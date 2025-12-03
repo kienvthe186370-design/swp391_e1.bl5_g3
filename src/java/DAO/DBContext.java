@@ -26,9 +26,7 @@ public class DBContext {
 public static void main(String[] args) {
         // Tạo đối tượng DBContext
         DBContext dbContext = new DBContext();      
-        
-        
-        
+
         // Gọi hàm getConnection
         Connection conn = dbContext.getConnection();
 
