@@ -68,6 +68,56 @@ public class CategoryDAO extends DBContext {
         }
         return false;
     }
+     public boolean updateCategory(Category cat) {
+        String sql = "UPDATE Categories SET CategoryName = ?, Description = ?, Icon = ?, DisplayOrder = ?, IsActive = ? WHERE CategoryID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, cat.getCategoryName());
+            ps.setString(2, cat.getDescription());
+            ps.setString(3, cat.getIcon());
+            ps.setInt(4, cat.getDisplayOrder());
+            ps.setBoolean(5, cat.isIsActive());
+            ps.setInt(6, cat.getCategoryID());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
     
+    // Delete category
+    public boolean deleteCategory(int id) {
+        String sql = "DELETE FROM Categories WHERE CategoryID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    public List<CategoryAttribute> getCategoryAttributes(int categoryID) {
+        List<CategoryAttribute> list = new ArrayList<>();
+        String sql = "SELECT * FROM CategoryAttributes WHERE CategoryID = ? ORDER BY DisplayOrder";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, categoryID);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                CategoryAttribute ca = new CategoryAttribute(
+                    rs.getInt("CategoryAttributeID"),
+                    rs.getInt("CategoryID"),
+                    rs.getInt("AttributeID"),
+                    rs.getBoolean("IsRequired"),
+                    rs.getInt("DisplayOrder")
+                );
+                list.add(ca);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }
     
