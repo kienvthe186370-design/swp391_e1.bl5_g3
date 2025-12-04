@@ -90,5 +90,68 @@ public class AttributeDAO extends DBContext {
         }
         return false;
     }
+    public List<AttributeValue> getValuesByAttributeID(int attributeID) {
+        List<AttributeValue> list = new ArrayList<>();
+        String sql = "SELECT * FROM AttributeValues WHERE AttributeID = ? ORDER BY ValueName";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, attributeID);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                AttributeValue val = new AttributeValue(
+                    rs.getInt("ValueID"),
+                    rs.getInt("AttributeID"),
+                    rs.getString("ValueName"),
+                    rs.getBoolean("IsActive")
+                );
+                list.add(val);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
     
+    // Insert attribute value
+    public boolean insertAttributeValue(AttributeValue value) {
+        String sql = "INSERT INTO AttributeValues (AttributeID, ValueName, IsActive) VALUES (?, ?, ?)";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, value.getAttributeID());
+            ps.setString(2, value.getValueName());
+            ps.setBoolean(3, value.isIsActive());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    // Update attribute value
+    public boolean updateAttributeValue(AttributeValue value) {
+        String sql = "UPDATE AttributeValues SET ValueName = ?, IsActive = ? WHERE ValueID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, value.getValueName());
+            ps.setBoolean(2, value.isIsActive());
+            ps.setInt(3, value.getValueID());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    // Delete attribute value
+    public boolean deleteAttributeValue(int valueID) {
+        String sql = "DELETE FROM AttributeValues WHERE ValueID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, valueID);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
