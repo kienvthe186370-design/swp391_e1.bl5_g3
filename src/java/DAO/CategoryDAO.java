@@ -119,5 +119,33 @@ public class CategoryDAO extends DBContext {
         }
         return list;
     }
+     public boolean addCategoryAttribute(CategoryAttribute ca) {
+        String sql = "INSERT INTO CategoryAttributes (CategoryID, AttributeID, IsRequired, DisplayOrder) VALUES (?, ?, ?, ?)";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, ca.getCategoryID());
+            ps.setInt(2, ca.getAttributeID());
+            ps.setBoolean(3, ca.isIsRequired());
+            ps.setInt(4, ca.getDisplayOrder());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    // Remove attribute from category
+    public boolean removeCategoryAttribute(int categoryID, int attributeID) {
+        String sql = "DELETE FROM CategoryAttributes WHERE CategoryID = ? AND AttributeID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, categoryID);
+            ps.setInt(2, attributeID);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
     
