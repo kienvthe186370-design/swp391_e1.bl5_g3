@@ -1,3 +1,83 @@
+# NetBeans specific
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# Class Files
+*.class
+
+# Log Files
+*.log
+
+# Package Files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Virtual machine crash logs
+hs_err_pid*
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Database
+*.db
+*.sqlite
+
+# Compiled files
+*.com
+*.dll
+*.exe
+*.o
+*.so
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# Gradle
+.gradle
 /build/
-/nbproject/private/
-/dist/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
+
+# Sensitive data (IMPORTANT!)
+**/private.properties
+**/database.properties
+**/*password*
+**/*secret*
+**/*key*.properties
