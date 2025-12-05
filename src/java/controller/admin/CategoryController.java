@@ -105,4 +105,48 @@ public class CategoryController extends HttpServlet {
             response.sendRedirect("categories?msg=error");
         }
     }
+        private void updateCategory(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        try {
+            int id = Integer.parseInt(request.getParameter("categoryID"));
+            String name = request.getParameter("categoryName");
+            String desc = request.getParameter("description");
+            String icon = request.getParameter("icon");
+            
+            String displayOrderStr = request.getParameter("displayOrder");
+            int displayOrder = (displayOrderStr != null && !displayOrderStr.isEmpty()) 
+                              ? Integer.parseInt(displayOrderStr) : 0;
+            
+            boolean isActive = "on".equals(request.getParameter("isActive"));
+            
+            entity.Category category = new entity.Category(id, name, desc, icon, displayOrder, isActive);
+            boolean success = categoryDAO.updateCategory(category);
+            
+            if (success) {
+                response.sendRedirect("categories?msg=update_success");
+            } else {
+                response.sendRedirect("categories?msg=update_fail");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect("categories?msg=error");
+        }
+    }
+    
+    private void deleteCategory(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        boolean success = categoryDAO.deleteCategory(id);
+        
+        if (success) {
+            response.sendRedirect("categories?msg=delete_success");
+        } else {
+            response.sendRedirect("categories?msg=delete_fail");
+        }
+    }
+
+    @Override
+    public String getServletInfo() {
+        return "Category Management Controller";
+    }
 }
