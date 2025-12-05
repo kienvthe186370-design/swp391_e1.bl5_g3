@@ -25,7 +25,12 @@ public class Employee {
         this.passwordHash = passwordHash;
         this.phone = phone;
         this.role = role;
-        this.isActive = isActive;
+        this.isActive = isActive;   
+        
+        
+        
+        
+        
     }
 
     // Getters and Setters
