@@ -1,7 +1,9 @@
 package controller;
 
 import DAO.CustomerDAO;
+import DAO.EmployeeDAO;
 import entity.Customer;
+import entity.Employee;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -16,6 +18,19 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Nếu đã đăng nhập, redirect về trang tương ứng
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            if (session.getAttribute("customer") != null) {
+                response.sendRedirect("customer/home");
+                return;
+            } else if (session.getAttribute("employee") != null) {
+                Employee emp = (Employee) session.getAttribute("employee");
+                response.sendRedirect(getRedirectUrlByRole(emp.getRole()));
+                return;
+            }
+        }
+        
         request.getRequestDispatcher("login.jsp").forward(request, response);
     }
 
@@ -25,6 +40,7 @@ public class LoginServlet extends HttpServlet {
         
         String email = request.getParameter("email");
         String password = request.getParameter("password");
+        String userType = request.getParameter("userType"); // "customer" or "employee"
         
         if (email == null || email.trim().isEmpty() || 
             password == null || password.trim().isEmpty()) {
@@ -33,20 +49,59 @@ public class LoginServlet extends HttpServlet {
             return;
         }
         
-        CustomerDAO dao = new CustomerDAO();
-        Customer customer = dao.login(email, password);
+        HttpSession session = request.getSession();
         
-        if (customer != null) {
-            HttpSession session = request.getSession();
-            session.setAttribute("customer", customer);
-            session.setAttribute("customerID", customer.getCustomerID());
-            session.setAttribute("customerName", customer.getFullName());
+        // Mặc định thử đăng nhập Customer trước
+        if (userType == null || userType.equals("customer")) {
+            CustomerDAO customerDAO = new CustomerDAO();
+            Customer customer = customerDAO.login(email, password);
             
-            response.sendRedirect("index.html");
+            if (customer != null) {
+                session.setAttribute("customer", customer);
+                session.setAttribute("userID", customer.getCustomerID());
+                session.setAttribute("userName", customer.getFullName());
+                session.setAttribute("userType", "customer");
+                
+                response.sendRedirect("customer/home");
+                return;
+            }
+        }
+        
+        // Nếu không phải customer, thử đăng nhập Employee
+        EmployeeDAO employeeDAO = new EmployeeDAO();
+        Employee employee = employeeDAO.login(email, password);
+        
+        if (employee != null) {
+            session.setAttribute("employee", employee);
+            session.setAttribute("userID", employee.getEmployeeID());
+            session.setAttribute("userName", employee.getFullName());
+            session.setAttribute("userRole", employee.getRole());
+            session.setAttribute("userType", "employee");
+            
+            // Redirect dựa trên role
+            String redirectUrl = getRedirectUrlByRole(employee.getRole());
+            response.sendRedirect(redirectUrl);
         } else {
             request.setAttribute("error", "Email hoặc mật khẩu không đúng");
             request.setAttribute("email", email);
             request.getRequestDispatcher("login.jsp").forward(request, response);
+        }
+    }
+    
+    private String getRedirectUrlByRole(String role) {
+        switch (role.toLowerCase()) {
+            case "admin":
+                return "AdminLTE-3.2.0/index.jsp";
+            case "seller":
+                return "seller/dashboard";
+            case "sellermanager":
+                return "seller-manager/dashboard";
+            case "marketer":
+                return "marketer/dashboard";
+            case "staff":
+                return "staff/dashboard";
+            default:
+                return "index.html";
         }
     }
 }
