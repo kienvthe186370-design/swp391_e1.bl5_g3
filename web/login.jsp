@@ -1,4 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="java.util.regex.*" %>
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -111,62 +113,7 @@
 </head>
 
 <body>
-    <!-- Page Preloder -->
-    <div id="preloder">
-        <div class="loader"></div>
-    </div>
-
-    <!-- Header Section Begin -->
-    <header class="header">
-        <div class="header__top">
-            <div class="container">
-                <div class="row">
-                    <div class="col-lg-6 col-md-7">
-                        <div class="header__top__left">
-                            <p>Miễn phí vận chuyển, đổi trả trong 30 ngày</p>
-                        </div>
-                    </div>
-                    <div class="col-lg-6 col-md-5">
-                        <div class="header__top__right">
-                            <div class="header__top__links">
-                                <a href="login">Đăng nhập</a>
-                                <a href="#">FAQs</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-3 col-md-3">
-                    <div class="header__logo">
-                        <a href="./index.html"><img src="img/logo.png" alt=""></a>
-                    </div>
-                </div>
-                <div class="col-lg-6 col-md-6">
-                    <nav class="header__menu mobile-menu">
-                        <ul>
-                            <li><a href="./index.jsp">Home</a></li>
-                            <li><a href="./shop.jsp">Shop</a></li>
-                            <li><a href="./blog.jsp">Blog</a></li>
-                            <li><a href="./contact.jsp">Contact</a></li>
-                        </ul>
-                    </nav>
-                </div>
-                <div class="col-lg-3 col-md-3">
-                    <div class="header__nav__option">
-                        <a href="#" class="search-switch"><img src="img/icon/search.png" alt=""></a>
-                        <a href="#"><img src="img/icon/heart.png" alt=""></a>
-                        <a href="#"><img src="img/icon/cart.png" alt=""> <span>0</span></a>
-                        <div class="price">$0.00</div>
-                    </div>
-                </div>
-            </div>
-            <div class="canvas__open"><i class="fa fa-bars"></i></div>
-        </div>
-    </header>
-    <!-- Header Section End -->
+    <%@include file="header.jsp" %>
 
     <!-- Breadcrumb Section Begin -->
     <section class="breadcrumb-option">
@@ -235,64 +182,7 @@
     </section>
     <!-- Login Section End -->
 
-    <!-- Footer Section Begin -->
-    <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-3 col-md-6 col-sm-6">
-                    <div class="footer__about">
-                        <div class="footer__logo">
-                            <a href="#"><img src="img/footer-logo.png" alt=""></a>
-                        </div>
-                        <p>Pickleball Shop - Cửa hàng vợt và phụ kiện Pickleball hàng đầu Việt Nam.</p>
-                        <a href="#"><img src="img/payment.png" alt=""></a>
-                    </div>
-                </div>
-                <div class="col-lg-2 offset-lg-1 col-md-3 col-sm-6">
-                    <div class="footer__widget">
-                        <h6>Mua sắm</h6>
-                        <ul>
-                            <li><a href="#">Vợt Pickleball</a></li>
-                            <li><a href="#">Bóng</a></li>
-                            <li><a href="#">Phụ kiện</a></li>
-                            <li><a href="#">Sale</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-3 col-sm-6">
-                    <div class="footer__widget">
-                        <h6>Hỗ trợ</h6>
-                        <ul>
-                            <li><a href="#">Liên hệ</a></li>
-                            <li><a href="#">Thanh toán</a></li>
-                            <li><a href="#">Vận chuyển</a></li>
-                            <li><a href="#">Đổi trả</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-lg-3 offset-lg-1 col-md-6 col-sm-6">
-                    <div class="footer__widget">
-                        <h6>Nhận tin khuyến mãi</h6>
-                        <div class="footer__newslatter">
-                            <p>Đăng ký để nhận thông tin sản phẩm mới và ưu đãi!</p>
-                            <form action="#">
-                                <input type="text" placeholder="Email của bạn">
-                                <button type="submit"><span class="icon_mail_alt"></span></button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-lg-12 text-center">
-                    <div class="footer__copyright__text">
-                        <p>Copyright © <script>document.write(new Date().getFullYear());</script> Pickleball Shop Vietnam</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
-    <!-- Footer Section End -->
+    <%@include  file="footer.jsp"%>
 
     <!-- Js Plugins -->
     <script src="js/jquery-3.3.1.min.js"></script>
