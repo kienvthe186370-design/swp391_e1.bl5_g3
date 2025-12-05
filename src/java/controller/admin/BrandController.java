@@ -81,5 +81,65 @@ public class BrandController extends HttpServlet {
         request.getRequestDispatcher("/admin/brand-form.jsp").forward(request, response);
     }
     
-   
+    private void addBrand(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        try {
+            String name = request.getParameter("brandName");
+            String logo = request.getParameter("logo");
+            String desc = request.getParameter("description");
+            boolean isActive = "on".equals(request.getParameter("isActive"));
+            
+            entity.Brand brand = new entity.Brand(0, name, logo, desc, isActive);
+            boolean success = brandDAO.insertBrand(brand);
+            
+            if (success) {
+                response.sendRedirect("brands?msg=add_success");
+            } else {
+                response.sendRedirect("brands?msg=add_fail");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect("brands?msg=error");
+        }
+    }
+    
+    private void updateBrand(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        try {
+            int id = Integer.parseInt(request.getParameter("brandID"));
+            String name = request.getParameter("brandName");
+            String logo = request.getParameter("logo");
+            String desc = request.getParameter("description");
+            boolean isActive = "on".equals(request.getParameter("isActive"));
+            
+            entity.Brand brand = new entity.Brand(id, name, logo, desc, isActive);
+            boolean success = brandDAO.updateBrand(brand);
+            
+            if (success) {
+                response.sendRedirect("brands?msg=update_success");
+            } else {
+                response.sendRedirect("brands?msg=update_fail");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect("brands?msg=error");
+        }
+    }
+    
+    private void deleteBrand(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        boolean success = brandDAO.deleteBrand(id);
+        
+        if (success) {
+            response.sendRedirect("brands?msg=delete_success");
+        } else {
+            response.sendRedirect("brands?msg=delete_fail");
+        }
+    }
+
+    @Override
+    public String getServletInfo() {
+        return "Brand Management Controller";
+    }
 }
