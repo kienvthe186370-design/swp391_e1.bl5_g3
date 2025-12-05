@@ -17,7 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * @author Admin
  */
-@WebServlet(name="BrandController", urlPatterns={"/adminn/brands"})
+@WebServlet(name="BrandController", urlPatterns={"/admin/brands"})
 public class BrandController extends HttpServlet {
    
     private DAO.BrandDAO brandDAO = new DAO.BrandDAO();
@@ -64,49 +64,7 @@ public class BrandController extends HttpServlet {
     
     private void listBrands(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        // Get search, filter, sort parameters
-        String search = request.getParameter("search");
-        String statusParam = request.getParameter("status");
-        String sortBy = request.getParameter("sortBy");
-        String sortOrder = request.getParameter("sortOrder");
-        
-        // Get page parameters
-        int page = 1;
-        int pageSize = 10;
-        try {
-            if (request.getParameter("page") != null) {
-                page = Integer.parseInt(request.getParameter("page"));
-            }
-            if (request.getParameter("pageSize") != null) {
-                pageSize = Integer.parseInt(request.getParameter("pageSize"));
-            }
-        } catch (NumberFormatException e) {
-            page = 1;
-            pageSize = 10;
-        }
-        
-        // Parse status filter
-        Boolean isActive = null;
-        if (statusParam != null && !statusParam.isEmpty()) {
-            isActive = "active".equals(statusParam);
-        }
-        
-        // Get data with filters
-        java.util.List<entity.Brand> brands = brandDAO.getBrands(search, isActive, sortBy, sortOrder, page, pageSize);
-        int totalRecords = brandDAO.getTotalBrands(search, isActive);
-        int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
-        
-        // Set attributes
-        request.setAttribute("brands", brands);
-        request.setAttribute("currentPage", page);
-        request.setAttribute("pageSize", pageSize);
-        request.setAttribute("totalPages", totalPages);
-        request.setAttribute("totalRecords", totalRecords);
-        request.setAttribute("search", search);
-        request.setAttribute("status", statusParam);
-        request.setAttribute("sortBy", sortBy);
-        request.setAttribute("sortOrder", sortOrder);
-        
+        request.setAttribute("brands", brandDAO.getAllBrands());
         request.getRequestDispatcher("/admin/brands.jsp").forward(request, response);
     }
     
@@ -123,65 +81,5 @@ public class BrandController extends HttpServlet {
         request.getRequestDispatcher("/admin/brand-form.jsp").forward(request, response);
     }
     
-    private void addBrand(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        try {
-            String name = request.getParameter("brandName");
-            String logo = request.getParameter("logo");
-            String desc = request.getParameter("description");
-            boolean isActive = "on".equals(request.getParameter("isActive"));
-            
-            entity.Brand brand = new entity.Brand(0, name, logo, desc, isActive);
-            boolean success = brandDAO.insertBrand(brand);
-            
-            if (success) {
-                response.sendRedirect("brands?msg=add_success");
-            } else {
-                response.sendRedirect("brands?msg=add_fail");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendRedirect("brands?msg=error");
-        }
-    }
-    
-    private void updateBrand(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        try {
-            int id = Integer.parseInt(request.getParameter("brandID"));
-            String name = request.getParameter("brandName");
-            String logo = request.getParameter("logo");
-            String desc = request.getParameter("description");
-            boolean isActive = "on".equals(request.getParameter("isActive"));
-            
-            entity.Brand brand = new entity.Brand(id, name, logo, desc, isActive);
-            boolean success = brandDAO.updateBrand(brand);
-            
-            if (success) {
-                response.sendRedirect("brands?msg=update_success");
-            } else {
-                response.sendRedirect("brands?msg=update_fail");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendRedirect("brands?msg=error");
-        }
-    }
-    
-    private void deleteBrand(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        int id = Integer.parseInt(request.getParameter("id"));
-        boolean success = brandDAO.deleteBrand(id);
-        
-        if (success) {
-            response.sendRedirect("brands?msg=delete_success");
-        } else {
-            response.sendRedirect("brands?msg=delete_fail");
-        }
-    }
-
-    @Override
-    public String getServletInfo() {
-        return "Brand Management Controller";
-    }
+   
 }
