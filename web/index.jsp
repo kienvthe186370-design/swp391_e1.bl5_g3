@@ -37,51 +37,34 @@
 
     <!-- Hero Section Begin -->
     <section class="hero">
-        <div class="hero__slider owl-carousel">
-            <div class="hero__items set-bg" data-setbg="img/hero/hero-1.jpg">
+        <p style="color:red; font-size:20px; text-align:center;">
+        Số slider đang load: ${sliders.size()} (Nếu thấy số này > 0 là database đã kết nối thành công)
+    </p>
+    <div class="hero__slider owl-carousel">
+
+        <c:forEach items="${sliders}" var="s">
+            <div class="hero__items set-bg" data-setbg="${s.ImageURL}">
                 <div class="container">
                     <div class="row">
                         <div class="col-xl-5 col-lg-7 col-md-8">
                             <div class="hero__text">
-                                <h6>Summer Collection</h6>
-                                <h2>Fall - Winter Collections 2030</h2>
-                                <p>A specialist label creating luxury essentials. Ethically crafted with an unwavering
-                                commitment to exceptional quality.</p>
-                                <a href="#" class="primary-btn">Shop now <span class="arrow_right"></span></a>
-                                <div class="hero__social">
-                                    <a href="#"><i class="fa fa-facebook"></i></a>
-                                    <a href="#"><i class="fa fa-twitter"></i></a>
-                                    <a href="#"><i class="fa fa-pinterest"></i></a>
-                                    <a href="#"><i class="fa fa-instagram"></i></a>
-                                </div>
+
+                                <h2>${s.Title}</h2>
+
+                                <a href="${s.LinkURL}" class="primary-btn">
+                                    Xem ngay
+                                    <span class="arrow_right"></span>
+                                </a>
+
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="hero__items set-bg" data-setbg="img/hero/hero-2.jpg">
-                <div class="container">
-                    <div class="row">
-                        <div class="col-xl-5 col-lg-7 col-md-8">
-                            <div class="hero__text">
-                                <h6>Summer Collection</h6>
-                                <h2>Fall - Winter Collections 2030</h2>
-                                <p>A specialist label creating luxury essentials. Ethically crafted with an unwavering
-                                commitment to exceptional quality.</p>
-                                <a href="#" class="primary-btn">Shop now <span class="arrow_right"></span></a>
-                                <div class="hero__social">
-                                    <a href="#"><i class="fa fa-facebook"></i></a>
-                                    <a href="#"><i class="fa fa-twitter"></i></a>
-                                    <a href="#"><i class="fa fa-pinterest"></i></a>
-                                    <a href="#"><i class="fa fa-instagram"></i></a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+        </c:forEach>
+
+    </div>
+</section>
     <!-- Hero Section End -->
 
     <!-- Banner Section Begin -->
@@ -557,5 +540,20 @@
     <script src="js/owl.carousel.min.js"></script>
     <script src="js/main.js"></script>
 </body>
+<script>
+    $(document).ready(function(){
+        $(".hero__slider").owlCarousel({
+            items: 1,
+            loop: true,
+            nav: true,
+            dots: true,
+            autoplay: true,
+            autoplayTimeout: 5000,
+            animateOut: 'fadeOut',
+            animateIn: 'fadeIn',
+            navText: ["<span class='arrow_left'></span>","<span class='arrow_right'></span>"]
+        });
+    });
+</script>
 
 </html>
