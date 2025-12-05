@@ -136,6 +136,12 @@
                         <li data-filter=".new-arrivals">New Arrivals</li>
                         <li data-filter=".hot-sales">Hot Sales</li>
                     </ul>
+                    
+                    
+                    
+                    
+                    
+                    
                 </div>
             </div>
             <div class="row product__filter">
