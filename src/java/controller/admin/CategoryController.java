@@ -12,7 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * @author Admin
  */
-@WebServlet(name="CategoryController", urlPatterns={"/adminn/categories"})
+@WebServlet(name="CategoryController", urlPatterns={"/admin/categories"})
 public class CategoryController extends HttpServlet {
    
     private DAO.CategoryDAO categoryDAO = new DAO.CategoryDAO();
@@ -60,49 +60,7 @@ public class CategoryController extends HttpServlet {
     
     private void listCategories(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        // Get search, filter, sort parameters
-        String search = request.getParameter("search");
-        String statusParam = request.getParameter("status");
-        String sortBy = request.getParameter("sortBy");
-        String sortOrder = request.getParameter("sortOrder");
-        
-        // Get page parameters
-        int page = 1;
-        int pageSize = 10;
-        try {
-            if (request.getParameter("page") != null) {
-                page = Integer.parseInt(request.getParameter("page"));
-            }
-            if (request.getParameter("pageSize") != null) {
-                pageSize = Integer.parseInt(request.getParameter("pageSize"));
-            }
-        } catch (NumberFormatException e) {
-            page = 1;
-            pageSize = 10;
-        }
-        
-        // Parse status filter
-        Boolean isActive = null;
-        if (statusParam != null && !statusParam.isEmpty()) {
-            isActive = "active".equals(statusParam);
-        }
-        
-        // Get data with filters
-        java.util.List<entity.Category> categories = categoryDAO.getCategories(search, isActive, sortBy, sortOrder, page, pageSize);
-        int totalRecords = categoryDAO.getTotalCategories(search, isActive);
-        int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
-        
-        // Set attributes
-        request.setAttribute("categories", categories);
-        request.setAttribute("currentPage", page);
-        request.setAttribute("pageSize", pageSize);
-        request.setAttribute("totalPages", totalPages);
-        request.setAttribute("totalRecords", totalRecords);
-        request.setAttribute("search", search);
-        request.setAttribute("status", statusParam);
-        request.setAttribute("sortBy", sortBy);
-        request.setAttribute("sortOrder", sortOrder);
-        
+        request.setAttribute("categories", categoryDAO.getAllCategories());
         request.getRequestDispatcher("/admin/categories.jsp").forward(request, response);
     }
     
@@ -146,49 +104,5 @@ public class CategoryController extends HttpServlet {
             e.printStackTrace();
             response.sendRedirect("categories?msg=error");
         }
-    }
-        private void updateCategory(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        try {
-            int id = Integer.parseInt(request.getParameter("categoryID"));
-            String name = request.getParameter("categoryName");
-            String desc = request.getParameter("description");
-            String icon = request.getParameter("icon");
-            
-            String displayOrderStr = request.getParameter("displayOrder");
-            int displayOrder = (displayOrderStr != null && !displayOrderStr.isEmpty()) 
-                              ? Integer.parseInt(displayOrderStr) : 0;
-            
-            boolean isActive = "on".equals(request.getParameter("isActive"));
-            
-            entity.Category category = new entity.Category(id, name, desc, icon, displayOrder, isActive);
-            boolean success = categoryDAO.updateCategory(category);
-            
-            if (success) {
-                response.sendRedirect("categories?msg=update_success");
-            } else {
-                response.sendRedirect("categories?msg=update_fail");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendRedirect("categories?msg=error");
-        }
-    }
-    
-    private void deleteCategory(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        int id = Integer.parseInt(request.getParameter("id"));
-        boolean success = categoryDAO.deleteCategory(id);
-        
-        if (success) {
-            response.sendRedirect("categories?msg=delete_success");
-        } else {
-            response.sendRedirect("categories?msg=delete_fail");
-        }
-    }
-
-    @Override
-    public String getServletInfo() {
-        return "Category Management Controller";
     }
 }
