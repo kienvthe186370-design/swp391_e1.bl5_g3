@@ -77,7 +77,53 @@ public class SliderDAO extends DBContext {
 
     return list;
 }
+    public void insertSlider(Slider s){
+        String sql = "INSERT INTO Sliders (title, imageurl, linkurl, displayorder, status) VALUES (?, ?, ?, ?, ?)";
+        try(Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(sql)){
+            ps.setString(1, s.getTitle());
+            ps.setString(2, s.getImageURL());
+            ps.setString(3, s.getLinkURL());
+            ps.setString(4, s.getStatus());
+            ps.setInt(5, s.getDisplayOrder());
+            ps.executeUpdate();
+            
+        }catch (SQLException ex) {
+        System.out.println("Error in insertSlider: " + ex.getMessage());
+    }
+
+    }
     
+    public void updateSlider(Slider s){
+        String sql = "UPDATE Sliders SET title=?, imageurl=?, linkurl=?, displayOrder=?, status=? WHERE sliderID=?";
+
+        try(Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(sql)){
+            ps.setString(1, s.getTitle());
+            ps.setString(2, s.getImageURL());
+            ps.setString(3, s.getLinkURL());
+            ps.setString(4, s.getStatus());
+            ps.setInt(5, s.getDisplayOrder());
+            ps.executeUpdate();
+            
+        }catch (SQLException ex) {
+        System.out.println("Error in updateSlider: " + ex.getMessage());
+    }
+    }
+    
+    public void deleteSlider(int id){
+        String sql = "DELETE FROM Sliders WHERE sliderID = ?";
+        try(Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+
+        }catch (SQLException ex) {
+        System.out.println("Error in deleteSlider: " + ex.getMessage());
+                
+    }
+
+}
 }
     
 
