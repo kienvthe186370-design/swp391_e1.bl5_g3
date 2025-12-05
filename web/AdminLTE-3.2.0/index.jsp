@@ -303,7 +303,7 @@
               </div>
               <div class="card-body">
                 <p>Đây là trang quản trị hệ thống Pickleball Shop. Bạn có toàn quyền kiểm soát hệ thống.</p>
-                <p><strong>Email:</strong> <%= adminEmail %></p>
+                <p><strong>Email Admin:</strong> <%= adminEmail %></p>
                 <p><strong>Role:</strong> Administrator</p>
               </div>
             </div>
