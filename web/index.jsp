@@ -5,6 +5,7 @@
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.regex.*" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <!DOCTYPE html>
 <html lang="zxx">
@@ -37,21 +38,18 @@
 
     <!-- Hero Section Begin -->
     <section class="hero">
-        <p style="color:red; font-size:20px; text-align:center;">
-        Số slider đang load: ${sliders.size()} (Nếu thấy số này > 0 là database đã kết nối thành công)
-    </p>
     <div class="hero__slider owl-carousel">
 
         <c:forEach items="${sliders}" var="s">
-            <div class="hero__items set-bg" data-setbg="${s.ImageURL}">
+            <div class="hero__items set-bg" data-setbg="${s.imageURL}">
                 <div class="container">
                     <div class="row">
                         <div class="col-xl-5 col-lg-7 col-md-8">
                             <div class="hero__text">
 
-                                <h2>${s.Title}</h2>
+                                <h2>${s.title}</h2>
 
-                                <a href="${s.LinkURL}" class="primary-btn">
+                                <a href="${s.linkURL}" class="primary-btn">
                                     Xem ngay
                                     <span class="arrow_right"></span>
                                 </a>
