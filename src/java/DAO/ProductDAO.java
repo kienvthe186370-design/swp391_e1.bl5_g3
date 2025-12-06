@@ -336,6 +336,239 @@ public class ProductDAO extends DBContext {
     }
     
     /**
+     * Insert new product into database
+     * @param productName - Product name (required)
+     * @param categoryId - Category ID (required)
+     * @param brandId - Brand ID (nullable)
+     * @param description - Product description (nullable)
+     * @param specifications - Product specifications (nullable)
+     * @param createdBy - Employee ID who created the product
+     * @return Product ID of newly created product, or -1 if failed
+     */
+    public int insertProduct(String productName, int categoryId, Integer brandId,
+                            String description, String specifications, int createdBy) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getConnection();
+            
+            String sql = "INSERT INTO Products (ProductName, CategoryID, BrandID, Description, " +
+                        "Specifications, IsActive, CreatedBy, CreatedDate, UpdatedDate) " +
+                        "VALUES (?, ?, ?, ?, ?, 1, ?, GETDATE(), GETDATE())";
+            
+            ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
+            ps.setString(1, productName);
+            ps.setInt(2, categoryId);
+            
+            if (brandId != null) {
+                ps.setInt(3, brandId);
+            } else {
+                ps.setNull(3, java.sql.Types.INTEGER);
+            }
+            
+            ps.setString(4, description);
+            ps.setString(5, specifications);
+            ps.setInt(6, createdBy);
+            
+            int affectedRows = ps.executeUpdate();
+            
+            if (affectedRows > 0) {
+                rs = ps.getGeneratedKeys();
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+            
+            return -1;
+            
+        } catch (SQLException e) {
+            System.err.println("Error in insertProduct: " + e.getMessage());
+            e.printStackTrace();
+            return -1;
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    /**
+     * Insert product image into database
+     * @param productId - Product ID
+     * @param imageUrl - Relative URL to image file
+     * @param imageType - "main" or "thumbnail"
+     * @param sortOrder - Sort order for images (0 for main image, 1,2,3... for thumbnails)
+     * @return true if successful, false otherwise
+     */
+    public boolean insertProductImage(int productId, String imageUrl, 
+                                     String imageType, int sortOrder) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        
+        try {
+            conn = getConnection();
+            
+            // Database uses SortOrder, not DisplayOrder
+            String sql = "INSERT INTO ProductImages (ProductID, ImageURL, ImageType, SortOrder) " +
+                        "VALUES (?, ?, ?, ?)";
+            
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, productId);
+            ps.setString(2, imageUrl);
+            ps.setString(3, imageType);
+            ps.setInt(4, sortOrder);
+            
+            int rows = ps.executeUpdate();
+            System.out.println("Inserted ProductImage: ProductID=" + productId + ", ImageURL=" + imageUrl + ", Type=" + imageType + ", SortOrder=" + sortOrder + ", Rows=" + rows);
+            return rows > 0;
+            
+        } catch (SQLException e) {
+            System.err.println("Error in insertProductImage: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (ps != null) ps.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    /**
+     * Insert product with images in a single transaction
+     * This ensures atomicity - either all inserts succeed or all fail
+     * 
+     * @param productName - Product name (required)
+     * @param categoryId - Category ID (required)
+     * @param brandId - Brand ID (nullable)
+     * @param description - Product description (nullable)
+     * @param specifications - Product specifications (nullable)
+     * @param createdBy - Employee ID who created the product
+     * @param mainImageUrl - Main image URL (nullable)
+     * @param thumbnailUrls - List of thumbnail URLs (nullable)
+     * @return Product ID of newly created product, or -1 if failed
+     */
+    public int insertProductWithImages(String productName, int categoryId, Integer brandId,
+                                      String description, String specifications, int createdBy,
+                                      String mainImageUrl, List<String> thumbnailUrls) {
+        Connection conn = null;
+        PreparedStatement psProduct = null;
+        PreparedStatement psImage = null;
+        ResultSet rs = null;
+        int productId = -1;
+        
+        try {
+            conn = getConnection();
+            // Start transaction
+            conn.setAutoCommit(false);
+            
+            // Insert product
+            String sqlProduct = "INSERT INTO Products (ProductName, CategoryID, BrandID, Description, " +
+                               "Specifications, IsActive, CreatedBy, CreatedDate, UpdatedDate) " +
+                               "VALUES (?, ?, ?, ?, ?, 1, ?, GETDATE(), GETDATE())";
+            
+            psProduct = conn.prepareStatement(sqlProduct, PreparedStatement.RETURN_GENERATED_KEYS);
+            psProduct.setString(1, productName);
+            psProduct.setInt(2, categoryId);
+            
+            if (brandId != null) {
+                psProduct.setInt(3, brandId);
+            } else {
+                psProduct.setNull(3, java.sql.Types.INTEGER);
+            }
+            
+            psProduct.setString(4, description);
+            psProduct.setString(5, specifications);
+            psProduct.setInt(6, createdBy);
+            
+            int affectedRows = psProduct.executeUpdate();
+            
+            if (affectedRows == 0) {
+                conn.rollback();
+                return -1;
+            }
+            
+            // Get generated product ID
+            rs = psProduct.getGeneratedKeys();
+            if (rs.next()) {
+                productId = rs.getInt(1);
+            } else {
+                conn.rollback();
+                return -1;
+            }
+            
+            // Insert images if provided
+            // Database uses SortOrder, not DisplayOrder
+            String sqlImage = "INSERT INTO ProductImages (ProductID, ImageURL, ImageType, SortOrder) " +
+                             "VALUES (?, ?, ?, ?)";
+            psImage = conn.prepareStatement(sqlImage);
+            
+            // Insert main image
+            if (mainImageUrl != null && !mainImageUrl.trim().isEmpty()) {
+                psImage.setInt(1, productId);
+                psImage.setString(2, mainImageUrl);
+                psImage.setString(3, "main");
+                psImage.setInt(4, 0);
+                psImage.executeUpdate();
+            }
+            
+            // Insert thumbnails
+            if (thumbnailUrls != null && !thumbnailUrls.isEmpty()) {
+                for (int i = 0; i < thumbnailUrls.size(); i++) {
+                    String thumbnailUrl = thumbnailUrls.get(i);
+                    if (thumbnailUrl != null && !thumbnailUrl.trim().isEmpty()) {
+                        psImage.setInt(1, productId);
+                        psImage.setString(2, thumbnailUrl);
+                        psImage.setString(3, "thumbnail");
+                        psImage.setInt(4, i + 1);
+                        psImage.executeUpdate();
+                    }
+                }
+            }
+            
+            // Commit transaction
+            conn.commit();
+            return productId;
+            
+        } catch (SQLException e) {
+            System.err.println("Error in insertProductWithImages: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Rollback on error
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                    System.err.println("Transaction rolled back");
+                } catch (SQLException ex) {
+                    System.err.println("Error rolling back transaction: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+            }
+            return -1;
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (psProduct != null) psProduct.close();
+                if (psImage != null) psImage.close();
+                if (conn != null) {
+                    conn.setAutoCommit(true); // Reset auto-commit
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    /**
      * Test DAO
      */
     public static void main(String[] args) {
