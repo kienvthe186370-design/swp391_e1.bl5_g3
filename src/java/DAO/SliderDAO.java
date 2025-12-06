@@ -82,10 +82,10 @@ public class SliderDAO extends DBContext {
         try(Connection connection = getConnection();
                 PreparedStatement ps = connection.prepareStatement(sql)){
             ps.setString(1, s.getTitle());
-ps.setString(2, s.getImageURL());
-ps.setString(3, s.getLinkURL());
-ps.setInt(4, s.getDisplayOrder());      
-ps.setString(5, s.getStatus()); 
+            ps.setString(2, s.getImageURL());
+            ps.setString(3, s.getLinkURL());
+            ps.setInt(4, s.getDisplayOrder());
+            ps.setString(5, s.getStatus());
             ps.executeUpdate();
             
         }catch (SQLException ex) {
@@ -95,21 +95,24 @@ ps.setString(5, s.getStatus());
     }
     
     public void updateSlider(Slider s){
-        String sql = "UPDATE Sliders SET title=?, imageurl=?, linkurl=?, displayOrder=?, status=? WHERE sliderID=?";
+        String sql = "UPDATE Sliders SET Title=?, ImageURL=?, LinkURL=?, DisplayOrder=?, Status=? WHERE SliderID=?";
 
         try(Connection connection = getConnection();
                 PreparedStatement ps = connection.prepareStatement(sql)){
             ps.setString(1, s.getTitle());
             ps.setString(2, s.getImageURL());
             ps.setString(3, s.getLinkURL());
-            ps.setString(4, s.getStatus());
-            ps.setInt(5, s.getDisplayOrder());
+            ps.setInt(4, s.getDisplayOrder());
+            ps.setString(5, s.getStatus());
             ps.setInt(6, s.getSliderID());
-            ps.executeUpdate();
+            
+            int rowsAffected = ps.executeUpdate();
+            System.out.println("✅ Updated slider ID: " + s.getSliderID() + " - Rows affected: " + rowsAffected);
             
         }catch (SQLException ex) {
-        System.out.println("Error in updateSlider: " + ex.getMessage());
-    }
+            System.out.println("❌ Error in updateSlider: " + ex.getMessage());
+            ex.printStackTrace();
+        }
     }
     
     public void deleteSlider(int id){
@@ -125,6 +128,7 @@ ps.setString(5, s.getStatus());
     }
 
 }
+    
     // Get all sliders with pagination and search
     public List<Slider> getAllSliders(String search, String status, int page, int pageSize) {
         List<Slider> list = new ArrayList<>();
