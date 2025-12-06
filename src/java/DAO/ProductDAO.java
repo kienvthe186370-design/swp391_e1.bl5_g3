@@ -569,6 +569,240 @@ public class ProductDAO extends DBContext {
     }
     
     /**
+     * Get complete product details by ID
+     * @param productId - Product ID
+     * @return Map with all product fields + category name + brand name + creator name, or null if not found
+     */
+    public Map<String, Object> getProductById(int productId) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getConnection();
+            
+            String sql = "SELECT p.*, " +
+                        "c.CategoryName, " +
+                        "b.BrandName, " +
+                        "e.FullName AS CreatedByName, " +
+                        "(SELECT COUNT(*) FROM ProductImages WHERE ProductID = p.ProductID) AS ImageCount, " +
+                        "(SELECT COUNT(*) FROM ProductVariants WHERE ProductID = p.ProductID) AS VariantCount, " +
+                        "(SELECT ISNULL(SUM(Stock), 0) FROM ProductVariants WHERE ProductID = p.ProductID) AS TotalStock " +
+                        "FROM Products p " +
+                        "LEFT JOIN Categories c ON p.CategoryID = c.CategoryID " +
+                        "LEFT JOIN Brands b ON p.BrandID = b.BrandID " +
+                        "LEFT JOIN Employees e ON p.CreatedBy = e.EmployeeID " +
+                        "WHERE p.ProductID = ?";
+            
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, productId);
+            
+            rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                Map<String, Object> product = new HashMap<>();
+                
+                // Product basic info
+                product.put("productID", rs.getInt("ProductID"));
+                product.put("productName", rs.getString("ProductName"));
+                product.put("categoryID", rs.getInt("CategoryID"));
+                product.put("brandID", rs.getObject("BrandID"));
+                product.put("description", rs.getString("Description"));
+                product.put("specifications", rs.getString("Specifications"));
+                product.put("isActive", rs.getBoolean("IsActive"));
+                product.put("createdBy", rs.getObject("CreatedBy"));
+                product.put("createdDate", rs.getTimestamp("CreatedDate"));
+                product.put("updatedDate", rs.getTimestamp("UpdatedDate"));
+                
+                // Joined fields
+                product.put("categoryName", rs.getString("CategoryName"));
+                product.put("brandName", rs.getString("BrandName"));
+                product.put("createdByName", rs.getString("CreatedByName"));
+                
+                // Aggregated fields
+                product.put("imageCount", rs.getInt("ImageCount"));
+                product.put("variantCount", rs.getInt("VariantCount"));
+                product.put("totalStock", rs.getInt("TotalStock"));
+                
+                return product;
+            }
+            
+            return null; // Product not found
+            
+        } catch (SQLException e) {
+            System.err.println("Error in getProductById: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    /**
+     * Get all images for a product
+     * @param productId - Product ID
+     * @return List of Maps with ImageID, ImageURL, ImageType, SortOrder
+     */
+    public List<Map<String, Object>> getProductImages(int productId) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getConnection();
+            
+            String sql = "SELECT ImageID, ProductID, ImageURL, ImageType, SortOrder " +
+                        "FROM ProductImages " +
+                        "WHERE ProductID = ? " +
+                        "ORDER BY SortOrder ASC";
+            
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, productId);
+            
+            rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Map<String, Object> image = new HashMap<>();
+                image.put("imageID", rs.getInt("ImageID"));
+                image.put("productID", rs.getInt("ProductID"));
+                image.put("imageURL", rs.getString("ImageURL"));
+                image.put("imageType", rs.getString("ImageType"));
+                image.put("sortOrder", rs.getInt("SortOrder"));
+                list.add(image);
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error in getProductImages: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return list;
+    }
+    
+    /**
+     * Get all variants for a product
+     * @param productId - Product ID
+     * @return List of Maps with variant details
+     */
+    public List<Map<String, Object>> getProductVariants(int productId) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getConnection();
+            
+            String sql = "SELECT VariantID, ProductID, SKU, CostPrice, SellingPrice, CompareAtPrice, " +
+                        "ProfitMargin, ProfitAmount, Stock, ReservedStock, ReorderLevel, IsActive, " +
+                        "CreatedDate, UpdatedDate " +
+                        "FROM ProductVariants " +
+                        "WHERE ProductID = ? " +
+                        "ORDER BY CreatedDate DESC";
+            
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, productId);
+            
+            rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Map<String, Object> variant = new HashMap<>();
+                variant.put("variantID", rs.getInt("VariantID"));
+                variant.put("productID", rs.getInt("ProductID"));
+                variant.put("sku", rs.getString("SKU"));
+                variant.put("costPrice", rs.getBigDecimal("CostPrice"));
+                variant.put("sellingPrice", rs.getBigDecimal("SellingPrice"));
+                variant.put("compareAtPrice", rs.getBigDecimal("CompareAtPrice"));
+                variant.put("profitMargin", rs.getBigDecimal("ProfitMargin"));
+                variant.put("profitAmount", rs.getBigDecimal("ProfitAmount"));
+                variant.put("stock", rs.getInt("Stock"));
+                variant.put("reservedStock", rs.getInt("ReservedStock"));
+                variant.put("reorderLevel", rs.getObject("ReorderLevel"));
+                variant.put("isActive", rs.getBoolean("IsActive"));
+                variant.put("createdDate", rs.getTimestamp("CreatedDate"));
+                variant.put("updatedDate", rs.getTimestamp("UpdatedDate"));
+                
+                // Calculated fields
+                int stock = rs.getInt("Stock");
+                int reservedStock = rs.getInt("ReservedStock");
+                variant.put("availableStock", stock - reservedStock);
+                
+                list.add(variant);
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error in getProductVariants: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return list;
+    }
+    
+    /**
+     * Get employee name by ID
+     * @param employeeId - Employee ID
+     * @return Employee full name, or "Unknown" if not found
+     */
+    public String getEmployeeName(int employeeId) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getConnection();
+            
+            String sql = "SELECT FullName FROM Employees WHERE EmployeeID = ?";
+            
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, employeeId);
+            
+            rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getString("FullName");
+            }
+            
+            return "Unknown";
+            
+        } catch (SQLException e) {
+            System.err.println("Error in getEmployeeName: " + e.getMessage());
+            e.printStackTrace();
+            return "Unknown";
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    /**
      * Test DAO
      */
     public static void main(String[] args) {
