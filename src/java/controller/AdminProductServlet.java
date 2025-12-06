@@ -1,6 +1,5 @@
 package controller;
 
-
 import DAO.ProductDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -13,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Servlet x? l� qu?n l� s?n ph?m cho Admin/Marketer
+ * Servlet xử lý quản lý sản phẩm cho Admin/Marketer
  * F_12: View Product List (Admin Dashboard - Table layout)
  */
 @WebServlet(name = "AdminProductServlet", urlPatterns = {"/admin/products"})
@@ -30,7 +29,7 @@ public class AdminProductServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // Check authorization (Admin ho?c Marketer)
+        // Check authorization (Admin hoặc Marketer)
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("employee") == null) {
             response.sendRedirect(request.getContextPath() + "/login");
@@ -53,12 +52,12 @@ public class AdminProductServlet extends HttpServlet {
     }
     
     /**
-     * Hi?n th? danh s�ch s?n ph?m v?i filter, sort, pagination
+     * Hiển thị danh sách sản phẩm với filter, sort, pagination
      */
     private void showProductList(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // L?y parameters t? request
+        // Lấy parameters từ request
         String search = request.getParameter("search");
         String categoryIdStr = request.getParameter("categoryId");
         String brandIdStr = request.getParameter("brandId");
@@ -82,7 +81,7 @@ public class AdminProductServlet extends HttpServlet {
         
         // Pagination
         int page = 1;
-        int pageSize = 12; // Hi?n th? 12 s?n ph?m m?i trang
+        int pageSize = 12; // Hiển thị 12 sản phẩm mỗi trang
         try {
             if (pageStr != null && !pageStr.isEmpty()) {
                 page = Integer.parseInt(pageStr);
@@ -92,20 +91,20 @@ public class AdminProductServlet extends HttpServlet {
             page = 1;
         }
         
-        // L?y danh s�ch s?n ph?m
+        // Lấy danh sách sản phẩm
         List<Map<String, Object>> products = productDAO.getProducts(
             search, categoryId, brandId, isActive, sortBy, sortOrder, page, pageSize
         );
         
-        // L?y t?ng s? s?n ph?m ?? t�nh pagination
+        // Lấy tổng số sản phẩm để tính pagination
         int totalProducts = productDAO.getTotalProducts(search, categoryId, brandId, isActive);
         int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
         
-        // L?y categories v� brands cho filter dropdown
+        // Lấy categories và brands cho filter dropdown
         List<Map<String, Object>> categories = productDAO.getCategoriesForFilter();
         List<Map<String, Object>> brands = productDAO.getBrandsForFilter();
         
-        // Set attributes ?? JSP s? d?ng
+        // Set attributes để JSP sử dụng
         request.setAttribute("products", products);
         request.setAttribute("categories", categories);
         request.setAttribute("brands", brands);
@@ -116,7 +115,7 @@ public class AdminProductServlet extends HttpServlet {
         request.setAttribute("totalProducts", totalProducts);
         request.setAttribute("pageSize", pageSize);
         
-        // Filter values (?? gi? l?i gi� tr? khi filter)
+        // Filter values (để giữ lại giá trị khi filter)
         request.setAttribute("search", search);
         request.setAttribute("categoryId", categoryId);
         request.setAttribute("brandId", brandId);
@@ -137,14 +136,14 @@ public class AdminProductServlet extends HttpServlet {
         // Set unified layout attributes
         request.setAttribute("contentPage", "products");
         request.setAttribute("activePage", "products");
-        request.setAttribute("pageTitle", "Qu?n l� s?n ph?m");
+        request.setAttribute("pageTitle", "Quản lý sản phẩm");
         
         // Forward to unified layout
         request.getRequestDispatcher("/AdminLTE-3.2.0/index.jsp").forward(request, response);
     }
     
     /**
-     * X? l� x�a s?n ph?m (soft delete)
+     * Xử lý xóa sản phẩm (soft delete)
      */
     private void handleDelete(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -152,29 +151,29 @@ public class AdminProductServlet extends HttpServlet {
         String productIdStr = request.getParameter("id");
         
         if (productIdStr == null || productIdStr.isEmpty()) {
-            response.sendRedirect("products?error=" + encodeURL("ID s?n ph?m kh�ng h?p l?"));
+            response.sendRedirect("products?error=" + encodeURL("ID sản phẩm không hợp lệ"));
             return;
         }
         
         try {
             int productId = Integer.parseInt(productIdStr);
             
-            // Th?c hi?n soft delete
+            // Thực hiện soft delete
             boolean success = productDAO.softDeleteProduct(productId);
             
             if (success) {
-                response.sendRedirect("products?message=" + encodeURL("X�a s?n ph?m th�nh c�ng"));
+                response.sendRedirect("products?message=" + encodeURL("Xóa sản phẩm thành công"));
             } else {
-                response.sendRedirect("products?error=" + encodeURL("Kh�ng th? x�a s?n ph?m"));
+                response.sendRedirect("products?error=" + encodeURL("Không thể xóa sản phẩm"));
             }
             
         } catch (NumberFormatException e) {
-            response.sendRedirect("products?error=" + encodeURL("ID s?n ph?m kh�ng h?p l?"));
+            response.sendRedirect("products?error=" + encodeURL("ID sản phẩm không hợp lệ"));
         }
     }
     
     /**
-     * Parse Integer t? String (nullable)
+     * Parse Integer từ String (nullable)
      */
     private Integer parseInteger(String str) {
         if (str == null || str.isEmpty() || "all".equalsIgnoreCase(str)) {
@@ -188,7 +187,7 @@ public class AdminProductServlet extends HttpServlet {
     }
     
     /**
-     * Parse status t? String (nullable)
+     * Parse status từ String (nullable)
      * "active" -> true, "inactive" -> false, "all" -> null
      */
     private Boolean parseStatus(String status) {
@@ -205,7 +204,7 @@ public class AdminProductServlet extends HttpServlet {
     }
     
     /**
-     * Encode URL ?? tr�nh l?i v?i k� t? ??c bi?t
+     * Encode URL để tránh lỗi với ký tự đặc biệt
      */
     private String encodeURL(String str) {
         try {
