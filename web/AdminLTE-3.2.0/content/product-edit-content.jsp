@@ -27,6 +27,34 @@
         color: #6c757d;
         margin-top: 0.25rem;
     }
+    
+    .existing-image {
+        position: relative;
+        display: inline-block;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .existing-image img {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 2px solid #ddd;
+    }
+    
+    .existing-image .remove-existing-img {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        cursor: pointer;
+    }
 </style>
 
 <!-- Content Header -->
@@ -34,13 +62,13 @@
     <div class="container-fluid">
         <div class="row mb-2">
             <div class="col-sm-6">
-                <h1>Thêm sản phẩm mới</h1>
+                <h1>Chỉnh sửa sản phẩm</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
                     <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a></li>
                     <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/products">Sản phẩm</a></li>
-                    <li class="breadcrumb-item active">Thêm sản phẩm</li>
+                    <li class="breadcrumb-item active">Chỉnh sửa</li>
                 </ol>
             </div>
         </div>
@@ -60,9 +88,22 @@
                 </button>
             </div>
         </c:if>
+        
+        <!-- Success Message -->
+        <c:if test="${not empty successMessage}">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle"></i> ${successMessage}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        </c:if>
 
-        <form method="post" action="${pageContext.request.contextPath}/admin/product-add" 
-              enctype="multipart/form-data" id="productAddForm">
+        <form method="post" action="${pageContext.request.contextPath}/admin/product-edit" 
+              enctype="multipart/form-data" id="productEditForm">
+            
+            <!-- Hidden Product ID -->
+            <input type="hidden" name="productId" value="${product.productID}">
             
             <div class="row">
                 <!-- Left Column - Basic Information -->
@@ -83,7 +124,7 @@
                                        id="productName" 
                                        name="productName" 
                                        placeholder="Nhập tên sản phẩm"
-                                       value="${productName}"
+                                       value="${product.productName}"
                                        aria-required="true"
                                        aria-describedby="${not empty errors.productName ? 'productNameError' : ''}">
                                 <c:if test="${not empty errors.productName}">
@@ -100,7 +141,7 @@
                                           id="description" 
                                           name="description" 
                                           rows="4"
-                                          placeholder="Nhập mô tả chi tiết về sản phẩm">${description}</textarea>
+                                          placeholder="Nhập mô tả chi tiết về sản phẩm">${product.description}</textarea>
                             </div>
                             
                             <!-- Specifications -->
@@ -110,7 +151,7 @@
                                           id="specifications" 
                                           name="specifications" 
                                           rows="4"
-                                          placeholder="Nhập thông số kỹ thuật của sản phẩm">${specifications}</textarea>
+                                          placeholder="Nhập thông số kỹ thuật của sản phẩm">${product.specifications}</textarea>
                             </div>
                             
                         </div>
@@ -125,9 +166,31 @@
                         </div>
                         <div class="card-body">
                             
+                            <!-- Existing Images -->
+                            <c:if test="${not empty images}">
+                                <div class="form-group">
+                                    <label>Ảnh hiện tại:</label>
+                                    <div id="existingImages">
+                                        <c:forEach var="img" items="${images}">
+                                            <div class="existing-image" data-image-id="${img.imageID}">
+                                                <img src="${pageContext.request.contextPath}${img.imageURL}" alt="Product Image">
+                                                <button type="button" class="remove-existing-img" 
+                                                        onclick="removeExistingImage(${img.imageID})">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                                <input type="hidden" name="keepImageIds" value="${img.imageID}">
+                                                <c:if test="${img.imageType == 'main'}">
+                                                    <div class="badge badge-primary">Ảnh chính</div>
+                                                </c:if>
+                                            </div>
+                                        </c:forEach>
+                                    </div>
+                                </div>
+                            </c:if>
+                            
                             <!-- Main Image -->
                             <div class="form-group">
-                                <label for="mainImage">Ảnh chính</label>
+                                <label for="mainImage">Ảnh chính mới (nếu muốn thay đổi)</label>
                                 <div class="custom-file">
                                     <input type="file" 
                                            class="custom-file-input ${not empty errors.mainImage ? 'is-invalid' : ''}" 
@@ -135,7 +198,7 @@
                                            name="mainImage"
                                            accept=".jpg,.jpeg,.png,.gif"
                                            aria-describedby="${not empty errors.mainImage ? 'mainImageError' : ''}">
-                                    <label class="custom-file-label" for="mainImage">Chọn ảnh chính</label>
+                                    <label class="custom-file-label" for="mainImage">Chọn ảnh chính mới</label>
                                 </div>
                                 <div class="image-upload-hint">
                                     Chấp nhận: JPG, PNG, GIF. Kích thước tối đa: 2MB
@@ -157,7 +220,7 @@
                             
                             <!-- Thumbnail Images -->
                             <div class="form-group">
-                                <label for="thumbnailImages">Ảnh phụ (Thumbnails)</label>
+                                <label for="thumbnailImages">Ảnh phụ mới (Thumbnails)</label>
                                 <div class="custom-file">
                                     <input type="file" 
                                            class="custom-file-input ${not empty errors.thumbnailImages ? 'is-invalid' : ''}" 
@@ -166,7 +229,7 @@
                                            accept=".jpg,.jpeg,.png,.gif"
                                            multiple
                                            aria-describedby="${not empty errors.thumbnailImages ? 'thumbnailImagesError' : ''}">
-                                    <label class="custom-file-label" for="thumbnailImages">Chọn ảnh phụ</label>
+                                    <label class="custom-file-label" for="thumbnailImages">Chọn ảnh phụ mới</label>
                                 </div>
                                 <div class="image-upload-hint">
                                     Chấp nhận: JPG, PNG, GIF. Tối đa 4 ảnh. Tổng kích thước tối đa: 2MB
@@ -205,7 +268,7 @@
                                     <option value="0">-- Chọn danh mục --</option>
                                     <c:forEach var="cat" items="${categories}">
                                         <option value="${cat.categoryID}" 
-                                                ${categoryId == cat.categoryID ? 'selected' : ''}>
+                                                ${product.categoryID == cat.categoryID ? 'selected' : ''}>
                                             ${cat.categoryName}
                                         </option>
                                     </c:forEach>
@@ -226,11 +289,26 @@
                                     <option value="0">-- Chọn thương hiệu --</option>
                                     <c:forEach var="brand" items="${brands}">
                                         <option value="${brand.brandID}" 
-                                                ${brandId == brand.brandID ? 'selected' : ''}>
+                                                ${product.brandID == brand.brandID ? 'selected' : ''}>
                                             ${brand.brandName}
                                         </option>
                                     </c:forEach>
                                 </select>
+                            </div>
+                            
+                            <!-- Active Status -->
+                            <div class="form-group">
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" 
+                                           class="custom-control-input" 
+                                           id="isActive" 
+                                           name="isActive" 
+                                           value="true"
+                                           ${product.isActive ? 'checked' : ''}>
+                                    <label class="custom-control-label" for="isActive">
+                                        Sản phẩm hoạt động
+                                    </label>
+                                </div>
                             </div>
                             
                         </div>
@@ -240,9 +318,9 @@
                     <div class="card">
                         <div class="card-body">
                             <button type="submit" class="btn btn-primary btn-block">
-                                <i class="fas fa-save"></i> Lưu sản phẩm
+                                <i class="fas fa-save"></i> Cập nhật sản phẩm
                             </button>
-                            <a href="${pageContext.request.contextPath}/admin/products" 
+                            <a href="${pageContext.request.contextPath}/admin/product-details?id=${product.productID}" 
                                class="btn btn-secondary btn-block">
                                 <i class="fas fa-times"></i> Hủy
                             </a>
@@ -262,12 +340,12 @@
                                 <span class="text-danger">*</span> là bắt buộc phải nhập.
                             </small></p>
                             <p class="mb-2"><small>
-                                <strong>Hình ảnh:</strong> Nên upload ảnh chất lượng cao 
-                                để khách hàng có thể xem rõ sản phẩm.
+                                <strong>Hình ảnh:</strong> Bạn có thể giữ ảnh cũ hoặc upload ảnh mới. 
+                                Click nút X để xóa ảnh cũ.
                             </small></p>
                             <p class="mb-0"><small>
-                                <strong>Thương hiệu:</strong> Trường này không bắt buộc, 
-                                có thể để trống nếu sản phẩm không có thương hiệu cụ thể.
+                                <strong>Trạng thái:</strong> Tắt "Sản phẩm hoạt động" để ẩn sản phẩm 
+                                khỏi trang web.
                             </small></p>
                         </div>
                     </div>
@@ -280,9 +358,33 @@
 </section>
 
 <script>
-// Update custom file input label with selected filename and show preview
+// Remove existing image
+function removeExistingImage(imageId) {
+    if (confirm('Bạn có chắc muốn xóa ảnh này?')) {
+        var imageDiv = document.querySelector('.existing-image[data-image-id="' + imageId + '"]');
+        if (imageDiv) {
+            // Remove the hidden input so this image won't be kept
+            var hiddenInput = imageDiv.querySelector('input[name="keepImageIds"]');
+            if (hiddenInput) {
+                hiddenInput.remove();
+            }
+            // Hide the image div
+            imageDiv.style.display = 'none';
+            
+            // Add to delete list
+            var form = document.getElementById('productEditForm');
+            var deleteInput = document.createElement('input');
+            deleteInput.type = 'hidden';
+            deleteInput.name = 'deleteImageIds';
+            deleteInput.value = imageId;
+            form.appendChild(deleteInput);
+        }
+    }
+}
+
+// Same JavaScript as product-add for file previews
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Product Add Form Script Loaded');
+    console.log('Product Edit Form Script Loaded');
     
     // Handle main image file input with preview
     var mainImageInput = document.getElementById('mainImage');
@@ -292,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var fileName = this.value.split('\\').pop();
             var label = this.nextElementSibling;
             if (label) {
-                label.textContent = fileName || 'Chọn ảnh chính';
+                label.textContent = fileName || 'Chọn ảnh chính mới';
             }
             
             // Show preview
@@ -322,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var previewDiv = document.getElementById('mainImagePreview');
             
             mainImageInput.value = '';
-            if (label) label.textContent = 'Chọn ảnh chính';
+            if (label) label.textContent = 'Chọn ảnh chính mới';
             if (previewDiv) previewDiv.style.display = 'none';
         });
     }
@@ -354,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var fileCount = thumbnailFiles.length;
             var label = this.nextElementSibling;
             if (label) {
-                label.textContent = fileCount > 0 ? fileCount + ' file đã chọn' : 'Chọn ảnh phụ';
+                label.textContent = fileCount > 0 ? fileCount + ' file đã chọn' : 'Chọn ảnh phụ mới';
             }
             
             // Show previews
@@ -406,7 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 
                                 // Update label
                                 if (label) {
-                                    label.textContent = thumbnailFiles.length > 0 ? thumbnailFiles.length + ' file đã chọn' : 'Chọn ảnh phụ';
+                                    label.textContent = thumbnailFiles.length > 0 ? thumbnailFiles.length + ' file đã chọn' : 'Chọn ảnh phụ mới';
                                 }
                                 
                                 // Remove preview
@@ -487,7 +589,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // Update label
                         if (label) {
-                            label.textContent = thumbnailFiles.length > 0 ? thumbnailFiles.length + ' file đã chọn' : 'Chọn ảnh phụ';
+                            label.textContent = thumbnailFiles.length > 0 ? thumbnailFiles.length + ' file đã chọn' : 'Chọn ảnh phụ mới';
                         }
                         
                         // Re-render all previews
@@ -523,7 +625,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 5000);
     
     // Form validation before submit
-    var form = document.getElementById('productAddForm');
+    var form = document.getElementById('productEditForm');
     if (form) {
         form.addEventListener('submit', function(e) {
             var isValid = true;
@@ -543,26 +645,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 errorMessage += '- Vui lòng chọn danh mục\n';
             }
             
-            // Check main image size
-            var mainImageFile = document.getElementById('mainImage').files[0];
-            if (mainImageFile && mainImageFile.size > 2 * 1024 * 1024) {
-                isValid = false;
-                errorMessage += '- Ảnh chính không được vượt quá 2MB\n';
-            }
-            
-            // Check thumbnails count and total size
+            // Check thumbnails count
             var thumbnailFiles = document.getElementById('thumbnailImages').files;
             if (thumbnailFiles.length > 4) {
                 isValid = false;
                 errorMessage += '- Chỉ được chọn tối đa 4 ảnh phụ\n';
-            }
-            var totalSize = 0;
-            for (var i = 0; i < thumbnailFiles.length; i++) {
-                totalSize += thumbnailFiles[i].size;
-            }
-            if (totalSize > 2 * 1024 * 1024) {
-                isValid = false;
-                errorMessage += '- Tổng dung lượng ảnh phụ không được vượt quá 2MB\n';
             }
             
             if (!isValid) {
@@ -575,7 +662,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var submitBtn = this.querySelector('button[type="submit"]');
             if (submitBtn) {
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang cập nhật...';
             }
         });
     }
@@ -583,3 +670,4 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('All event listeners attached');
 });
 </script>
+
