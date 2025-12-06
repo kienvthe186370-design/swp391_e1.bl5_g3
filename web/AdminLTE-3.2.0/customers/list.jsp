@@ -122,12 +122,16 @@
           <!-- Search Form -->
           <form method="get" action="<%= request.getContextPath() %>/admin/customers" class="mb-3">
             <div class="row">
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <input type="text" name="search" value="${search}" class="form-control" 
                        placeholder="Tìm theo tên, email, số điện thoại...">
-                <c:if test="${not empty status}">
-                  <input type="hidden" name="status" value="${status}">
-                </c:if>
+              </div>
+              <div class="col-md-3">
+                <select name="emailVerified" class="form-control" onchange="this.form.submit()">
+                  <option value="">Tất cả trạng thái Email</option>
+                  <option value="verified" ${emailVerified == 'verified' ? 'selected' : ''}>Đã xác thực Email</option>
+                  <option value="unverified" ${emailVerified == 'unverified' ? 'selected' : ''}>Chưa xác thực Email</option>
+                </select>
               </div>
               <div class="col-md-2">
                 <button type="submit" class="btn btn-primary">
@@ -135,6 +139,12 @@
                 </button>
               </div>
             </div>
+            <c:if test="${not empty status}">
+              <input type="hidden" name="status" value="${status}">
+            </c:if>
+            <c:if test="${not empty emailVerified}">
+              <input type="hidden" name="emailVerified" value="${emailVerified}">
+            </c:if>
           </form>
 
           <!-- Customer Table -->
@@ -223,7 +233,7 @@
                 <c:forEach var="i" begin="1" end="${totalPages}">
                   <li class="page-item ${i == currentPage ? 'active' : ''}">
                     <a class="page-link" 
-                       href="<%= request.getContextPath() %>/admin/customers?page=${i}&status=${status}&search=${search}">
+                       href="<%= request.getContextPath() %>/admin/customers?page=${i}&status=${status}&emailVerified=${emailVerified}&search=${search}">
                       ${i}
                     </a>
                   </li>
