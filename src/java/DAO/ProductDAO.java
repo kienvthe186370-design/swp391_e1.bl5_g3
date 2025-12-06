@@ -762,6 +762,95 @@ public class ProductDAO extends DBContext {
     }
     
     /**
+     * Update product basic information
+     * @param productId - Product ID
+     * @param productName - Product name
+     * @param categoryId - Category ID
+     * @param brandId - Brand ID (nullable)
+     * @param description - Description (nullable)
+     * @param specifications - Specifications (nullable)
+     * @param isActive - Active status
+     * @return true if successful, false otherwise
+     */
+    public boolean updateProduct(int productId, String productName, int categoryId, Integer brandId,
+                                 String description, String specifications, boolean isActive) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        
+        try {
+            conn = getConnection();
+            
+            String sql = "UPDATE Products SET ProductName = ?, CategoryID = ?, BrandID = ?, " +
+                        "Description = ?, Specifications = ?, IsActive = ?, UpdatedDate = GETDATE() " +
+                        "WHERE ProductID = ?";
+            
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, productName);
+            ps.setInt(2, categoryId);
+            
+            if (brandId != null) {
+                ps.setInt(3, brandId);
+            } else {
+                ps.setNull(3, java.sql.Types.INTEGER);
+            }
+            
+            ps.setString(4, description);
+            ps.setString(5, specifications);
+            ps.setBoolean(6, isActive);
+            ps.setInt(7, productId);
+            
+            int rows = ps.executeUpdate();
+            return rows > 0;
+            
+        } catch (SQLException e) {
+            System.err.println("Error in updateProduct: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (ps != null) ps.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    /**
+     * Delete product image
+     * @param imageId - Image ID
+     * @return true if successful, false otherwise
+     */
+    public boolean deleteProductImage(int imageId) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        
+        try {
+            conn = getConnection();
+            
+            String sql = "DELETE FROM ProductImages WHERE ImageID = ?";
+            
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, imageId);
+            
+            int rows = ps.executeUpdate();
+            return rows > 0;
+            
+        } catch (SQLException e) {
+            System.err.println("Error in deleteProductImage: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (ps != null) ps.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    /**
      * Get employee name by ID
      * @param employeeId - Employee ID
      * @return Employee full name, or "Unknown" if not found

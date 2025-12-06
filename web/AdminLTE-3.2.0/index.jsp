@@ -64,6 +64,10 @@
     %>
         <jsp:include page="content/product-details-content.jsp" />
     <%
+        } else if ("product-edit".equals(contentPage)) {
+    %>
+        <jsp:include page="content/product-edit-content.jsp" />
+    <%
         } else {
             // Default dashboard content
     %>

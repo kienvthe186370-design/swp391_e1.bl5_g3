@@ -216,24 +216,24 @@
                                 </c:if>
                             </c:forEach>
                             
-                            <!-- Thumbnails -->
-                            <c:set var="hasThumbnails" value="false" />
+                            <!-- Gallery Images (Thumbnails) -->
+                            <c:set var="hasGallery" value="false" />
                             <c:forEach var="img" items="${images}">
-                                <c:if test="${img.imageType == 'thumbnail'}">
-                                    <c:set var="hasThumbnails" value="true" />
+                                <c:if test="${img.imageType == 'gallery'}">
+                                    <c:set var="hasGallery" value="true" />
                                 </c:if>
                             </c:forEach>
                             
-                            <c:if test="${hasThumbnails}">
+                            <c:if test="${hasGallery}">
                                 <div class="col-md-12">
                                     <h5 class="mb-3">Ảnh phụ:</h5>
                                     <div class="row">
                                         <c:forEach var="img" items="${images}">
-                                            <c:if test="${img.imageType == 'thumbnail'}">
+                                            <c:if test="${img.imageType == 'gallery'}">
                                                 <div class="col-md-3 col-sm-4 col-6 mb-3">
                                                     <img src="${pageContext.request.contextPath}${img.imageURL}" 
                                                          class="thumbnail-img" 
-                                                         alt="Thumbnail"
+                                                         alt="Gallery Image"
                                                          data-toggle="modal"
                                                          data-target="#imageModal"
                                                          data-image="${pageContext.request.contextPath}${img.imageURL}">

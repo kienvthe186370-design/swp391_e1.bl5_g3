@@ -388,7 +388,7 @@ public class AdminProductServlet extends HttpServlet {
                 System.out.println("No main image uploaded");
             }
             
-            // Save thumbnail images
+            // Save thumbnail images (gallery type for homepage/details display)
             int displayOrder = 1;
             System.out.println("Number of thumbnails: " + thumbnailParts.size());
             for (Part thumbnailPart : thumbnailParts) {
@@ -396,7 +396,7 @@ public class AdminProductServlet extends HttpServlet {
                 String imageUrl = saveImageFile(thumbnailPart, uploadDir);
                 System.out.println("Thumbnail saved to: " + imageUrl);
                 if (imageUrl != null) {
-                    boolean inserted = productDAO.insertProductImage(productId, imageUrl, "thumbnail", displayOrder++);
+                    boolean inserted = productDAO.insertProductImage(productId, imageUrl, "gallery", displayOrder++);
                     System.out.println("Thumbnail inserted to DB: " + inserted);
                 }
             }
