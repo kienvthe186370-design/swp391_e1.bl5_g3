@@ -59,11 +59,58 @@ public class HomeServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        SliderDAO dao = new SliderDAO();
-        List<Slider> sliders = dao.getActiveSliders();
-
-        request.setAttribute("sliders", sliders);
-        request.getRequestDispatcher("index.jsp").forward(request, response);
+        try {
+            System.out.println("🏠 HomeServlet: Loading homepage data...");
+            
+            // 1. Load Sliders
+            SliderDAO sliderDAO = new SliderDAO();
+            List<Slider> sliders = sliderDAO.getTop5Sliders();
+            request.setAttribute("sliders", sliders);
+            System.out.println("✅ Loaded " + (sliders != null ? sliders.size() : 0) + " sliders");
+            
+            // 2. Load Featured Products (12 sản phẩm mới nhất)
+            DAO.ProductDAO productDAO = new DAO.ProductDAO();
+            List<dto.ProductListDTO> featuredProducts = productDAO.getProducts(
+                null, null, null, true, "date", "desc", 1, 12
+            );
+            request.setAttribute("featuredProducts", featuredProducts);
+            System.out.println("✅ Loaded " + (featuredProducts != null ? featuredProducts.size() : 0) + " products");
+            
+            // 3. Load Categories cho menu
+            DAO.CategoryDAO categoryDAO = new DAO.CategoryDAO();
+            List<entity.Category> categories = categoryDAO.getAllCategories();
+            request.setAttribute("categories", categories);
+            System.out.println("✅ Loaded " + (categories != null ? categories.size() : 0) + " categories");
+            
+            // 4. Load Latest Blogs (3 bài mới nhất)
+            try {
+                DAO.BlogPostDAO blogDAO = new DAO.BlogPostDAO();
+                List<entity.BlogPost> latestBlogs = blogDAO.search(null, "published");
+                // Lấy 3 bài đầu
+                if (latestBlogs != null && latestBlogs.size() > 3) {
+                    latestBlogs = latestBlogs.subList(0, 3);
+                }
+                request.setAttribute("latestBlogs", latestBlogs);
+            } catch (Exception blogEx) {
+                System.err.println("⚠️ Warning: Cannot load blogs - " + blogEx.getMessage());
+                request.setAttribute("latestBlogs", new java.util.ArrayList<>());
+            }
+            
+            System.out.println("✅ HomeServlet: All data loaded successfully!");
+            request.getRequestDispatcher("index.jsp").forward(request, response);
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error in HomeServlet: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Set empty lists to prevent JSP errors
+            request.setAttribute("sliders", new java.util.ArrayList<>());
+            request.setAttribute("featuredProducts", new java.util.ArrayList<>());
+            request.setAttribute("categories", new java.util.ArrayList<>());
+            request.setAttribute("latestBlogs", new java.util.ArrayList<>());
+            
+            request.getRequestDispatcher("index.jsp").forward(request, response);
+        }
     }
 
     /** 
