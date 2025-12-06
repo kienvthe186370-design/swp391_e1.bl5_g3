@@ -1,20 +1,23 @@
 package DAO;
 
-import dto.ProductListDTO;
 import entity.Product;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Data Access Object cho Product
  * DÙNG CHUNG cho cả Homepage và Admin Dashboard
+ * Trả về Map<String, Object> thay vì DTO
  */
 public class ProductDAO extends DBContext {
     
     /**
      * Lấy danh sách sản phẩm với filter, sort, pagination
+     * Trả về List<Map> chứa thông tin sản phẩm + thông tin liên quan
      * 
      * @param search - Tìm kiếm theo tên sản phẩm (nullable)
      * @param categoryId - Filter theo category (nullable)
@@ -24,12 +27,12 @@ public class ProductDAO extends DBContext {
      * @param sortOrder - "asc" hoặc "desc"
      * @param page - Trang hiện tại (bắt đầu từ 1)
      * @param pageSize - Số item mỗi trang
-     * @return List<ProductListDTO>
+     * @return List<Map<String, Object>>
      */
-    public List<ProductListDTO> getProducts(String search, Integer categoryId, Integer brandId,
-                                             Boolean isActive, String sortBy, String sortOrder,
-                                             int page, int pageSize) {
-        List<ProductListDTO> list = new ArrayList<>();
+    public List<Map<String, Object>> getProducts(String search, Integer categoryId, Integer brandId,
+                                                   Boolean isActive, String sortBy, String sortOrder,
+                                                   int page, int pageSize) {
+        List<Map<String, Object>> list = new ArrayList<>();
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -111,36 +114,36 @@ public class ProductDAO extends DBContext {
             rs = ps.executeQuery();
             
             while (rs.next()) {
-                // Create Product entity
-                Product product = new Product();
-                product.setProductID(rs.getInt("ProductID"));
-                product.setProductName(rs.getString("ProductName"));
-                product.setCategoryID(rs.getInt("CategoryID"));
-                product.setBrandID(rs.getObject("BrandID") != null ? rs.getInt("BrandID") : null);
-                product.setDescription(rs.getString("Description"));
-                product.setSpecifications(rs.getString("Specifications"));
-                product.setActive(rs.getBoolean("IsActive"));
-                product.setCreatedBy(rs.getObject("CreatedBy") != null ? rs.getInt("CreatedBy") : null);
-                product.setCreatedDate(rs.getTimestamp("CreatedDate"));
-                product.setUpdatedDate(rs.getTimestamp("UpdatedDate"));
+                Map<String, Object> product = new HashMap<>();
                 
-                // Create DTO
-                ProductListDTO dto = new ProductListDTO();
-                dto.setProduct(product);
-                dto.setMainImageUrl(rs.getString("MainImage"));
-                dto.setCategoryName(rs.getString("CategoryName"));
-                dto.setBrandName(rs.getString("BrandName"));
-                dto.setVariantCount(rs.getInt("VariantCount"));
+                // Product basic info
+                product.put("productID", rs.getInt("ProductID"));
+                product.put("productName", rs.getString("ProductName"));
+                product.put("categoryID", rs.getInt("CategoryID"));
+                product.put("brandID", rs.getObject("BrandID"));
+                product.put("description", rs.getString("Description"));
+                product.put("specifications", rs.getString("Specifications"));
+                product.put("isActive", rs.getBoolean("IsActive"));
+                product.put("createdBy", rs.getObject("CreatedBy"));
+                product.put("createdDate", rs.getTimestamp("CreatedDate"));
+                product.put("updatedDate", rs.getTimestamp("UpdatedDate"));
                 
-                BigDecimal minPrice = rs.getBigDecimal("MinPrice");
-                BigDecimal maxPrice = rs.getBigDecimal("MaxPrice");
-                dto.setMinPrice(minPrice);
-                dto.setMaxPrice(maxPrice);
+                // Additional info
+                product.put("categoryName", rs.getString("CategoryName"));
+                product.put("brandName", rs.getString("BrandName"));
+                product.put("mainImageUrl", rs.getString("MainImage"));
+                product.put("variantCount", rs.getInt("VariantCount"));
+                product.put("minPrice", rs.getBigDecimal("MinPrice"));
+                product.put("maxPrice", rs.getBigDecimal("MaxPrice"));
+                product.put("totalStock", rs.getInt("TotalStock"));
+                product.put("reservedStock", rs.getInt("ReservedStock"));
                 
-                dto.setTotalStock(rs.getInt("TotalStock"));
-                dto.setReservedStock(rs.getInt("ReservedStock"));
+                // Calculated fields
+                int totalStock = rs.getInt("TotalStock");
+                int reservedStock = rs.getInt("ReservedStock");
+                product.put("availableStock", totalStock - reservedStock);
                 
-                list.add(dto);
+                list.add(product);
             }
             
         } catch (SQLException e) {
@@ -256,9 +259,10 @@ public class ProductDAO extends DBContext {
     
     /**
      * Lấy danh sách categories để hiển thị trong filter
+     * Trả về List<Map> với keys: "categoryID", "categoryName"
      */
-    public List<Object[]> getCategoriesForFilter() {
-        List<Object[]> list = new ArrayList<>();
+    public List<Map<String, Object>> getCategoriesForFilter() {
+        List<Map<String, Object>> list = new ArrayList<>();
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -270,9 +274,9 @@ public class ProductDAO extends DBContext {
             rs = ps.executeQuery();
             
             while (rs.next()) {
-                Object[] category = new Object[2];
-                category[0] = rs.getInt("CategoryID");
-                category[1] = rs.getString("CategoryName");
+                Map<String, Object> category = new HashMap<>();
+                category.put("categoryID", rs.getInt("CategoryID"));
+                category.put("categoryName", rs.getString("CategoryName"));
                 list.add(category);
             }
             
@@ -294,9 +298,10 @@ public class ProductDAO extends DBContext {
     
     /**
      * Lấy danh sách brands để hiển thị trong filter
+     * Trả về List<Map> với keys: "brandID", "brandName"
      */
-    public List<Object[]> getBrandsForFilter() {
-        List<Object[]> list = new ArrayList<>();
+    public List<Map<String, Object>> getBrandsForFilter() {
+        List<Map<String, Object>> list = new ArrayList<>();
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -308,9 +313,9 @@ public class ProductDAO extends DBContext {
             rs = ps.executeQuery();
             
             while (rs.next()) {
-                Object[] brand = new Object[2];
-                brand[0] = rs.getInt("BrandID");
-                brand[1] = rs.getString("BrandName");
+                Map<String, Object> brand = new HashMap<>();
+                brand.put("brandID", rs.getInt("BrandID"));
+                brand.put("brandName", rs.getString("BrandName"));
                 list.add(brand);
             }
             
@@ -336,14 +341,19 @@ public class ProductDAO extends DBContext {
     public static void main(String[] args) {
         ProductDAO dao = new ProductDAO();
         
-        System.out.println("=== TEST ProductDAO ===\n");
+        System.out.println("=== TEST ProductDAO (WITHOUT DTO) ===\n");
         
         // Test 1: Get all products
         System.out.println("Test 1: Get all active products (page 1, 12 items)");
-        List<ProductListDTO> products = dao.getProducts(null, null, null, true, "date", "desc", 1, 12);
+        List<Map<String, Object>> products = dao.getProducts(null, null, null, true, "date", "desc", 1, 12);
         System.out.println("Found " + products.size() + " products");
-        for (ProductListDTO dto : products) {
-            System.out.println(dto);
+        for (Map<String, Object> product : products) {
+            System.out.println("ID: " + product.get("productID") + 
+                             ", Name: " + product.get("productName") +
+                             ", Category: " + product.get("categoryName") +
+                             ", Brand: " + product.get("brandName") +
+                             ", Variants: " + product.get("variantCount") +
+                             ", Stock: " + product.get("totalStock"));
         }
         
         System.out.println("\n---\n");
@@ -357,30 +367,30 @@ public class ProductDAO extends DBContext {
         
         // Test 3: Search by name
         System.out.println("Test 3: Search products with 'Joola'");
-        List<ProductListDTO> searchResults = dao.getProducts("Joola", null, null, true, "name", "asc", 1, 10);
+        List<Map<String, Object>> searchResults = dao.getProducts("Joola", null, null, true, "name", "asc", 1, 10);
         System.out.println("Found " + searchResults.size() + " products");
-        for (ProductListDTO dto : searchResults) {
-            System.out.println(dto);
+        for (Map<String, Object> product : searchResults) {
+            System.out.println("Name: " + product.get("productName"));
         }
         
         System.out.println("\n---\n");
         
         // Test 4: Get categories
         System.out.println("Test 4: Get categories for filter");
-        List<Object[]> categories = dao.getCategoriesForFilter();
+        List<Map<String, Object>> categories = dao.getCategoriesForFilter();
         System.out.println("Found " + categories.size() + " categories");
-        for (Object[] cat : categories) {
-            System.out.println("ID: " + cat[0] + ", Name: " + cat[1]);
+        for (Map<String, Object> cat : categories) {
+            System.out.println("ID: " + cat.get("categoryID") + ", Name: " + cat.get("categoryName"));
         }
         
         System.out.println("\n---\n");
         
         // Test 5: Get brands
         System.out.println("Test 5: Get brands for filter");
-        List<Object[]> brands = dao.getBrandsForFilter();
+        List<Map<String, Object>> brands = dao.getBrandsForFilter();
         System.out.println("Found " + brands.size() + " brands");
-        for (Object[] brand : brands) {
-            System.out.println("ID: " + brand[0] + ", Name: " + brand[1]);
+        for (Map<String, Object> brand : brands) {
+            System.out.println("ID: " + brand.get("brandID") + ", Name: " + brand.get("brandName"));
         }
     }
 }
