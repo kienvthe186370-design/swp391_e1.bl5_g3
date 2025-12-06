@@ -342,7 +342,7 @@
                                                    class="btn btn-info btn-sm btn-action" title="Xem chi tiết">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <a href="${pageContext.request.contextPath}/admin/product-edit?id=${item.productID}" 
+                                                <a href="${pageContext.request.contextPath}/admin/product-details?id=${item.productID}" 
                                                    class="btn btn-primary btn-sm btn-action" title="Sửa">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
