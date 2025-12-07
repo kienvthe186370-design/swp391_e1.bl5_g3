@@ -190,25 +190,73 @@
             </table>
 
             <!-- Pagination -->
-            <c:if test="${totalPages > 1}">
-              <div class="mt-3">
-                <ul class="pagination justify-content-center">
-                  <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="?page=${currentPage - 1}&search=${search}&status=${status}&sortBy=${sortBy}&pageSize=${pageSize}">
-                      <i class="fas fa-chevron-left"></i>
-                    </a>
-                  </li>
-                  <c:forEach begin="1" end="${totalPages}" var="i">
-                    <li class="page-item ${currentPage == i ? 'active' : ''}">
-                      <a class="page-link" href="?page=${i}&search=${search}&status=${status}&sortBy=${sortBy}&pageSize=${pageSize}">${i}</a>
-                    </li>
-                  </c:forEach>
-                  <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
-                    <a class="page-link" href="?page=${currentPage + 1}&search=${search}&status=${status}&sortBy=${sortBy}&pageSize=${pageSize}">
-                      <i class="fas fa-chevron-right"></i>
-                    </a>
-                  </li>
-                </ul>
+            <c:if test="${totalRecords > 0}">
+              <div class="row mt-3">
+                <div class="col-sm-12 col-md-5">
+                  <div class="dataTables_info" role="status" aria-live="polite">
+                    Hiển thị <strong>${(currentPage-1)*pageSize + 1}</strong> 
+                    đến <strong>${currentPage*pageSize > totalRecords ? totalRecords : currentPage*pageSize}</strong> 
+                    của <strong>${totalRecords}</strong> bản ghi
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-7">
+                  <c:if test="${totalRecords > 0}">
+                    <div class="dataTables_paginate paging_simple_numbers float-right">
+                      <ul class="pagination">
+                      <li class="paginate_button page-item previous ${currentPage == 1 ? 'disabled' : ''}">
+                        <a href="?page=${currentPage - 1}&search=${search}&status=${status}&sortBy=${sortBy}&sortOrder=${sortOrder}&pageSize=${pageSize}" 
+                           class="page-link">Trước</a>
+                      </li>
+                      
+                      <c:choose>
+                        <c:when test="${totalPages <= 7}">
+                          <c:forEach begin="1" end="${totalPages}" var="i">
+                            <li class="paginate_button page-item ${currentPage == i ? 'active' : ''}">
+                              <a href="?page=${i}&search=${search}&status=${status}&sortBy=${sortBy}&sortOrder=${sortOrder}&pageSize=${pageSize}" 
+                                 class="page-link">${i}</a>
+                            </li>
+                          </c:forEach>
+                        </c:when>
+                        <c:otherwise>
+                          <c:if test="${currentPage > 3}">
+                            <li class="paginate_button page-item">
+                              <a href="?page=1&search=${search}&status=${status}&sortBy=${sortBy}&sortOrder=${sortOrder}&pageSize=${pageSize}" 
+                                 class="page-link">1</a>
+                            </li>
+                            <c:if test="${currentPage > 4}">
+                              <li class="paginate_button page-item disabled"><span class="page-link">...</span></li>
+                            </c:if>
+                          </c:if>
+                          
+                          <c:forEach begin="1" end="${totalPages}" var="i">
+                            <c:if test="${i >= currentPage - 2 && i <= currentPage + 2}">
+                              <li class="paginate_button page-item ${currentPage == i ? 'active' : ''}">
+                                <a href="?page=${i}&search=${search}&status=${status}&sortBy=${sortBy}&sortOrder=${sortOrder}&pageSize=${pageSize}" 
+                                   class="page-link">${i}</a>
+                              </li>
+                            </c:if>
+                          </c:forEach>
+                          
+                          <c:if test="${currentPage < totalPages - 2}">
+                            <c:if test="${currentPage < totalPages - 3}">
+                              <li class="paginate_button page-item disabled"><span class="page-link">...</span></li>
+                            </c:if>
+                            <li class="paginate_button page-item">
+                              <a href="?page=${totalPages}&search=${search}&status=${status}&sortBy=${sortBy}&sortOrder=${sortOrder}&pageSize=${pageSize}" 
+                                 class="page-link">${totalPages}</a>
+                            </li>
+                          </c:if>
+                        </c:otherwise>
+                      </c:choose>
+                      
+                      <li class="paginate_button page-item next ${currentPage >= totalPages ? 'disabled' : ''}">
+                        <a href="?page=${currentPage + 1}&search=${search}&status=${status}&sortBy=${sortBy}&sortOrder=${sortOrder}&pageSize=${pageSize}" 
+                           class="page-link">Sau</a>
+                      </li>
+                    </ul>
+                  </div>
+                  </c:if>
+                </div>
               </div>
             </c:if>
           </div>
