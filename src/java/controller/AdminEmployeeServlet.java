@@ -9,12 +9,19 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 @WebServlet(name = "AdminEmployeeServlet", urlPatterns = {"/admin/employees"})
 public class AdminEmployeeServlet extends HttpServlet {
     
     private static final int PAGE_SIZE = 10;
     private EmployeeDAO employeeDAO = new EmployeeDAO();
+    
+    // Danh sách các role hợp lệ (phải khớp CHÍNH XÁC với database constraint)
+    private static final List<String> VALID_ROLES = Arrays.asList(
+        "Admin", "Staff", "Marketer", "Seller", "SellerManager"
+    );
     
     /**
      * Kiểm tra quyền Admin
@@ -28,6 +35,24 @@ public class AdminEmployeeServlet extends HttpServlet {
             return false;
         }
         return true;
+    }
+    
+    /**
+     * Validate và chuẩn hóa role - đảm bảo khớp với database constraint
+     */
+    private String validateAndNormalizeRole(String role) {
+        if (role == null || role.trim().isEmpty()) {
+            return null;
+        }
+        String roleTrimmed = role.trim();
+        
+        // Tìm role khớp (không phân biệt hoa thường)
+        for (String validRole : VALID_ROLES) {
+            if (validRole.equalsIgnoreCase(roleTrimmed)) {
+                return validRole; // Trả về role đúng format từ danh sách hợp lệ
+            }
+        }
+        return null; // Role không hợp lệ
     }
     
     @Override
@@ -143,9 +168,18 @@ public class AdminEmployeeServlet extends HttpServlet {
             String phone = request.getParameter("phone");
             String role = request.getParameter("role");
             
-            // Validation
+            // Validation họ tên
             if (fullName == null || fullName.trim().isEmpty()) {
                 session.setAttribute("message", "Họ tên không được để trống!");
+                session.setAttribute("messageType", "danger");
+                response.sendRedirect(request.getContextPath() + "/admin/employees?action=create");
+                return;
+            }
+            
+            // [SỬA LỖI 1] Validate format họ tên (giống như khi edit)
+            String fullNameTrimmed = fullName.trim();
+            if (!fullNameTrimmed.matches("^[a-zA-ZÀ-ỹ0-9\\s]+$") || !fullNameTrimmed.matches(".*[a-zA-ZÀ-ỹ].*")) {
+                session.setAttribute("message", "Họ tên không hợp lệ! Họ tên chỉ được chứa chữ cái, số và khoảng trắng, không được có ký tự đặc biệt và phải có ít nhất 1 chữ cái.");
                 session.setAttribute("messageType", "danger");
                 response.sendRedirect(request.getContextPath() + "/admin/employees?action=create");
                 return;
@@ -158,10 +192,10 @@ public class AdminEmployeeServlet extends HttpServlet {
                 return;
             }
             
-            // Validate format email: chuyển thành chữ thường, phần đầu không được là số, phải có @, đuôi .com hoặc .vn
+            // [SỬA LỖI 2] Validate format email - mở rộng hơn
             String emailTrimmed = email.trim().toLowerCase();
-            if (!emailTrimmed.matches("^[a-zA-Z][a-zA-Z0-9._-]*@[a-zA-Z0-9.-]+\\.(com|vn)$")) {
-                session.setAttribute("message", "Email không hợp lệ! Email phải bắt đầu bằng chữ cái, có @ và đuôi phải là .com hoặc .vn (Ví dụ: example@gmail.com)");
+            if (!emailTrimmed.matches("^[a-z][a-z0-9._-]*@[a-z0-9.-]+\\.[a-z]{2,}$")) {
+                session.setAttribute("message", "Email không hợp lệ! Email phải bắt đầu bằng chữ cái và có định dạng đúng (Ví dụ: example@gmail.com)");
                 session.setAttribute("messageType", "danger");
                 response.sendRedirect(request.getContextPath() + "/admin/employees?action=create");
                 return;
@@ -205,15 +239,33 @@ public class AdminEmployeeServlet extends HttpServlet {
                 }
             }
             
-            boolean success = employeeDAO.createEmployee(fullName.trim(), emailTrimmed, password, 
-                    phone != null ? phone.trim() : null, role);
+            // [SỬA LỖI 3] Validate và chuẩn hóa role - đảm bảo khớp với database constraint
+            String validatedRole = validateAndNormalizeRole(role);
+            if (validatedRole == null) {
+                session.setAttribute("message", "Vai trò không hợp lệ! Vui lòng chọn: Marketer, Seller, SellerManager hoặc Staff.");
+                session.setAttribute("messageType", "danger");
+                response.sendRedirect(request.getContextPath() + "/admin/employees?action=create");
+                return;
+            }
+            
+            // Không cho phép tạo Admin
+            if ("Admin".equalsIgnoreCase(validatedRole)) {
+                session.setAttribute("message", "Không được phép tạo tài khoản Admin!");
+                session.setAttribute("messageType", "danger");
+                response.sendRedirect(request.getContextPath() + "/admin/employees?action=create");
+                return;
+            }
+            
+            String phoneValue = (phone != null && !phone.trim().isEmpty()) ? phone.trim() : null;
+            boolean success = employeeDAO.createEmployee(fullNameTrimmed, emailTrimmed, password, 
+                    phoneValue, validatedRole);
             
             if (success) {
                 session.setAttribute("message", "Tạo nhân viên mới thành công!");
                 session.setAttribute("messageType", "success");
                 response.sendRedirect(request.getContextPath() + "/admin/employees");
             } else {
-                session.setAttribute("message", "Có lỗi xảy ra khi tạo nhân viên!");
+                session.setAttribute("message", "Có lỗi xảy ra khi tạo nhân viên! Vui lòng kiểm tra lại thông tin.");
                 session.setAttribute("messageType", "danger");
                 response.sendRedirect(request.getContextPath() + "/admin/employees?action=create");
             }
@@ -254,10 +306,10 @@ public class AdminEmployeeServlet extends HttpServlet {
                 return;
             }
             
-            // Validate format email: chuyển thành chữ thường, phần đầu không được là số, phải có @, đuôi .com hoặc .vn
+            // [SỬA LỖI 2] Validate format email - mở rộng hơn
             String emailTrimmed = email.trim().toLowerCase();
-            if (!emailTrimmed.matches("^[a-zA-Z][a-zA-Z0-9._-]*@[a-zA-Z0-9.-]+\\.(com|vn)$")) {
-                session.setAttribute("message", "Email không hợp lệ! Email phải bắt đầu bằng chữ cái, có @ và đuôi phải là .com hoặc .vn (Ví dụ: example@gmail.com)");
+            if (!emailTrimmed.matches("^[a-z][a-z0-9._-]*@[a-z0-9.-]+\\.[a-z]{2,}$")) {
+                session.setAttribute("message", "Email không hợp lệ! Email phải bắt đầu bằng chữ cái và có định dạng đúng (Ví dụ: example@gmail.com)");
                 session.setAttribute("messageType", "danger");
                 response.sendRedirect(request.getContextPath() + "/admin/employees?action=edit&id=" + employeeID);
                 return;
@@ -297,9 +349,27 @@ public class AdminEmployeeServlet extends HttpServlet {
                 }
             }
             
+            // [SỬA LỖI 3] Validate và chuẩn hóa role - đảm bảo khớp với database constraint
+            String validatedRole = validateAndNormalizeRole(role);
+            if (validatedRole == null) {
+                session.setAttribute("message", "Vai trò không hợp lệ! Vui lòng chọn: Marketer, Seller, SellerManager hoặc Staff.");
+                session.setAttribute("messageType", "danger");
+                response.sendRedirect(request.getContextPath() + "/admin/employees?action=edit&id=" + employeeID);
+                return;
+            }
+            
+            // Không cho phép đổi sang Admin
+            if ("Admin".equalsIgnoreCase(validatedRole)) {
+                session.setAttribute("message", "Không được phép chuyển vai trò thành Admin!");
+                session.setAttribute("messageType", "danger");
+                response.sendRedirect(request.getContextPath() + "/admin/employees?action=edit&id=" + employeeID);
+                return;
+            }
+            
             // Cập nhật thông tin
-            boolean success = employeeDAO.updateEmployee(employeeID, fullName.trim(), emailTrimmed,
-                    phone != null ? phone.trim() : null, role, isActive);
+            String phoneValue = (phone != null && !phone.trim().isEmpty()) ? phone.trim() : null;
+            boolean success = employeeDAO.updateEmployee(employeeID, fullNameTrimmed, emailTrimmed,
+                    phoneValue, validatedRole, isActive);
             
             // Cập nhật mật khẩu nếu có
             if (password != null && !password.trim().isEmpty()) {
@@ -323,7 +393,7 @@ public class AdminEmployeeServlet extends HttpServlet {
                 session.setAttribute("messageType", "success");
                 response.sendRedirect(request.getContextPath() + "/admin/employees");
             } else {
-                session.setAttribute("message", "Có lỗi xảy ra khi cập nhật!");
+                session.setAttribute("message", "Có lỗi xảy ra khi cập nhật! Vui lòng kiểm tra lại thông tin.");
                 session.setAttribute("messageType", "danger");
                 response.sendRedirect(request.getContextPath() + "/admin/employees?action=edit&id=" + employeeID);
             }
@@ -354,4 +424,3 @@ public class AdminEmployeeServlet extends HttpServlet {
         }
     }
 }
-

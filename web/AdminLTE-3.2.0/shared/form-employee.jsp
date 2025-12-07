@@ -29,6 +29,7 @@
         <label for="fullName">Tên Nhân viên <span class="text-danger">*</span></label>
         <input type="text" class="form-control" id="fullName" name="fullName" 
                value="<%= employee != null ? employee.getFullName() : "" %>" required placeholder="Nhập tên nhân viên">
+        <small class="form-text text-muted">Chỉ được chứa chữ cái, số và khoảng trắng</small>
       </div>
       
       <div class="form-group">
@@ -36,18 +37,21 @@
         <input type="email" class="form-control" id="email" name="email" 
                value="<%= employee != null ? employee.getEmail() : "" %>" required 
                placeholder="Nhập email">
+        <small class="form-text text-muted">Email phải bắt đầu bằng chữ cái (Ví dụ: example@gmail.com)</small>
       </div>
       
       <div class="form-group">
         <label for="phone">Số điện thoại</label>
         <input type="text" class="form-control" id="phone" name="phone" 
                value="<%= employee != null && employee.getPhone() != null ? employee.getPhone() : "" %>" placeholder="Nhập số điện thoại">
+        <small class="form-text text-muted">10-11 số, bắt đầu bằng 0 (Ví dụ: 0912345678)</small>
       </div>
       
       <div class="form-group">
         <label for="role">Vai trò <span class="text-danger">*</span></label>
         <select class="form-control" id="role" name="role" required>
           <option value="">-- Chọn vai trò --</option>
+          <option value="Staff" <%= employee != null && "Staff".equals(employee.getRole()) ? "selected" : "" %>>Staff</option>
           <option value="Marketer" <%= employee != null && "Marketer".equals(employee.getRole()) ? "selected" : "" %>>Marketer</option>
           <option value="SellerManager" <%= employee != null && "SellerManager".equals(employee.getRole()) ? "selected" : "" %>>Seller Manager</option>
           <option value="Seller" <%= employee != null && "Seller".equals(employee.getRole()) ? "selected" : "" %>>Seller</option>
@@ -55,7 +59,7 @@
       </div>
       
       <div class="form-group">
-        <label for="password">Mật khẩu <span class="text-danger">*</span></label>
+        <label for="password">Mật khẩu <%= isEditMode ? "" : "<span class=\"text-danger\">*</span>" %></label>
         <input type="password" class="form-control" id="password" name="password" 
                <%= isEditMode ? "" : "required" %> placeholder="<%= isEditMode ? "Nhập mật khẩu mới (để trống nếu không muốn thay đổi)" : "Nhập mật khẩu" %>" minlength="6">
         <small class="form-text text-muted">
@@ -64,7 +68,7 @@
       </div>
       
       <div class="form-group">
-        <label for="confirmPassword">Xác nhận Mật khẩu <span class="text-danger">*</span></label>
+        <label for="confirmPassword">Xác nhận Mật khẩu <%= isEditMode ? "" : "<span class=\"text-danger\">*</span>" %></label>
         <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" 
                <%= isEditMode ? "" : "required" %> placeholder="Nhập lại mật khẩu" minlength="6">
         <small class="form-text text-muted">Xác nhận mật khẩu phải khớp với mật khẩu ở trên</small>
@@ -82,16 +86,59 @@
 </div>
 
 <script>
-// Client-side validation: kiểm tra mật khẩu xác nhận
+// Client-side validation
 document.getElementById('employeeForm').addEventListener('submit', function(e) {
+    var fullName = document.getElementById('fullName').value.trim();
+    var email = document.getElementById('email').value.trim();
+    var phone = document.getElementById('phone').value.trim();
+    var role = document.getElementById('role').value;
     var password = document.getElementById('password').value;
     var confirmPassword = document.getElementById('confirmPassword').value;
+    
+    // Validate họ tên
+    var nameRegex = /^[a-zA-ZÀ-ỹ0-9\s]+$/;
+    var hasLetter = /[a-zA-ZÀ-ỹ]/;
+    if (!nameRegex.test(fullName) || !hasLetter.test(fullName)) {
+        e.preventDefault();
+        alert('Họ tên không hợp lệ! Chỉ được chứa chữ cái, số và khoảng trắng, phải có ít nhất 1 chữ cái.');
+        return false;
+    }
+    
+    // Validate email
+    var emailRegex = /^[a-zA-Z][a-zA-Z0-9._-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+        e.preventDefault();
+        alert('Email không hợp lệ! Email phải bắt đầu bằng chữ cái và có định dạng đúng.');
+        return false;
+    }
+    
+    // Validate phone nếu có nhập
+    if (phone.length > 0) {
+        var phoneRegex = /^0[0-9]{9,10}$/;
+        if (!phoneRegex.test(phone)) {
+            e.preventDefault();
+            alert('Số điện thoại không hợp lệ! Phải có 10-11 số và bắt đầu bằng 0.');
+            return false;
+        }
+    }
+    
+    // Validate role
+    if (!role) {
+        e.preventDefault();
+        alert('Vui lòng chọn vai trò!');
+        return false;
+    }
     
     <c:if test="${!isEditMode}">
     // Create mode: mật khẩu bắt buộc
     if (password.length < 6) {
         e.preventDefault();
         alert('Mật khẩu phải có ít nhất 6 ký tự!');
+        return false;
+    }
+    if (password !== confirmPassword) {
+        e.preventDefault();
+        alert('Mật khẩu xác nhận không khớp!');
         return false;
     }
     </c:if>
@@ -104,15 +151,14 @@ document.getElementById('employeeForm').addEventListener('submit', function(e) {
             alert('Mật khẩu phải có ít nhất 6 ký tự!');
             return false;
         }
+        if (password !== confirmPassword) {
+            e.preventDefault();
+            alert('Mật khẩu xác nhận không khớp!');
+            return false;
+        }
     }
     </c:if>
     
-    // Kiểm tra mật khẩu xác nhận
-    if (password.length > 0 && password !== confirmPassword) {
-        e.preventDefault();
-        alert('Mật khẩu xác nhận không khớp!');
-        return false;
-    }
+    return true;
 });
 </script>
-

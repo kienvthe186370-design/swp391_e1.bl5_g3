@@ -10,6 +10,8 @@ import java.util.logging.Logger;
 
 public class EmployeeDAO extends DBContext {
     
+    private static final Logger LOGGER = Logger.getLogger(EmployeeDAO.class.getName());
+    
     public Employee login(String email, String password) {
         String sql = "SELECT * FROM Employees WHERE Email = ? AND IsActive = 1";
         try (Connection conn = getConnection();
@@ -27,7 +29,7 @@ public class EmployeeDAO extends DBContext {
                 }
             }
         } catch (SQLException e) {
-            Logger.getLogger(EmployeeDAO.class.getName()).log(Level.SEVERE, null, e);
+            LOGGER.log(Level.SEVERE, null, e);
         }
         return null;
     }
@@ -44,7 +46,7 @@ public class EmployeeDAO extends DBContext {
                 return mapResultSetToEmployee(rs);
             }
         } catch (SQLException e) {
-            Logger.getLogger(EmployeeDAO.class.getName()).log(Level.SEVERE, null, e);
+            LOGGER.log(Level.SEVERE, null, e);
         }
         return null;
     }
@@ -60,7 +62,7 @@ public class EmployeeDAO extends DBContext {
                 return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            Logger.getLogger(EmployeeDAO.class.getName()).log(Level.SEVERE, null, e);
+            LOGGER.log(Level.SEVERE, null, e);
         }
         return false;
     }
@@ -80,7 +82,7 @@ public class EmployeeDAO extends DBContext {
                 return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            Logger.getLogger(EmployeeDAO.class.getName()).log(Level.SEVERE, null, e);
+            LOGGER.log(Level.SEVERE, null, e);
         }
         return false;
     }
@@ -128,7 +130,7 @@ public class EmployeeDAO extends DBContext {
                 list.add(mapResultSetToEmployee(rs));
             }
         } catch (SQLException e) {
-            Logger.getLogger(EmployeeDAO.class.getName()).log(Level.SEVERE, null, e);
+            LOGGER.log(Level.SEVERE, null, e);
         }
         return list;
     }
@@ -172,7 +174,7 @@ public class EmployeeDAO extends DBContext {
                 return rs.getInt(1);
             }
         } catch (SQLException e) {
-            Logger.getLogger(EmployeeDAO.class.getName()).log(Level.SEVERE, null, e);
+            LOGGER.log(Level.SEVERE, null, e);
         }
         return 0;
     }
@@ -196,7 +198,7 @@ public class EmployeeDAO extends DBContext {
                 stats[2] = rs.getInt("Locked");
             }
         } catch (SQLException e) {
-            Logger.getLogger(EmployeeDAO.class.getName()).log(Level.SEVERE, null, e);
+            LOGGER.log(Level.SEVERE, null, e);
         }
         return stats;
     }
@@ -207,18 +209,41 @@ public class EmployeeDAO extends DBContext {
     public boolean createEmployee(String fullName, String email, String password, String phone, String role) {
         String sql = "INSERT INTO Employees (FullName, Email, PasswordHash, Phone, Role, IsActive, CreatedDate) "
                    + "VALUES (?, ?, ?, ?, ?, 1, GETDATE())";
+        
+        // DEBUG LOG
+        System.out.println("========== CREATE EMPLOYEE DEBUG ==========");
+        System.out.println("FullName: [" + fullName + "]");
+        System.out.println("Email: [" + email + "]");
+        System.out.println("Phone: [" + phone + "]");
+        System.out.println("Role: [" + role + "]");
+        System.out.println("Role length: " + (role != null ? role.length() : "null"));
+        System.out.println("============================================");
+        
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setString(1, fullName);
             ps.setString(2, email);
             ps.setString(3, PasswordUtil.hashPassword(password));
-            ps.setString(4, phone);
+            // Xử lý phone null đúng cách
+            if (phone != null && !phone.trim().isEmpty()) {
+                ps.setString(4, phone.trim());
+            } else {
+                ps.setNull(4, java.sql.Types.VARCHAR);
+            }
             ps.setString(5, role);
             
-            return ps.executeUpdate() > 0;
+            int result = ps.executeUpdate();
+            System.out.println("Create result: " + result);
+            return result > 0;
         } catch (SQLException e) {
-            Logger.getLogger(EmployeeDAO.class.getName()).log(Level.SEVERE, null, e);
+            System.out.println("========== SQL ERROR ==========");
+            System.out.println("SQLState: " + e.getSQLState());
+            System.out.println("ErrorCode: " + e.getErrorCode());
+            System.out.println("Message: " + e.getMessage());
+            System.out.println("===============================");
+            LOGGER.log(Level.SEVERE, "Error creating employee: " + e.getMessage(), e);
+            e.printStackTrace();
             return false;
         }
     }
@@ -228,19 +253,44 @@ public class EmployeeDAO extends DBContext {
      */
     public boolean updateEmployee(int employeeID, String fullName, String email, String phone, String role, boolean isActive) {
         String sql = "UPDATE Employees SET FullName = ?, Email = ?, Phone = ?, Role = ?, IsActive = ? WHERE EmployeeID = ?";
+        
+        // DEBUG LOG
+        System.out.println("========== UPDATE EMPLOYEE DEBUG ==========");
+        System.out.println("EmployeeID: " + employeeID);
+        System.out.println("FullName: [" + fullName + "]");
+        System.out.println("Email: [" + email + "]");
+        System.out.println("Phone: [" + phone + "]");
+        System.out.println("Role: [" + role + "]");
+        System.out.println("Role length: " + (role != null ? role.length() : "null"));
+        System.out.println("IsActive: " + isActive);
+        System.out.println("============================================");
+        
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setString(1, fullName);
             ps.setString(2, email);
-            ps.setString(3, phone);
+            // Xử lý phone null đúng cách
+            if (phone != null && !phone.trim().isEmpty()) {
+                ps.setString(3, phone.trim());
+            } else {
+                ps.setNull(3, java.sql.Types.VARCHAR);
+            }
             ps.setString(4, role);
             ps.setBoolean(5, isActive);
             ps.setInt(6, employeeID);
             
-            return ps.executeUpdate() > 0;
+            int result = ps.executeUpdate();
+            System.out.println("Update result: " + result);
+            return result > 0;
         } catch (SQLException e) {
-            Logger.getLogger(EmployeeDAO.class.getName()).log(Level.SEVERE, null, e);
+            System.out.println("========== SQL ERROR ==========");
+            System.out.println("SQLState: " + e.getSQLState());
+            System.out.println("ErrorCode: " + e.getErrorCode());
+            System.out.println("Message: " + e.getMessage());
+            System.out.println("===============================");
+            LOGGER.log(Level.SEVERE, "Error updating employee ID " + employeeID + ": " + e.getMessage(), e);
+            e.printStackTrace();
             return false;
         }
     }
@@ -258,7 +308,7 @@ public class EmployeeDAO extends DBContext {
             
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            Logger.getLogger(EmployeeDAO.class.getName()).log(Level.SEVERE, null, e);
+            LOGGER.log(Level.SEVERE, null, e);
             return false;
         }
     }
@@ -276,7 +326,7 @@ public class EmployeeDAO extends DBContext {
             
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            Logger.getLogger(EmployeeDAO.class.getName()).log(Level.SEVERE, null, e);
+            LOGGER.log(Level.SEVERE, null, e);
             return false;
         }
     }
@@ -289,7 +339,7 @@ public class EmployeeDAO extends DBContext {
             ps.setInt(1, employeeID);
             ps.executeUpdate();
         } catch (SQLException e) {
-            Logger.getLogger(EmployeeDAO.class.getName()).log(Level.SEVERE, null, e);
+            LOGGER.log(Level.SEVERE, null, e);
         }
     }
     
