@@ -100,12 +100,12 @@
             <c:forEach var="p" items="${products}">
                 <tr class="table-row">
                     <td>
-                        <strong>#${p.productId}</strong>
+                        <strong>#${p.productID}</strong>
                     </td>
                     <td>
                         <c:choose>
-                            <c:when test="${not empty p.imageUrl}">
-                                <img src="${p.imageUrl}" alt="${p.productName}" class="product-image">
+                            <c:when test="${not empty p.mainImageUrl}">
+                                <img src="${p.mainImageUrl}" alt="${p.productName}" class="product-image">
                             </c:when>
                             <c:otherwise>
                                 <img src="${pageContext.request.contextPath}/img/product/product-1.jpg" alt="No image" class="product-image">
