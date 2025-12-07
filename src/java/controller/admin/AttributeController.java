@@ -1,0 +1,234 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
+ */
+
+package controller.admin;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+/**
+ *
+ * @author Admin
+ */
+@WebServlet(name="AttributeController", urlPatterns={"/adminn/attributes"})
+public class AttributeController extends HttpServlet {
+   
+    private DAO.AttributeDAO attributeDAO = new DAO.AttributeDAO();
+    
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        
+        String action = request.getParameter("action");
+        if (action == null) action = "list";
+        
+        switch (action) {
+            case "add":
+                showAddForm(request, response);
+                break;
+            case "edit":
+                showEditForm(request, response);
+                break;
+            case "delete":
+                deleteAttribute(request, response);
+                break;
+            case "values":
+                manageValues(request, response);
+                break;
+            case "deleteValue":
+                deleteValue(request, response);
+                break;
+            default:
+                listAttributes(request, response);
+                break;
+        }
+    } 
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        
+        String action = request.getParameter("action");
+        
+        if ("add".equals(action)) {
+            addAttribute(request, response);
+        } else if ("edit".equals(action)) {
+            updateAttribute(request, response);
+        } else if ("addValue".equals(action)) {
+            addValue(request, response);
+        }
+    }
+    
+    private void listAttributes(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        // Get search, filter, sort parameters
+        String search = request.getParameter("search");
+        String statusParam = request.getParameter("status");
+        String sortBy = request.getParameter("sortBy");
+        String sortOrder = request.getParameter("sortOrder");
+        
+        // Get page parameters
+        int page = 1;
+        int pageSize = 10;
+        try {
+            if (request.getParameter("page") != null) {
+                page = Integer.parseInt(request.getParameter("page"));
+            }
+            if (request.getParameter("pageSize") != null) {
+                pageSize = Integer.parseInt(request.getParameter("pageSize"));
+            }
+        } catch (NumberFormatException e) {
+            page = 1;
+            pageSize = 10;
+        }
+        
+        // Parse status filter
+        Boolean isActive = null;
+        if (statusParam != null && !statusParam.isEmpty()) {
+            isActive = "active".equals(statusParam);
+        }
+        
+        // Get data with filters
+        java.util.List<entity.ProductAttribute> attributes = attributeDAO.getAttributes(search, isActive, sortBy, sortOrder, page, pageSize);
+        int totalRecords = attributeDAO.getTotalAttributes(search, isActive);
+        int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
+        
+        // Set attributes
+        request.setAttribute("attributes", attributes);
+        request.setAttribute("currentPage", page);
+        request.setAttribute("pageSize", pageSize);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalRecords", totalRecords);
+        request.setAttribute("search", search);
+        request.setAttribute("status", statusParam);
+        request.setAttribute("sortBy", sortBy);
+        request.setAttribute("sortOrder", sortOrder);
+        
+        request.getRequestDispatcher("/admin/attributes.jsp").forward(request, response);
+    }
+    
+    private void showAddForm(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        request.getRequestDispatcher("/admin/attribute-form.jsp").forward(request, response);
+    }
+    
+    private void showEditForm(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        entity.ProductAttribute attr = attributeDAO.getAttributeByID(id);
+        request.setAttribute("attribute", attr);
+        request.getRequestDispatcher("/admin/attribute-form.jsp").forward(request, response);
+    }
+    
+    private void addAttribute(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        try {
+            String name = request.getParameter("attributeName");
+            boolean isActive = "on".equals(request.getParameter("isActive"));
+            
+            entity.ProductAttribute attr = new entity.ProductAttribute(0, name, isActive);
+            boolean success = attributeDAO.insertAttribute(attr);
+            
+            if (success) {
+                response.sendRedirect("attributes?msg=add_success");
+            } else {
+                response.sendRedirect("attributes?msg=add_fail");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect("attributes?msg=error");
+        }
+    }
+    
+    private void updateAttribute(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        try {
+            int id = Integer.parseInt(request.getParameter("attributeID"));
+            String name = request.getParameter("attributeName");
+            boolean isActive = "on".equals(request.getParameter("isActive"));
+            
+            entity.ProductAttribute attr = new entity.ProductAttribute(id, name, isActive);
+            boolean success = attributeDAO.updateAttribute(attr);
+            
+            if (success) {
+                response.sendRedirect("attributes?msg=update_success");
+            } else {
+                response.sendRedirect("attributes?msg=update_fail");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect("attributes?msg=error");
+        }
+    }
+    
+    private void deleteAttribute(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        boolean success = attributeDAO.deleteAttribute(id);
+        
+        if (success) {
+            response.sendRedirect("attributes?msg=delete_success");
+        } else {
+            response.sendRedirect("attributes?msg=delete_fail");
+        }
+    }
+    
+    private void manageValues(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        int attrId = Integer.parseInt(request.getParameter("id"));
+        entity.ProductAttribute attr = attributeDAO.getAttributeByID(attrId);
+        request.setAttribute("attribute", attr);
+        request.setAttribute("values", attributeDAO.getValuesByAttributeID(attrId));
+        request.getRequestDispatcher("/admin/attribute-values.jsp").forward(request, response);
+    }
+    
+    private void addValue(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        try {
+            int attrId = Integer.parseInt(request.getParameter("attributeID"));
+            String valueName = request.getParameter("valueName");
+            boolean isActive = "on".equals(request.getParameter("isActive"));
+            
+            entity.AttributeValue value = new entity.AttributeValue(0, attrId, valueName, isActive);
+            boolean success = attributeDAO.insertAttributeValue(value);
+            
+            if (success) {
+                response.sendRedirect("attributes?action=values&id=" + attrId + "&msg=add_success");
+            } else {
+                response.sendRedirect("attributes?action=values&id=" + attrId + "&msg=add_fail");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect("attributes?msg=error");
+        }
+    }
+    
+    private void deleteValue(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        int valueId = Integer.parseInt(request.getParameter("valueId"));
+        int attrId = Integer.parseInt(request.getParameter("attrId"));
+        boolean success = attributeDAO.deleteAttributeValue(valueId);
+        
+        if (success) {
+            response.sendRedirect("attributes?action=values&id=" + attrId + "&msg=delete_success");
+        } else {
+            response.sendRedirect("attributes?action=values&id=" + attrId + "&msg=delete_fail");
+        }
+    }
+
+    @Override
+    public String getServletInfo() {
+        return "Attribute Management Controller";
+    }
+}
