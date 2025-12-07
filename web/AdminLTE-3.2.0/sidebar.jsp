@@ -1,9 +1,3 @@
-<%-- 
-    Document   : sidebar
-    Created on : Dec 7, 2025, 10:59:45 PM
-    Author     : xuand
---%>
-
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="entity.Employee" %>
 <%
