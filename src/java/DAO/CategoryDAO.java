@@ -31,6 +31,110 @@ public class CategoryDAO extends DBContext {
         }
         return list;
     }
+    
+    // Get categories with search, filter, sort and paging
+    public List<Category> getCategories(String search, Boolean isActive, String sortBy, String sortOrder, int page, int pageSize) {
+        List<Category> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT * FROM Categories WHERE 1=1");
+        
+        // Search
+        if (search != null && !search.trim().isEmpty()) {
+            sql.append(" AND (CategoryName LIKE ? OR Description LIKE ?)");
+        }
+        
+        // Filter by status
+        if (isActive != null) {
+            sql.append(" AND IsActive = ?");
+        }
+        
+        // Sort
+        if (sortBy != null && !sortBy.isEmpty()) {
+            sql.append(" ORDER BY ").append(sortBy);
+            if (sortOrder != null && sortOrder.equalsIgnoreCase("DESC")) {
+                sql.append(" DESC");
+            } else {
+                sql.append(" ASC");
+            }
+        } else {
+            sql.append(" ORDER BY DisplayOrder, CategoryName");
+        }
+        
+        // Paging
+        sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int paramIndex = 1;
+            
+            // Set search parameters
+            if (search != null && !search.trim().isEmpty()) {
+                String searchPattern = "%" + search + "%";
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
+            }
+            
+            // Set filter parameters
+            if (isActive != null) {
+                ps.setBoolean(paramIndex++, isActive);
+            }
+            
+            // Set paging parameters
+            ps.setInt(paramIndex++, (page - 1) * pageSize);
+            ps.setInt(paramIndex++, pageSize);
+            
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Category cat = new Category(
+                    rs.getInt("CategoryID"),
+                    rs.getString("CategoryName"),
+                    rs.getString("Description"),
+                    rs.getString("Icon"),
+                    rs.getInt("DisplayOrder"),
+                    rs.getBoolean("IsActive")
+                );
+                list.add(cat);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    
+    // Get total count for pagination
+    public int getTotalCategories(String search, Boolean isActive) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Categories WHERE 1=1");
+        
+        if (search != null && !search.trim().isEmpty()) {
+            sql.append(" AND (CategoryName LIKE ? OR Description LIKE ?)");
+        }
+        
+        if (isActive != null) {
+            sql.append(" AND IsActive = ?");
+        }
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int paramIndex = 1;
+            
+            if (search != null && !search.trim().isEmpty()) {
+                String searchPattern = "%" + search + "%";
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
+            }
+            
+            if (isActive != null) {
+                ps.setBoolean(paramIndex++, isActive);
+            }
+            
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
     public Category getCategoryByID(int id) {
         String sql = "SELECT * FROM Categories WHERE CategoryID = ?";
         try (Connection conn = getConnection();
@@ -147,5 +251,28 @@ public class CategoryDAO extends DBContext {
         }
         return false;
     }
-}
     
+    // Get category attributes by attribute ID
+    public List<CategoryAttribute> getCategoryAttributesByAttribute(int attributeID) {
+        List<CategoryAttribute> list = new ArrayList<>();
+        String sql = "SELECT * FROM CategoryAttributes WHERE AttributeID = ? ORDER BY DisplayOrder";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, attributeID);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                CategoryAttribute ca = new CategoryAttribute(
+                    rs.getInt("CategoryAttributeID"),
+                    rs.getInt("CategoryID"),
+                    rs.getInt("AttributeID"),
+                    rs.getBoolean("IsRequired"),
+                    rs.getInt("DisplayOrder")
+                );
+                list.add(ca);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+}

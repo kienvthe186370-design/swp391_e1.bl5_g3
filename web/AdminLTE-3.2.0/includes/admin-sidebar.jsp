@@ -2,23 +2,23 @@
 <%@ page import="entity.Employee" %>
 <%
     Employee employee = (Employee) session.getAttribute("employee");
-    String adminName = (employee != null) ? employee.getFullName() : "Admin";
-    String adminEmail = (employee != null) ? employee.getEmail() : "";
+    String userRole = employee.getRole();
+    String adminName = employee.getFullName();
+    String adminEmail = employee.getEmail();
     
-    String activePage = (String) request.getAttribute("activePage");
-    if (activePage == null) activePage = "dashboard";
+    // Xác định trang hiện tại để highlight menu (navigation tự động)
+    String currentURI = request.getRequestURI();
+    boolean isDashboard = currentURI.contains("index.jsp") && !currentURI.contains("customer") && !currentURI.contains("product") && !currentURI.contains("order");
+    boolean isCustomerPage = currentURI.contains("customer");
+    boolean isProductPage = currentURI.contains("product");
+    boolean isOrderPage = currentURI.contains("order");
 %>
-<!-- Main Sidebar Container -->
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
-  <!-- Brand Logo -->
-  <a href="<%= request.getContextPath() %>/admin/dashboard" class="brand-link">
+  <a href="<%= request.getContextPath() %>/AdminLTE-3.2.0/index.jsp" class="brand-link">
     <img src="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
     <span class="brand-text font-weight-light">Pickleball Admin</span>
   </a>
-
-  <!-- Sidebar -->
   <div class="sidebar">
-    <!-- Sidebar user panel (optional) -->
     <div class="user-panel mt-3 pb-3 mb-3 d-flex">
       <div class="image">
         <img src="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image">
@@ -28,122 +28,92 @@
         <small class="text-muted"><%= adminEmail %></small>
       </div>
     </div>
-
-    <!-- Sidebar Menu -->
     <nav class="mt-2">
       <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
         <!-- Dashboard -->
         <li class="nav-item">
-          <a href="<%= request.getContextPath() %>/admin/dashboard" class="nav-link <%= activePage.equals("dashboard") ? "active" : "" %>">
+          <a href="<%= request.getContextPath() %>/AdminLTE-3.2.0/index.jsp" 
+             class="nav-link <%= isDashboard ? "active" : "" %>">
             <i class="nav-icon fas fa-tachometer-alt"></i>
             <p>Dashboard</p>
           </a>
         </li>
         
-        <!-- Users Management -->
-        <li class="nav-item <%= activePage.startsWith("user") ? "menu-open" : "" %>">
-          <a href="#" class="nav-link <%= activePage.startsWith("user") ? "active" : "" %>">
+        <!-- Quản lý User - Chỉ Admin mới thấy -->
+        <% if ("Admin".equals(userRole)) { %>
+        <li class="nav-item <%= isCustomerPage ? "menu-open" : "" %>">
+          <a href="#" class="nav-link <%= isCustomerPage ? "active" : "" %>">
             <i class="nav-icon fas fa-users"></i>
-            <p>
-              Quản lý User
-              <i class="fas fa-angle-left right"></i>
-            </p>
+            <p>Quản lý User <i class="fas fa-angle-left right"></i></p>
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="<%= request.getContextPath() %>/admin/customers" class="nav-link <%= activePage.equals("customers") ? "active" : "" %>">
+              <a href="<%= request.getContextPath() %>/admin/customers" 
+                 class="nav-link <%= isCustomerPage ? "active" : "" %>">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Khách hàng</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="<%= request.getContextPath() %>/admin/employees" class="nav-link <%= activePage.equals("employees") ? "active" : "" %>">
+              <a href="<%= request.getContextPath() %>/admin/employees" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Nhân viên</p>
               </a>
             </li>
           </ul>
         </li>
-
-        <!-- Products -->
-        <li class="nav-item <%= activePage.startsWith("product") ? "menu-open" : "" %>">
-          <a href="#" class="nav-link <%= activePage.startsWith("product") ? "active" : "" %>">
+        <% } %>
+        
+        <!-- Sản phẩm -->
+        <li class="nav-item <%= isProductPage ? "menu-open" : "" %>">
+          <a href="#" class="nav-link <%= isProductPage ? "active" : "" %>">
             <i class="nav-icon fas fa-cube"></i>
-            <p>
-              Sản phẩm
-              <i class="fas fa-angle-left right"></i>
-            </p>
+            <p>Sản phẩm <i class="fas fa-angle-left right"></i></p>
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="<%= request.getContextPath() %>/admin/products" class="nav-link <%= activePage.equals("products") ? "active" : "" %>">
+              <a href="<%= request.getContextPath() %>/admin/products" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Danh sách</p>
               </a>
             </li>
-            <li class="nav-item">
-              <a href="<%= request.getContextPath() %>/admin/product-add" class="nav-link <%= activePage.equals("product-add") ? "active" : "" %>">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Thêm mới</p>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="<%= request.getContextPath() %>/admin/categories" class="nav-link <%= activePage.equals("categories") ? "active" : "" %>">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Danh mục</p>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="<%= request.getContextPath() %>/admin/brands" class="nav-link <%= activePage.equals("brands") ? "active" : "" %>">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Thương hiệu</p>
-              </a>
-            </li>
           </ul>
         </li>
-
-        <!-- Orders -->
+        
+        <!-- Đơn hàng - DÙNG CHUNG cho nhiều role -->
         <li class="nav-item">
-          <a href="<%= request.getContextPath() %>/admin/orders" class="nav-link <%= activePage.equals("orders") ? "active" : "" %>">
+          <a href="<%= request.getContextPath() %>/admin/orders" 
+             class="nav-link <%= isOrderPage ? "active" : "" %>">
             <i class="nav-icon fas fa-shopping-cart"></i>
             <p>Đơn hàng</p>
           </a>
         </li>
-
+        
         <!-- Vouchers -->
         <li class="nav-item">
-          <a href="<%= request.getContextPath() %>/admin/vouchers" class="nav-link <%= activePage.equals("vouchers") ? "active" : "" %>">
+          <a href="#" class="nav-link">
             <i class="nav-icon fas fa-ticket-alt"></i>
             <p>Voucher</p>
           </a>
         </li>
-
-        <!-- Blogs -->
-        <li class="nav-item">
-          <a href="<%= request.getContextPath() %>/admin/blogs" class="nav-link <%= activePage.equals("blogs") ? "active" : "" %>">
-            <i class="nav-icon fas fa-blog"></i>
-            <p>Blogs</p>
-          </a>
-        </li>
-
+        
         <!-- Reports -->
         <li class="nav-item">
-          <a href="<%= request.getContextPath() %>/admin/reports" class="nav-link <%= activePage.equals("reports") ? "active" : "" %>">
+          <a href="#" class="nav-link">
             <i class="nav-icon fas fa-chart-bar"></i>
             <p>Báo cáo</p>
           </a>
         </li>
-
+        
         <!-- Settings -->
         <li class="nav-item">
-          <a href="<%= request.getContextPath() %>/admin/settings" class="nav-link <%= activePage.equals("settings") ? "active" : "" %>">
+          <a href="#" class="nav-link">
             <i class="nav-icon fas fa-cog"></i>
             <p>Cài đặt</p>
           </a>
         </li>
       </ul>
     </nav>
-    <!-- /.sidebar-menu -->
   </div>
-  <!-- /.sidebar -->
 </aside>
+
