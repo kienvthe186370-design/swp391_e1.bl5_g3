@@ -20,13 +20,8 @@ public class AdminDashboardServlet extends HttpServlet {
         Employee employee = (Employee) session.getAttribute("employee");
         
         if (employee != null && "Admin".equalsIgnoreCase(employee.getRole())) {
-            // Set attributes for unified layout
-            request.setAttribute("contentPage", "dashboard");
-            request.setAttribute("activePage", "dashboard");
-            request.setAttribute("pageTitle", "Dashboard");
-            
-            // Forward to unified AdminLTE layout
-            request.getRequestDispatcher("/AdminLTE-3.2.0/index.jsp").forward(request, response);
+            // Redirect to AdminLTE dashboard
+            response.sendRedirect(request.getContextPath() + "/AdminLTE-3.2.0/index.jsp");
         } else {
             response.sendRedirect(request.getContextPath() + "/login");
         }
