@@ -1,83 +1,176 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
-
 package controller;
 
+import DAO.SliderDAO;
+import entity.Slider;
 import java.io.IOException;
-import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
- *
- * @author xuand
+ * Slider Management Controller
+ * Handles CRUD operations for sliders
  */
-@WebServlet(name="Slider", urlPatterns={"/Slider"})
+@WebServlet(name="SliderController", urlPatterns={"/admin/slider"})
 public class SliderController extends HttpServlet {
+    
+    private SliderDAO sliderDAO;
+    
+    @Override
+    public void init() throws ServletException {
+        sliderDAO = new SliderDAO();
+    }
    
-    /** 
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet SliderController</title>");  
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet SliderController at " + request.getContextPath () + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
-        }
-    } 
-
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /** 
-     * Handles the HTTP <code>GET</code> method.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        processRequest(request, response);
+        String action = request.getParameter("action");
+        
+        if (action == null) {
+            action = "list";
+        }
+        
+        switch (action) {
+            case "list":
+                showSliderList(request, response);
+                break;
+            case "add":
+                showAddForm(request, response);
+                break;
+            case "edit":
+                showEditForm(request, response);
+                break;
+            case "delete":
+                deleteSlider(request, response);
+                break;
+            default:
+                showSliderList(request, response);
+                break;
+        }
     } 
 
-    /** 
-     * Handles the HTTP <code>POST</code> method.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        processRequest(request, response);
+        request.setCharacterEncoding("UTF-8");
+        String action = request.getParameter("action");
+        
+        if ("add".equals(action)) {
+            addSlider(request, response);
+        } else if ("update".equals(action)) {
+            updateSlider(request, response);
+        }
+    }
+    
+    // Show slider list with pagination and search
+    private void showSliderList(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        String search = request.getParameter("search");
+        String status = request.getParameter("status");
+        String pageStr = request.getParameter("page");
+        
+        int page = 1;
+        int pageSize = 10;
+        
+        if (pageStr != null) {
+            try {
+                page = Integer.parseInt(pageStr);
+            } catch (NumberFormatException e) {
+                page = 1;
+            }
+        }
+        
+        List<Slider> sliders = sliderDAO.getAllSliders(search, status, page, pageSize);
+        int totalSliders = sliderDAO.getTotalSliders(search, status);
+        int totalPages = (int) Math.ceil((double) totalSliders / pageSize);
+        
+        request.setAttribute("sliders", sliders);
+        request.setAttribute("currentPage", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("search", search);
+        request.setAttribute("status", status);
+        
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-slider-list.jsp").forward(request, response);
+    }
+    
+    // Show add slider form
+    private void showAddForm(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-slider-detail.jsp").forward(request, response);
+    }
+    
+    // Show edit slider form
+    private void showEditForm(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        Slider slider = sliderDAO.getSliderById(id);
+        
+        if (slider != null) {
+            request.setAttribute("slider", slider);
+            request.getRequestDispatcher("/AdminLTE-3.2.0/admin-slider-detail.jsp").forward(request, response);
+        } else {
+            response.sendRedirect(request.getContextPath() + "/admin/slider?error=notfound");
+        }
+    }
+    
+    // Add new slider
+    private void addSlider(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        String title = request.getParameter("title");
+        String imageURL = request.getParameter("imageURL");
+        String linkURL = request.getParameter("linkURL");
+        int displayOrder = Integer.parseInt(request.getParameter("displayOrder"));
+        String status = request.getParameter("status");
+        
+        Slider slider = new Slider();
+        slider.setTitle(title);
+        slider.setImageURL(imageURL);
+        slider.setLinkURL(linkURL);
+        slider.setDisplayOrder(displayOrder);
+        slider.setStatus(status);
+        
+        sliderDAO.insertSlider(slider);
+        
+        response.sendRedirect(request.getContextPath() + "/admin/slider?success=added");
+    }
+    
+    // Update slider
+    private void updateSlider(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        String title = request.getParameter("title");
+        String imageURL = request.getParameter("imageURL");
+        String linkURL = request.getParameter("linkURL");
+        int displayOrder = Integer.parseInt(request.getParameter("displayOrder"));
+        String status = request.getParameter("status");
+        
+        Slider slider = new Slider();
+        slider.setSliderID(id);
+        slider.setTitle(title);
+        slider.setImageURL(imageURL);
+        slider.setLinkURL(linkURL);
+        slider.setDisplayOrder(displayOrder);
+        slider.setStatus(status);
+        
+        sliderDAO.updateSlider(slider);
+        
+        response.sendRedirect(request.getContextPath() + "/admin/slider?success=updated");
+    }
+    
+    // Delete slider
+    private void deleteSlider(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        sliderDAO.deleteSlider(id);
+        
+        response.sendRedirect(request.getContextPath() + "/admin/slider?success=deleted");
     }
 
-    /** 
-     * Returns a short description of the servlet.
-     * @return a String containing servlet description
-     */
     @Override
     public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
+        return "Slider Management Controller";
+    }
 }

@@ -193,6 +193,15 @@
               <p>Voucher</p>
             </a>
           </li>
+          
+          <!-- Slider -->
+          <li class="nav-item">
+            <a href="<%= request.getContextPath() %>/admin/slider" class="nav-link">
+
+              <i class="nav-icon fas fa-fw fa-images "></i>
+              <p>Slider</p>
+            </a>
+          </li>
 
           <!-- Reports -->
           <li class="nav-item">
