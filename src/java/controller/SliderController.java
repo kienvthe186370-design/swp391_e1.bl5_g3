@@ -1,8 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
-
 package controller;
 
 import DAO.SliderDAO;
@@ -16,8 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- *
- * @author xuand
+ * Slider Management Controller
+ * Handles CRUD operations for sliders
  */
 @WebServlet(name="SliderController", urlPatterns={"/admin/slider"})
 public class SliderController extends HttpServlet {
@@ -98,13 +93,13 @@ public class SliderController extends HttpServlet {
         request.setAttribute("search", search);
         request.setAttribute("status", status);
         
-        request.getRequestDispatcher("/admin-slider-list.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-slider-list.jsp").forward(request, response);
     }
     
     // Show add slider form
     private void showAddForm(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        request.getRequestDispatcher("/admin-slider-detail.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-slider-detail.jsp").forward(request, response);
     }
     
     // Show edit slider form
@@ -115,7 +110,7 @@ public class SliderController extends HttpServlet {
         
         if (slider != null) {
             request.setAttribute("slider", slider);
-            request.getRequestDispatcher("/admin-slider-detail.jsp").forward(request, response);
+            request.getRequestDispatcher("/AdminLTE-3.2.0/admin-slider-detail.jsp").forward(request, response);
         } else {
             response.sendRedirect(request.getContextPath() + "/admin/slider?error=notfound");
         }
