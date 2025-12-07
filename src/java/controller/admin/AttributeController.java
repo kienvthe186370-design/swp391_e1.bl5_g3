@@ -17,7 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * @author Admin
  */
-@WebServlet(name="AttributeController", urlPatterns={"/adminn/attributes"})
+@WebServlet(name="AttributeController", urlPatterns={"/admin/attributes"})
 public class AttributeController extends HttpServlet {
    
     private DAO.AttributeDAO attributeDAO = new DAO.AttributeDAO();
@@ -115,12 +115,12 @@ public class AttributeController extends HttpServlet {
         request.setAttribute("sortBy", sortBy);
         request.setAttribute("sortOrder", sortOrder);
         
-        request.getRequestDispatcher("/admin/attributes.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-attribute-list.jsp").forward(request, response);
     }
     
     private void showAddForm(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        request.getRequestDispatcher("/admin/attribute-form.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-attribute-detail.jsp").forward(request, response);
     }
     
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
@@ -128,7 +128,7 @@ public class AttributeController extends HttpServlet {
         int id = Integer.parseInt(request.getParameter("id"));
         entity.ProductAttribute attr = attributeDAO.getAttributeByID(id);
         request.setAttribute("attribute", attr);
-        request.getRequestDispatcher("/admin/attribute-form.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-attribute-detail.jsp").forward(request, response);
     }
     
     private void addAttribute(HttpServletRequest request, HttpServletResponse response)
@@ -190,7 +190,7 @@ public class AttributeController extends HttpServlet {
         entity.ProductAttribute attr = attributeDAO.getAttributeByID(attrId);
         request.setAttribute("attribute", attr);
         request.setAttribute("values", attributeDAO.getValuesByAttributeID(attrId));
-        request.getRequestDispatcher("/admin/attribute-values.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-attribute-values.jsp").forward(request, response);
     }
     
     private void addValue(HttpServletRequest request, HttpServletResponse response)
