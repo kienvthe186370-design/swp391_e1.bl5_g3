@@ -102,7 +102,7 @@
             </c:choose>
           </h3>
           <div class="card-tools">
-            <div class="btn-group">
+            <div class="btn-group mr-2">
               <a href="<%= request.getContextPath() %>/admin/customers?status=active" 
                  class="btn btn-sm btn-success ${status == 'active' ? 'active' : ''}">
                 <i class="fas fa-user-check"></i> Đang hoạt động
@@ -116,6 +116,9 @@
                 <i class="fas fa-list"></i> Tất cả
               </a>
             </div>
+                <a href="<%= request.getContextPath() %>/admin/customers?action=create" class="btn btn-primary btn-sm">
+              <i class="fas fa-plus"></i> Thêm Khách hàng
+            </a>
           </div>
         </div>
         <div class="card-body">
@@ -226,21 +229,50 @@
             </table>
           </div>
 
-          <!-- Pagination -->
-          <c:if test="${totalPages > 1}">
-            <nav>
-              <ul class="pagination justify-content-center">
-                <c:forEach var="i" begin="1" end="${totalPages}">
-                  <li class="page-item ${i == currentPage ? 'active' : ''}">
+         <!-- Pagination -->
+          <nav>
+            <ul class="pagination justify-content-center">
+              <!-- Nút Trước -->
+              <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                <c:choose>
+                  <c:when test="${currentPage == 1}">
+                    <span class="page-link">Trước</span>
+                  </c:when>
+                  <c:otherwise>
                     <a class="page-link" 
-                       href="<%= request.getContextPath() %>/admin/customers?page=${i}&status=${status}&emailVerified=${emailVerified}&search=${search}">
-                      ${i}
+                       href="<%= request.getContextPath() %>/admin/customers?page=${currentPage - 1}&status=${status}&emailVerified=${emailVerified}&search=${search}">
+                      Trước
                     </a>
-                  </li>
-                </c:forEach>
-              </ul>
-            </nav>
-          </c:if>
+                  </c:otherwise>
+                </c:choose>
+              </li>
+              
+              <!-- Số trang -->
+              <c:forEach var="i" begin="1" end="${totalPages > 0 ? totalPages : 1}">
+                <li class="page-item ${i == currentPage ? 'active' : ''}">
+                  <a class="page-link" 
+                     href="<%= request.getContextPath() %>/admin/customers?page=${i}&status=${status}&emailVerified=${emailVerified}&search=${search}">
+                    ${i}
+                  </a>
+                </li>
+              </c:forEach>
+              
+              <!-- Nút Sau -->
+              <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
+                <c:choose>
+                  <c:when test="${currentPage >= totalPages}">
+                    <span class="page-link">Sau</span>
+                  </c:when>
+                  <c:otherwise>
+                    <a class="page-link" 
+                       href="<%= request.getContextPath() %>/admin/customers?page=${currentPage + 1}&status=${status}&emailVerified=${emailVerified}&search=${search}">
+                      Sau
+                    </a>
+                  </c:otherwise>
+                </c:choose>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </div>

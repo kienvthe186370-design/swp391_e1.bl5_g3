@@ -1,14 +1,24 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%
-    // Chỉ hỗ trợ edit mode
-    request.setAttribute("pageTitle", "Chỉnh sửa Khách hàng");
+    // Mode: "create" hoặc "edit"
+    String mode = (String) request.getAttribute("formMode");
+    if (mode == null) mode = "create";
+    
+    String pageTitle = "create".equals(mode) ? "Thêm Khách hàng mới" : "Chỉnh sửa Khách hàng";
+    request.setAttribute("pageTitle", pageTitle);
     
     // Get message from session
     String message = (String) session.getAttribute("message");
     String messageType = (String) session.getAttribute("messageType");
     session.removeAttribute("message");
     session.removeAttribute("messageType");
+    
+    // Set vào request attribute để JSTL có thể truy cập
+    if (message != null) {
+        request.setAttribute("message", message);
+        request.setAttribute("messageType", messageType);
+    }
 %>
 <jsp:include page="../includes/admin-header.jsp"/>
 <jsp:include page="../includes/admin-sidebar.jsp"/>
@@ -19,7 +29,8 @@
       <div class="row mb-2">
         <div class="col-sm-6">
           <h1 class="m-0">
-            <i class="fas fa-edit"></i> Chỉnh sửa Khách hàng
+            <i class="fas fa-<%= "create".equals(mode) ? "plus" : "edit" %>"></i> 
+            <%= pageTitle %>
           </h1>
         </div>
         <div class="col-sm-6">
@@ -30,7 +41,7 @@
             <li class="breadcrumb-item">
               <a href="<%= request.getContextPath() %>/admin/customers">Khách hàng</a>
             </li>
-            <li class="breadcrumb-item active">Chỉnh sửa</li>
+            <li class="breadcrumb-item active"><%= "create".equals(mode) ? "Thêm mới" : "Chỉnh sửa" %></li>
           </ol>
         </div>
       </div>
