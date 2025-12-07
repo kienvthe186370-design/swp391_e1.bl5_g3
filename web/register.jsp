@@ -147,41 +147,47 @@
                             </div>
                         <% } %>
                         
-                        <form action="register" method="post">
+                        <form action="register" method="post" id="registerForm">
                             <div class="form-group">
                                 <label>Họ và tên <span>*</span></label>
-                                <input type="text" name="fullName" 
+                                <input type="text" name="fullName" id="fullName"
                                        value="<%= request.getAttribute("fullName") != null ? request.getAttribute("fullName") : "" %>"
                                        placeholder="Nhập họ và tên" required>
+                                <small class="form-text" id="fullNameError"></small>
                             </div>
                             
                             <div class="form-group">
                                 <label>Email <span>*</span></label>
-                                <input type="email" name="email" 
+                                <input type="email" name="email" id="email"
                                        value="<%= request.getAttribute("email") != null ? request.getAttribute("email") : "" %>"
                                        placeholder="Nhập email" required>
+                                <small class="form-text" id="emailError"></small>
+                                <small class="form-text text-success" id="emailSuccess"></small>
                             </div>
                             
                             <div class="form-group">
                                 <label>Số điện thoại <span>*</span></label>
-                                <input type="tel" name="phone" 
+                                <input type="tel" name="phone" id="phone"
                                        value="<%= request.getAttribute("phone") != null ? request.getAttribute("phone") : "" %>"
-                                       placeholder="Nhập số điện thoại" required>
+                                       placeholder="Nhập số điện thoại (10 số)" required>
+                                <small class="form-text" id="phoneError"></small>
                             </div>
                             
                             <div class="form-group">
                                 <label>Mật khẩu <span>*</span></label>
-                                <input type="password" name="password" 
+                                <input type="password" name="password" id="password"
                                        placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)" required>
+                                <small class="form-text" id="passwordError"></small>
                             </div>
                             
                             <div class="form-group">
                                 <label>Xác nhận mật khẩu <span>*</span></label>
-                                <input type="password" name="confirmPassword" 
+                                <input type="password" name="confirmPassword" id="confirmPassword"
                                        placeholder="Nhập lại mật khẩu" required>
+                                <small class="form-text" id="confirmPasswordError"></small>
                             </div>
                             
-                            <button type="submit" class="site-btn">Đăng Ký</button>
+                            <button type="submit" class="site-btn" id="submitBtn">Đăng Ký</button>
                         </form>
                         
                         <div class="register-links">
@@ -207,5 +213,8 @@
     <script src="js/mixitup.min.js"></script>
     <script src="js/owl.carousel.min.js"></script>
     <script src="js/main.js"></script>
+    
+    <!-- Register Validation Script -->
+    <script src="js/register-validation.js"></script>
 </body>
 </html>
