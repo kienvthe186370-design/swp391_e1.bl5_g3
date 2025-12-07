@@ -1,39 +1,15 @@
-/**
- * register-validation.js
- * Real-time validation cho form đăng ký
- * 
- * Chức năng:
- * 1. Validate email format
- * 2. Check email đã tồn tại (AJAX)
- * 3. Validate phone number
- * 4. Validate password strength
- * 5. Check password match
- * 6. Prevent double submit
- */
-
 $(document).ready(function() {
-    // ============================================
-    // BIẾN GLOBAL
-    // ============================================
     let isEmailValid = false;
     let isEmailChecking = false;
     let emailCheckTimeout = null;
     
-    // Lấy context path từ URL
     const contextPath = window.location.pathname.substring(0, window.location.pathname.indexOf("/",2));
     
-    // ============================================
-    // VALIDATE EMAIL FORMAT (Client-side)
-    // ============================================
     function validateEmailFormat(email) {
-        // Regex pattern cho email
         const emailPattern = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
         return emailPattern.test(email);
     }
     
-    // ============================================
-    // CHECK EMAIL TỒN TẠI (AJAX)
-    // ============================================
     function checkEmailExists(email) {
         isEmailChecking = true;
         $('#emailError').text('Đang kiểm tra...').css('color', '#999');
@@ -48,17 +24,14 @@ $(document).ready(function() {
                 isEmailChecking = false;
                 
                 if (response.valid && !response.exists) {
-                    // Email hợp lệ và chưa tồn tại
                     isEmailValid = true;
                     $('#emailError').text('');
                     $('#emailSuccess').text('✓ ' + response.message).css('color', '#28a745');
                 } else if (response.exists) {
-                    // Email đã tồn tại
                     isEmailValid = false;
                     $('#emailError').text('✗ ' + response.message).css('color', '#dc3545');
                     $('#emailSuccess').text('');
                 } else {
-                    // Email không hợp lệ
                     isEmailValid = false;
                     $('#emailError').text('✗ ' + response.message).css('color', '#dc3545');
                     $('#emailSuccess').text('');
@@ -72,42 +45,31 @@ $(document).ready(function() {
         });
     }
     
-    // ============================================
-    // EMAIL INPUT - Real-time validation
-    // ============================================
     $('#email').on('input', function() {
         const email = $(this).val().trim();
         
-        // Clear timeout cũ
         if (emailCheckTimeout) {
             clearTimeout(emailCheckTimeout);
         }
         
-        // Reset messages
         $('#emailError').text('');
         $('#emailSuccess').text('');
         isEmailValid = false;
         
-        // Kiểm tra empty
         if (email === '') {
             return;
         }
         
-        // Kiểm tra format trước
         if (!validateEmailFormat(email)) {
             $('#emailError').text('✗ Email không đúng định dạng').css('color', '#dc3545');
             return;
         }
         
-        // Delay 500ms trước khi gọi AJAX (tránh gọi quá nhiều)
         emailCheckTimeout = setTimeout(function() {
             checkEmailExists(email);
         }, 500);
     });
     
-    // ============================================
-    // FULL NAME VALIDATION
-    // ============================================
     $('#fullName').on('blur', function() {
         const name = $(this).val().trim();
         
@@ -122,9 +84,6 @@ $(document).ready(function() {
         }
     });
     
-    // ============================================
-    // PHONE VALIDATION
-    // ============================================
     $('#phone').on('blur', function() {
         const phone = $(this).val().trim();
         const phonePattern = /^(0|\+84)[0-9]{9,10}$/;
@@ -138,9 +97,6 @@ $(document).ready(function() {
         }
     });
     
-    // ============================================
-    // PASSWORD VALIDATION
-    // ============================================
     $('#password').on('input', function() {
         const password = $(this).val();
         
@@ -152,15 +108,11 @@ $(document).ready(function() {
             $('#passwordError').text('✓ Mật khẩu hợp lệ').css('color', '#28a745');
         }
         
-        // Kiểm tra confirm password nếu đã nhập
         if ($('#confirmPassword').val().length > 0) {
             $('#confirmPassword').trigger('input');
         }
     });
     
-    // ============================================
-    // CONFIRM PASSWORD VALIDATION
-    // ============================================
     $('#confirmPassword').on('input', function() {
         const password = $('#password').val();
         const confirmPassword = $(this).val();
@@ -174,18 +126,13 @@ $(document).ready(function() {
         }
     });
     
-    // ============================================
-    // FORM SUBMIT VALIDATION
-    // ============================================
     $('#registerForm').on('submit', function(e) {
-        // Nếu đang check email, chặn submit
         if (isEmailChecking) {
             e.preventDefault();
             alert('Vui lòng đợi kiểm tra email hoàn tất');
             return false;
         }
         
-        // Nếu email không hợp lệ, chặn submit
         if (!isEmailValid) {
             e.preventDefault();
             alert('Vui lòng nhập email hợp lệ và chưa được đăng ký');
@@ -193,7 +140,6 @@ $(document).ready(function() {
             return false;
         }
         
-        // Kiểm tra password khớp
         if ($('#password').val() !== $('#confirmPassword').val()) {
             e.preventDefault();
             alert('Mật khẩu xác nhận không khớp');
@@ -201,7 +147,6 @@ $(document).ready(function() {
             return false;
         }
         
-        // Disable submit button để tránh double submit
         $('#submitBtn').prop('disabled', true).text('Đang xử lý...');
         
         return true;

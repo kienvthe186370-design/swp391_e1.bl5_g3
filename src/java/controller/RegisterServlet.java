@@ -22,7 +22,9 @@ public class RegisterServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        
         request.setCharacterEncoding("UTF-8");
+        
         String fullName = request.getParameter("fullName");
         String email = request.getParameter("email");
         String password = request.getParameter("password");
@@ -33,30 +35,31 @@ public class RegisterServlet extends HttpServlet {
             ValidationUtil.isEmpty(email) ||
             ValidationUtil.isEmpty(password) ||
             ValidationUtil.isEmpty(phone)) {
+            
             setErrorAndForward(request, response, 
                 "Vui lòng điền đầy đủ thông tin", 
                 fullName, email, phone);
             return;
         }
-
+        
         fullName = fullName.trim();
         email = email.trim();
         phone = phone.trim();
- 
+        
         if (!ValidationUtil.isValidName(fullName)) {
             setErrorAndForward(request, response, 
                 "Tên không hợp lệ. Vui lòng chỉ nhập chữ cái", 
                 fullName, email, phone);
             return;
         }
-
+        
         if (!ValidationUtil.isValidEmail(email)) {
             setErrorAndForward(request, response, 
                 "Email không đúng định dạng", 
                 fullName, email, phone);
             return;
         }
-  
+        
         if (!ValidationUtil.isValidPhone(phone)) {
             setErrorAndForward(request, response, 
                 "Số điện thoại không hợp lệ", 
@@ -80,17 +83,17 @@ public class RegisterServlet extends HttpServlet {
                 fullName, email, phone);
             return;
         }
-
+        
         CustomerDAO customerDAO = new CustomerDAO();
         EmployeeDAO employeeDAO = new EmployeeDAO();
         
         if (customerDAO.isEmailExists(email) || employeeDAO.isEmailExists(email)) {
             setErrorAndForward(request, response, 
                 "Email này đã được đăng ký. Vui lòng sử dụng email khác hoặc đăng nhập.", 
-                fullName, "", phone); // Không giữ lại email đã tồn tại
+                fullName, "", phone);
             return;
         }
-
+        
         boolean success = customerDAO.register(fullName, email, password, phone);
         
         if (success) {
@@ -103,7 +106,7 @@ public class RegisterServlet extends HttpServlet {
                 fullName, email, phone);
         }
     }
- 
+    
     private void setErrorAndForward(HttpServletRequest request, 
                                     HttpServletResponse response,
                                     String errorMessage,
