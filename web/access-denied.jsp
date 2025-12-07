@@ -1,3 +1,9 @@
+<%-- 
+    Document   : access-denied
+    Created on : Dec 5, 2025, 4:46:06 PM
+    Author     : ASUS
+--%>
+
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
 <html lang="vi">
