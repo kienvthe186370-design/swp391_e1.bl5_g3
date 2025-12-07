@@ -114,7 +114,7 @@
             <li class="nav-item">
               <a href="<%= request.getContextPath() %>/admin/categories" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
-                <p>Danh mục</p>
+                <p>Danh mục sản phẩm </p>
               </a>
             </li>
             <li class="nav-item">
@@ -126,7 +126,7 @@
             <li class="nav-item">
               <a href="<%= request.getContextPath() %>/admin/attributes" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
-                <p>Thuộc tính</p>
+                <p>Thuộc tính sản phẩm</p>
               </a>
             </li>
           </ul>

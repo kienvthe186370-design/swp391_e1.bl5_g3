@@ -156,6 +156,10 @@
                          class="btn btn-info btn-sm" title="Quản lý giá trị">
                         <i class="fas fa-list"></i> Giá trị
                       </a>
+                      <a href="<%= request.getContextPath() %>/admin/attributes?action=categories&id=${attr.attributeID}" 
+                         class="btn btn-success btn-sm" title="Gán danh mục">
+                        <i class="fas fa-link"></i> Danh mục
+                      </a>
                       <a href="<%= request.getContextPath() %>/admin/attributes?action=edit&id=${attr.attributeID}" 
                          class="btn btn-warning btn-sm" title="Chỉnh sửa">
                         <i class="fas fa-edit"></i>
