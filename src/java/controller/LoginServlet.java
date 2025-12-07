@@ -91,7 +91,7 @@ public class LoginServlet extends HttpServlet {
     private String getRedirectUrlByRole(String role) {
         switch (role.toLowerCase()) {
             case "admin":
-                return "admin/dashboard";
+                return "AdminLTE-3.2.0/index.jsp";
             case "seller":
                 return "seller/dashboard";
             case "sellermanager":

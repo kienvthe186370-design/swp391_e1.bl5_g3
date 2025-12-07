@@ -16,14 +16,14 @@ import java.util.List;
  */
 @WebServlet(name="SliderController", urlPatterns={"/admin/slider"})
 public class SliderController extends HttpServlet {
-   
+    
     private SliderDAO sliderDAO;
     
     @Override
     public void init() throws ServletException {
         sliderDAO = new SliderDAO();
-        }
-
+    }
+   
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
@@ -31,8 +31,8 @@ public class SliderController extends HttpServlet {
         
         if (action == null) {
             action = "list";
-    } 
-
+        }
+        
         switch (action) {
             case "list":
                 showSliderList(request, response);
@@ -172,5 +172,5 @@ public class SliderController extends HttpServlet {
     @Override
     public String getServletInfo() {
         return "Slider Management Controller";
-}
+    }
 }
