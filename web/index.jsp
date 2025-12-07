@@ -368,23 +368,41 @@
                 <c:forEach var="product" items="${featuredProducts}">
                     <div class="col-lg-3 col-md-6 col-sm-6">
                         <div class="product__item">
-                            <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? product.mainImageUrl : pageContext.request.contextPath.concat('/img/product/default.jpg')}">
-                                <span class="label">New</span>
+                            <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}" 
+                                 style="cursor: pointer;" 
+                                 onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
+                                <!-- Show "New" badge if product created within last 30 days -->
+                                <c:if test="${not empty product.createdDate}">
+                                    <jsp:useBean id="now" class="java.util.Date"/>
+                                    <c:set var="daysDiff" value="${(now.time - product.createdDate.time) / (1000 * 60 * 60 * 24)}"/>
+                                    <c:if test="${daysDiff <= 30}">
+                                        <span class="label">New</span>
+                                    </c:if>
+                                </c:if>
+                                
+                                <!-- Show "Out of Stock" badge if no stock -->
+                                <c:if test="${product.totalStock == 0}">
+                                    <span class="label" style="background: #dc3545;">Hết hàng</span>
+                                </c:if>
+                                
                                 <ul class="product__hover">
-                                    <li><a href="#"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
-                                    <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.product.productID}"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt=""></a></li>
+                                    <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
+                                    <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" title="Xem chi tiết" onclick="event.stopPropagation();"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt=""></a></li>
                                 </ul>
                             </div>
                             <div class="product__item__text">
-                                <h6><a href="${pageContext.request.contextPath}/product-detail?id=${product.product.productID}">${product.product.productName}</a></h6>
-                                <a href="${pageContext.request.contextPath}/cart/add?id=${product.product.productID}" class="add-cart">+ Thêm vào giỏ</a>
-                                <div class="rating">
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star-o"></i>
-                                </div>
+                                <!-- Show brand if available -->
+                                <c:if test="${not empty product.brandName}">
+                                    <div class="product__brand" style="margin-bottom: 8px;">
+                                        <small style="color: #888; font-size: 12px;">
+                                            <i class="fa fa-tag"></i> ${product.brandName}
+                                        </small>
+                                    </div>
+                                </c:if>
+                                
+                                <h6><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}">${product.productName}</a></h6>
+                                
+                                <!-- Price display -->
                                 <c:choose>
                                     <c:when test="${product.minPrice != null && product.maxPrice != null}">
                                         <c:choose>
@@ -400,11 +418,30 @@
                                         <h5>Liên hệ</h5>
                                     </c:otherwise>
                                 </c:choose>
-                                <c:if test="${not empty product.categoryName}">
-                                    <div class="product__category">
-                                        <small class="text-muted">${product.categoryName}</small>
-                                    </div>
-                                </c:if>
+                                
+                                <!-- Add to cart button - disabled if out of stock -->
+                                <c:choose>
+                                    <c:when test="${product.totalStock > 0}">
+                                        <a href="${pageContext.request.contextPath}/cart/add?id=${product.productID}" class="add-cart">+ Thêm vào giỏ</a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <a href="#" class="add-cart" style="background: #ccc; cursor: not-allowed;" onclick="return false;">Hết hàng</a>
+                                    </c:otherwise>
+                                </c:choose>
+                                
+                                <!-- Category and stock info -->
+                                <div style="margin-top: 8px;">
+                                    <c:if test="${not empty product.categoryName}">
+                                        <small style="color: #666; font-size: 12px;">
+                                            <i class="fa fa-folder-o"></i> ${product.categoryName}
+                                        </small>
+                                    </c:if>
+                                    <c:if test="${product.totalStock > 0 && product.totalStock <= 10}">
+                                        <small style="color: #ff6b6b; font-size: 12px; margin-left: 10px;">
+                                            <i class="fa fa-exclamation-circle"></i> Chỉ còn ${product.totalStock} sản phẩm
+                                        </small>
+                                    </c:if>
+                                </div>
                             </div>
                         </div>
                     </div>
