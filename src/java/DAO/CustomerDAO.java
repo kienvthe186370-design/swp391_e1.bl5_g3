@@ -50,6 +50,28 @@ public class CustomerDAO extends DBContext {
         }
     }
     
+    /**
+     * Tạo khách hàng mới (cho admin) - có thể set IsEmailVerified
+     */
+    public boolean createCustomer(String fullName, String email, String password, String phone, boolean isEmailVerified) {
+        String sql = "INSERT INTO Customers (FullName, Email, PasswordHash, Phone, IsEmailVerified, IsActive, CreatedDate) "
+                   + "VALUES (?, ?, ?, ?, ?, 1, GETDATE())";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, fullName);
+            ps.setString(2, email);
+            ps.setString(3, PasswordUtil.hashPassword(password));
+            ps.setString(4, phone);
+            ps.setBoolean(5, isEmailVerified);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
+            return false;
+        }
+    }
+    
     public boolean isEmailExists(String email) {
         String sql = "SELECT COUNT(*) FROM Customers WHERE Email = ?";
         try (Connection conn = getConnection();
@@ -143,47 +165,7 @@ public class CustomerDAO extends DBContext {
         customer.setLastLogin(rs.getTimestamp("LastLogin"));
         return customer;
     }
-    /**
-     * Lấy danh sách khách hàng với filter và pagination (cho admin)
-     */
-    public List<Customer> getAllCustomers(String search, Boolean isActive, int page, int pageSize) {
-        List<Customer> list = new ArrayList<>();
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT * FROM Customers WHERE 1=1 ");
-        
-        if (search != null && !search.trim().isEmpty()) {
-            sql.append("AND (FullName LIKE ? OR Email LIKE ? OR Phone LIKE ?) ");
-        }
-        if (isActive != null) {
-            sql.append("AND IsActive = ? ");
-        }
-        sql.append("ORDER BY CreatedDate DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-        
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            
-            int paramIndex = 1;
-            if (search != null && !search.trim().isEmpty()) {
-                String searchTerm = "%" + search.trim() + "%";
-                ps.setString(paramIndex++, searchTerm);
-                ps.setString(paramIndex++, searchTerm);
-                ps.setString(paramIndex++, searchTerm);
-            }
-            if (isActive != null) {
-                ps.setBoolean(paramIndex++, isActive);
-            }
-            ps.setInt(paramIndex++, (page - 1) * pageSize);
-            ps.setInt(paramIndex++, pageSize);
-            
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                list.add(mapResultSetToCustomer(rs));
-            }
-        } catch (SQLException e) {
-            Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
-        }
-        return list;
-    }
+    
     /**
      * Lấy danh sách khách hàng với filter và pagination (cho admin)
      */
@@ -231,6 +213,7 @@ public class CustomerDAO extends DBContext {
         }
         return list;
     }
+    
     /**
      * Lấy thông tin chi tiết khách hàng theo ID
      */
@@ -270,6 +253,25 @@ public class CustomerDAO extends DBContext {
             return false;
         }
     }
+    
+    /**
+     * Cập nhật mật khẩu khách hàng
+     */
+    public boolean updatePassword(int customerID, String newPassword) {
+        String sql = "UPDATE Customers SET PasswordHash = ? WHERE CustomerID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, PasswordUtil.hashPassword(newPassword));
+            ps.setInt(2, customerID);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
+            return false;
+        }
+    }
+    
     /**
      * Khóa/Mở khóa tài khoản khách hàng
      */
