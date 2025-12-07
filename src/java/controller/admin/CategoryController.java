@@ -12,7 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * @author Admin
  */
-@WebServlet(name="CategoryController", urlPatterns={"/adminn/categories"})
+@WebServlet(name="CategoryController", urlPatterns={"/admin/categories"})
 public class CategoryController extends HttpServlet {
    
     private DAO.CategoryDAO categoryDAO = new DAO.CategoryDAO();
@@ -103,13 +103,13 @@ public class CategoryController extends HttpServlet {
         request.setAttribute("sortBy", sortBy);
         request.setAttribute("sortOrder", sortOrder);
         
-        request.getRequestDispatcher("/admin/categories.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-category-list.jsp").forward(request, response);
     }
     
     private void showAddForm(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
         request.setAttribute("attributes", attributeDAO.getAllAttributes());
-        request.getRequestDispatcher("/admin/category-form.jsp").forward(request, response);
+       request.getRequestDispatcher("/AdminLTE-3.2.0/admin-category-detail.jsp").forward(request, response);
     }
     
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
@@ -119,7 +119,7 @@ public class CategoryController extends HttpServlet {
         request.setAttribute("category", category);
         request.setAttribute("attributes", attributeDAO.getAllAttributes());
         request.setAttribute("categoryAttributes", categoryDAO.getCategoryAttributes(id));
-        request.getRequestDispatcher("/admin/category-form.jsp").forward(request, response);
+      request.getRequestDispatcher("/AdminLTE-3.2.0/admin-category-detail.jsp").forward(request, response);
     }
         private void addCategory(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {

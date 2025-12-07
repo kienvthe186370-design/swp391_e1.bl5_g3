@@ -95,6 +95,37 @@
           </a>
         </li>
 
+        <!-- Categories, Brands, Attributes -->
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <i class="nav-icon fas fa-database"></i>
+            <p>
+              Quản lý Dữ liệu
+              <i class="fas fa-angle-left right"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="<%= request.getContextPath() %>/admin/categories" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Danh mục sản phẩm </p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="<%= request.getContextPath() %>/admin/brands" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Thương hiệu</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="<%= request.getContextPath() %>/admin/attributes" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Thuộc tính sản phẩm</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+
         <!-- Slider -->
         <li class="nav-item">
           <a href="<%= request.getContextPath() %>/admin/slider" class="nav-link">

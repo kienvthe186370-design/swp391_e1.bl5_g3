@@ -17,7 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * @author Admin
  */
-@WebServlet(name="AttributeController", urlPatterns={"/adminn/attributes"})
+@WebServlet(name="AttributeController", urlPatterns={"/admin/attributes"})
 public class AttributeController extends HttpServlet {
    
     private DAO.AttributeDAO attributeDAO = new DAO.AttributeDAO();
@@ -47,6 +47,12 @@ public class AttributeController extends HttpServlet {
             case "deleteValue":
                 deleteValue(request, response);
                 break;
+            case "categories":
+                manageCategories(request, response);
+                break;
+            case "removeCategory":
+                removeCategory(request, response);
+                break;
             default:
                 listAttributes(request, response);
                 break;
@@ -67,6 +73,10 @@ public class AttributeController extends HttpServlet {
             updateAttribute(request, response);
         } else if ("addValue".equals(action)) {
             addValue(request, response);
+        } else if ("assignCategory".equals(action)) {
+            assignCategory(request, response);
+        } else if ("removeCategory".equals(action)) {
+            removeCategory(request, response);
         }
     }
     
@@ -115,12 +125,12 @@ public class AttributeController extends HttpServlet {
         request.setAttribute("sortBy", sortBy);
         request.setAttribute("sortOrder", sortOrder);
         
-        request.getRequestDispatcher("/admin/attributes.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-attribute-list.jsp").forward(request, response);
     }
     
     private void showAddForm(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        request.getRequestDispatcher("/admin/attribute-form.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-attribute-detail.jsp").forward(request, response);
     }
     
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
@@ -128,7 +138,7 @@ public class AttributeController extends HttpServlet {
         int id = Integer.parseInt(request.getParameter("id"));
         entity.ProductAttribute attr = attributeDAO.getAttributeByID(id);
         request.setAttribute("attribute", attr);
-        request.getRequestDispatcher("/admin/attribute-form.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-attribute-detail.jsp").forward(request, response);
     }
     
     private void addAttribute(HttpServletRequest request, HttpServletResponse response)
@@ -190,7 +200,7 @@ public class AttributeController extends HttpServlet {
         entity.ProductAttribute attr = attributeDAO.getAttributeByID(attrId);
         request.setAttribute("attribute", attr);
         request.setAttribute("values", attributeDAO.getValuesByAttributeID(attrId));
-        request.getRequestDispatcher("/admin/attribute-values.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-attribute-values.jsp").forward(request, response);
     }
     
     private void addValue(HttpServletRequest request, HttpServletResponse response)
@@ -224,6 +234,62 @@ public class AttributeController extends HttpServlet {
             response.sendRedirect("attributes?action=values&id=" + attrId + "&msg=delete_success");
         } else {
             response.sendRedirect("attributes?action=values&id=" + attrId + "&msg=delete_fail");
+        }
+    }
+    
+    private void manageCategories(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        int attrId = Integer.parseInt(request.getParameter("id"));
+        entity.ProductAttribute attr = attributeDAO.getAttributeByID(attrId);
+        
+        // Get all categories
+        DAO.CategoryDAO categoryDAO = new DAO.CategoryDAO();
+        java.util.List<entity.Category> allCategories = categoryDAO.getAllCategories();
+        
+        // Get categories already assigned to this attribute
+        java.util.List<entity.CategoryAttribute> assignedCategories = categoryDAO.getCategoryAttributesByAttribute(attrId);
+        
+        request.setAttribute("attribute", attr);
+        request.setAttribute("allCategories", allCategories);
+        request.setAttribute("assignedCategories", assignedCategories);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-attribute-categories.jsp").forward(request, response);
+    }
+    
+    private void assignCategory(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        try {
+            int attributeID = Integer.parseInt(request.getParameter("attributeID"));
+            int categoryID = Integer.parseInt(request.getParameter("categoryID"));
+            boolean isRequired = "on".equals(request.getParameter("isRequired"));
+            int displayOrder = Integer.parseInt(request.getParameter("displayOrder"));
+            
+            DAO.CategoryDAO categoryDAO = new DAO.CategoryDAO();
+            entity.CategoryAttribute ca = new entity.CategoryAttribute(0, categoryID, attributeID, isRequired, displayOrder);
+            boolean success = categoryDAO.addCategoryAttribute(ca);
+            
+            if (success) {
+                response.sendRedirect("attributes?action=categories&id=" + attributeID + "&msg=assign_success");
+            } else {
+                response.sendRedirect("attributes?action=categories&id=" + attributeID + "&msg=assign_fail");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect("attributes?msg=error");
+        }
+    }
+    
+    private void removeCategory(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        int attributeID = Integer.parseInt(request.getParameter("attributeID"));
+        int categoryID = Integer.parseInt(request.getParameter("categoryID"));
+        
+        DAO.CategoryDAO categoryDAO = new DAO.CategoryDAO();
+        boolean success = categoryDAO.removeCategoryAttribute(categoryID, attributeID);
+        
+        if (success) {
+            response.sendRedirect("attributes?action=categories&id=" + attributeID + "&msg=remove_success");
+        } else {
+            response.sendRedirect("attributes?action=categories&id=" + attributeID + "&msg=remove_fail");
         }
     }
 
