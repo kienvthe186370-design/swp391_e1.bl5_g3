@@ -1,9 +1,3 @@
-<%-- 
-    Document   : index
-    Created on : Dec 5, 2025, 3:37:35 PM
-    Author     : ASUS
---%>
-
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="entity.Employee" %>
 <%
@@ -191,15 +185,6 @@
             <a href="#" class="nav-link">
               <i class="nav-icon fas fa-ticket-alt"></i>
               <p>Voucher</p>
-            </a>
-          </li>
-          
-          <!-- Slider -->
-          <li class="nav-item">
-            <a href="<%= request.getContextPath() %>/admin/slider" class="nav-link">
-
-              <i class="nav-icon fas fa-fw fa-images "></i>
-              <p>Slider</p>
             </a>
           </li>
 

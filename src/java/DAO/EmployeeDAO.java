@@ -59,6 +59,24 @@ public class EmployeeDAO extends DBContext {
         }
     }
     
+
+    public boolean isEmailExists(String email) {
+        String sql = "SELECT COUNT(*) FROM Employees WHERE Email = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(EmployeeDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return false;
+    }
+    
     private Employee mapResultSetToEmployee(ResultSet rs) throws SQLException {
         Employee employee = new Employee();
         employee.setEmployeeID(rs.getInt("EmployeeID"));
