@@ -18,7 +18,6 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Nếu đã đăng nhập, redirect về trang tương ứng
         HttpSession session = request.getSession(false);
         if (session != null) {
             if (session.getAttribute("customer") != null) {
@@ -40,7 +39,7 @@ public class LoginServlet extends HttpServlet {
         
         String email = request.getParameter("email");
         String password = request.getParameter("password");
-        String userType = request.getParameter("userType"); // "customer" or "employee"
+        String userType = request.getParameter("userType"); 
         
         if (email == null || email.trim().isEmpty() || 
             password == null || password.trim().isEmpty()) {
@@ -50,8 +49,6 @@ public class LoginServlet extends HttpServlet {
         }
         
         HttpSession session = request.getSession();
-        
-        // Mặc định thử đăng nhập Customer trước
         if (userType == null || userType.equals("customer")) {
             CustomerDAO customerDAO = new CustomerDAO();
             Customer customer = customerDAO.login(email, password);
@@ -66,8 +63,7 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
         }
-        
-        // Nếu không phải customer, thử đăng nhập Employee
+
         EmployeeDAO employeeDAO = new EmployeeDAO();
         Employee employee = employeeDAO.login(email, password);
         
@@ -77,8 +73,6 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("userName", employee.getFullName());
             session.setAttribute("userRole", employee.getRole());
             session.setAttribute("userType", "employee");
-            
-            // Redirect dựa trên role
             String redirectUrl = getRedirectUrlByRole(employee.getRole());
             response.sendRedirect(redirectUrl);
         } else {
@@ -91,7 +85,7 @@ public class LoginServlet extends HttpServlet {
     private String getRedirectUrlByRole(String role) {
         switch (role.toLowerCase()) {
             case "admin":
-                return "admin/dashboard";
+                return "AdminLTE-3.2.0/index.jsp";
             case "seller":
                 return "seller/dashboard";
             case "sellermanager":

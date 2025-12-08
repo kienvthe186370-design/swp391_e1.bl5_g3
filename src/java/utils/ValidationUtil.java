@@ -14,13 +14,10 @@ public class ValidationUtil {
         if (email == null || email.trim().isEmpty()) {
             return false;
         }
-        
         email = email.trim();
-        
         if (email.length() > 100) {
             return false;
-        }
-        
+        }       
         Matcher matcher = emailPattern.matcher(email);
         return matcher.matches();
     }
@@ -39,7 +36,6 @@ public class ValidationUtil {
         int atIndex = email.indexOf('@');
         return email.substring(atIndex + 1);
     }
-    
     private static final String PHONE_PATTERN = 
         "^(\\+84|0)[0-9]{9,10}$";
     
@@ -48,10 +44,8 @@ public class ValidationUtil {
     public static boolean isValidPhone(String phone) {
         if (phone == null || phone.trim().isEmpty()) {
             return false;
-        }
-        
-        phone = phone.replaceAll("[\\s-]", "");
-        
+        }        
+        phone = phone.replaceAll("[\\s-]", "");       
         Matcher matcher = phonePattern.matcher(phone);
         return matcher.matches();
     }
@@ -59,30 +53,24 @@ public class ValidationUtil {
     public static String normalizePhone(String phone) {
         if (phone == null) {
             return null;
-        }
-        
-        phone = phone.replaceAll("[\\s-]", "");
-        
+        }       
+        phone = phone.replaceAll("[\\s-]", "");        
         if (phone.startsWith("+84")) {
             phone = "0" + phone.substring(3);
-        }
-        
+        }        
         return phone;
     }
     
     public static boolean isValidPassword(String password) {
         if (password == null || password.isEmpty()) {
             return false;
-        }
-        
+        }       
         if (password.length() < 6) {
             return false;
-        }
-        
+        } 
         if (password.length() > 50) {
             return false;
         }
-        
         return true;
     }
     
@@ -90,33 +78,29 @@ public class ValidationUtil {
         if (password == null || password.length() < 8) {
             return false;
         }
-        
         boolean hasUpperCase = false;
         boolean hasLowerCase = false;
         boolean hasDigit = false;
-        
         for (char c : password.toCharArray()) {
             if (Character.isUpperCase(c)) hasUpperCase = true;
             if (Character.isLowerCase(c)) hasLowerCase = true;
             if (Character.isDigit(c)) hasDigit = true;
         }
-        
         return hasUpperCase && hasLowerCase && hasDigit;
     }
-    
+   
     public static String getPasswordError(String password) {
         if (password == null || password.isEmpty()) {
             return "Mật khẩu không được để trống";
         }
-        
         if (password.length() < 6) {
             return "Mật khẩu phải có ít nhất 6 ký tự";
         }
-        
+
         if (password.length() > 50) {
             return "Mật khẩu không được quá 50 ký tự";
         }
-        
+
         return null;
     }
     
@@ -124,13 +108,10 @@ public class ValidationUtil {
         if (name == null || name.trim().isEmpty()) {
             return false;
         }
-        
         name = name.trim();
-        
         if (name.length() < 2 || name.length() > 100) {
             return false;
         }
-        
         String namePattern = "^[\\p{L}\\s]+$";
         return name.matches(namePattern);
     }
