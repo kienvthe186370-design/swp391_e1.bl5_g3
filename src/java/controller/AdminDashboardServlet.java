@@ -19,7 +19,8 @@ public class AdminDashboardServlet extends HttpServlet {
         HttpSession session = request.getSession();
         Employee employee = (Employee) session.getAttribute("employee");
         
-        if (employee != null && "Admin".equalsIgnoreCase(employee.getRole())) {
+        // Dashboard is accessible to all logged-in employees (all roles)
+        if (employee != null) {
             // Set attributes for unified layout
             request.setAttribute("contentPage", "dashboard");
             request.setAttribute("activePage", "dashboard");
