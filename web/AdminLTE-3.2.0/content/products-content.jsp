@@ -277,6 +277,13 @@
                                             <td class="text-center">
                                                 <div class="stock-info">
                                                     <c:choose>
+                                                        <%-- Sản phẩm mới tạo, chưa có biến thể --%>
+                                                        <c:when test="${item.variantCount == 0}">
+                                                            <span class="badge badge-info">
+                                                                <i class="fas fa-clock"></i> Mới tạo
+                                                            </span>
+                                                        </c:when>
+                                                        <%-- Có biến thể nhưng hết hàng --%>
                                                         <c:when test="${item.totalStock == 0}">
                                                             <span class="badge badge-danger">Hết hàng</span>
                                                         </c:when>
@@ -363,7 +370,7 @@
                 </div>
                 
                 <!-- Pagination -->
-                <c:if test="${totalPages > 1}">
+                <c:if test="${totalPages >= 1}">
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <p class="text-muted">
@@ -375,10 +382,10 @@
                         <div class="col-md-6">
                             <nav aria-label="Page navigation">
                                 <ul class="pagination justify-content-end mb-0">
-                                    <!-- Previous -->
+                                    <!-- Previous Button -->
                                     <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
-                                        <a class="page-link" href="?page=${currentPage - 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&status=${status}&sortBy=${sortBy}&sortOrder=${sortOrder}">
-                                            <i class="fas fa-chevron-left"></i>
+                                        <a class="page-link" href="?page=${currentPage - 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&status=${status}&sortBy=${sortBy}&sortOrder=${sortOrder}" style="min-width: 80px; text-align: center;">
+                                            Trước
                                         </a>
                                     </li>
                                     
@@ -399,10 +406,10 @@
                                         </c:if>
                                     </c:forEach>
                                     
-                                    <!-- Next -->
+                                    <!-- Next Button -->
                                     <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
-                                        <a class="page-link" href="?page=${currentPage + 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&status=${status}&sortBy=${sortBy}&sortOrder=${sortOrder}">
-                                            <i class="fas fa-chevron-right"></i>
+                                        <a class="page-link" href="?page=${currentPage + 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&status=${status}&sortBy=${sortBy}&sortOrder=${sortOrder}" style="min-width: 80px; text-align: center;">
+                                            Sau
                                         </a>
                                     </li>
                                 </ul>

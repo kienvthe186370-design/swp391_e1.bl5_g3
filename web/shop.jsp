@@ -29,7 +29,6 @@
             padding: 30px;
             border-radius: 8px;
         }
-        
         .shop__sidebar__title {
             font-size: 18px;
             font-weight: 700;
@@ -37,11 +36,9 @@
             padding-bottom: 15px;
             border-bottom: 2px solid #e1e1e1;
         }
-        
         .shop__sidebar__filter {
             margin-bottom: 30px;
         }
-        
         .shop__sidebar__filter label {
             display: block;
             margin-bottom: 10px;
@@ -49,59 +46,34 @@
             font-size: 14px;
             color: #666;
         }
-        
         .shop__sidebar__filter input[type="checkbox"] {
             margin-right: 8px;
         }
-        
         .shop__sidebar__filter input[type="checkbox"]:checked + span {
             color: #ca1515;
             font-weight: 600;
         }
-        
         .shop__product__option {
             margin-bottom: 30px;
         }
-        
         .shop__product__option__right {
             display: flex;
             align-items: center;
             justify-content: flex-end;
             gap: 15px;
+            flex-wrap: wrap;
         }
-        
         .shop__product__option__right p {
             margin: 0;
             color: #666;
             font-size: 14px;
         }
-        
         .shop__product__option__right select {
             padding: 8px 15px;
             border: 1px solid #e1e1e1;
             border-radius: 4px;
             font-size: 14px;
         }
-        
-        .product__discount__percent {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #ca1515;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .product__price__old {
-            text-decoration: line-through;
-            color: #999;
-            font-size: 14px;
-            margin-right: 10px;
-        }
-        
         .pagination {
             display: flex;
             justify-content: center;
@@ -109,9 +81,7 @@
             gap: 5px;
             margin-top: 40px;
         }
-        
-        .pagination a,
-        .pagination span {
+        .pagination a, .pagination span {
             display: inline-block;
             padding: 8px 15px;
             border: 1px solid #e1e1e1;
@@ -120,28 +90,23 @@
             text-decoration: none;
             transition: all 0.3s;
         }
-        
         .pagination a:hover {
             background: #ca1515;
             color: white;
             border-color: #ca1515;
         }
-        
         .pagination .active {
             background: #ca1515;
             color: white;
             border-color: #ca1515;
         }
-        
         .pagination .disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
-        
         .search-box {
             margin-bottom: 20px;
         }
-        
         .search-box input {
             width: 100%;
             padding: 10px 15px;
@@ -149,7 +114,6 @@
             border-radius: 4px;
             font-size: 14px;
         }
-        
         .search-box button {
             width: 100%;
             margin-top: 10px;
@@ -161,18 +125,15 @@
             cursor: pointer;
             font-weight: 600;
         }
-        
         .search-box button:hover {
             background: #a01010;
         }
-        
         .filter-tags {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 20px;
         }
-        
         .filter-tag {
             display: inline-flex;
             align-items: center;
@@ -183,18 +144,70 @@
             font-size: 13px;
             color: #666;
         }
-        
         .filter-tag .remove {
             cursor: pointer;
             color: #ca1515;
             font-weight: bold;
         }
-        
         .clear-filters {
             color: #ca1515;
             cursor: pointer;
             font-size: 13px;
             text-decoration: underline;
+        }
+        /* Hide hover effect that shows product name */
+        .product__item .product__hover {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        .product__item:hover .product__hover {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        .product__item:hover .product__item__pic:before,
+        .product__item:hover .product__item__pic:after {
+            display: none !important;
+            opacity: 0 !important;
+            background: transparent !important;
+        }
+        .product__item__pic:before,
+        .product__item__pic:after {
+            display: none !important;
+        }
+        /* Product name styling - FORCE VISIBLE */
+        .product__item__text h6 {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            margin-bottom: 8px !important;
+            min-height: 40px;
+            position: relative !important;
+        }
+        .product__item:hover .product__item__text h6 {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .product__item__text h6 a {
+            color: #111 !important;
+            font-size: 14px !important;
+            line-height: 1.4;
+            font-weight: 600;
+            display: inline !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .product__item__text h6 a:hover {
+            color: #ca1515 !important;
+        }
+        /* Price styling */
+        .product-price {
+            color: #ca1515 !important;
+            font-weight: 600 !important;
+            font-size: 14px !important;
+            margin-bottom: 5px !important;
         }
     </style>
 </head>
@@ -287,11 +300,20 @@
                     <!-- Sort and Display Options -->
                     <div class="shop__product__option">
                         <div class="row">
-                            <div class="col-lg-6 col-md-6 col-sm-6">
-                                <p>Hiển thị ${(currentPage - 1) * pageSize + 1}–${currentPage * pageSize > totalProducts ? totalProducts : currentPage * pageSize} trong tổng số ${totalProducts} sản phẩm</p>
+                            <div class="col-lg-4 col-md-4 col-sm-12">
+                                <p>Hiển thị ${(currentPage - 1) * pageSize + 1}–${currentPage * pageSize > totalProducts ? totalProducts : currentPage * pageSize} / ${totalProducts} sản phẩm</p>
                             </div>
-                            <div class="col-lg-6 col-md-6 col-sm-6">
+                            <div class="col-lg-8 col-md-8 col-sm-12">
                                 <div class="shop__product__option__right">
+                                    <p>Khoảng giá:</p>
+                                    <select onchange="filterByPriceRange(this.value)">
+                                        <option value="" ${empty minPrice && empty maxPrice ? 'selected' : ''}>Tất cả</option>
+                                        <option value="0-500000" ${minPrice == '0' && maxPrice == '500000' ? 'selected' : ''}>Dưới 500K</option>
+                                        <option value="500000-1000000" ${minPrice == '500000' && maxPrice == '1000000' ? 'selected' : ''}>500K - 1 triệu</option>
+                                        <option value="1000000-2000000" ${minPrice == '1000000' && maxPrice == '2000000' ? 'selected' : ''}>1 - 2 triệu</option>
+                                        <option value="2000000-5000000" ${minPrice == '2000000' && maxPrice == '5000000' ? 'selected' : ''}>2 - 5 triệu</option>
+                                        <option value="5000000-" ${minPrice == '5000000' && empty maxPrice ? 'selected' : ''}>Trên 5 triệu</option>
+                                    </select>
                                     <p>Sắp xếp:</p>
                                     <select onchange="sortProducts(this.value)">
                                         <option value="date-desc" ${sortBy == 'date' && sortOrder == 'desc' ? 'selected' : ''}>Mới nhất</option>
@@ -310,11 +332,8 @@
                     <div class="row">
                         <c:forEach var="product" items="${products}">
                             <div class="col-lg-4 col-md-6 col-sm-6">
-                                <div class="product__item">
-                                    <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}"
-                                         style="cursor: pointer;" 
-                                         onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
-                                        <!-- Show "New" badge if product created within last 30 days -->
+                                <div class="product__item" style="cursor: pointer;" onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
+                                    <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}">
                                         <c:if test="${not empty product.createdDate}">
                                             <jsp:useBean id="now" class="java.util.Date"/>
                                             <c:set var="daysDiff" value="${(now.time - product.createdDate.time) / (1000 * 60 * 60 * 24)}"/>
@@ -322,57 +341,39 @@
                                                 <span class="label">New</span>
                                             </c:if>
                                         </c:if>
-                                        
-                                        <!-- Show "Out of Stock" badge if no stock -->
-                                        <c:if test="${product.totalStock == 0}">
-                                            <span class="label" style="background: #dc3545;">Hết hàng</span>
-                                        </c:if>
-                                        
-                                        <!-- Show discount percentage if compareAtPrice exists -->
-                                        <c:if test="${product.minPrice != null && product.maxPrice != null}">
-                                            <c:set var="hasDiscount" value="false"/>
-                                            <!-- This is simplified - in real scenario, check variants for compareAtPrice -->
-                                        </c:if>
-                                        
-                                        <ul class="product__hover">
-                                            <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
-                                            <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" title="Xem chi tiết" onclick="event.stopPropagation();"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt=""></a></li>
-                                        </ul>
+                                        <c:choose>
+                                            <c:when test="${product.variantCount == 0}">
+                                                <span class="label" style="background: #17a2b8;">Coming Soon</span>
+                                            </c:when>
+                                            <c:when test="${product.totalStock == 0}">
+                                                <span class="label" style="background: #dc3545;">Hết hàng</span>
+                                            </c:when>
+                                        </c:choose>
                                     </div>
                                     <div class="product__item__text">
-                                        <!-- Brand -->
-                                        <c:if test="${not empty product.brandName}">
-                                            <div style="margin-bottom: 5px;">
-                                                <small style="color: #999; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
-                                                    ${product.brandName}
-                                                </small>
-                                            </div>
-                                        </c:if>
-                                        
-                                        <h6><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}">${product.productName}</a></h6>
-                                        
-                                        <!-- Price -->
+                                        <h6 style="margin-bottom: 8px; min-height: 40px;"><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" onclick="event.stopPropagation();">${product.productName}</a></h6>
                                         <c:choose>
                                             <c:when test="${product.minPrice != null && product.maxPrice != null}">
                                                 <c:choose>
                                                     <c:when test="${product.minPrice.compareTo(product.maxPrice) == 0}">
-                                                        <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
+                                                        <p class="product-price" style="color: #ca1515; font-weight: 600; font-size: 14px; margin-bottom: 5px;"><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</p>
                                                     </c:when>
                                                     <c:otherwise>
-                                                        <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫ - <fmt:formatNumber value="${product.maxPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
+                                                        <p class="product-price" style="color: #ca1515; font-weight: 600; font-size: 14px; margin-bottom: 5px;"><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫ - <fmt:formatNumber value="${product.maxPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</p>
                                                     </c:otherwise>
                                                 </c:choose>
                                             </c:when>
                                             <c:otherwise>
-                                                <h5>Liên hệ</h5>
+                                                <p class="product-price" style="color: #ca1515; font-weight: 600; font-size: 14px; margin-bottom: 5px;">Liên hệ</p>
                                             </c:otherwise>
                                         </c:choose>
-                                        
-                                        <!-- Stock warning -->
+                                        <c:if test="${not empty product.brandName}">
+                                            <small style="color: #999; font-size: 11px;">${product.brandName}</small>
+                                        </c:if>
                                         <c:if test="${product.totalStock > 0 && product.totalStock <= 10}">
-                                            <div style="margin-top: 8px;">
-                                                <small style="color: #ff6b6b; font-size: 12px;">
-                                                    <i class="fa fa-exclamation-circle"></i> Chỉ còn ${product.totalStock} sản phẩm
+                                            <div style="margin-top: 5px;">
+                                                <small style="color: #ff6b6b; font-size: 11px;">
+                                                    <i class="fa fa-exclamation-circle"></i> Còn ${product.totalStock} sp
                                                 </small>
                                             </div>
                                         </c:if>
@@ -381,7 +382,6 @@
                             </div>
                         </c:forEach>
                         
-                        <!-- No products message -->
                         <c:if test="${empty products}">
                             <div class="col-12 text-center py-5">
                                 <i class="fa fa-inbox" style="font-size: 48px; color: #ccc; margin-bottom: 20px;"></i>
@@ -392,28 +392,24 @@
                     </div>
 
                     <!-- Pagination -->
-                    <c:if test="${totalPages > 1}">
+                    <c:if test="${totalPages >= 1}">
                         <div class="pagination">
-                            <!-- Previous -->
                             <c:choose>
                                 <c:when test="${currentPage > 1}">
-                                    <a href="?page=${currentPage - 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&sortBy=${sortBy}&sortOrder=${sortOrder}">
-                                        <i class="fa fa-chevron-left"></i>
-                                    </a>
+                                    <a href="?page=${currentPage - 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&minPrice=${minPrice}&maxPrice=${maxPrice}&sortBy=${sortBy}&sortOrder=${sortOrder}" style="min-width: 80px; text-align: center;">Trước</a>
                                 </c:when>
                                 <c:otherwise>
-                                    <span class="disabled"><i class="fa fa-chevron-left"></i></span>
+                                    <span class="disabled" style="min-width: 80px; text-align: center;">Trước</span>
                                 </c:otherwise>
                             </c:choose>
                             
-                            <!-- Page numbers -->
                             <c:forEach begin="1" end="${totalPages}" var="i">
                                 <c:choose>
                                     <c:when test="${i == currentPage}">
                                         <span class="active">${i}</span>
                                     </c:when>
                                     <c:when test="${i == 1 || i == totalPages || (i >= currentPage - 2 && i <= currentPage + 2)}">
-                                        <a href="?page=${i}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&sortBy=${sortBy}&sortOrder=${sortOrder}">${i}</a>
+                                        <a href="?page=${i}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&minPrice=${minPrice}&maxPrice=${maxPrice}&sortBy=${sortBy}&sortOrder=${sortOrder}">${i}</a>
                                     </c:when>
                                     <c:when test="${i == 2 && currentPage > 4}">
                                         <span>...</span>
@@ -424,15 +420,12 @@
                                 </c:choose>
                             </c:forEach>
                             
-                            <!-- Next -->
                             <c:choose>
                                 <c:when test="${currentPage < totalPages}">
-                                    <a href="?page=${currentPage + 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&sortBy=${sortBy}&sortOrder=${sortOrder}">
-                                        <i class="fa fa-chevron-right"></i>
-                                    </a>
+                                    <a href="?page=${currentPage + 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&minPrice=${minPrice}&maxPrice=${maxPrice}&sortBy=${sortBy}&sortOrder=${sortOrder}" style="min-width: 80px; text-align: center;">Sau</a>
                                 </c:when>
                                 <c:otherwise>
-                                    <span class="disabled"><i class="fa fa-chevron-right"></i></span>
+                                    <span class="disabled" style="min-width: 80px; text-align: center;">Sau</span>
                                 </c:otherwise>
                             </c:choose>
                         </div>
@@ -441,11 +434,9 @@
             </div>
         </div>
     </section>
-    <!-- Shop Section End -->
 
     <%@include file="footer.jsp" %>
 
-    <!-- Js Plugins -->
     <script src="js/jquery-3.3.1.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/jquery.nice-select.min.js"></script>
@@ -458,49 +449,49 @@
     <script src="js/main.js"></script>
     
     <script>
-        // Filter by category
         function filterByCategory(categoryId) {
             const currentParams = new URLSearchParams(window.location.search);
             const currentCategoryId = currentParams.get('categoryId');
-            
             if (currentCategoryId == categoryId) {
-                // Uncheck - remove filter
                 currentParams.delete('categoryId');
             } else {
-                // Check - add filter
                 currentParams.set('categoryId', categoryId);
             }
-            
-            currentParams.set('page', '1'); // Reset to page 1
+            currentParams.set('page', '1');
             window.location.href = '${pageContext.request.contextPath}/shop?' + currentParams.toString();
         }
         
-        // Filter by brand
         function filterByBrand(brandId) {
             const currentParams = new URLSearchParams(window.location.search);
             const currentBrandId = currentParams.get('brandId');
-            
             if (currentBrandId == brandId) {
-                // Uncheck - remove filter
                 currentParams.delete('brandId');
             } else {
-                // Check - add filter
                 currentParams.set('brandId', brandId);
             }
-            
-            currentParams.set('page', '1'); // Reset to page 1
+            currentParams.set('page', '1');
             window.location.href = '${pageContext.request.contextPath}/shop?' + currentParams.toString();
         }
         
-        // Sort products
+        function filterByPriceRange(value) {
+            const currentParams = new URLSearchParams(window.location.search);
+            currentParams.delete('minPrice');
+            currentParams.delete('maxPrice');
+            if (value) {
+                const [min, max] = value.split('-');
+                if (min) currentParams.set('minPrice', min);
+                if (max) currentParams.set('maxPrice', max);
+            }
+            currentParams.set('page', '1');
+            window.location.href = '${pageContext.request.contextPath}/shop?' + currentParams.toString();
+        }
+        
         function sortProducts(value) {
             const [sortBy, sortOrder] = value.split('-');
             const currentParams = new URLSearchParams(window.location.search);
-            
             currentParams.set('sortBy', sortBy);
             currentParams.set('sortOrder', sortOrder);
-            currentParams.set('page', '1'); // Reset to page 1
-            
+            currentParams.set('page', '1');
             window.location.href = '${pageContext.request.contextPath}/shop?' + currentParams.toString();
         }
     </script>
