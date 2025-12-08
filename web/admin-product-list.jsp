@@ -129,7 +129,22 @@
                         </c:if>
                     </td>
                     <td>
-                        <div class="stock-number">${p.totalStock}</div>
+                        <c:choose>
+                            <%-- Sản phẩm mới tạo, chưa có biến thể --%>
+                            <c:when test="${p.variantCount == 0}">
+                                <span class="badge bg-info">Mới tạo</span>
+                            </c:when>
+                            <%-- Có biến thể nhưng hết hàng --%>
+                            <c:when test="${p.totalStock == 0}">
+                                <span class="badge bg-danger">Hết hàng</span>
+                            </c:when>
+                            <c:when test="${p.totalStock <= 10}">
+                                <span class="badge bg-warning text-dark">${p.totalStock}</span>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="stock-number">${p.totalStock}</div>
+                            </c:otherwise>
+                        </c:choose>
                         <c:if test="${p.reservedStock > 0}">
                             <div class="reserved-stock">Giữ: ${p.reservedStock}</div>
                         </c:if>

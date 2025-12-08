@@ -258,97 +258,22 @@
                 </h3>
             </div>
             <div class="card-body">
-                <c:choose>
-                    <c:when test="${empty variants}">
-                        <div class="text-center py-4">
+                <div class="text-center py-4">
+                    <c:choose>
+                        <c:when test="${empty variants}">
                             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Chưa có biến thể nào</p>
-                        </div>
-                    </c:when>
-                    <c:otherwise>
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover variant-table">
-                                <thead>
-                                    <tr>
-                                        <th>SKU</th>
-                                        <th class="text-right">Giá vốn</th>
-                                        <th class="text-right">Giá bán</th>
-                                        <th class="text-right">Giá so sánh</th>
-                                        <th class="text-center">Tồn kho</th>
-                                        <th class="text-center">Đã giữ</th>
-                                        <th class="text-center">Khả dụng</th>
-                                        <th class="text-right">Lợi nhuận</th>
-                                        <th class="text-center">Trạng thái</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <c:forEach var="variant" items="${variants}">
-                                        <tr>
-                                            <td><strong>${variant.sku}</strong></td>
-                                            <td class="text-right">
-                                                <fmt:formatNumber value="${variant.costPrice}" type="number" groupingUsed="true"/>đ
-                                            </td>
-                                            <td class="text-right">
-                                                <fmt:formatNumber value="${variant.sellingPrice}" type="number" groupingUsed="true"/>đ
-                                            </td>
-                                            <td class="text-right">
-                                                <c:choose>
-                                                    <c:when test="${not empty variant.compareAtPrice}">
-                                                        <fmt:formatNumber value="${variant.compareAtPrice}" type="number" groupingUsed="true"/>đ
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <span class="text-muted">-</span>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </td>
-                                            <td class="text-center">
-                                                <c:choose>
-                                                    <c:when test="${variant.stock == 0}">
-                                                        <span class="out-of-stock">${variant.stock}</span>
-                                                    </c:when>
-                                                    <c:when test="${variant.stock <= 10}">
-                                                        <span class="low-stock">${variant.stock}</span>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        ${variant.stock}
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </td>
-                                            <td class="text-center">${variant.reservedStock}</td>
-                                            <td class="text-center">
-                                                <strong>${variant.availableStock}</strong>
-                                            </td>
-                                            <td class="text-right">
-                                                <c:choose>
-                                                    <c:when test="${variant.profitMargin >= 0}">
-                                                        <span class="profit-positive">
-                                                            <fmt:formatNumber value="${variant.profitMargin}" type="number" maxFractionDigits="1"/>%
-                                                        </span>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <span class="profit-negative">
-                                                            <fmt:formatNumber value="${variant.profitMargin}" type="number" maxFractionDigits="1"/>%
-                                                        </span>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </td>
-                                            <td class="text-center">
-                                                <c:choose>
-                                                    <c:when test="${variant.isActive}">
-                                                        <span class="badge badge-success">Hoạt động</span>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <span class="badge badge-danger">Ngừng</span>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </td>
-                                        </tr>
-                                    </c:forEach>
-                                </tbody>
-                            </table>
-                        </div>
-                    </c:otherwise>
-                </c:choose>
+                            <p class="text-muted mb-3">Chưa có biến thể nào</p>
+                        </c:when>
+                        <c:otherwise>
+                            <i class="fas fa-boxes fa-3x text-info mb-3"></i>
+                            <p class="text-muted mb-3">Sản phẩm có ${fn:length(variants)} biến thể</p>
+                        </c:otherwise>
+                    </c:choose>
+                    <a href="${pageContext.request.contextPath}/admin/product-variants?productId=${product.productID}" 
+                       class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus-circle"></i> Quản lý biến thể
+                    </a>
+                </div>
             </div>
         </div>
         
