@@ -98,13 +98,13 @@ public class SliderController extends HttpServlet {
         request.setAttribute("search", search);
         request.setAttribute("status", status);
         
-        request.getRequestDispatcher("/admin-slider-list.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-slider-list.jsp").forward(request, response);
     }
     
     // Show add slider form
     private void showAddForm(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        request.getRequestDispatcher("/admin-slider-detail.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-slider-detail.jsp").forward(request, response);
     }
     
     // Show edit slider form
@@ -115,7 +115,7 @@ public class SliderController extends HttpServlet {
         
         if (slider != null) {
             request.setAttribute("slider", slider);
-            request.getRequestDispatcher("/admin-slider-detail.jsp").forward(request, response);
+            request.getRequestDispatcher("/AdminLTE-3.2.0/admin-slider-detail.jsp").forward(request, response);
         } else {
             response.sendRedirect(request.getContextPath() + "/admin/slider?error=notfound");
         }

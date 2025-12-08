@@ -26,10 +26,10 @@
 <div class="wrapper">
 
   <!-- Navbar -->
-  <%@ include file="navbar.jsp" %>
+  <jsp:include page="includes/admin-header.jsp" />
 
-  <!-- Sidebar -->
-  <%@ include file="sidebar.jsp" %>
+  <!-- Sidebar - Using unified sidebar component -->
+  <jsp:include page="includes/admin-sidebar.jsp" />
 
   <!-- Content Wrapper -->
   <div class="content-wrapper">
@@ -182,17 +182,7 @@
   </div>
 
   <!-- Footer -->
-  <footer class="main-footer">
-    <strong>Copyright &copy; 2025 <a href="#">Pickleball Shop</a>.</strong> All rights reserved.
-  </footer>
-</div>
-
-<!-- jQuery -->
-<script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>
-<!-- Bootstrap 4 -->
-<script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<!-- AdminLTE App -->
-<script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
+  <jsp:include page="includes/admin-footer.jsp" />
 
 <script>
 // Preview icon when class is entered
@@ -222,5 +212,3 @@ $('#categoryForm').on('submit', function(e) {
     return true;
 });
 </script>
-</body>
-</html>
