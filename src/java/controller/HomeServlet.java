@@ -70,7 +70,7 @@ public class HomeServlet extends HttpServlet {
             
             // 2. Load Featured Products (12 sản phẩm mới nhất)
             DAO.ProductDAO productDAO = new DAO.ProductDAO();
-            List<dto.ProductListDTO> featuredProducts = productDAO.getProducts(
+            List<java.util.Map<String, Object>> featuredProducts = productDAO.getProducts(
                 null, null, null, true, "date", "desc", 1, 12
             );
             request.setAttribute("featuredProducts", featuredProducts);

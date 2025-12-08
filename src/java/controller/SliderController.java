@@ -1,3 +1,8 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
+ */
+
 package controller;
 
 import DAO.SliderDAO;
@@ -11,8 +16,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * Slider Management Controller
- * Handles CRUD operations for sliders
+ *
+ * @author xuand
  */
 @WebServlet(name="SliderController", urlPatterns={"/admin/slider"})
 public class SliderController extends HttpServlet {

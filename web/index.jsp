@@ -32,6 +32,62 @@
     <link rel="stylesheet" href="css/owl.carousel.min.css" type="text/css">
     <link rel="stylesheet" href="css/slicknav.min.css" type="text/css">
     <link rel="stylesheet" href="css/style.css" type="text/css">
+    <style>
+        /* Hide hover effect that shows product name */
+        .product__item .product__hover {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        .product__item:hover .product__hover {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        .product__item:hover .product__item__pic:before,
+        .product__item:hover .product__item__pic:after {
+            display: none !important;
+            opacity: 0 !important;
+            background: transparent !important;
+        }
+        .product__item__pic:before,
+        .product__item__pic:after {
+            display: none !important;
+        }
+        /* Product name styling - FORCE VISIBLE */
+        .product__item__text h6 {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            margin-bottom: 8px !important;
+            min-height: 40px;
+            position: relative !important;
+        }
+        .product__item:hover .product__item__text h6 {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .product__item__text h6 a {
+            color: #111 !important;
+            font-size: 14px !important;
+            line-height: 1.4;
+            font-weight: 600;
+            display: inline !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .product__item__text h6 a:hover {
+            color: #ca1515 !important;
+        }
+        /* Price styling */
+        .product-price {
+            color: #ca1515 !important;
+            font-weight: 600 !important;
+            font-size: 14px !important;
+            margin-bottom: 5px !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -367,42 +423,58 @@
                 <!-- Loop through featured products from database -->
                 <c:forEach var="product" items="${featuredProducts}">
                     <div class="col-lg-3 col-md-6 col-sm-6">
-                        <div class="product__item">
-                            <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? product.mainImageUrl : pageContext.request.contextPath.concat('/img/product/default.jpg')}">
-                                <span class="label">New</span>
-                                <ul class="product__hover">
-                                    <li><a href="#"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
-                                    <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.product.productID}"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt=""></a></li>
-                                </ul>
+                        <div class="product__item" style="cursor: pointer;" onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
+                            <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}">
+                                <!-- Show "New" badge if product created within last 30 days -->
+                                <c:if test="${not empty product.createdDate}">
+                                    <jsp:useBean id="now" class="java.util.Date"/>
+                                    <c:set var="daysDiff" value="${(now.time - product.createdDate.time) / (1000 * 60 * 60 * 24)}"/>
+                                    <c:if test="${daysDiff <= 30}">
+                                        <span class="label">New</span>
+                                    </c:if>
+                                </c:if>
+                                
+                                <!-- Show status badge based on variant/stock -->
+                                <c:choose>
+                                    <c:when test="${product.variantCount == 0}">
+                                        <span class="label" style="background: #17a2b8;">Coming Soon</span>
+                                    </c:when>
+                                    <c:when test="${product.totalStock == 0}">
+                                        <span class="label" style="background: #dc3545;">Hết hàng</span>
+                                    </c:when>
+                                </c:choose>
                             </div>
                             <div class="product__item__text">
-                                <h6><a href="${pageContext.request.contextPath}/product-detail?id=${product.product.productID}">${product.product.productName}</a></h6>
-                                <a href="${pageContext.request.contextPath}/cart/add?id=${product.product.productID}" class="add-cart">+ Thêm vào giỏ</a>
-                                <div class="rating">
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star-o"></i>
-                                </div>
+                                <h6 style="margin-bottom: 8px; min-height: 40px;"><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" onclick="event.stopPropagation();">${product.productName}</a></h6>
+                                
+                                <!-- Price display -->
                                 <c:choose>
                                     <c:when test="${product.minPrice != null && product.maxPrice != null}">
                                         <c:choose>
                                             <c:when test="${product.minPrice.compareTo(product.maxPrice) == 0}">
-                                                <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
+                                                <p class="product-price" style="color: #ca1515; font-weight: 600; font-size: 14px; margin-bottom: 5px;"><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</p>
                                             </c:when>
                                             <c:otherwise>
-                                                <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫ - <fmt:formatNumber value="${product.maxPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
+                                                <p class="product-price" style="color: #ca1515; font-weight: 600; font-size: 14px; margin-bottom: 5px;"><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫ - <fmt:formatNumber value="${product.maxPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</p>
                                             </c:otherwise>
                                         </c:choose>
                                     </c:when>
                                     <c:otherwise>
-                                        <h5>Liên hệ</h5>
+                                        <p class="product-price" style="color: #ca1515; font-weight: 600; font-size: 14px; margin-bottom: 5px;">Liên hệ</p>
                                     </c:otherwise>
                                 </c:choose>
-                                <c:if test="${not empty product.categoryName}">
-                                    <div class="product__category">
-                                        <small class="text-muted">${product.categoryName}</small>
+                                
+                                <!-- Brand info -->
+                                <c:if test="${not empty product.brandName}">
+                                    <small style="color: #999; font-size: 11px;">${product.brandName}</small>
+                                </c:if>
+                                
+                                <!-- Stock warning -->
+                                <c:if test="${product.totalStock > 0 && product.totalStock <= 10}">
+                                    <div style="margin-top: 5px;">
+                                        <small style="color: #ff6b6b; font-size: 11px;">
+                                            <i class="fa fa-exclamation-circle"></i> Còn ${product.totalStock} sp
+                                        </small>
                                     </div>
                                 </c:if>
                             </div>

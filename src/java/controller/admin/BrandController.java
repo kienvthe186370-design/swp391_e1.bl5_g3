@@ -17,7 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * @author Admin
  */
-@WebServlet(name="BrandController", urlPatterns={"/adminn/brands"})
+@WebServlet(name="BrandController", urlPatterns={"/admin/brands"})
 public class BrandController extends HttpServlet {
    
     private DAO.BrandDAO brandDAO = new DAO.BrandDAO();
@@ -107,12 +107,12 @@ public class BrandController extends HttpServlet {
         request.setAttribute("sortBy", sortBy);
         request.setAttribute("sortOrder", sortOrder);
         
-        request.getRequestDispatcher("/admin/brands.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-brand-list.jsp").forward(request, response);
     }
     
     private void showAddForm(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        request.getRequestDispatcher("/admin/brand-form.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-brand-detail.jsp").forward(request, response);
     }
     
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
@@ -120,7 +120,7 @@ public class BrandController extends HttpServlet {
         int id = Integer.parseInt(request.getParameter("id"));
         entity.Brand brand = brandDAO.getBrandByID(id);
         request.setAttribute("brand", brand);
-        request.getRequestDispatcher("/admin/brand-form.jsp").forward(request, response);
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-brand-detail.jsp").forward(request, response);
     }
     
     private void addBrand(HttpServletRequest request, HttpServletResponse response)

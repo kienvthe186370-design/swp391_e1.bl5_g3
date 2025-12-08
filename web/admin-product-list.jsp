@@ -100,12 +100,12 @@
             <c:forEach var="p" items="${products}">
                 <tr class="table-row">
                     <td>
-                        <strong>#${p.productId}</strong>
+                        <strong>#${p.productID}</strong>
                     </td>
                     <td>
                         <c:choose>
-                            <c:when test="${not empty p.imageUrl}">
-                                <img src="${p.imageUrl}" alt="${p.productName}" class="product-image">
+                            <c:when test="${not empty p.mainImageUrl}">
+                                <img src="${p.mainImageUrl}" alt="${p.productName}" class="product-image">
                             </c:when>
                             <c:otherwise>
                                 <img src="${pageContext.request.contextPath}/img/product/product-1.jpg" alt="No image" class="product-image">
@@ -129,7 +129,22 @@
                         </c:if>
                     </td>
                     <td>
-                        <div class="stock-number">${p.totalStock}</div>
+                        <c:choose>
+                            <%-- Sản phẩm mới tạo, chưa có biến thể --%>
+                            <c:when test="${p.variantCount == 0}">
+                                <span class="badge bg-info">Mới tạo</span>
+                            </c:when>
+                            <%-- Có biến thể nhưng hết hàng --%>
+                            <c:when test="${p.totalStock == 0}">
+                                <span class="badge bg-danger">Hết hàng</span>
+                            </c:when>
+                            <c:when test="${p.totalStock <= 10}">
+                                <span class="badge bg-warning text-dark">${p.totalStock}</span>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="stock-number">${p.totalStock}</div>
+                            </c:otherwise>
+                        </c:choose>
                         <c:if test="${p.reservedStock > 0}">
                             <div class="reserved-stock">Giữ: ${p.reservedStock}</div>
                         </c:if>

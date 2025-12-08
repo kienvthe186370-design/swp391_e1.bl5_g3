@@ -251,5 +251,28 @@ public class CategoryDAO extends DBContext {
         }
         return false;
     }
-}
     
+    // Get category attributes by attribute ID
+    public List<CategoryAttribute> getCategoryAttributesByAttribute(int attributeID) {
+        List<CategoryAttribute> list = new ArrayList<>();
+        String sql = "SELECT * FROM CategoryAttributes WHERE AttributeID = ? ORDER BY DisplayOrder";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, attributeID);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                CategoryAttribute ca = new CategoryAttribute(
+                    rs.getInt("CategoryAttributeID"),
+                    rs.getInt("CategoryID"),
+                    rs.getInt("AttributeID"),
+                    rs.getBoolean("IsRequired"),
+                    rs.getInt("DisplayOrder")
+                );
+                list.add(ca);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+}
