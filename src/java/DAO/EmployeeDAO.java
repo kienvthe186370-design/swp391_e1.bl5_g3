@@ -11,7 +11,7 @@ public class EmployeeDAO extends DBContext {
     public Employee login(String email, String password) {
         String sql = "SELECT * FROM Employees WHERE Email = ? AND IsActive = 1";
         try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
@@ -63,7 +63,7 @@ public class EmployeeDAO extends DBContext {
     public boolean isEmailExists(String email) {
         String sql = "SELECT COUNT(*) FROM Employees WHERE Email = ?";
         try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();

@@ -45,7 +45,7 @@ public class RegisterServlet extends HttpServlet {
         fullName = fullName.trim();
         email = email.trim();
         phone = phone.trim();
-        
+
         if (!ValidationUtil.isValidName(fullName)) {
             setErrorAndForward(request, response, 
                 "Tên không hợp lệ. Vui lòng chỉ nhập chữ cái", 
@@ -53,12 +53,6 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
         
-        if (!ValidationUtil.isValidEmail(email)) {
-            setErrorAndForward(request, response, 
-                "Email không đúng định dạng", 
-                fullName, email, phone);
-            return;
-        }
         
         if (!ValidationUtil.isValidPhone(phone)) {
             setErrorAndForward(request, response, 
@@ -68,7 +62,6 @@ public class RegisterServlet extends HttpServlet {
         }
         
         phone = ValidationUtil.normalizePhone(phone);
-        
         String passwordError = ValidationUtil.getPasswordError(password);
         if (passwordError != null) {
             setErrorAndForward(request, response, 
@@ -86,7 +79,6 @@ public class RegisterServlet extends HttpServlet {
         
         CustomerDAO customerDAO = new CustomerDAO();
         EmployeeDAO employeeDAO = new EmployeeDAO();
-        
         if (customerDAO.isEmailExists(email) || employeeDAO.isEmailExists(email)) {
             setErrorAndForward(request, response, 
                 "Email này đã được đăng ký. Vui lòng sử dụng email khác hoặc đăng nhập.", 
@@ -95,7 +87,6 @@ public class RegisterServlet extends HttpServlet {
         }
         
         boolean success = customerDAO.register(fullName, email, password, phone);
-        
         if (success) {
             request.setAttribute("success", 
                 "Đăng ký thành công! Vui lòng đăng nhập với email: " + email);

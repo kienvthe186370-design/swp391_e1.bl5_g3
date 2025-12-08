@@ -11,7 +11,7 @@ public class CustomerDAO extends DBContext {
     public Customer login(String email, String password) {
         String sql = "SELECT * FROM Customers WHERE Email = ? AND IsActive = 1";
         try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
@@ -34,7 +34,7 @@ public class CustomerDAO extends DBContext {
         String sql = "INSERT INTO Customers (FullName, Email, PasswordHash, Phone, IsEmailVerified, IsActive, CreatedDate) "
                    + "VALUES (?, ?, ?, ?, 0, 1, GETDATE())";
         try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setString(1, fullName);
             ps.setString(2, email);
@@ -51,7 +51,7 @@ public class CustomerDAO extends DBContext {
     public boolean isEmailExists(String email) {
         String sql = "SELECT COUNT(*) FROM Customers WHERE Email = ?";
         try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
@@ -119,7 +119,7 @@ public class CustomerDAO extends DBContext {
     private void updateLastLogin(int customerID) {
         String sql = "UPDATE Customers SET LastLogin = GETDATE() WHERE CustomerID = ?";
         try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setInt(1, customerID);
             ps.executeUpdate();
