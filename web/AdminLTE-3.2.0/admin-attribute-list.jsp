@@ -109,6 +109,7 @@
                 </div>
                 <div class="col-md-2">
                   <select name="pageSize" class="form-control" onchange="this.form.submit()">
+                    <option value="5" ${pageSize == 5 ? 'selected' : ''}>5/trang</option>
                     <option value="10" ${pageSize == 10 ? 'selected' : ''}>10/trang</option>
                     <option value="20" ${pageSize == 20 ? 'selected' : ''}>20/trang</option>
                     <option value="50" ${pageSize == 50 ? 'selected' : ''}>50/trang</option>
@@ -158,7 +159,7 @@
                       </a>
                       <a href="<%= request.getContextPath() %>/admin/attributes?action=categories&id=${attr.attributeID}" 
                          class="btn btn-success btn-sm" title="Gán danh mục">
-                        <i class="fas fa-link"></i> Danh mục
+                        <i class="fas fa-link"></i> Gán DM
                       </a>
                       <a href="<%= request.getContextPath() %>/admin/attributes?action=edit&id=${attr.attributeID}" 
                          class="btn btn-warning btn-sm" title="Chỉnh sửa">

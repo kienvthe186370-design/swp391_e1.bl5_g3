@@ -72,7 +72,7 @@ public class BrandController extends HttpServlet {
         
         // Get page parameters
         int page = 1;
-        int pageSize = 10;
+        int pageSize = 5;
         try {
             if (request.getParameter("page") != null) {
                 page = Integer.parseInt(request.getParameter("page"));
@@ -82,7 +82,7 @@ public class BrandController extends HttpServlet {
             }
         } catch (NumberFormatException e) {
             page = 1;
-            pageSize = 10;
+            pageSize = 5;
         }
         
         // Parse status filter
