@@ -4,59 +4,115 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <style>
+    /* Compact table rows to fit viewport without scrollbar */
+    .table td, .table th {
+        padding: 0.5rem 0.75rem;
+        vertical-align: middle;
+    }
+    
     .product-img {
-        width: 50px;
-        height: 50px;
+        width: 40px;
+        height: 40px;
         object-fit: cover;
         border-radius: 4px;
     }
     
     .product-img-placeholder {
-        width: 50px;
-        height: 50px;
+        width: 40px;
+        height: 40px;
         background-color: #f4f6f9;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 4px;
         color: #adb5bd;
+        font-size: 12px;
     }
     
     .badge-custom {
-        padding: 4px 8px;
-        font-size: 12px;
+        padding: 3px 6px;
+        font-size: 11px;
         border-radius: 3px;
     }
     
     .product-name {
         font-weight: 500;
         color: #495057;
-        margin-bottom: 2px;
+        margin-bottom: 1px;
+        font-size: 13px;
     }
     
     .product-variants-info {
-        font-size: 12px;
+        font-size: 11px;
         color: #6c757d;
     }
     
     .btn-action {
-        padding: 2px 8px;
-        font-size: 13px;
+        padding: 2px 6px;
+        font-size: 12px;
     }
     
     .price-text {
         font-weight: 600;
         color: #007bff;
-        font-size: 14px;
+        font-size: 13px;
     }
     
     .stock-info {
-        font-size: 13px;
+        font-size: 12px;
     }
     
     .stock-reserved {
         color: #6c757d;
+        font-size: 11px;
+    }
+    
+    /* Draft product highlighting */
+    tr.product-draft {
+        background-color: #FFF9E6 !important;
+    }
+    
+    tr.product-draft:hover {
+        background-color: #FFF3CD !important;
+    }
+    
+    /* Compact filter section */
+    .card-body .form-group {
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-body .form-group label {
+        margin-bottom: 0.25rem;
         font-size: 12px;
+    }
+    
+    .card-body .form-control {
+        padding: 0.25rem 0.5rem;
+        font-size: 13px;
+        height: auto;
+    }
+    
+    /* Compact content header */
+    .content-header {
+        padding: 0.5rem 0.5rem;
+    }
+    
+    .content-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    /* Compact card header */
+    .card-header {
+        padding: 0.5rem 1rem;
+    }
+    
+    .card-header .card-title {
+        font-size: 1rem;
+    }
+    
+    /* Reduce card body padding */
+    .card > .card-body {
+        padding: 0.75rem;
     }
 </style>
 
@@ -160,7 +216,33 @@
                             </div>
                         </div>
                         
-                        <!-- Status Filter -->
+                        <!-- Product Status Filter -->
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Tình trạng</label>
+                                <select name="statusFilter" class="form-control">
+                                    <option value="">Tất cả 
+                                        <c:if test="${not empty statusCounts}">
+                                            (${statusCounts.draft + statusCounts.in_stock + statusCounts.out_of_stock})
+                                        </c:if>
+                                    </option>
+                                    <option value="draft" ${statusFilter == 'draft' ? 'selected' : ''}>
+                                        Nháp
+                                        <c:if test="${not empty statusCounts}"> (${statusCounts.draft})</c:if>
+                                    </option>
+                                    <option value="in_stock" ${statusFilter == 'in_stock' ? 'selected' : ''}>
+                                        Còn hàng
+                                        <c:if test="${not empty statusCounts}"> (${statusCounts.in_stock})</c:if>
+                                    </option>
+                                    <option value="out_of_stock" ${statusFilter == 'out_of_stock' ? 'selected' : ''}>
+                                        Hết hàng
+                                        <c:if test="${not empty statusCounts}"> (${statusCounts.out_of_stock})</c:if>
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Active Status Filter -->
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label>Trạng thái</label>
@@ -209,7 +291,8 @@
                                 <th style="width: 120px;">Thương hiệu</th>
                                 <th style="width: 100px;">Tồn kho</th>
                                 <th style="width: 130px;">Giá bán</th>
-                                <th style="width: 120px;">Trạng thái</th>
+                                <th style="width: 120px;">Tình trạng</th>
+                                <th style="width: 100px;">Trạng thái</th>
                                 <th style="width: 150px;">Hành động</th>
                             </tr>
                         </thead>
@@ -217,7 +300,7 @@
                             <c:choose>
                                 <c:when test="${empty products}">
                                     <tr>
-                                        <td colspan="9" class="text-center py-4">
+                                        <td colspan="10" class="text-center py-4"></td>
                                             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                             <p class="text-muted">Không có sản phẩm nào</p>
                                         </td>
@@ -225,7 +308,7 @@
                                 </c:when>
                                 <c:otherwise>
                                     <c:forEach var="item" items="${products}">
-                                        <tr>
+                                        <tr class="${item.status == 'draft' ? 'product-draft' : ''}">
                                             <!-- ID -->
                                             <td class="text-center">#${item.productID}</td>
                                             
@@ -277,6 +360,11 @@
                                             <td class="text-center">
                                                 <div class="stock-info">
                                                     <c:choose>
+                                                        <c:when test="${item.status == 'draft'}">
+                                                            <span class="badge badge-secondary">
+                                                                <i class="fas fa-minus"></i> Chưa nhập
+                                                            </span>
+                                                        </c:when>
                                                         <c:when test="${item.totalStock == 0}">
                                                             <span class="badge badge-danger">Hết hàng</span>
                                                         </c:when>
@@ -320,7 +408,35 @@
                                                 </c:choose>
                                             </td>
                                             
-                                            <!-- Status -->
+                                            <!-- Tình trạng (Product Status) -->
+                                            <td class="text-center">
+                                                <c:choose>
+                                                    <c:when test="${item.status == 'draft'}">
+                                                        <span class="badge badge-primary badge-custom" 
+                                                              data-toggle="tooltip" 
+                                                              title="Sản phẩm cần bổ sung variant và giá bán">
+                                                            <i class="fas fa-edit"></i> Nháp
+                                                        </span>
+                                                    </c:when>
+                                                    <c:when test="${item.status == 'out_of_stock'}">
+                                                        <span class="badge badge-danger badge-custom">
+                                                            <i class="fas fa-times-circle"></i> Hết hàng
+                                                        </span>
+                                                    </c:when>
+                                                    <c:when test="${item.status == 'in_stock'}">
+                                                        <span class="badge badge-success badge-custom">
+                                                            <i class="fas fa-check-circle"></i> Còn hàng
+                                                        </span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="badge badge-secondary badge-custom">
+                                                            <i class="fas fa-question-circle"></i> N/A
+                                                        </span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td>
+                                            
+                                            <!-- Status (Active/Inactive) -->
                                             <td class="text-center">
                                                 <c:choose>
                                                     <c:when test="${item.isActive}">
@@ -329,8 +445,8 @@
                                                         </span>
                                                     </c:when>
                                                     <c:otherwise>
-                                                        <span class="badge badge-danger badge-custom">
-                                                            <i class="fas fa-times-circle"></i> Ngừng
+                                                        <span class="badge badge-secondary badge-custom">
+                                                            <i class="fas fa-ban"></i> Dừng
                                                         </span>
                                                     </c:otherwise>
                                                 </c:choose>
@@ -342,18 +458,33 @@
                                                    class="btn btn-info btn-sm btn-action" title="Xem chi tiết">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <a href="${pageContext.request.contextPath}/admin/product-details?id=${item.productID}" 
-                                                   class="btn btn-primary btn-sm btn-action" title="Sửa">
+                                                <a href="${pageContext.request.contextPath}/admin/product-edit?id=${item.productID}" 
+                                                   class="btn btn-primary btn-sm btn-action" title="Chỉnh sửa">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <button type="button" class="btn btn-danger btn-sm btn-action" 
-                                                        data-product-id="${item.productID}"
-                                                        data-product-name="<c:out value='${item.productName}'/>"
-                                                        onclick="confirmDelete(this)" 
-                                                        title="Xóa">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </td>
+                                                <c:choose>
+                                                    <c:when test="${item.isActive}">
+                                                        <button type="button" class="btn btn-warning btn-sm btn-action" 
+                                                                data-product-id="${item.productID}"
+                                                                data-product-name="<c:out value='${item.productName}'/>"
+                                                                data-is-active="true"
+                                                                onclick="toggleProductStatus(this)" 
+                                                                title="Dừng hoạt động">
+                                                            <i class="fas fa-lock"></i>
+                                                        </button>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <button type="button" class="btn btn-success btn-sm btn-action" 
+                                                                data-product-id="${item.productID}"
+                                                                data-product-name="<c:out value='${item.productName}'/>"
+                                                                data-is-active="false"
+                                                                onclick="toggleProductStatus(this)" 
+                                                                title="Kích hoạt">
+                                                            <i class="fas fa-unlock"></i>
+                                                        </button>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td></i>
                                         </tr>
                                     </c:forEach>
                                 </c:otherwise>
@@ -377,7 +508,7 @@
                                 <ul class="pagination justify-content-end mb-0">
                                     <!-- Previous -->
                                     <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
-                                        <a class="page-link" href="?page=${currentPage - 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&status=${status}&sortBy=${sortBy}&sortOrder=${sortOrder}">
+                                        <a class="page-link" href="?page=${currentPage - 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&status=${status}&statusFilter=${statusFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}">
                                             <i class="fas fa-chevron-left"></i>
                                         </a>
                                     </li>
@@ -386,7 +517,7 @@
                                     <c:forEach begin="1" end="${totalPages}" var="i">
                                         <c:if test="${i == 1 || i == totalPages || (i >= currentPage - 2 && i <= currentPage + 2)}">
                                             <li class="page-item ${currentPage == i ? 'active' : ''}">
-                                                <a class="page-link" href="?page=${i}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&status=${status}&sortBy=${sortBy}&sortOrder=${sortOrder}">
+                                                <a class="page-link" href="?page=${i}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&status=${status}&statusFilter=${statusFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}">
                                                     ${i}
                                                 </a>
                                             </li>
@@ -401,7 +532,7 @@
                                     
                                     <!-- Next -->
                                     <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
-                                        <a class="page-link" href="?page=${currentPage + 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&status=${status}&sortBy=${sortBy}&sortOrder=${sortOrder}">
+                                        <a class="page-link" href="?page=${currentPage + 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&status=${status}&statusFilter=${statusFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}">
                                             <i class="fas fa-chevron-right"></i>
                                         </a>
                                     </li>
@@ -416,11 +547,17 @@
 </section>
 
 <script>
-function confirmDelete(button) {
+function toggleProductStatus(button) {
     var productId = button.getAttribute('data-product-id');
     var productName = button.getAttribute('data-product-name');
-    if (confirm('Bạn có chắc muốn xóa sản phẩm "' + productName + '" không?\n\nSản phẩm sẽ được chuyển sang trạng thái không hoạt động.')) {
-        window.location.href = '${pageContext.request.contextPath}/admin/products?action=delete&id=' + productId;
+    var isActive = button.getAttribute('data-is-active') === 'true';
+    
+    var action = isActive ? 'dừng hoạt động' : 'kích hoạt';
+    var confirmMessage = 'Bạn có chắc muốn ' + action + ' sản phẩm "' + productName + '" không?';
+    
+    if (confirm(confirmMessage)) {
+        var newStatus = isActive ? 'inactive' : 'active';
+        window.location.href = '${pageContext.request.contextPath}/admin/products?action=toggle-status&id=' + productId + '&status=' + newStatus;
     }
 }
 
@@ -429,5 +566,8 @@ $(document).ready(function() {
     setTimeout(function() {
         $('.alert').fadeOut('slow');
     }, 5000);
+    
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
 });
 </script>

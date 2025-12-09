@@ -38,7 +38,8 @@ public class ProductDetailServlet extends HttpServlet {
             // Get product details
             Map<String, Object> product = productDAO.getProductById(productId);
             
-            if (product == null) {
+            // Check if product exists and is active
+            if (product == null || !((Boolean) product.get("isActive"))) {
                 response.sendRedirect(request.getContextPath() + "/shop");
                 return;
             }
