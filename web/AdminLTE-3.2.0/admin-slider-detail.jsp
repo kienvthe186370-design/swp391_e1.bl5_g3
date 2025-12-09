@@ -1,3 +1,4 @@
+
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page import="entity.Employee" %>
@@ -7,13 +8,14 @@
         response.sendRedirect(request.getContextPath() + "/login.jsp");
         return;
     }
+    String adminName = employee.getFullName();
 %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${category != null ? 'Chỉnh sửa' : 'Thêm mới'} Danh mục - Admin</title>
+  <title>${slider != null ? 'Chỉnh sửa' : 'Thêm mới'} Slider - Admin</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -21,6 +23,19 @@
   <link rel="stylesheet" href="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/fontawesome-free/css/all.min.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/css/adminlte.min.css">
+  <style>
+    .image-preview {
+      max-width: 100%;
+      max-height: 300px;
+      border: 2px dashed #dee2e6;
+      border-radius: 8px;
+      padding: 10px;
+      display: none;
+    }
+    .image-preview.show {
+      display: block;
+    }
+  </style>
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
@@ -39,15 +54,15 @@
         <div class="row mb-2">
           <div class="col-sm-6">
             <h1>
-              <i class="fas fa-list"></i> 
-              ${category != null ? 'Chỉnh sửa Danh mục' : 'Thêm Danh mục Mới'}
+              <i class="fas fa-images"></i> 
+              ${slider != null ? 'Chỉnh sửa Slider' : 'Thêm Slider Mới'}
             </h1>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="<%= request.getContextPath() %>/AdminLTE-3.2.0/index.jsp">Home</a></li>
-              <li class="breadcrumb-item"><a href="<%= request.getContextPath() %>/admin/categories">Danh mục</a></li>
-              <li class="breadcrumb-item active">${category != null ? 'Chỉnh sửa' : 'Thêm mới'}</li>
+              <li class="breadcrumb-item"><a href="<%= request.getContextPath() %>/admin/slider">Slider</a></li>
+              <li class="breadcrumb-item active">${slider != null ? 'Chỉnh sửa' : 'Thêm mới'}</li>
             </ol>
           </div>
         </div>
@@ -62,70 +77,79 @@
           <div class="col-md-8">
             <div class="card card-primary">
               <div class="card-header">
-                <h3 class="card-title">Thông tin Danh mục</h3>
+                <h3 class="card-title">Thông tin Slider</h3>
               </div>
               
-              <form method="post" action="<%= request.getContextPath() %>/admin/categories" id="categoryForm">
-                <input type="hidden" name="action" value="${category != null ? 'edit' : 'add'}">
-                <c:if test="${category != null}">
-                  <input type="hidden" name="categoryID" value="${category.categoryID}">
+              <form method="post" action="<%= request.getContextPath() %>/admin/slider" id="sliderForm">
+                <input type="hidden" name="action" value="${slider != null ? 'update' : 'add'}">
+                <c:if test="${slider != null}">
+                  <input type="hidden" name="id" value="${slider.sliderID}">
                 </c:if>
 
                 <div class="card-body">
-                  <!-- Category Name -->
+                  <!-- Title -->
                   <div class="form-group">
-                    <label for="categoryName">Tên Danh mục <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="categoryName" name="categoryName" 
-                           value="${category != null ? category.categoryName : ''}" 
-                           placeholder="Nhập tên danh mục..." required>
-                    <small class="form-text text-muted">Ví dụ: Vợt Pickleball, Bóng Pickleball</small>
+                    <label for="title">Tiêu đề Slider <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="title" name="title" 
+                           value="${slider != null ? slider.title : ''}" 
+                           placeholder="Nhập tiêu đề slider..." required>
+                    <small class="form-text text-muted">Tiêu đề mô tả cho slider (tối đa 200 ký tự)</small>
                   </div>
 
-                  <!-- Description -->
+                  <!-- Image URL -->
                   <div class="form-group">
-                    <label for="description">Mô tả</label>
-                    <textarea class="form-control" id="description" name="description" rows="3" 
-                              placeholder="Nhập mô tả danh mục...">${category != null ? category.description : ''}</textarea>
-                    <small class="form-text text-muted">Mô tả ngắn gọn về danh mục sản phẩm</small>
-                  </div>
-
-                  <!-- Icon -->
-                  <div class="form-group">
-                    <label for="icon">Icon CSS Class</label>
-                    <input type="text" class="form-control" id="icon" name="icon" 
-                           value="${category != null ? category.icon : ''}" 
-                           placeholder="fas fa-list, icon-paddle...">
-                    <small class="form-text text-muted">Class CSS của icon (Font Awesome hoặc custom)</small>
-                    <div class="mt-2">
-                      <span id="iconPreview" class="${category != null ? category.icon : ''}" style="font-size: 24px;"></span>
+                    <label for="imageURL">URL Hình ảnh <span class="text-danger">*</span></label>
+                    <input type="url" class="form-control" id="imageURL" name="imageURL" 
+                           value="${slider != null ? slider.imageURL : ''}" 
+                           placeholder="https://example.com/image.jpg" 
+                           onchange="previewImage()" required>
+                    <small class="form-text text-muted">Nhập URL đầy đủ của hình ảnh slider</small>
+                    
+                    <!-- Image Preview -->
+                    <div class="mt-3 text-center">
+                      <img id="imagePreview" class="image-preview ${slider != null && slider.imageURL != null ? 'show' : ''}" 
+                           src="${slider != null ? slider.imageURL : ''}" alt="Preview">
                     </div>
+                  </div>
+
+                  <!-- Link URL -->
+                  <div class="form-group">
+                    <label for="linkURL">Link URL</label>
+                    <input type="url" class="form-control" id="linkURL" name="linkURL" 
+                           value="${slider != null ? slider.linkURL : ''}" 
+                           placeholder="https://example.com/page">
+                    <small class="form-text text-muted">URL trang đích khi click vào slider (có thể để trống)</small>
                   </div>
 
                   <!-- Display Order -->
                   <div class="form-group">
-                    <label for="displayOrder">Thứ tự hiển thị</label>
+                    <label for="displayOrder">Thứ tự hiển thị <span class="text-danger">*</span></label>
                     <input type="number" class="form-control" id="displayOrder" name="displayOrder" 
-                           value="${category != null ? category.displayOrder : 0}" 
-                           min="0" max="100">
-                    <small class="form-text text-muted">Số thứ tự hiển thị (0 = hiển thị đầu tiên)</small>
+                           value="${slider != null ? slider.displayOrder : 1}" 
+                           min="1" max="100" required>
+                    <small class="form-text text-muted">Số thứ tự hiển thị (1 = hiển thị đầu tiên)</small>
                   </div>
 
-                  <!-- Is Active -->
+                  <!-- Status -->
                   <div class="form-group">
-                    <div class="custom-control custom-switch">
-                      <input type="checkbox" class="custom-control-input" id="isActive" name="isActive" 
-                             ${category == null || category.isActive ? 'checked' : ''}>
-                      <label class="custom-control-label" for="isActive">Kích hoạt danh mục</label>
-                    </div>
-                    <small class="form-text text-muted">Bật để hiển thị danh mục trên website</small>
+                    <label for="status">Trạng thái <span class="text-danger">*</span></label>
+                    <select class="form-control" id="status" name="status" required>
+                      <option value="active" ${slider == null || slider.status == 'active' ? 'selected' : ''}>
+                        Active - Hiển thị
+                      </option>
+                      <option value="inactive" ${slider != null && slider.status == 'inactive' ? 'selected' : ''}>
+                        Inactive - Ẩn
+                      </option>
+                    </select>
+                    <small class="form-text text-muted">Chọn trạng thái hiển thị của slider</small>
                   </div>
                 </div>
 
                 <div class="card-footer">
                   <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> ${category != null ? 'Cập nhật' : 'Thêm mới'}
+                    <i class="fas fa-save"></i> ${slider != null ? 'Cập nhật' : 'Thêm mới'}
                   </button>
-                  <a href="<%= request.getContextPath() %>/admin/categories" class="btn btn-default">
+                  <a href="<%= request.getContextPath() %>/admin/slider" class="btn btn-default">
                     <i class="fas fa-times"></i> Hủy
                   </a>
                 </div>
@@ -143,33 +167,33 @@
               <div class="card-body">
                 <h6><i class="fas fa-lightbulb"></i> Lưu ý:</h6>
                 <ul class="pl-3">
-                  <li>Tên danh mục phải <strong>duy nhất</strong></li>
-                  <li>Mô tả giúp SEO tốt hơn</li>
-                  <li>Icon hiển thị trên menu</li>
+                  <li>Hình ảnh nên có kích thước <strong>1920x600px</strong></li>
+                  <li>Định dạng: <strong>JPG, PNG</strong></li>
+                  <li>Dung lượng tối đa: <strong>2MB</strong></li>
                   <li>Thứ tự nhỏ hơn hiển thị trước</li>
                 </ul>
 
-                <h6 class="mt-3"><i class="fas fa-icons"></i> Icon phổ biến:</h6>
+                <h6 class="mt-3"><i class="fas fa-exclamation-triangle"></i> Khuyến nghị:</h6>
                 <ul class="pl-3">
-                  <li><i class="fas fa-table-tennis"></i> fas fa-table-tennis</li>
-                  <li><i class="fas fa-baseball-ball"></i> fas fa-baseball-ball</li>
-                  <li><i class="fas fa-tshirt"></i> fas fa-tshirt</li>
-                  <li><i class="fas fa-shopping-bag"></i> fas fa-shopping-bag</li>
+                  <li>Sử dụng hình ảnh chất lượng cao</li>
+                  <li>Nội dung rõ ràng, dễ đọc</li>
+                  <li>Tránh quá nhiều text trên ảnh</li>
+                  <li>Test trên nhiều thiết bị</li>
                 </ul>
               </div>
             </div>
 
-            <!-- Category Info (if editing) -->
-            <c:if test="${category != null}">
+            <!-- Slider Info (if editing) -->
+            <c:if test="${slider != null}">
               <div class="card card-secondary">
                 <div class="card-header">
                   <h3 class="card-title"><i class="fas fa-database"></i> Thông tin</h3>
                 </div>
                 <div class="card-body">
-                  <p><strong>ID:</strong> #${category.categoryID}</p>
+                  <p><strong>ID:</strong> #${slider.sliderID}</p>
                   <p><strong>Trạng thái:</strong> 
-                    <span class="badge ${category.isActive ? 'badge-success' : 'badge-danger'}">
-                      ${category.isActive ? 'Active' : 'Inactive'}
+                    <span class="badge ${slider.status == 'active' ? 'badge-success' : 'badge-danger'}">
+                      ${slider.status}
                     </span>
                   </p>
                 </div>
@@ -185,30 +209,60 @@
   <jsp:include page="includes/admin-footer.jsp" />
 
 <script>
-// Preview icon when class is entered
-$('#icon').on('input', function() {
-    const iconClass = $(this).val();
-    $('#iconPreview').attr('class', iconClass).css('font-size', '24px');
-});
+// Preview image when URL is entered
+function previewImage() {
+    const imageURL = $('#imageURL').val();
+    const preview = $('#imagePreview');
+    
+    if (imageURL) {
+        preview.attr('src', imageURL);
+        preview.addClass('show');
+        
+        // Handle image load error
+        preview.on('error', function() {
+            preview.removeClass('show');
+            alert('Không thể tải hình ảnh. Vui lòng kiểm tra lại URL.');
+        });
+    } else {
+        preview.removeClass('show');
+    }
+}
 
 // Form validation
-$('#categoryForm').on('submit', function(e) {
-    const categoryName = $('#categoryName').val().trim();
+$('#sliderForm').on('submit', function(e) {
+    const title = $('#title').val().trim();
+    const imageURL = $('#imageURL').val().trim();
+    const displayOrder = $('#displayOrder').val();
     
-    if (!categoryName) {
+    if (!title) {
         e.preventDefault();
-        alert('Vui lòng nhập tên danh mục!');
-        $('#categoryName').focus();
+        alert('Vui lòng nhập tiêu đề slider!');
+        $('#title').focus();
         return false;
     }
     
-    if (categoryName.length < 2) {
+    if (!imageURL) {
         e.preventDefault();
-        alert('Tên danh mục phải có ít nhất 2 ký tự!');
-        $('#categoryName').focus();
+        alert('Vui lòng nhập URL hình ảnh!');
+        $('#imageURL').focus();
+        return false;
+    }
+    
+    if (displayOrder < 1 || displayOrder > 100) {
+        e.preventDefault();
+        alert('Thứ tự hiển thị phải từ 1 đến 100!');
+        $('#displayOrder').focus();
         return false;
     }
     
     return true;
+});
+
+// Load preview on page load if editing
+$(document).ready(function() {
+    const imageURL = $('#imageURL').val();
+    if (imageURL) {
+        previewImage();
+    }
 });
 </script>
