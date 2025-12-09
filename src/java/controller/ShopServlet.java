@@ -2,7 +2,6 @@ package controller;
 
 import DAO.ProductDAO;
 import java.io.IOException;
-import java.math.BigDecimal;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -30,31 +29,15 @@ public class ShopServlet extends HttpServlet {
             String search = request.getParameter("search");
             String categoryIdStr = request.getParameter("categoryId");
             String brandIdStr = request.getParameter("brandId");
-            String minPriceStr = request.getParameter("minPrice");
-            String maxPriceStr = request.getParameter("maxPrice");
             String sortBy = request.getParameter("sortBy");
             String sortOrder = request.getParameter("sortOrder");
             String pageStr = request.getParameter("page");
             
-            // Parse category and brand
+            // Parse parameters
             Integer categoryId = (categoryIdStr != null && !categoryIdStr.isEmpty()) 
                                 ? Integer.parseInt(categoryIdStr) : null;
             Integer brandId = (brandIdStr != null && !brandIdStr.isEmpty()) 
                             ? Integer.parseInt(brandIdStr) : null;
-            
-            // Parse price range
-            BigDecimal minPrice = null;
-            BigDecimal maxPrice = null;
-            if (minPriceStr != null && !minPriceStr.isEmpty()) {
-                try {
-                    minPrice = new BigDecimal(minPriceStr);
-                } catch (NumberFormatException e) { }
-            }
-            if (maxPriceStr != null && !maxPriceStr.isEmpty()) {
-                try {
-                    maxPrice = new BigDecimal(maxPriceStr);
-                } catch (NumberFormatException e) { }
-            }
             
             // Default values
             if (sortBy == null || sortBy.isEmpty()) sortBy = "date";
@@ -70,17 +53,15 @@ public class ShopServlet extends HttpServlet {
                 }
             }
             
-            int pageSize = 12;
+            int pageSize = 12; // 12 products per page
             
-            // Get products with price filter
-            List<Map<String, Object>> products = productDAO.getProductsWithPriceFilter(
-                search, categoryId, brandId, minPrice, maxPrice, true, sortBy, sortOrder, page, pageSize
+            // Get products
+            List<Map<String, Object>> products = productDAO.getProducts(
+                search, categoryId, brandId, true, sortBy, sortOrder, page, pageSize
             );
             
             // Get total count for pagination
-            int totalProducts = productDAO.getTotalProductsWithPriceFilter(
-                search, categoryId, brandId, minPrice, maxPrice, true
-            );
+            int totalProducts = productDAO.getTotalProducts(search, categoryId, brandId, true);
             int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
             
             // Get categories and brands for filters
@@ -100,8 +81,6 @@ public class ShopServlet extends HttpServlet {
             request.setAttribute("search", search);
             request.setAttribute("categoryId", categoryId);
             request.setAttribute("brandId", brandId);
-            request.setAttribute("minPrice", minPriceStr);
-            request.setAttribute("maxPrice", maxPriceStr);
             request.setAttribute("sortBy", sortBy);
             request.setAttribute("sortOrder", sortOrder);
             

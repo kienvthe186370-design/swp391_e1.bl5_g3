@@ -43,14 +43,6 @@ public class ProductDetailServlet extends HttpServlet {
                 return;
             }
             
-            // Check if product is active - block access to inactive products for regular users
-            Boolean isActive = (Boolean) product.get("isActive");
-            if (isActive == null || !isActive) {
-                // Product is inactive, redirect to shop page
-                response.sendRedirect(request.getContextPath() + "/shop?error=product-unavailable");
-                return;
-            }
-            
             // Get product images
             List<Map<String, Object>> images = productDAO.getProductImages(productId);
             

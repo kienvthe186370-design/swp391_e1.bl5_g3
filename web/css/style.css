@@ -953,8 +953,6 @@ ol {
 	color: #b7b7b7;
 }
 
-/* DISABLED: Product hover effects - keep product name visible */
-/*
 .product__item:hover .product__item__pic .product__hover {
 	right: 20px;
 	opacity: 1;
@@ -973,7 +971,6 @@ ol {
 .product__item:hover .product__item__text .product__color__select {
 	opacity: 1;
 }
-*/
 
 .product__item__pic {
 	height: 260px;
@@ -995,18 +992,13 @@ ol {
 	top: 20px;
 }
 
-/* DISABLED: Hide product hover icons */
 .product__item__pic .product__hover {
-	display: none !important;
-	visibility: hidden !important;
-	/*
 	position: absolute;
 	right: -200px;
 	top: 20px;
 	-webkit-transition: all, 0.8s;
 	-o-transition: all, 0.8s;
 	transition: all, 0.8s;
-	*/
 }
 
 .product__item__pic .product__hover li {
@@ -1081,9 +1073,6 @@ ol {
 	font-size: 15px;
 	font-weight: 600;
 	margin-bottom: 5px;
-	display: block !important;
-	visibility: visible !important;
-	opacity: 1 !important;
 	-webkit-transition: all, 0.3s;
 	-o-transition: all, 0.3s;
 	transition: all, 0.3s;
