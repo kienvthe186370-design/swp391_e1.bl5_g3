@@ -244,6 +244,16 @@
   <!-- Footer -->
   <jsp:include page="includes/admin-footer.jsp" />
 
+</div>
+<!-- ./wrapper -->
+
+<!-- jQuery -->
+<script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
+
 <script>
 // Preview uploaded image from file input
 function previewUploadedImage(input) {
@@ -361,3 +371,6 @@ $(document).ready(function() {
     }
 });
 </script>
+
+</body>
+</html>
