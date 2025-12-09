@@ -129,8 +129,24 @@ public class SliderDAO extends DBContext {
 
 }
     
-    // Get all sliders with pagination and search
-    public List<Slider> getAllSliders(String search, String status, int page, int pageSize) {
+    // Toggle slider status (active <-> inactive)
+    public boolean toggleSliderStatus(int id) {
+        String sql = "UPDATE Sliders SET Status = CASE WHEN Status = 'active' THEN 'inactive' ELSE 'active' END WHERE SliderID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            int rowsAffected = ps.executeUpdate();
+            System.out.println("✅ Toggled slider status ID: " + id + " - Rows affected: " + rowsAffected);
+            return rowsAffected > 0;
+        } catch (SQLException ex) {
+            System.out.println("❌ Error in toggleSliderStatus: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+        return false;
+    }
+    
+    // Get all sliders with pagination, search, filter and sort
+    public List<Slider> getAllSliders(String search, String status, String sortBy, String sortOrder, int page, int pageSize) {
         List<Slider> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT SliderID, Title, ImageURL, LinkURL, DisplayOrder, Status FROM Sliders WHERE 1=1");
         
@@ -141,7 +157,19 @@ public class SliderDAO extends DBContext {
             sql.append(" AND Status = ?");
         }
         
-        sql.append(" ORDER BY DisplayOrder ASC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        // Sort
+        if (sortBy != null && !sortBy.isEmpty()) {
+            sql.append(" ORDER BY ").append(sortBy);
+            if (sortOrder != null && sortOrder.equalsIgnoreCase("DESC")) {
+                sql.append(" DESC");
+            } else {
+                sql.append(" ASC");
+            }
+        } else {
+            sql.append(" ORDER BY DisplayOrder ASC");
+        }
+        
+        sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
         
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {

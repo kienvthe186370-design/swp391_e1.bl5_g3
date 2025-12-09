@@ -84,10 +84,40 @@
             <i class="icon fas fa-check"></i> Xóa slider thành công!
           </div>
         </c:if>
+        <c:if test="${param.success == 'toggled'}">
+          <div class="alert alert-success alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <i class="icon fas fa-check"></i> Cập nhật trạng thái slider thành công!
+          </div>
+        </c:if>
         <c:if test="${param.error == 'notfound'}">
           <div class="alert alert-danger alert-dismissible fade show">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
             <i class="icon fas fa-ban"></i> Không tìm thấy slider!
+          </div>
+        </c:if>
+        <c:if test="${param.error == 'toggle_failed'}">
+          <div class="alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <i class="icon fas fa-ban"></i> Không thể cập nhật trạng thái slider!
+          </div>
+        </c:if>
+        <c:if test="${param.error == 'no_image'}">
+          <div class="alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <i class="icon fas fa-ban"></i> Vui lòng chọn hình ảnh hoặc nhập URL!
+          </div>
+        </c:if>
+        <c:if test="${param.error == 'add_failed'}">
+          <div class="alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <i class="icon fas fa-ban"></i> Không thể thêm slider! Vui lòng thử lại.
+          </div>
+        </c:if>
+        <c:if test="${param.error == 'update_failed'}">
+          <div class="alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <i class="icon fas fa-ban"></i> Không thể cập nhật slider! Vui lòng thử lại.
           </div>
         </c:if>
 
@@ -107,10 +137,10 @@
             <!-- Filter Form -->
             <form method="get" action="<%= request.getContextPath() %>/admin/slider" class="mb-3">
               <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-3">
                   <input type="text" name="search" value="${search}" class="form-control" placeholder="Tìm theo tiêu đề...">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <select name="status" class="form-control">
                     <option value="">-- Tất cả trạng thái --</option>
                     <option value="active" ${status == 'active' ? 'selected' : ''}>Active</option>
@@ -118,13 +148,29 @@
                   </select>
                 </div>
                 <div class="col-md-2">
+                  <select name="sortBy" class="form-control">
+                    <option value="">Sắp xếp theo</option>
+                    <option value="SliderID" ${sortBy == 'SliderID' ? 'selected' : ''}>ID</option>
+                    <option value="Title" ${sortBy == 'Title' ? 'selected' : ''}>Tiêu đề</option>
+                    <option value="DisplayOrder" ${sortBy == 'DisplayOrder' ? 'selected' : ''}>Thứ tự</option>
+                    <option value="Status" ${sortBy == 'Status' ? 'selected' : ''}>Trạng thái</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <select name="pageSize" class="form-control" onchange="this.form.submit()">
+                    <option value="5" ${pageSize == 5 ? 'selected' : ''}>5/trang</option>
+                    <option value="10" ${pageSize == 10 ? 'selected' : ''}>10/trang</option>
+                    <option value="20" ${pageSize == 20 ? 'selected' : ''}>20/trang</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
                   <button type="submit" class="btn btn-primary btn-block">
                     <i class="fas fa-search"></i> Tìm kiếm
                   </button>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                   <a href="<%= request.getContextPath() %>/admin/slider" class="btn btn-secondary btn-block">
-                    <i class="fas fa-redo"></i> Reset
+                    <i class="fas fa-redo"></i>
                   </a>
                 </div>
               </div>
@@ -150,7 +196,11 @@
                     <td>
                       <c:choose>
                         <c:when test="${not empty slider.imageURL}">
-                          <img src="${slider.imageURL}" alt="${slider.title}" class="img-thumbnail" style="max-width: 120px; max-height: 60px;">
+                          <img src="${pageContext.request.contextPath}/${slider.imageURL}" 
+                               alt="${slider.title}" 
+                               class="img-thumbnail" 
+                               style="max-width: 120px; max-height: 60px; cursor: pointer;"
+                               onclick="showImageModal('${pageContext.request.contextPath}/${slider.imageURL}', '${slider.title}')">
                         </c:when>
                         <c:otherwise>
                           <div class="text-center text-muted">
@@ -192,10 +242,22 @@
                          class="btn btn-warning btn-sm" title="Chỉnh sửa">
                         <i class="fas fa-edit"></i>
                       </a>
-                      <button type="button" class="btn btn-danger btn-sm" 
-                              onclick="confirmDelete(${slider.sliderID}, '${slider.title}')" title="Xóa">
-                        <i class="fas fa-trash"></i>
-                      </button>
+                      <c:choose>
+                        <c:when test="${slider.status == 'active'}">
+                          <button type="button" class="btn btn-danger btn-sm" 
+                                  onclick="confirmToggleStatus(${slider.sliderID}, '${slider.title}', 'inactive')" 
+                                  title="Khóa slider">
+                            <i class="fas fa-lock"></i>
+                          </button>
+                        </c:when>
+                        <c:otherwise>
+                          <button type="button" class="btn btn-success btn-sm" 
+                                  onclick="confirmToggleStatus(${slider.sliderID}, '${slider.title}', 'active')" 
+                                  title="Mở khóa slider">
+                            <i class="fas fa-unlock"></i>
+                          </button>
+                        </c:otherwise>
+                      </c:choose>
                     </td>
                   </tr>
                 </c:forEach>
@@ -211,25 +273,37 @@
             </table>
 
             <!-- Pagination -->
-            <c:if test="${totalPages > 1}">
-              <div class="mt-3">
-                <ul class="pagination justify-content-center">
-                  <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="?page=${currentPage - 1}&search=${search}&status=${status}">
-                      <i class="fas fa-chevron-left"></i>
-                    </a>
-                  </li>
-                  <c:forEach begin="1" end="${totalPages}" var="i">
-                    <li class="page-item ${currentPage == i ? 'active' : ''}">
-                      <a class="page-link" href="?page=${i}&search=${search}&status=${status}">${i}</a>
-                    </li>
-                  </c:forEach>
-                  <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
-                    <a class="page-link" href="?page=${currentPage + 1}&search=${search}&status=${status}">
-                      <i class="fas fa-chevron-right"></i>
-                    </a>
-                  </li>
-                </ul>
+            <c:if test="${totalSliders > 0}">
+              <div class="row mt-3">
+                <div class="col-sm-12 col-md-5">
+                  <div class="dataTables_info" role="status" aria-live="polite">
+                    Hiển thị <strong>${(currentPage-1)*pageSize + 1}</strong> 
+                    đến <strong>${currentPage*pageSize > totalSliders ? totalSliders : currentPage*pageSize}</strong> 
+                    của <strong>${totalSliders}</strong> slider
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-7">
+                  <c:if test="${totalPages > 1}">
+                    <div class="dataTables_paginate paging_simple_numbers float-right">
+                      <ul class="pagination">
+                        <li class="paginate_button page-item previous ${currentPage == 1 ? 'disabled' : ''}">
+                          <a href="?page=${currentPage - 1}&search=${search}&status=${status}&sortBy=${sortBy}&pageSize=${pageSize}" 
+                             class="page-link">Trước</a>
+                        </li>
+                        <c:forEach begin="1" end="${totalPages}" var="i">
+                          <li class="paginate_button page-item ${currentPage == i ? 'active' : ''}">
+                            <a href="?page=${i}&search=${search}&status=${status}&sortBy=${sortBy}&pageSize=${pageSize}" 
+                               class="page-link">${i}</a>
+                          </li>
+                        </c:forEach>
+                        <li class="paginate_button page-item next ${currentPage >= totalPages ? 'disabled' : ''}">
+                          <a href="?page=${currentPage + 1}&search=${search}&status=${status}&sortBy=${sortBy}&pageSize=${pageSize}" 
+                             class="page-link">Sau</a>
+                        </li>
+                      </ul>
+                    </div>
+                  </c:if>
+                </div>
               </div>
             </c:if>
           </div>
@@ -241,33 +315,67 @@
   <!-- Footer -->
   <jsp:include page="includes/admin-footer.jsp" />
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal">
+<!-- Toggle Status Confirmation Modal -->
+<div class="modal fade" id="toggleStatusModal">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header bg-danger">
-        <h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Xác nhận xóa</h4>
+      <div class="modal-header" id="modalHeader">
+        <h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> <span id="modalTitle"></span></h4>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
       <div class="modal-body">
-        <p>Bạn có chắc chắn muốn xóa slider <strong id="sliderTitle"></strong>?</p>
-        <p class="text-danger"><i class="fas fa-info-circle"></i> Hành động này không thể hoàn tác!</p>
+        <p id="modalMessage"></p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
-        <a href="#" id="confirmDeleteBtn" class="btn btn-danger">
-          <i class="fas fa-trash"></i> Xóa
+        <a href="#" id="confirmToggleBtn" class="btn">
+          <i id="modalIcon"></i> <span id="modalBtnText"></span>
         </a>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imageModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalTitle">Xem ảnh Slider</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="imageModalImg" src="" alt="Slider Image" class="img-fluid" style="max-height: 500px;">
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-function confirmDelete(id, title) {
-    $('#sliderTitle').text(title);
-    $('#confirmDeleteBtn').attr('href', '<%= request.getContextPath() %>/admin/slider?action=delete&id=' + id);
-    $('#deleteModal').modal('show');
+function confirmToggleStatus(id, title, newStatus) {
+    if (newStatus === 'inactive') {
+        $('#modalHeader').removeClass('bg-success').addClass('bg-danger');
+        $('#modalTitle').text('Xác nhận khóa slider');
+        $('#modalMessage').html('Bạn có chắc chắn muốn <strong>khóa</strong> slider <strong>' + title + '</strong>?<br><small class="text-muted">Slider sẽ không hiển thị trên trang chủ.</small>');
+        $('#confirmToggleBtn').removeClass('btn-success').addClass('btn-danger');
+        $('#modalIcon').removeClass('fa-unlock').addClass('fa-lock');
+        $('#modalBtnText').text('Khóa');
+    } else {
+        $('#modalHeader').removeClass('bg-danger').addClass('bg-success');
+        $('#modalTitle').text('Xác nhận mở khóa slider');
+        $('#modalMessage').html('Bạn có chắc chắn muốn <strong>mở khóa</strong> slider <strong>' + title + '</strong>?<br><small class="text-muted">Slider sẽ hiển thị trên trang chủ.</small>');
+        $('#confirmToggleBtn').removeClass('btn-danger').addClass('btn-success');
+        $('#modalIcon').removeClass('fa-lock').addClass('fa-unlock');
+        $('#modalBtnText').text('Mở khóa');
+    }
+    $('#confirmToggleBtn').attr('href', '<%= request.getContextPath() %>/admin/slider?action=toggleStatus&id=' + id);
+    $('#toggleStatusModal').modal('show');
+}
+
+function showImageModal(imageSrc, title) {
+    $('#imageModalImg').attr('src', imageSrc);
+    $('#imageModalTitle').text(title);
+    $('#imageModal').modal('show');
 }
 
 // Auto hide alerts after 3 seconds
