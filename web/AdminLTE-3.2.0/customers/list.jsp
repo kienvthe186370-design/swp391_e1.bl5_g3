@@ -45,52 +45,6 @@
         </div>
       </c:if>
 
-      <!-- Statistics Cards -->
-      <div class="row">
-        <div class="col-lg-4 col-6">
-          <div class="small-box bg-info">
-            <div class="inner">
-              <h3>${stats[0]}</h3>
-              <p>Tổng tài khoản</p>
-            </div>
-            <div class="icon">
-              <i class="fas fa-users"></i>
-            </div>
-            <a href="<%= request.getContextPath() %>/admin/customers" class="small-box-footer">
-              Xem tất cả <i class="fas fa-arrow-circle-right"></i>
-            </a>
-          </div>
-        </div>
-        <div class="col-lg-4 col-6">
-          <div class="small-box bg-success">
-            <div class="inner">
-              <h3>${stats[1]}</h3>
-              <p>Đang hoạt động</p>
-            </div>
-            <div class="icon">
-              <i class="fas fa-user-check"></i>
-            </div>
-            <a href="<%= request.getContextPath() %>/admin/customers?status=active" class="small-box-footer">
-              Chi tiết <i class="fas fa-arrow-circle-right"></i>
-            </a>
-          </div>
-        </div>
-        <div class="col-lg-4 col-6">
-          <div class="small-box bg-warning">
-            <div class="inner">
-              <h3>${stats[2]}</h3>
-              <p>Đã khóa</p>
-            </div>
-            <div class="icon">
-              <i class="fas fa-user-lock"></i>
-            </div>
-            <a href="<%= request.getContextPath() %>/admin/customers?status=locked" class="small-box-footer">
-              Chi tiết <i class="fas fa-arrow-circle-right"></i>
-            </a>
-          </div>
-        </div>
-      </div>
-
       <!-- Customer List Card -->
       <div class="card">
         <div class="card-header">
@@ -102,21 +56,7 @@
             </c:choose>
           </h3>
           <div class="card-tools">
-            <div class="btn-group mr-2">
-              <a href="<%= request.getContextPath() %>/admin/customers?status=active" 
-                 class="btn btn-sm btn-success ${status == 'active' ? 'active' : ''}">
-                <i class="fas fa-user-check"></i> Đang hoạt động
-              </a>
-              <a href="<%= request.getContextPath() %>/admin/customers?status=locked" 
-                 class="btn btn-sm btn-warning ${status == 'locked' ? 'active' : ''}">
-                <i class="fas fa-user-lock"></i> Đã khóa
-              </a>
-              <a href="<%= request.getContextPath() %>/admin/customers" 
-                 class="btn btn-sm btn-secondary ${status == null ? 'active' : ''}">
-                <i class="fas fa-list"></i> Tất cả
-              </a>
-            </div>
-                <a href="<%= request.getContextPath() %>/admin/customers?action=create" class="btn btn-primary btn-sm">
+            <a href="<%= request.getContextPath() %>/admin/customers?action=create" class="btn btn-primary btn-sm">
               <i class="fas fa-plus"></i> Thêm Khách hàng
             </a>
           </div>
@@ -129,8 +69,15 @@
                 <input type="text" name="search" value="${search}" class="form-control" 
                        placeholder="Tìm theo tên, email, số điện thoại...">
               </div>
+              <div class="col-md-2">
+                <select name="status" class="form-control">
+                  <option value="">Tất cả trạng thái</option>
+                  <option value="active" ${status == 'active' ? 'selected' : ''}>Đang hoạt động</option>
+                  <option value="locked" ${status == 'locked' ? 'selected' : ''}>Đã khóa</option>
+                </select>
+              </div>
               <div class="col-md-3">
-                <select name="emailVerified" class="form-control" onchange="this.form.submit()">
+                <select name="emailVerified" class="form-control">
                   <option value="">Tất cả trạng thái Email</option>
                   <option value="verified" ${emailVerified == 'verified' ? 'selected' : ''}>Đã xác thực Email</option>
                   <option value="unverified" ${emailVerified == 'unverified' ? 'selected' : ''}>Chưa xác thực Email</option>
@@ -142,9 +89,6 @@
                 </button>
               </div>
             </div>
-            <c:if test="${not empty status}">
-              <input type="hidden" name="status" value="${status}">
-            </c:if>
             <c:if test="${not empty emailVerified}">
               <input type="hidden" name="emailVerified" value="${emailVerified}">
             </c:if>
