@@ -66,6 +66,8 @@ public class AdminProductServlet extends HttpServlet {
             
             if ("delete".equals(action)) {
                 handleDelete(request, response);
+            } else if ("toggle-status".equals(action)) {
+                handleToggleStatus(request, response);
             } else {
                 showProductList(request, response);
             }
@@ -103,6 +105,7 @@ public class AdminProductServlet extends HttpServlet {
         String categoryIdStr = request.getParameter("categoryId");
         String brandIdStr = request.getParameter("brandId");
         String statusStr = request.getParameter("status");
+        String statusFilter = request.getParameter("statusFilter");
         String sortBy = request.getParameter("sortBy");
         String sortOrder = request.getParameter("sortOrder");
         String pageStr = request.getParameter("page");
@@ -122,7 +125,7 @@ public class AdminProductServlet extends HttpServlet {
         
         // Pagination
         int page = 1;
-        int pageSize = 12; // Hiển thị 12 sản phẩm mỗi trang
+        int pageSize = 6; // Hiển thị 6 sản phẩm mỗi trang để vừa viewport, tránh thanh cuộn dọc
         try {
             if (pageStr != null && !pageStr.isEmpty()) {
                 page = Integer.parseInt(pageStr);
@@ -132,14 +135,17 @@ public class AdminProductServlet extends HttpServlet {
             page = 1;
         }
         
-        // Lấy danh sách sản phẩm
+        // Lấy danh sách sản phẩm (with status filter)
         List<Map<String, Object>> products = productDAO.getProducts(
-            search, categoryId, brandId, isActive, sortBy, sortOrder, page, pageSize
+            search, categoryId, brandId, isActive, statusFilter, sortBy, sortOrder, page, pageSize
         );
         
-        // Lấy tổng số sản phẩm để tính pagination
-        int totalProducts = productDAO.getTotalProducts(search, categoryId, brandId, isActive);
+        // Lấy tổng số sản phẩm để tính pagination (with status filter)
+        int totalProducts = productDAO.getTotalProducts(search, categoryId, brandId, isActive, statusFilter);
         int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
+        
+        // Lấy status counts cho dashboard/filter
+        Map<String, Integer> statusCounts = productDAO.getProductStatusCounts();
         
         // Lấy categories và brands cho filter dropdown
         List<Map<String, Object>> categories = productDAO.getCategoriesForFilter();
@@ -161,6 +167,8 @@ public class AdminProductServlet extends HttpServlet {
         request.setAttribute("categoryId", categoryId);
         request.setAttribute("brandId", brandId);
         request.setAttribute("status", statusStr);
+        request.setAttribute("statusFilter", statusFilter);
+        request.setAttribute("statusCounts", statusCounts);
         request.setAttribute("sortBy", sortBy);
         request.setAttribute("sortOrder", sortOrder);
         
@@ -206,6 +214,44 @@ public class AdminProductServlet extends HttpServlet {
                 response.sendRedirect("products?message=" + encodeURL("Xóa sản phẩm thành công"));
             } else {
                 response.sendRedirect("products?error=" + encodeURL("Không thể xóa sản phẩm"));
+            }
+            
+        } catch (NumberFormatException e) {
+            response.sendRedirect("products?error=" + encodeURL("ID sản phẩm không hợp lệ"));
+        }
+    }
+    
+    /**
+     * Xử lý toggle trạng thái sản phẩm (active/inactive)
+     */
+    private void handleToggleStatus(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        String productIdStr = request.getParameter("id");
+        String statusStr = request.getParameter("status");
+        
+        if (productIdStr == null || productIdStr.isEmpty()) {
+            response.sendRedirect("products?error=" + encodeURL("ID sản phẩm không hợp lệ"));
+            return;
+        }
+        
+        if (statusStr == null || statusStr.isEmpty()) {
+            response.sendRedirect("products?error=" + encodeURL("Trạng thái không hợp lệ"));
+            return;
+        }
+        
+        try {
+            int productId = Integer.parseInt(productIdStr);
+            boolean newStatus = "active".equalsIgnoreCase(statusStr);
+            
+            // Thực hiện toggle status
+            boolean success = productDAO.toggleProductStatus(productId, newStatus);
+            
+            if (success) {
+                String message = newStatus ? "Kích hoạt sản phẩm thành công" : "Dừng hoạt động sản phẩm thành công";
+                response.sendRedirect("products?message=" + encodeURL(message));
+            } else {
+                response.sendRedirect("products?error=" + encodeURL("Không thể cập nhật trạng thái sản phẩm"));
             }
             
         } catch (NumberFormatException e) {
