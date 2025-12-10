@@ -233,6 +233,8 @@
                                 <input type="text" name="search" placeholder="Tìm kiếm sản phẩm..." value="${search}">
                                 <input type="hidden" name="categoryId" value="${categoryId}">
                                 <input type="hidden" name="brandId" value="${brandId}">
+                                <input type="hidden" name="minPrice" value="${minPrice}">
+                                <input type="hidden" name="maxPrice" value="${maxPrice}">
                                 <input type="hidden" name="sortBy" value="${sortBy}">
                                 <input type="hidden" name="sortOrder" value="${sortOrder}">
                                 <button type="submit">
@@ -242,12 +244,30 @@
                         </div>
                         
                         <!-- Active Filters -->
-                        <c:if test="${not empty search || not empty categoryId || not empty brandId}">
+                        <c:if test="${not empty search || not empty categoryId || not empty brandId || not empty minPrice || not empty maxPrice}">
                             <div class="filter-tags">
                                 <c:if test="${not empty search}">
                                     <div class="filter-tag">
                                         <span>Tìm: "${search}"</span>
-                                        <a href="${pageContext.request.contextPath}/shop?categoryId=${categoryId}&brandId=${brandId}&sortBy=${sortBy}&sortOrder=${sortOrder}" class="remove">×</a>
+                                        <a href="${pageContext.request.contextPath}/shop?categoryId=${categoryId}&brandId=${brandId}&minPrice=${minPrice}&maxPrice=${maxPrice}&sortBy=${sortBy}&sortOrder=${sortOrder}" class="remove">×</a>
+                                    </div>
+                                </c:if>
+                                <c:if test="${not empty minPrice || not empty maxPrice}">
+                                    <div class="filter-tag">
+                                        <span>Giá: 
+                                            <c:choose>
+                                                <c:when test="${not empty minPrice && not empty maxPrice}">
+                                                    <fmt:formatNumber value="${minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫ - <fmt:formatNumber value="${maxPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                </c:when>
+                                                <c:when test="${not empty minPrice}">
+                                                    Trên <fmt:formatNumber value="${minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                </c:when>
+                                                <c:otherwise>
+                                                    Dưới <fmt:formatNumber value="${maxPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </span>
+                                        <a href="${pageContext.request.contextPath}/shop?search=${search}&categoryId=${categoryId}&brandId=${brandId}&sortBy=${sortBy}&sortOrder=${sortOrder}" class="remove">×</a>
                                     </div>
                                 </c:if>
                                 <a href="${pageContext.request.contextPath}/shop" class="clear-filters">Xóa tất cả bộ lọc</a>
@@ -278,6 +298,47 @@
                                     <span>${brand.brandName}</span>
                                 </label>
                             </c:forEach>
+                        </div>
+                        
+                        <!-- Price Filter -->
+                        <div class="shop__sidebar__filter">
+                            <h5 class="shop__sidebar__title">KHOẢNG GIÁ</h5>
+                            <label>
+                                <input type="radio" name="priceRange" value="" 
+                                       onchange="filterByPrice('', '')"
+                                       ${empty minPrice && empty maxPrice ? 'checked' : ''}>
+                                <span>Tất cả</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="priceRange" value="0-500000" 
+                                       onchange="filterByPrice(0, 500000)"
+                                       ${minPrice == '0' && maxPrice == '500000' ? 'checked' : ''}>
+                                <span>Dưới 500.000₫</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="priceRange" value="500000-1000000" 
+                                       onchange="filterByPrice(500000, 1000000)"
+                                       ${minPrice == '500000' && maxPrice == '1000000' ? 'checked' : ''}>
+                                <span>500.000₫ - 1.000.000₫</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="priceRange" value="1000000-2000000" 
+                                       onchange="filterByPrice(1000000, 2000000)"
+                                       ${minPrice == '1000000' && maxPrice == '2000000' ? 'checked' : ''}>
+                                <span>1.000.000₫ - 2.000.000₫</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="priceRange" value="2000000-5000000" 
+                                       onchange="filterByPrice(2000000, 5000000)"
+                                       ${minPrice == '2000000' && maxPrice == '5000000' ? 'checked' : ''}>
+                                <span>2.000.000₫ - 5.000.000₫</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="priceRange" value="5000000-" 
+                                       onchange="filterByPrice(5000000, '')"
+                                       ${minPrice == '5000000' && empty maxPrice ? 'checked' : ''}>
+                                <span>Trên 5.000.000₫</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -311,71 +372,42 @@
                         <c:forEach var="product" items="${products}">
                             <div class="col-lg-4 col-md-6 col-sm-6">
                                 <div class="product__item">
-                                    <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}"
-                                         style="cursor: pointer;" 
-                                         onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
-                                        <!-- Show "New" badge if product created within last 30 days -->
-                                        <c:if test="${not empty product.createdDate}">
-                                            <jsp:useBean id="now" class="java.util.Date"/>
-                                            <c:set var="daysDiff" value="${(now.time - product.createdDate.time) / (1000 * 60 * 60 * 24)}"/>
-                                            <c:if test="${daysDiff <= 30}">
+                                    <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}">
+                                        <c:choose>
+                                            <c:when test="${product.variantCount == 0}">
+                                                <span class="label" style="background: #ffc107; color: #111;">Sắp ra mắt</span>
+                                            </c:when>
+                                            <c:when test="${product.totalStock == 0}">
+                                                <span class="label" style="background: #dc3545; color: #fff;">Hết hàng</span>
+                                            </c:when>
+                                            <c:when test="${product.totalStock <= 10}">
+                                                <span class="label" style="background: #fd7e14; color: #fff;">Sắp hết</span>
+                                            </c:when>
+                                            <c:otherwise>
                                                 <span class="label">New</span>
-                                            </c:if>
-                                        </c:if>
-                                        
-                                        <!-- Show "Out of Stock" badge if no stock -->
-                                        <c:if test="${product.totalStock == 0}">
-                                            <span class="label" style="background: #dc3545;">Hết hàng</span>
-                                        </c:if>
-                                        
-                                        <!-- Show discount percentage if compareAtPrice exists -->
-                                        <c:if test="${product.minPrice != null && product.maxPrice != null}">
-                                            <c:set var="hasDiscount" value="false"/>
-                                            <!-- This is simplified - in real scenario, check variants for compareAtPrice -->
-                                        </c:if>
-                                        
+                                            </c:otherwise>
+                                        </c:choose>
                                         <ul class="product__hover">
-                                            <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
-                                            <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" title="Xem chi tiết" onclick="event.stopPropagation();"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt=""></a></li>
+                                            <li><a href="#"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt="Wishlist"></a></li>
+                                            <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt="View"></a></li>
                                         </ul>
                                     </div>
                                     <div class="product__item__text">
-                                        <!-- Brand -->
                                         <c:if test="${not empty product.brandName}">
-                                            <div style="margin-bottom: 5px;">
-                                                <small style="color: #999; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
-                                                    ${product.brandName}
-                                                </small>
-                                            </div>
+                                            <span class="product__brand">${product.brandName}</span>
                                         </c:if>
-                                        
                                         <h6><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}">${product.productName}</a></h6>
-                                        
-                                        <!-- Price -->
-                                        <c:choose>
-                                            <c:when test="${product.minPrice != null && product.maxPrice != null}">
-                                                <c:choose>
-                                                    <c:when test="${product.minPrice.compareTo(product.maxPrice) == 0}">
-                                                        <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫ - <fmt:formatNumber value="${product.maxPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <h5>Liên hệ</h5>
-                                            </c:otherwise>
-                                        </c:choose>
-                                        
-                                        <!-- Stock warning -->
-                                        <c:if test="${product.totalStock > 0 && product.totalStock <= 10}">
-                                            <div style="margin-top: 8px;">
-                                                <small style="color: #ff6b6b; font-size: 12px;">
-                                                    <i class="fa fa-exclamation-circle"></i> Chỉ còn ${product.totalStock} sản phẩm
-                                                </small>
-                                            </div>
-                                        </c:if>
+                                        <a href="${pageContext.request.contextPath}/cart?action=add&productId=${product.productID}" class="add-cart">+ Add To Cart</a>
+                                        <h5>
+                                            <c:choose>
+                                                <c:when test="${product.minPrice != null}">
+                                                    <fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                </c:when>
+                                                <c:otherwise>
+                                                    Liên hệ
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </h5>
                                     </div>
                                 </div>
                             </div>
@@ -392,51 +424,49 @@
                     </div>
 
                     <!-- Pagination -->
-                    <c:if test="${totalPages > 1}">
-                        <div class="pagination">
-                            <!-- Previous -->
+                    <div class="pagination">
+                        <!-- Previous -->
+                        <c:choose>
+                            <c:when test="${currentPage > 1}">
+                                <a href="?page=${currentPage - 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&minPrice=${minPrice}&maxPrice=${maxPrice}&sortBy=${sortBy}&sortOrder=${sortOrder}">
+                                    <i class="fa fa-chevron-left"></i>
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="disabled"><i class="fa fa-chevron-left"></i></span>
+                            </c:otherwise>
+                        </c:choose>
+                        
+                        <!-- Page numbers -->
+                        <c:forEach begin="1" end="${totalPages > 0 ? totalPages : 1}" var="i">
                             <c:choose>
-                                <c:when test="${currentPage > 1}">
-                                    <a href="?page=${currentPage - 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&sortBy=${sortBy}&sortOrder=${sortOrder}">
-                                        <i class="fa fa-chevron-left"></i>
-                                    </a>
+                                <c:when test="${i == currentPage || (currentPage == null && i == 1)}">
+                                    <span class="active">${i}</span>
                                 </c:when>
-                                <c:otherwise>
-                                    <span class="disabled"><i class="fa fa-chevron-left"></i></span>
-                                </c:otherwise>
-                            </c:choose>
-                            
-                            <!-- Page numbers -->
-                            <c:forEach begin="1" end="${totalPages}" var="i">
-                                <c:choose>
-                                    <c:when test="${i == currentPage}">
-                                        <span class="active">${i}</span>
-                                    </c:when>
-                                    <c:when test="${i == 1 || i == totalPages || (i >= currentPage - 2 && i <= currentPage + 2)}">
-                                        <a href="?page=${i}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&sortBy=${sortBy}&sortOrder=${sortOrder}">${i}</a>
-                                    </c:when>
-                                    <c:when test="${i == 2 && currentPage > 4}">
-                                        <span>...</span>
-                                    </c:when>
-                                    <c:when test="${i == totalPages - 1 && currentPage < totalPages - 3}">
-                                        <span>...</span>
-                                    </c:when>
-                                </c:choose>
-                            </c:forEach>
-                            
-                            <!-- Next -->
-                            <c:choose>
-                                <c:when test="${currentPage < totalPages}">
-                                    <a href="?page=${currentPage + 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&sortBy=${sortBy}&sortOrder=${sortOrder}">
-                                        <i class="fa fa-chevron-right"></i>
-                                    </a>
+                                <c:when test="${i == 1 || i == totalPages || (i >= currentPage - 2 && i <= currentPage + 2)}">
+                                    <a href="?page=${i}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&minPrice=${minPrice}&maxPrice=${maxPrice}&sortBy=${sortBy}&sortOrder=${sortOrder}">${i}</a>
                                 </c:when>
-                                <c:otherwise>
-                                    <span class="disabled"><i class="fa fa-chevron-right"></i></span>
-                                </c:otherwise>
+                                <c:when test="${i == 2 && currentPage > 4}">
+                                    <span>...</span>
+                                </c:when>
+                                <c:when test="${i == totalPages - 1 && currentPage < totalPages - 3}">
+                                    <span>...</span>
+                                </c:when>
                             </c:choose>
-                        </div>
-                    </c:if>
+                        </c:forEach>
+                        
+                        <!-- Next -->
+                        <c:choose>
+                            <c:when test="${currentPage < totalPages}">
+                                <a href="?page=${currentPage + 1}&search=${search}&categoryId=${categoryId}&brandId=${brandId}&minPrice=${minPrice}&maxPrice=${maxPrice}&sortBy=${sortBy}&sortOrder=${sortOrder}">
+                                    <i class="fa fa-chevron-right"></i>
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="disabled"><i class="fa fa-chevron-right"></i></span>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
                 </div>
             </div>
         </div>
@@ -501,6 +531,30 @@
             currentParams.set('sortOrder', sortOrder);
             currentParams.set('page', '1'); // Reset to page 1
             
+            window.location.href = '${pageContext.request.contextPath}/shop?' + currentParams.toString();
+        }
+        
+        // Filter by price range
+        function filterByPrice(minPrice, maxPrice) {
+            const currentParams = new URLSearchParams(window.location.search);
+            
+            if (minPrice === '' && maxPrice === '') {
+                currentParams.delete('minPrice');
+                currentParams.delete('maxPrice');
+            } else {
+                if (minPrice !== '') {
+                    currentParams.set('minPrice', minPrice);
+                } else {
+                    currentParams.delete('minPrice');
+                }
+                if (maxPrice !== '') {
+                    currentParams.set('maxPrice', maxPrice);
+                } else {
+                    currentParams.delete('maxPrice');
+                }
+            }
+            
+            currentParams.set('page', '1'); // Reset to page 1
             window.location.href = '${pageContext.request.contextPath}/shop?' + currentParams.toString();
         }
     </script>

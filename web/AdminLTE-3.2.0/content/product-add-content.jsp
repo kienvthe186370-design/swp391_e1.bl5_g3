@@ -279,16 +279,33 @@
     </div>
 </section>
 
+<!-- Include ImageValidator -->
+<script src="${pageContext.request.contextPath}/js/image-validator.js"></script>
+
 <script>
 // Update custom file input label with selected filename and show preview
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Product Add Form Script Loaded');
+    
+    // Initialize ImageValidator for main image
+    ImageValidator.attach('#mainImage');
+    
+    // Initialize ImageValidator for thumbnail images (multiple)
+    ImageValidator.attach('#thumbnailImages');
     
     // Handle main image file input with preview
     var mainImageInput = document.getElementById('mainImage');
     if (mainImageInput) {
         mainImageInput.addEventListener('change', function() {
             console.log('Main image changed');
+            
+            // Skip if no files (cleared by validator)
+            if (this.files.length === 0) {
+                var previewDiv = document.getElementById('mainImagePreview');
+                if (previewDiv) previewDiv.style.display = 'none';
+                return;
+            }
+            
             var fileName = this.value.split('\\').pop();
             var label = this.nextElementSibling;
             if (label) {
@@ -334,6 +351,17 @@ document.addEventListener('DOMContentLoaded', function() {
     if (thumbnailInput) {
         thumbnailInput.addEventListener('change', function() {
             console.log('Thumbnails changed');
+            
+            // Skip if no files (cleared by validator)
+            if (this.files.length === 0) {
+                var previewContainer = document.getElementById('thumbnailsPreview');
+                if (previewContainer) {
+                    previewContainer.innerHTML = '';
+                    previewContainer.style.display = 'none';
+                }
+                thumbnailFiles = [];
+                return;
+            }
             
             // Store files in our array
             thumbnailFiles = Array.from(this.files);
@@ -543,26 +571,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 errorMessage += '- Vui lòng chọn danh mục\n';
             }
             
-            // Check main image size
-            var mainImageFile = document.getElementById('mainImage').files[0];
-            if (mainImageFile && mainImageFile.size > 2 * 1024 * 1024) {
-                isValid = false;
-                errorMessage += '- Ảnh chính không được vượt quá 2MB\n';
+            // Validate main image using ImageValidator
+            var mainImageInput = document.getElementById('mainImage');
+            var mainImageFile = mainImageInput.files[0];
+            if (mainImageFile) {
+                var mainResult = ImageValidator.validate(mainImageFile);
+                if (!mainResult.valid) {
+                    isValid = false;
+                    errorMessage += '- Ảnh chính: ' + mainResult.error + '\n';
+                    ImageValidator.showError(mainImageInput, mainResult.error);
+                }
             }
             
-            // Check thumbnails count and total size
-            var thumbnailFiles = document.getElementById('thumbnailImages').files;
-            if (thumbnailFiles.length > 4) {
-                isValid = false;
-                errorMessage += '- Chỉ được chọn tối đa 4 ảnh phụ\n';
-            }
-            var totalSize = 0;
-            for (var i = 0; i < thumbnailFiles.length; i++) {
-                totalSize += thumbnailFiles[i].size;
-            }
-            if (totalSize > 2 * 1024 * 1024) {
-                isValid = false;
-                errorMessage += '- Tổng dung lượng ảnh phụ không được vượt quá 2MB\n';
+            // Validate thumbnail images using ImageValidator
+            var thumbnailInput = document.getElementById('thumbnailImages');
+            var thumbnailFiles = thumbnailInput.files;
+            if (thumbnailFiles.length > 0) {
+                // Check max 4 images
+                if (thumbnailFiles.length > 4) {
+                    isValid = false;
+                    errorMessage += '- Chỉ được chọn tối đa 4 ảnh phụ\n';
+                }
+                
+                // Validate each file
+                var thumbResult = ImageValidator.validateMultiple(thumbnailFiles);
+                if (!thumbResult.valid) {
+                    isValid = false;
+                    errorMessage += '- Ảnh phụ: ' + thumbResult.errors.join('; ') + '\n';
+                    ImageValidator.showError(thumbnailInput, thumbResult.errors.join(' | '));
+                }
             }
             
             if (!isValid) {
