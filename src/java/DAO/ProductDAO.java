@@ -687,6 +687,69 @@ public class ProductDAO extends DBContext {
         }
     }
     
+    // ========== VARIANT MANAGEMENT METHODS ==========
+    
+    /**
+     * Insert variant mới và trả về variantId
+     * Sử dụng cho tính năng Quản lý Biến thể sản phẩm
+     */
+    public int insertVariant(int productId, String sku, BigDecimal sellingPrice, int stock) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getConnection();
+            String sql = "INSERT INTO ProductVariants (ProductID, SKU, CostPrice, SellingPrice, Stock, IsActive, CreatedDate, UpdatedDate) " +
+                        "VALUES (?, ?, 0, ?, ?, 1, GETDATE(), GETDATE())";
+            
+            ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
+            ps.setInt(1, productId);
+            ps.setString(2, sku);
+            ps.setBigDecimal(3, sellingPrice);
+            ps.setInt(4, stock);
+            
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                rs = ps.getGeneratedKeys();
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+            return -1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        } finally {
+            closeResources(rs, ps, conn);
+        }
+    }
+    
+    /**
+     * Insert liên kết variant-attribute vào bảng VariantAttributes
+     * Sử dụng cho tính năng Quản lý Biến thể sản phẩm
+     */
+    public boolean insertVariantAttribute(int variantId, int valueId) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        
+        try {
+            conn = getConnection();
+            String sql = "INSERT INTO VariantAttributes (VariantID, ValueID) VALUES (?, ?)";
+            
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, variantId);
+            ps.setInt(2, valueId);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources(null, ps, conn);
+        }
+    }
+    
     // Helper method to close resources
     private void closeResources(ResultSet rs, PreparedStatement ps, Connection conn) {
         try {

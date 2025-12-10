@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.math.BigDecimal;
 
 @WebServlet(name = "AdminProductServlet", urlPatterns = {"/admin/products", "/admin/product-add"})
 @MultipartConfig(
@@ -106,7 +107,7 @@ public class AdminProductServlet extends HttpServlet {
         if (sortOrder == null || sortOrder.isEmpty()) sortOrder = "desc";
         
         int page = 1;
-        int pageSize = 6;
+        int pageSize = 5;
         try {
             if (pageStr != null && !pageStr.isEmpty()) {
                 page = Integer.parseInt(pageStr);
@@ -307,6 +308,39 @@ public class AdminProductServlet extends HttpServlet {
                     productDAO.insertProductImage(productId, imageUrl, "gallery", displayOrder++);
                 }
             }
+            
+            // ===== XỬ LÝ VARIANTS =====
+            int variantIndex = 0;
+            while (request.getParameter("variant_sku_" + variantIndex) != null) {
+                String sku = request.getParameter("variant_sku_" + variantIndex);
+                String priceStr = request.getParameter("variant_price_" + variantIndex);
+                String stockStr = request.getParameter("variant_stock_" + variantIndex);
+                String valueIds = request.getParameter("variant_values_" + variantIndex);
+                
+                if (sku != null && !sku.trim().isEmpty() && priceStr != null && !priceStr.trim().isEmpty()) {
+                    try {
+                        BigDecimal price = new BigDecimal(priceStr);
+                        int stock = (stockStr != null && !stockStr.isEmpty()) ? Integer.parseInt(stockStr) : 0;
+                        
+                        // Insert variant
+                        int variantId = productDAO.insertVariant(productId, sku.trim(), price, stock);
+                        
+                        // Insert variant attributes
+                        if (valueIds != null && !valueIds.isEmpty() && variantId > 0) {
+                            String[] ids = valueIds.split(",");
+                            for (String valIdStr : ids) {
+                                int valueId = Integer.parseInt(valIdStr.trim());
+                                productDAO.insertVariantAttribute(variantId, valueId);
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        // Log error, continue with next variant
+                        System.err.println("Error parsing variant data at index " + variantIndex + ": " + e.getMessage());
+                    }
+                }
+                variantIndex++;
+            }
+            // ===== END XỬ LÝ VARIANTS =====
             
             response.sendRedirect(request.getContextPath() + "/admin/products?message=" + 
                                 encodeURL("Thêm sản phẩm thành công"));
