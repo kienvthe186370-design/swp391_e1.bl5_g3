@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="entity.Employee" %>
+<%@ page import="utils.RolePermission" %>
 <%
     // ===== ROLE DETECTION AND NULL SAFETY =====
     Employee employee = (Employee) session.getAttribute("employee");
@@ -18,9 +19,12 @@
     
     String adminName = employee.getFullName();
     String adminEmail = employee.getEmail();
+    String roleDisplayName = RolePermission.getRoleDisplayName(userRole);
+    
+    // ===== CHECK IF ADMIN - Admin giữ nguyên menu cũ =====
+    boolean isAdmin = "Admin".equalsIgnoreCase(userRole);
     
     // ===== ACTIVE PAGE DETECTION =====
-    // Xác định trang hiện tại để highlight menu (navigation tự động)
     String currentURI = request.getRequestURI();
     String contextPath = request.getContextPath();
     
@@ -44,25 +48,41 @@
     // Order pages
     boolean isOrderPage = currentURI.contains("/admin/order");
     
+    // Other pages
+    boolean isReportsPage = currentURI.contains("/admin/reports");
+    boolean isVoucherPage = currentURI.contains("/admin/voucher");
+    boolean isSettingsPage = currentURI.contains("/admin/settings");
+    
     // Parent menu detection (for expanding submenus)
     boolean isUserManagement = isCustomerPage || isEmployeePage;
-    boolean isProductManagement = isProductPage; // Only Products page
-    boolean isCatalogManagement = isCategoryPage || isBrandPage || isAttributePage; // Categories, Brands, Attributes
+    boolean isProductManagement = isProductPage;
+    boolean isCatalogManagement = isCategoryPage || isBrandPage || isAttributePage;
     boolean isMarketing = isSliderPage;
     
     // ===== ROLE-BASED ACCESS CONTROL FLAGS =====
-    // Determine which menu sections are visible based on user role
-    boolean canAccessUserManagement = "Admin".equals(userRole);
-    boolean canAccessProductManagement = "Admin".equals(userRole) || "Marketer".equals(userRole);
-    boolean canAccessCatalogManagement = "Admin".equals(userRole) || "Marketer".equals(userRole);
-    boolean canAccessMarketing = "Admin".equals(userRole) || "Marketer".equals(userRole);
-    boolean canAccessOrders = !"Staff".equals(userRole); // All roles except Staff
-    boolean canAccessVouchers = "Admin".equals(userRole) || "Marketer".equals(userRole);
-    boolean canAccessReports = "Admin".equals(userRole);
-    boolean canAccessSettings = "Admin".equals(userRole);
+    // Admin: giữ nguyên tất cả menu như cũ (code của bạn bạn)
+    // Các role khác: phân quyền theo yêu cầu mới
+    
+    // SellerManager permissions
+    boolean canAccessCustomerManagement = RolePermission.canManageCustomers(userRole);
+    boolean canViewCustomers = RolePermission.canViewCustomers(userRole);
+    boolean canAccessOrders = RolePermission.canManageOrders(userRole);
+    boolean canAccessReports = RolePermission.canViewSalesReports(userRole);
+    
+    // Marketer permissions
+    boolean canAccessProductManagement = RolePermission.canManageProducts(userRole);
+    boolean canAccessCatalogManagement = RolePermission.canManageCatalog(userRole);
+    boolean canAccessMarketing = RolePermission.canManageMarketing(userRole);
+    boolean canAccessVouchers = RolePermission.canManageVouchers(userRole);
+    
+    // Check for access denied message
+    String accessDeniedMsg = (String) session.getAttribute("accessDeniedMessage");
+    if (accessDeniedMsg != null) {
+        session.removeAttribute("accessDeniedMessage");
+    }
 %>
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
-  <a href="<%= request.getContextPath() %>/AdminLTE-3.2.0/index.jsp" class="brand-link">
+  <a href="<%= request.getContextPath() %>/admin/dashboard" class="brand-link">
     <img src="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
     <span class="brand-text font-weight-light">Pickleball Admin</span>
   </a>
@@ -73,11 +93,13 @@
       </div>
       <div class="info">
         <a href="#" class="d-block"><%= adminName %></a>
-        <small class="text-muted"><%= adminEmail %></small>
+        <small class="text-muted d-block"><%= adminEmail %></small>
+        <span class="badge badge-info"><%= roleDisplayName %></span>
       </div>
     </div>
     <nav class="mt-2">
       <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+        
         <!-- Dashboard - Visible to all roles -->
         <li class="nav-item">
           <a href="<%= contextPath %>/admin/dashboard" 
@@ -87,8 +109,10 @@
           </a>
         </li>
         
+<% if (isAdmin) { %>
+        <!-- ==================== ADMIN - GIỮ NGUYÊN MENU CŨ ==================== -->
+        
         <!-- User Management - Admin only -->
-        <% if (canAccessUserManagement) { %>
         <li class="nav-item <%= isUserManagement ? "menu-open" : "" %>">
           <a href="#" class="nav-link <%= isUserManagement ? "active" : "" %>">
             <i class="nav-icon fas fa-users"></i>
@@ -114,10 +138,8 @@
             </li>
           </ul>
         </li>
-        <% } %>
         
-        <!-- Product Management - Admin and Marketer -->
-        <% if (canAccessProductManagement) { %>
+        <!-- Product Management - Admin -->
         <li class="nav-item <%= isProductManagement ? "menu-open" : "" %>">
           <a href="#" class="nav-link <%= isProductManagement ? "active" : "" %>">
             <i class="nav-icon fas fa-cube"></i>
@@ -136,9 +158,147 @@
             </li>
           </ul>
         </li>
+        
+        <!-- Catalog Management - Admin -->
+        <li class="nav-item <%= isCatalogManagement ? "menu-open" : "" %>">
+          <a href="#" class="nav-link <%= isCatalogManagement ? "active" : "" %>">
+            <i class="nav-icon fas fa-tags"></i>
+            <p>
+              Quản lý Danh mục
+              <i class="fas fa-angle-left right"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/categories" 
+                 class="nav-link <%= isCategoryPage ? "active" : "" %>">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Danh mục</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/brands" 
+                 class="nav-link <%= isBrandPage ? "active" : "" %>">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Thương hiệu</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/attributes" 
+                 class="nav-link <%= isAttributePage ? "active" : "" %>">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Thuộc tính</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+        
+        <!-- Marketing - Admin -->
+        <li class="nav-item <%= isMarketing ? "menu-open" : "" %>">
+          <a href="#" class="nav-link <%= isMarketing ? "active" : "" %>">
+            <i class="nav-icon fas fa-bullhorn"></i>
+            <p>
+              Marketing
+              <i class="fas fa-angle-left right"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/slider" 
+                 class="nav-link <%= isSliderPage ? "active" : "" %>">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Sliders</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+        
+        <!-- Orders - Admin -->
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/orders" 
+             class="nav-link <%= isOrderPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-shopping-cart"></i>
+            <p>Đơn hàng</p>
+          </a>
+        </li>
+        
+        <!-- Vouchers - Admin -->
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/vouchers" 
+             class="nav-link <%= isVoucherPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-ticket-alt"></i>
+            <p>Voucher</p>
+          </a>
+        </li>
+        
+        <!-- Reports - Admin -->
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/reports" 
+             class="nav-link <%= isReportsPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-chart-bar"></i>
+            <p>Báo cáo</p>
+          </a>
+        </li>
+        
+        <!-- Settings - Admin -->
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/settings" 
+             class="nav-link <%= isSettingsPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-cog"></i>
+            <p>Cài đặt</p>
+          </a>
+        </li>
+        
+<% } else { %>
+        <!-- ==================== OTHER ROLES - PHÂN QUYỀN MỚI ==================== -->
+        
+        <!-- ===== SELLER MANAGER SECTION ===== -->
+        <!-- Quản lý Khách hàng - SellerManager (CRUD) hoặc Seller (View only) -->
+        <% if (canViewCustomers) { %>
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/customers" 
+             class="nav-link <%= isCustomerPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-users"></i>
+            <p>Khách hàng<% if (!canAccessCustomerManagement) { %> <small>(Xem)</small><% } %></p>
+          </a>
+        </li>
         <% } %>
         
-        <!-- Catalog Management - Admin and Marketer -->
+        <!-- Quản lý Đơn hàng - SellerManager và Seller -->
+        <% if (canAccessOrders) { %>
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/orders" 
+             class="nav-link <%= isOrderPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-shopping-cart"></i>
+            <p>Đơn hàng</p>
+          </a>
+        </li>
+        <% } %>
+        
+        <!-- Báo cáo doanh số - Chỉ SellerManager -->
+        <% if (canAccessReports) { %>
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/reports" 
+             class="nav-link <%= isReportsPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-chart-bar"></i>
+            <p>Báo cáo doanh số</p>
+          </a>
+        </li>
+        <% } %>
+        
+        <!-- ===== MARKETER SECTION ===== -->
+        <!-- Quản lý Sản phẩm - Chỉ Marketer -->
+        <% if (canAccessProductManagement) { %>
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/products" 
+             class="nav-link <%= isProductPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-cube"></i>
+            <p>Quản lý Sản phẩm</p>
+          </a>
+        </li>
+        <% } %>
+        
+        <!-- Quản lý Danh mục - Chỉ Marketer -->
         <% if (canAccessCatalogManagement) { %>
         <li class="nav-item <%= isCatalogManagement ? "menu-open" : "" %>">
           <a href="#" class="nav-link <%= isCatalogManagement ? "active" : "" %>">
@@ -174,7 +334,7 @@
         </li>
         <% } %>
         
-        <!-- Marketing - Admin and Marketer -->
+        <!-- Marketing - Chỉ Marketer -->
         <% if (canAccessMarketing) { %>
         <li class="nav-item <%= isMarketing ? "menu-open" : "" %>">
           <a href="#" class="nav-link <%= isMarketing ? "active" : "" %>">
@@ -196,48 +356,20 @@
         </li>
         <% } %>
         
-        <!-- Orders - All roles except Staff -->
-        <% if (canAccessOrders) { %>
-        <li class="nav-item">
-          <a href="<%= contextPath %>/admin/orders" 
-             class="nav-link <%= isOrderPage ? "active" : "" %>">
-            <i class="nav-icon fas fa-shopping-cart"></i>
-            <p>Đơn hàng</p>
-          </a>
-        </li>
-        <% } %>
-        
-        <!-- Vouchers - Placeholder (Admin, Marketer) -->
+        <!-- Voucher - Chỉ Marketer -->
         <% if (canAccessVouchers) { %>
         <li class="nav-item">
-          <a href="#" class="nav-link">
+          <a href="<%= contextPath %>/admin/vouchers" 
+             class="nav-link <%= isVoucherPage ? "active" : "" %>">
             <i class="nav-icon fas fa-ticket-alt"></i>
             <p>Voucher</p>
           </a>
         </li>
         <% } %>
         
-        <!-- Reports - Placeholder (Admin only) -->
-        <% if (canAccessReports) { %>
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="nav-icon fas fa-chart-bar"></i>
-            <p>Báo cáo</p>
-          </a>
-        </li>
-        <% } %>
+<% } %>
         
-        <!-- Settings - Placeholder (Admin only) -->
-        <% if (canAccessSettings) { %>
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="nav-icon fas fa-cog"></i>
-            <p>Cài đặt</p>
-          </a>
-        </li>
-        <% } %>
       </ul>
     </nav>
   </div>
 </aside>
-
