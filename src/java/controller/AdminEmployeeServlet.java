@@ -15,7 +15,7 @@ import java.util.List;
 @WebServlet(name = "AdminEmployeeServlet", urlPatterns = {"/admin/employees"})
 public class AdminEmployeeServlet extends HttpServlet {
     
-    private static final int PAGE_SIZE = 10;
+    private static final int PAGE_SIZE = 5;
     private EmployeeDAO employeeDAO = new EmployeeDAO();
     
     // Danh sách các role hợp lệ (phải khớp CHÍNH XÁC với database constraint)
@@ -164,7 +164,6 @@ public class AdminEmployeeServlet extends HttpServlet {
             String fullName = request.getParameter("fullName");
             String email = request.getParameter("email");
             String password = request.getParameter("password");
-            String confirmPassword = request.getParameter("confirmPassword");
             String phone = request.getParameter("phone");
             String role = request.getParameter("role");
             
@@ -203,13 +202,6 @@ public class AdminEmployeeServlet extends HttpServlet {
             
             if (password == null || password.trim().isEmpty() || password.length() < 6) {
                 session.setAttribute("message", "Mật khẩu phải có ít nhất 6 ký tự!");
-                session.setAttribute("messageType", "danger");
-                response.sendRedirect(request.getContextPath() + "/admin/employees?action=create");
-                return;
-            }
-            
-            if (!password.equals(confirmPassword)) {
-                session.setAttribute("message", "Mật khẩu xác nhận không khớp!");
                 session.setAttribute("messageType", "danger");
                 response.sendRedirect(request.getContextPath() + "/admin/employees?action=create");
                 return;
@@ -278,7 +270,6 @@ public class AdminEmployeeServlet extends HttpServlet {
             String phone = request.getParameter("phone");
             String role = request.getParameter("role");
             String password = request.getParameter("password");
-            String confirmPassword = request.getParameter("confirmPassword");
             
             // Lấy trạng thái hiện tại của nhân viên để giữ nguyên (không cho phép sửa trong form)
             Employee currentEmployee = employeeDAO.getEmployeeById(employeeID);
@@ -375,12 +366,6 @@ public class AdminEmployeeServlet extends HttpServlet {
             if (password != null && !password.trim().isEmpty()) {
                 if (password.length() < 6) {
                     session.setAttribute("message", "Mật khẩu phải có ít nhất 6 ký tự!");
-                    session.setAttribute("messageType", "danger");
-                    response.sendRedirect(request.getContextPath() + "/admin/employees?action=edit&id=" + employeeID);
-                    return;
-                }
-                if (!password.equals(confirmPassword)) {
-                    session.setAttribute("message", "Mật khẩu xác nhận không khớp!");
                     session.setAttribute("messageType", "danger");
                     response.sendRedirect(request.getContextPath() + "/admin/employees?action=edit&id=" + employeeID);
                     return;

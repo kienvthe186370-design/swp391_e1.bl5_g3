@@ -67,12 +67,6 @@
         </small>
       </div>
       
-      <div class="form-group">
-        <label for="confirmPassword">Xác nhận Mật khẩu <%= isEditMode ? "" : "<span class=\"text-danger\">*</span>" %></label>
-        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" 
-               <%= isEditMode ? "" : "required" %> placeholder="Nhập lại mật khẩu" minlength="6">
-        <small class="form-text text-muted">Xác nhận mật khẩu phải khớp với mật khẩu ở trên</small>
-      </div>
     </div>
     <div class="card-footer">
       <button type="submit" class="btn btn-primary">
@@ -93,7 +87,6 @@ document.getElementById('employeeForm').addEventListener('submit', function(e) {
     var phone = document.getElementById('phone').value.trim();
     var role = document.getElementById('role').value;
     var password = document.getElementById('password').value;
-    var confirmPassword = document.getElementById('confirmPassword').value;
     
     // Validate họ tên
     var nameRegex = /^[a-zA-ZÀ-ỹ0-9\s]+$/;
@@ -136,11 +129,6 @@ document.getElementById('employeeForm').addEventListener('submit', function(e) {
         alert('Mật khẩu phải có ít nhất 6 ký tự!');
         return false;
     }
-    if (password !== confirmPassword) {
-        e.preventDefault();
-        alert('Mật khẩu xác nhận không khớp!');
-        return false;
-    }
     </c:if>
     
     <c:if test="${isEditMode}">
@@ -149,11 +137,6 @@ document.getElementById('employeeForm').addEventListener('submit', function(e) {
         if (password.length < 6) {
             e.preventDefault();
             alert('Mật khẩu phải có ít nhất 6 ký tự!');
-            return false;
-        }
-        if (password !== confirmPassword) {
-            e.preventDefault();
-            alert('Mật khẩu xác nhận không khớp!');
             return false;
         }
     }
