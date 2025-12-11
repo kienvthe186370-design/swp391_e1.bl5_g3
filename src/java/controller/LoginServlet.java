@@ -4,7 +4,6 @@ import DAO.CustomerDAO;
 import DAO.EmployeeDAO;
 import entity.Customer;
 import entity.Employee;
-import entity.OTPCode;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -30,48 +29,36 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
         }
-
+        
         request.getRequestDispatcher("login.jsp").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
+        
         String email = request.getParameter("email");
         String password = request.getParameter("password");
-        String userType = request.getParameter("userType");
-
-        if (email == null || email.trim().isEmpty()
-                || password == null || password.trim().isEmpty()) {
+        String userType = request.getParameter("userType"); 
+        
+        if (email == null || email.trim().isEmpty() || 
+            password == null || password.trim().isEmpty()) {
             request.setAttribute("error", "Vui lòng nhập đầy đủ email và mật khẩu");
             request.getRequestDispatcher("login.jsp").forward(request, response);
             return;
         }
-
+        
         HttpSession session = request.getSession();
         if (userType == null || userType.equals("customer")) {
             CustomerDAO customerDAO = new CustomerDAO();
             Customer customer = customerDAO.login(email, password);
-
+            
             if (customer != null) {
-                // Đây để kiểm tra email đã được xác thực chưa
-                if (!customer.isEmailVerified()) {
-                    // Tạo OTP mới và gửi email
-                    OTPService otpService = new OTPService();
-                    otpService.createAndSendOTP(email, OTPCode.TYPE_VERIFY_EMAIL);
-                    // Lưu email vào session để verify
-                    session.setAttribute("pendingEmail", email);
-                    session.setAttribute("otpType", OTPCode.TYPE_VERIFY_EMAIL);
-                    // Redirect đến trang verify OTP
-                    response.sendRedirect("verify-otp");
-                    return;
-                }
                 session.setAttribute("customer", customer);
                 session.setAttribute("userID", customer.getCustomerID());
                 session.setAttribute("userName", customer.getFullName());
                 session.setAttribute("userType", "customer");
-
+                
                 response.sendRedirect("customer/home");
                 return;
             }
@@ -79,7 +66,7 @@ public class LoginServlet extends HttpServlet {
 
         EmployeeDAO employeeDAO = new EmployeeDAO();
         Employee employee = employeeDAO.login(email, password);
-
+        
         if (employee != null) {
             session.setAttribute("employee", employee);
             session.setAttribute("userID", employee.getEmployeeID());
@@ -94,7 +81,7 @@ public class LoginServlet extends HttpServlet {
             request.getRequestDispatcher("login.jsp").forward(request, response);
         }
     }
-
+    
     private String getRedirectUrlByRole(String role) {
         return "admin/dashboard";
     }
