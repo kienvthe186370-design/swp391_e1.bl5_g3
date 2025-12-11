@@ -750,6 +750,74 @@ public class ProductDAO extends DBContext {
         }
     }
     
+    /**
+     * Delete a product variant
+     */
+    public boolean deleteProductVariant(int variantId) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        
+        try {
+            conn = getConnection();
+            // First delete variant attributes
+            ps = conn.prepareStatement("DELETE FROM VariantAttributes WHERE VariantID = ?");
+            ps.setInt(1, variantId);
+            ps.executeUpdate();
+            ps.close();
+            
+            // Then delete the variant
+            ps = conn.prepareStatement("DELETE FROM ProductVariants WHERE VariantID = ?");
+            ps.setInt(1, variantId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources(null, ps, conn);
+        }
+    }
+    
+    /**
+     * Update an existing product variant
+     */
+    public boolean updateProductVariant(int variantId, String sku, BigDecimal costPrice, BigDecimal sellingPrice, boolean isActive) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        
+        try {
+            conn = getConnection();
+            String sql = "UPDATE ProductVariants SET SKU = ?, CostPrice = ?, SellingPrice = ?, IsActive = ?, UpdatedDate = GETDATE() WHERE VariantID = ?";
+            
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, sku);
+            ps.setBigDecimal(2, costPrice);
+            ps.setBigDecimal(3, sellingPrice);
+            ps.setBoolean(4, isActive);
+            ps.setInt(5, variantId);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources(null, ps, conn);
+        }
+    }
+    
+    /**
+     * Insert a new product variant and return the generated ID
+     */
+    public int insertProductVariant(int productId, String sku, BigDecimal sellingPrice, int stock) {
+        return insertVariant(productId, sku, sellingPrice, stock);
+    }
+    
+    /**
+     * Insert variant-attribute value link
+     */
+    public boolean insertVariantAttributeValue(int variantId, int valueId) {
+        return insertVariantAttribute(variantId, valueId);
+    }
+    
     // Helper method to close resources
     private void closeResources(ResultSet rs, PreparedStatement ps, Connection conn) {
         try {

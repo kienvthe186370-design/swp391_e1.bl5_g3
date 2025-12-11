@@ -279,6 +279,7 @@
                                         <th class="text-center">Khả dụng</th>
                                         <th class="text-right">Lợi nhuận</th>
                                         <th class="text-center">Trạng thái</th>
+                                        <th class="text-center">Hành động</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -341,6 +342,12 @@
                                                         <span class="badge badge-danger">Ngừng</span>
                                                     </c:otherwise>
                                                 </c:choose>
+                                            </td>
+                                            <td class="text-center">
+                                                <a href="${pageContext.request.contextPath}/admin/stock/detail?id=${variant.variantID}" 
+                                                   class="btn btn-success btn-sm" title="Nhập kho">
+                                                    <i class="fas fa-plus-circle"></i> Nhập
+                                                </a>
                                             </td>
                                         </tr>
                                     </c:forEach>

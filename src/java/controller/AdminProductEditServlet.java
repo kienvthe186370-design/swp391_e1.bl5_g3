@@ -66,11 +66,13 @@ public class AdminProductEditServlet extends HttpServlet {
             List<Map<String, Object>> images = productDAO.getProductImages(productId);
             List<Map<String, Object>> categories = productDAO.getCategoriesForFilter();
             List<Map<String, Object>> brands = productDAO.getBrandsForFilter();
+            List<Map<String, Object>> variants = productDAO.getProductVariants(productId);
             
             request.setAttribute("product", product);
             request.setAttribute("images", images);
             request.setAttribute("categories", categories);
             request.setAttribute("brands", brands);
+            request.setAttribute("variants", variants);
             
             request.setAttribute("contentPage", "product-edit");
             request.setAttribute("activePage", "products");
@@ -170,6 +172,65 @@ public class AdminProductEditServlet extends HttpServlet {
                         productDAO.insertProductImage(productId, imageUrl, "gallery", sortOrder++);
                     }
                 }
+            }
+            
+            // Handle variant deletions
+            String[] deleteVariantIds = request.getParameterValues("deleteVariantIds");
+            if (deleteVariantIds != null) {
+                for (String variantId : deleteVariantIds) {
+                    productDAO.deleteProductVariant(Integer.parseInt(variantId));
+                }
+            }
+            
+            // Handle existing variant updates
+            String existingCountStr = request.getParameter("existingVariantCount");
+            if (existingCountStr != null && !existingCountStr.isEmpty()) {
+                int existingCount = Integer.parseInt(existingCountStr);
+                for (int i = 0; i < existingCount; i++) {
+                    String variantIdStr = request.getParameter("existingVariantId_" + i);
+                    if (variantIdStr == null || variantIdStr.isEmpty()) continue;
+                    
+                    int variantId = Integer.parseInt(variantIdStr);
+                    String sku = request.getParameter("existingVariantSku_" + i);
+                    String costPriceStr = request.getParameter("existingVariantCostPrice_" + i);
+                    String priceStr = request.getParameter("existingVariantPrice_" + i);
+                    boolean variantActive = "true".equals(request.getParameter("existingVariantActive_" + i));
+                    
+                    if (sku != null && !sku.isEmpty() && priceStr != null && !priceStr.isEmpty()) {
+                        java.math.BigDecimal costPrice = (costPriceStr != null && !costPriceStr.isEmpty()) 
+                            ? new java.math.BigDecimal(costPriceStr) : java.math.BigDecimal.ZERO;
+                        java.math.BigDecimal sellingPrice = new java.math.BigDecimal(priceStr);
+                        productDAO.updateProductVariant(variantId, sku, costPrice, sellingPrice, variantActive);
+                    }
+                }
+            }
+            
+            // Handle new variants
+            int newVariantIndex = 0;
+            while (true) {
+                String valueIds = request.getParameter("newVariant_values_" + newVariantIndex);
+                if (valueIds == null) break;
+                
+                String sku = request.getParameter("newVariant_sku_" + newVariantIndex);
+                String priceStr = request.getParameter("newVariant_price_" + newVariantIndex);
+                String stockStr = request.getParameter("newVariant_stock_" + newVariantIndex);
+                
+                if (sku != null && !sku.isEmpty() && priceStr != null && !priceStr.isEmpty()) {
+                    java.math.BigDecimal sellingPrice = new java.math.BigDecimal(priceStr);
+                    int stock = (stockStr != null && !stockStr.isEmpty()) ? Integer.parseInt(stockStr) : 0;
+                    
+                    // Create new variant
+                    int newVariantId = productDAO.insertProductVariant(productId, sku, sellingPrice, stock);
+                    
+                    // Link variant to attribute values
+                    if (newVariantId > 0 && !valueIds.isEmpty()) {
+                        String[] valueIdArray = valueIds.split(",");
+                        for (String valueId : valueIdArray) {
+                            productDAO.insertVariantAttributeValue(newVariantId, Integer.parseInt(valueId.trim()));
+                        }
+                    }
+                }
+                newVariantIndex++;
             }
             
             response.sendRedirect(request.getContextPath() + "/admin/product-details?id=" + productId + 

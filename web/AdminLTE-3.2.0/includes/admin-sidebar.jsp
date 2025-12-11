@@ -34,6 +34,7 @@
     
     // Product Management pages
     boolean isProductPage = currentURI.contains("/admin/product");
+    boolean isStockPage = currentURI.contains("/admin/stock");
     boolean isCategoryPage = currentURI.contains("/admin/categories");
     boolean isBrandPage = currentURI.contains("/admin/brands");
     boolean isAttributePage = currentURI.contains("/admin/attributes");
@@ -46,7 +47,7 @@
     
     // Parent menu detection (for expanding submenus)
     boolean isUserManagement = isCustomerPage || isEmployeePage;
-    boolean isProductManagement = isProductPage; // Only Products page
+    boolean isProductManagement = isProductPage || isStockPage; // Products and Stock pages
     boolean isCatalogManagement = isCategoryPage || isBrandPage || isAttributePage; // Categories, Brands, Attributes
     boolean isMarketing = isSliderPage;
     
@@ -132,6 +133,13 @@
                  class="nav-link <%= isProductPage ? "active" : "" %>">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Sản phẩm</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/stock" 
+                 class="nav-link <%= isStockPage ? "active" : "" %>">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Quản lý tồn kho</p>
               </a>
             </li>
           </ul>
