@@ -39,7 +39,7 @@
               <a href="<%= request.getContextPath() %>/AdminLTE-3.2.0/index.jsp">Dashboard</a>
             </li>
             <li class="breadcrumb-item">
-              <a href="<%= request.getContextPath() %>/admin/customers">Khách hàng</a>
+              <a href="<%= request.getContextPath() %>/seller-manager/customers">Khách hàng</a>
             </li>
             <li class="breadcrumb-item active"><%= "create".equals(mode) ? "Thêm mới" : "Chỉnh sửa" %></li>
           </ol>
