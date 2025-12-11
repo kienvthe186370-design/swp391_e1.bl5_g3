@@ -51,6 +51,7 @@
         <label for="role">Vai trò <span class="text-danger">*</span></label>
         <select class="form-control" id="role" name="role" required>
           <option value="">-- Chọn vai trò --</option>
+          <option value="Staff" <%= employee != null && "Staff".equals(employee.getRole()) ? "selected" : "" %>>Staff</option>
           <option value="Marketer" <%= employee != null && "Marketer".equals(employee.getRole()) ? "selected" : "" %>>Marketer</option>
           <option value="SellerManager" <%= employee != null && "SellerManager".equals(employee.getRole()) ? "selected" : "" %>>Seller Manager</option>
           <option value="Seller" <%= employee != null && "Seller".equals(employee.getRole()) ? "selected" : "" %>>Seller</option>

@@ -35,8 +35,6 @@
     // User Management pages
     boolean isCustomerPage = currentURI.contains("/admin/customer");
     boolean isEmployeePage = currentURI.contains("/admin/employee");
-    boolean isSMCustomerPage = currentURI.contains("/seller-manager/customer");
-    isCustomerPage = isCustomerPage || isSMCustomerPage;
     
     // Product Management pages
     boolean isProductPage = currentURI.contains("/admin/product");
@@ -115,8 +113,8 @@
         <!-- ==================== ADMIN - GIỮ NGUYÊN MENU CŨ ==================== -->
         
         <!-- User Management - Admin only -->
-        <li class="nav-item <%= isEmployeePage ? "menu-open" : "" %>">
-          <a href="#" class="nav-link <%= isEmployeePage ? "active" : "" %>">
+        <li class="nav-item <%= isUserManagement ? "menu-open" : "" %>">
+          <a href="#" class="nav-link <%= isUserManagement ? "active" : "" %>">
             <i class="nav-icon fas fa-users"></i>
             <p>
               Quản lý User
@@ -124,6 +122,13 @@
             </p>
           </a>
           <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/customers" 
+                 class="nav-link <%= isCustomerPage ? "active" : "" %>">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Khách hàng</p>
+              </a>
+            </li>
             <li class="nav-item">
               <a href="<%= contextPath %>/admin/employees" 
                  class="nav-link <%= isEmployeePage ? "active" : "" %>">
@@ -251,10 +256,10 @@
         <!-- Quản lý Khách hàng - SellerManager (CRUD) hoặc Seller (View only) -->
         <% if (canViewCustomers) { %>
         <li class="nav-item">
-          <a href="<%= contextPath %>/seller-manager/customers" 
-             class="nav-link <%= isSMCustomerPage ? "active" : "" %>">
+          <a href="<%= contextPath %>/admin/customers" 
+             class="nav-link <%= isCustomerPage ? "active" : "" %>">
             <i class="nav-icon fas fa-users"></i>
-            <p>Quản lý khách hàng<% if (!canAccessCustomerManagement) { %> <small>(Xem)</small><% } %></p>
+            <p>Khách hàng<% if (!canAccessCustomerManagement) { %> <small>(Xem)</small><% } %></p>
           </a>
         </li>
         <% } %>
