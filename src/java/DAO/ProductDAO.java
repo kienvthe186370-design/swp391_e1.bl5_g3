@@ -844,6 +844,11 @@ public class ProductDAO extends DBContext {
     }
     
     // Helper method to close resources
+    
+    
+    
+    
+    
     private void closeResources(ResultSet rs, PreparedStatement ps, Connection conn) {
         try {
             if (rs != null) rs.close();
