@@ -106,7 +106,7 @@
                   <th>Số điện thoại</th>
                   <th>Vai trò</th>
                   <th>Trạng thái</th>
-                  <th>Ngày tạo</th>
+                  <th>Ngày vào công ty</th>
                   <th>Thao tác</th>
                 </tr>
               </thead>
