@@ -35,9 +35,12 @@
     // User Management pages
     boolean isCustomerPage = currentURI.contains("/admin/customer");
     boolean isEmployeePage = currentURI.contains("/admin/employee");
+    boolean isSMCustomerPage = currentURI.contains("/seller-manager/customer");
+    isCustomerPage = isCustomerPage || isSMCustomerPage;
     
     // Product Management pages
     boolean isProductPage = currentURI.contains("/admin/product");
+    boolean isStockPage = currentURI.contains("/admin/stock");
     boolean isCategoryPage = currentURI.contains("/admin/categories");
     boolean isBrandPage = currentURI.contains("/admin/brands");
     boolean isAttributePage = currentURI.contains("/admin/attributes");
@@ -55,8 +58,8 @@
     
     // Parent menu detection (for expanding submenus)
     boolean isUserManagement = isCustomerPage || isEmployeePage;
-    boolean isProductManagement = isProductPage;
-    boolean isCatalogManagement = isCategoryPage || isBrandPage || isAttributePage;
+    boolean isProductManagement = isProductPage || isStockPage; // Products and Stock pages
+    boolean isCatalogManagement = isCategoryPage || isBrandPage || isAttributePage; // Categories, Brands, Attributes
     boolean isMarketing = isSliderPage;
     
     // ===== ROLE-BASED ACCESS CONTROL FLAGS =====
@@ -113,8 +116,8 @@
         <!-- ==================== ADMIN - GIỮ NGUYÊN MENU CŨ ==================== -->
         
         <!-- User Management - Admin only -->
-        <li class="nav-item <%= isUserManagement ? "menu-open" : "" %>">
-          <a href="#" class="nav-link <%= isUserManagement ? "active" : "" %>">
+        <li class="nav-item <%= isEmployeePage ? "menu-open" : "" %>">
+          <a href="#" class="nav-link <%= isEmployeePage ? "active" : "" %>">
             <i class="nav-icon fas fa-users"></i>
             <p>
               Quản lý User
@@ -122,13 +125,6 @@
             </p>
           </a>
           <ul class="nav nav-treeview">
-            <li class="nav-item">
-              <a href="<%= contextPath %>/admin/customers" 
-                 class="nav-link <%= isCustomerPage ? "active" : "" %>">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Khách hàng</p>
-              </a>
-            </li>
             <li class="nav-item">
               <a href="<%= contextPath %>/admin/employees" 
                  class="nav-link <%= isEmployeePage ? "active" : "" %>">
@@ -154,6 +150,13 @@
                  class="nav-link <%= isProductPage ? "active" : "" %>">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Sản phẩm</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/stock" 
+                 class="nav-link <%= isStockPage ? "active" : "" %>">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Quản lý tồn kho</p>
               </a>
             </li>
           </ul>
@@ -256,10 +259,10 @@
         <!-- Quản lý Khách hàng - SellerManager (CRUD) hoặc Seller (View only) -->
         <% if (canViewCustomers) { %>
         <li class="nav-item">
-          <a href="<%= contextPath %>/admin/customers" 
-             class="nav-link <%= isCustomerPage ? "active" : "" %>">
+          <a href="<%= contextPath %>/seller-manager/customers" 
+             class="nav-link <%= isSMCustomerPage ? "active" : "" %>">
             <i class="nav-icon fas fa-users"></i>
-            <p>Khách hàng<% if (!canAccessCustomerManagement) { %> <small>(Xem)</small><% } %></p>
+            <p>Quản lý khách hàng<% if (!canAccessCustomerManagement) { %> <small>(Xem)</small><% } %></p>
           </a>
         </li>
         <% } %>

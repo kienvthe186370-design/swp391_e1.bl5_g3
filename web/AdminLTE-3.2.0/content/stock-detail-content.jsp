@@ -1,0 +1,395 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
+<style>
+    .stat-box { background: #f8f9fa; border-radius: 8px; padding: 15px; text-align: center; border-left: 4px solid #007bff; }
+    .stat-box.stock { border-left-color: #17a2b8; }
+    .stat-box.cost { border-left-color: #ffc107; }
+    .stat-box.price { border-left-color: #28a745; }
+    .stat-box.profit { border-left-color: #6f42c1; }
+    .stat-box .label { font-size: 0.85rem; color: #6c757d; margin-bottom: 5px; }
+    .stat-box .value { font-size: 1.4rem; font-weight: 700; }
+    .preview-box { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 2px dashed #ced4da; border-radius: 8px; padding: 20px; text-align: center; }
+    .preview-box .preview-label { font-size: 0.85rem; color: #6c757d; margin-bottom: 5px; }
+    .preview-box .preview-value { font-size: 1.5rem; font-weight: 700; color: #28a745; }
+    .product-image { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #e9ecef; }
+</style>
+
+<!-- Content Header -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0"><i class="fas fa-boxes mr-2"></i>Nhập kho sản phẩm</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/stock">Quản lý kho</a></li>
+                    <li class="breadcrumb-item active">Nhập kho</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <!-- Success/Error Messages -->
+        <c:if test="${not empty successMessage}">
+            <div class="alert alert-success alert-dismissible fade show">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <i class="fas fa-check-circle mr-2"></i>${successMessage}
+            </div>
+        </c:if>
+        <c:if test="${not empty errorMessage}">
+            <div class="alert alert-danger alert-dismissible fade show">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <i class="fas fa-exclamation-circle mr-2"></i>${errorMessage}
+            </div>
+        </c:if>
+
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-lg-8">
+                <!-- Product Info Card -->
+                <div class="card card-info">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-info-circle mr-2"></i>Thông tin sản phẩm</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex">
+                            <c:choose>
+                                <c:when test="${not empty stockDetail.mainImage}">
+                                    <img src="${stockDetail.mainImage}" alt="Product" class="product-image mr-3">
+                                </c:when>
+                                <c:otherwise>
+                                    <img src="${pageContext.request.contextPath}/img/product/product-1.jpg" alt="No image" class="product-image mr-3">
+                                </c:otherwise>
+                            </c:choose>
+                            <div>
+                                <h4 class="mb-2">${stockDetail.productName}</h4>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-barcode mr-1"></i> SKU: <code>${stockDetail.sku}</code>
+                                    <span class="ml-3"><i class="fas fa-hashtag mr-1"></i> Variant ID: <strong>#${variantId}</strong></span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Stats -->
+                        <div class="row mt-4">
+                            <div class="col mb-3">
+                                <div class="stat-box stock">
+                                    <div class="label"><i class="fas fa-cubes mr-1"></i>Tồn kho</div>
+                                    <div class="value text-info" id="currentStockDisplay">${stockDetail.currentStock}</div>
+                                </div>
+                            </div>
+                            <div class="col mb-3">
+                                <div class="stat-box cost">
+                                    <div class="label"><i class="fas fa-coins mr-1"></i>Giá vốn TB</div>
+                                    <div class="value text-warning">
+                                        <fmt:formatNumber value="${stockDetail.avgCostPrice}" type="number" maxFractionDigits="0"/>đ
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col mb-3">
+                                <div class="stat-box price">
+                                    <div class="label"><i class="fas fa-tag mr-1"></i>Giá bán</div>
+                                    <div class="value text-success">
+                                        <fmt:formatNumber value="${stockDetail.sellingPrice}" type="number" maxFractionDigits="0"/>đ
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col mb-3">
+                                <div class="stat-box profit">
+                                    <div class="label"><i class="fas fa-chart-line mr-1"></i>% LN mong muốn</div>
+                                    <div class="value text-purple">
+                                        <fmt:formatNumber value="${stockDetail.profitMarginTarget}" type="number" maxFractionDigits="1"/>%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock History Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-history mr-2"></i>Lịch sử nhập kho</h3>
+                    </div>
+                    <div class="card-body table-responsive p-0">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Ngày nhập</th>
+                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-right">Giá nhập/đơn vị</th>
+                                    <th class="text-right">Thành tiền</th>
+                                    <th>Người nhập</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:choose>
+                                    <c:when test="${not empty receiptHistory}">
+                                        <c:forEach var="receipt" items="${receiptHistory}">
+                                            <tr>
+                                                <td><span class="badge badge-secondary">#${receipt.receiptId}</span></td>
+                                                <td><fmt:formatDate value="${receipt.receiptDate}" pattern="dd/MM/yyyy HH:mm"/></td>
+                                                <td class="text-center"><strong>${receipt.quantity}</strong></td>
+                                                <td class="text-right"><fmt:formatNumber value="${receipt.unitCost}" type="number" maxFractionDigits="0"/>đ</td>
+                                                <td class="text-right"><strong><fmt:formatNumber value="${receipt.totalCost}" type="number" maxFractionDigits="0"/>đ</strong></td>
+                                                <td><i class="fas fa-user-circle mr-1"></i>${not empty receipt.createdByName ? receipt.createdByName : 'N/A'}</td>
+                                            </tr>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4 text-muted">
+                                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                                Chưa có lịch sử nhập kho
+                                            </td>
+                                        </tr>
+                                    </c:otherwise>
+                                </c:choose>
+                            </tbody>
+                            <c:if test="${not empty receiptHistory}">
+                                <tfoot class="bg-light">
+                                    <tr>
+                                        <td colspan="2"><strong>Tổng cộng</strong></td>
+                                        <td class="text-center"><strong class="text-primary">${receiptSummary.totalQuantity}</strong></td>
+                                        <td class="text-right">-</td>
+                                        <td class="text-right"><strong class="text-primary"><fmt:formatNumber value="${receiptSummary.totalAmount}" type="number" maxFractionDigits="0"/>đ</strong></td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </c:if>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Import Form -->
+            <div class="col-lg-4">
+                <div class="card card-success">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>Nhập kho mới</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="${pageContext.request.contextPath}/admin/stock/detail" id="stockForm">
+                            <input type="hidden" name="variantId" value="${variantId}">
+                            
+                            <!-- % Lợi nhuận mong muốn -->
+                            <div class="form-group">
+                                <label><i class="fas fa-percentage mr-1"></i>% Lợi nhuận mong muốn</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="profitMarginTarget" name="profitMarginTarget" 
+                                           placeholder="VD: 30" min="0" max="500" step="0.1"
+                                           value="<fmt:formatNumber value="${stockDetail.profitMarginTarget}" type="number" maxFractionDigits="1"/>">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">Giá bán = Giá vốn TB × (1 + %/100)</small>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-sort-numeric-up mr-1"></i>Số lượng nhập</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" placeholder="Nhập số lượng..." min="0">
+                                <small class="form-text text-muted">Để trống nếu chỉ thay đổi % lợi nhuận</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label><i class="fas fa-money-bill mr-1"></i>Giá nhập/đơn vị</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="unitCost" name="unitCost" placeholder="Nhập giá..." min="1000">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">đ</span>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">Bắt buộc nếu có số lượng nhập</small>
+                            </div>
+
+                            <div class="preview-box mb-3">
+                                <div class="preview-label">Thành tiền</div>
+                                <div class="preview-value" id="totalPreview">0đ</div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                <small>Hệ thống sẽ tự động tính <strong>Giá bán</strong> = Giá vốn TB × (1 + % LN / 100)</small>
+                            </div>
+
+                            <button type="submit" class="btn btn-success btn-block btn-lg">
+                                <i class="fas fa-check mr-2"></i>Xác nhận
+                            </button>
+                            <a href="${pageContext.request.contextPath}/admin/stock" class="btn btn-secondary btn-block">
+                                <i class="fas fa-arrow-left mr-2"></i>Quay lại danh sách
+                            </a>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Preview Card -->
+                <div class="card card-warning">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-calculator mr-2"></i>Dự tính sau nhập</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="text-muted small mb-1">Tồn kho mới</div>
+                                <div class="h4 text-info mb-0" id="newStockPreview">${stockDetail.currentStock}</div>
+                                <small class="text-success" id="stockChangePreview"></small>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted small mb-1">Giá vốn TB mới</div>
+                                <div class="h4 text-warning mb-0" id="newAvgCostPreview">
+                                    <fmt:formatNumber value="${stockDetail.avgCostPrice}" type="number" maxFractionDigits="0"/>đ
+                                </div>
+                                <small id="costChangePreview"></small>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="text-center">
+                            <div class="text-muted small mb-1">Giá bán mới</div>
+                            <div class="h4 text-success mb-0" id="newSellingPricePreview">
+                                <fmt:formatNumber value="${stockDetail.sellingPrice}" type="number" maxFractionDigits="0"/>đ
+                            </div>
+                            <small id="sellingPriceChangePreview"></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dữ liệu hiện tại từ server
+    const currentStock = parseInt('${stockDetail.currentStock}') || 0;
+    const currentTotalCost = parseFloat('${stockDetail.totalCost}') || 0;
+    const currentTotalQty = parseInt('${stockDetail.totalReceived}') || 0;
+    const currentSellingPrice = parseFloat('${stockDetail.sellingPrice}') || 0;
+    const currentAvgCost = parseFloat('${stockDetail.avgCostPrice}') || 0;
+    const currentProfitMargin = parseFloat('${stockDetail.profitMarginTarget}') || 30;
+
+    const quantityInput = document.getElementById('quantity');
+    const unitCostInput = document.getElementById('unitCost');
+    const profitMarginInput = document.getElementById('profitMarginTarget');
+
+    function formatCurrency(num) {
+        return Math.round(num).toLocaleString('vi-VN') + 'đ';
+    }
+
+    function updatePreview() {
+        const qty = parseInt(quantityInput.value) || 0;
+        const cost = parseInt(unitCostInput.value) || 0;
+        const profitMargin = parseFloat(profitMarginInput.value) || currentProfitMargin;
+        const total = qty * cost;
+        
+        // Thành tiền
+        document.getElementById('totalPreview').textContent = formatCurrency(total);
+        
+        // Tồn kho mới
+        const newStock = currentStock + qty;
+        document.getElementById('newStockPreview').textContent = newStock;
+        
+        const stockChange = document.getElementById('stockChangePreview');
+        if (qty > 0) {
+            stockChange.innerHTML = '<i class="fas fa-arrow-up"></i> +' + qty;
+            stockChange.className = 'text-success';
+        } else {
+            stockChange.textContent = '';
+        }
+        
+        // Tính giá vốn TB mới
+        let newAvgCost = currentAvgCost;
+        if (qty > 0 && cost > 0) {
+            const newTotalCost = currentTotalCost + total;
+            const newTotalQty = currentTotalQty + qty;
+            newAvgCost = newTotalQty > 0 ? newTotalCost / newTotalQty : currentAvgCost;
+            
+            document.getElementById('newAvgCostPreview').textContent = formatCurrency(newAvgCost);
+            
+            const costDiff = newAvgCost - currentAvgCost;
+            const costChange = document.getElementById('costChangePreview');
+            if (costDiff > 0) {
+                costChange.innerHTML = '<i class="fas fa-arrow-up"></i> +' + formatCurrency(costDiff);
+                costChange.className = 'text-danger';
+            } else if (costDiff < 0) {
+                costChange.innerHTML = '<i class="fas fa-arrow-down"></i> ' + formatCurrency(Math.abs(costDiff));
+                costChange.className = 'text-success';
+            } else {
+                costChange.textContent = '';
+            }
+        } else {
+            document.getElementById('newAvgCostPreview').textContent = formatCurrency(currentAvgCost);
+            document.getElementById('costChangePreview').textContent = '';
+        }
+        
+        // Tính giá bán mới: Giá bán = Giá vốn TB × (1 + % LN / 100)
+        const newSellingPrice = newAvgCost * (1 + profitMargin / 100);
+        document.getElementById('newSellingPricePreview').textContent = formatCurrency(newSellingPrice);
+        
+        const sellingPriceDiff = newSellingPrice - currentSellingPrice;
+        const sellingPriceChange = document.getElementById('sellingPriceChangePreview');
+        if (Math.abs(sellingPriceDiff) > 1) {
+            if (sellingPriceDiff > 0) {
+                sellingPriceChange.innerHTML = '<i class="fas fa-arrow-up"></i> +' + formatCurrency(sellingPriceDiff);
+                sellingPriceChange.className = 'text-success';
+            } else {
+                sellingPriceChange.innerHTML = '<i class="fas fa-arrow-down"></i> ' + formatCurrency(Math.abs(sellingPriceDiff));
+                sellingPriceChange.className = 'text-danger';
+            }
+        } else {
+            sellingPriceChange.textContent = '';
+        }
+    }
+
+    // Event listeners cho cả 3 input
+    quantityInput.addEventListener('input', updatePreview);
+    unitCostInput.addEventListener('input', updatePreview);
+    profitMarginInput.addEventListener('input', updatePreview);
+
+    // Form validation
+    document.getElementById('stockForm').addEventListener('submit', function(e) {
+        const qty = parseInt(quantityInput.value) || 0;
+        const cost = parseInt(unitCostInput.value) || 0;
+        const profitMargin = parseFloat(profitMarginInput.value);
+        const profitMarginChanged = Math.abs(profitMargin - currentProfitMargin) > 0.01;
+        
+        // Validate profit margin
+        if (profitMargin < 0 || profitMargin > 500) {
+            e.preventDefault();
+            alert('% Lợi nhuận phải từ 0 đến 500');
+            profitMarginInput.focus();
+            return;
+        }
+        
+        // Phải có ít nhất 1 thay đổi
+        if (qty <= 0 && !profitMarginChanged) {
+            e.preventDefault();
+            alert('Vui lòng nhập số lượng hoặc thay đổi % lợi nhuận');
+            quantityInput.focus();
+            return;
+        }
+        
+        // Nếu có số lượng thì phải có giá nhập
+        if (qty > 0 && cost <= 0) {
+            e.preventDefault();
+            alert('Vui lòng nhập giá nhập hợp lệ (> 0)');
+            unitCostInput.focus();
+            return;
+        }
+    });
+    
+    // Chạy lần đầu khi load trang
+    updatePreview();
+});
+</script>

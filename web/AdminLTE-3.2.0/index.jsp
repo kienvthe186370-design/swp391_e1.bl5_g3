@@ -68,6 +68,14 @@
     %>
         <jsp:include page="content/product-edit-content.jsp" />
     <%
+        } else if ("stock-list".equals(contentPage)) {
+    %>
+        <jsp:include page="content/stock-list-content.jsp" />
+    <%
+        } else if ("stock-detail".equals(contentPage)) {
+    %>
+        <jsp:include page="content/stock-detail-content.jsp" />
+    <%
         } else {
             // Default dashboard content
     %>
