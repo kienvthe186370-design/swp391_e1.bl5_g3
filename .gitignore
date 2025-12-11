@@ -1,4 +1,4 @@
-# NetBeans specific
+# --- NetBeans specific (Updated) ---
 nbproject/private/
 build/
 nbbuild/
@@ -6,13 +6,18 @@ dist/
 nbdist/
 .nb-gradle/
 
-# Class Files
+# nbproject/build-impl.xml
+nbproject/genfiles.properties
+nbproject/project.properties
+nbproject/project.xml
+
+# --- Class Files ---
 *.class
 
-# Log Files
+# --- Log Files ---
 *.log
 
-# Package Files
+# --- Package Files ---
 *.jar
 *.war
 *.ear
@@ -20,10 +25,10 @@ nbdist/
 *.tar.gz
 *.rar
 
-# Virtual machine crash logs
+# --- Virtual machine crash logs ---
 hs_err_pid*
 
-# IDE
+# --- IDE (Other) ---
 .idea/
 *.iml
 .vscode/
@@ -31,7 +36,7 @@ hs_err_pid*
 *.swo
 *~
 
-# OS
+# --- OS ---
 .DS_Store
 .DS_Store?
 ._*
@@ -40,24 +45,24 @@ hs_err_pid*
 ehthumbs.db
 Thumbs.db
 
-# Database
+# --- Database ---
 *.db
 *.sqlite
 
-# Compiled files
+# --- Compiled files ---
 *.com
 *.dll
 *.exe
 *.o
 *.so
 
-# Temporary files
+# --- Temporary files ---
 *.tmp
 *.bak
 *.swp
 *~.nib
 
-# Maven
+# --- Maven ---
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -68,14 +73,14 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 
-# Gradle
+# --- Gradle ---
 .gradle
 /build/
 gradle-app.setting
 !gradle-wrapper.jar
 .gradletasknamecache
 
-# Sensitive data (IMPORTANT!)
+# --- Sensitive data (IMPORTANT!) ---
 **/private.properties
 **/database.properties
 **/*password*

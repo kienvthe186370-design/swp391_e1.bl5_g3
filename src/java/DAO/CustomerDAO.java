@@ -141,6 +141,42 @@ public class CustomerDAO extends DBContext {
         }
     }
     
+    /**
+     * Kích hoạt email cho customer (set IsEmailVerified = 1)
+     */
+    public boolean verifyEmail(String email) {
+        String sql = "UPDATE Customers SET IsEmailVerified = 1 WHERE Email = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, email);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
+            return false;
+        }
+    }
+    
+    /**
+     * Lấy customer theo email
+     */
+    public Customer getCustomerByEmail(String email) {
+        String sql = "SELECT * FROM Customers WHERE Email = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return mapResultSetToCustomer(rs);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return null;
+    }
+    
     private void updateLastLogin(int customerID) {
         String sql = "UPDATE Customers SET LastLogin = GETDATE() WHERE CustomerID = ?";
         try (Connection conn = getConnection();
@@ -184,7 +220,7 @@ public class CustomerDAO extends DBContext {
         if (isEmailVerified != null) {
             sql.append("AND IsEmailVerified = ? ");
         }
-        sql.append("ORDER BY CreatedDate DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        sql.append("ORDER BY CreatedDate ASC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
         
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {

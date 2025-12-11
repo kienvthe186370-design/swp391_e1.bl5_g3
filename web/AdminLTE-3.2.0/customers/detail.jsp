@@ -20,7 +20,7 @@
               <a href="<%= request.getContextPath() %>/AdminLTE-3.2.0/index.jsp">Dashboard</a>
             </li>
             <li class="breadcrumb-item">
-              <a href="<%= request.getContextPath() %>/admin/customers">Khách hàng</a>
+              <a href="<%= request.getContextPath() %>/seller-manager/customers">Khách hàng</a>
             </li>
             <li class="breadcrumb-item active">Chi tiết</li>
           </ol>
@@ -35,7 +35,7 @@
         <div class="alert alert-danger">
           Không tìm thấy khách hàng!
         </div>
-        <a href="<%= request.getContextPath() %>/admin/customers" class="btn btn-secondary">
+        <a href="<%= request.getContextPath() %>/seller-manager/customers" class="btn btn-secondary">
           <i class="fas fa-arrow-left"></i> Quay lại
         </a>
       </c:if>
@@ -115,11 +115,11 @@
             </div>
           </div>
           <div class="card-footer">
-            <a href="<%= request.getContextPath() %>/admin/customers?action=edit&id=${customer.customerID}" 
+            <a href="<%= request.getContextPath() %>/seller-manager/customers?action=edit&id=${customer.customerID}" 
                class="btn btn-warning">
               <i class="fas fa-edit"></i> Chỉnh sửa
             </a>
-            <a href="<%= request.getContextPath() %>/admin/customers" 
+            <a href="<%= request.getContextPath() %>/seller-manager/customers" 
                class="btn btn-secondary">
               <i class="fas fa-arrow-left"></i> Quay lại
             </a>
