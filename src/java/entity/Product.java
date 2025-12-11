@@ -1,16 +1,23 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package entity;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 /**
- * Product entity
+ *
  * @author ASUS
  */
+
+
 public class Product {
     private int productID;
     private String productName;
     private int categoryID;
-    private Integer brandID;
+    private Integer brandID; // nullable
     private String description;
     private String specifications;
     private boolean isActive;
@@ -18,9 +25,11 @@ public class Product {
     private Timestamp createdDate;
     private Timestamp updatedDate;
     
+    // Constructor mặc định
     public Product() {
     }
     
+    // Constructor đầy đủ
     public Product(int productID, String productName, int categoryID, Integer brandID, 
                    String description, String specifications, boolean isActive, 
                    Integer createdBy, Timestamp createdDate, Timestamp updatedDate) {
@@ -36,39 +45,96 @@ public class Product {
         this.updatedDate = updatedDate;
     }
     
-    // Getters & Setters
-    public int getProductID() { return productID; }
-    public void setProductID(int productID) { this.productID = productID; }
+    // Getters and Setters
+    public int getProductID() {
+        return productID;
+    }
     
-    public String getProductName() { return productName; }
-    public void setProductName(String productName) { this.productName = productName; }
+    public void setProductID(int productID) {
+        this.productID = productID;
+    }
     
-    public int getCategoryID() { return categoryID; }
-    public void setCategoryID(int categoryID) { this.categoryID = categoryID; }
+    public String getProductName() {
+        return productName;
+    }
     
-    public Integer getBrandID() { return brandID; }
-    public void setBrandID(Integer brandID) { this.brandID = brandID; }
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
     
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public int getCategoryID() {
+        return categoryID;
+    }
     
-    public String getSpecifications() { return specifications; }
-    public void setSpecifications(String specifications) { this.specifications = specifications; }
+    public void setCategoryID(int categoryID) {
+        this.categoryID = categoryID;
+    }
     
-    public boolean isActive() { return isActive; }
-    public void setActive(boolean active) { isActive = active; }
+    public Integer getBrandID() {
+        return brandID;
+    }
     
-    public Integer getCreatedBy() { return createdBy; }
-    public void setCreatedBy(Integer createdBy) { this.createdBy = createdBy; }
+    public void setBrandID(Integer brandID) {
+        this.brandID = brandID;
+    }
     
-    public Timestamp getCreatedDate() { return createdDate; }
-    public void setCreatedDate(Timestamp createdDate) { this.createdDate = createdDate; }
+    public String getDescription() {
+        return description;
+    }
     
-    public Timestamp getUpdatedDate() { return updatedDate; }
-    public void setUpdatedDate(Timestamp updatedDate) { this.updatedDate = updatedDate; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
+    public String getSpecifications() {
+        return specifications;
+    }
+    
+    public void setSpecifications(String specifications) {
+        this.specifications = specifications;
+    }
+    
+    public boolean isActive() {
+        return isActive;
+    }
+    
+    public void setActive(boolean active) {
+        isActive = active;
+    }
+    
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+    
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
+    }
+    
+    public Timestamp getCreatedDate() {
+        return createdDate;
+    }
+    
+    public void setCreatedDate(Timestamp createdDate) {
+        this.createdDate = createdDate;
+    }
+    
+    public Timestamp getUpdatedDate() {
+        return updatedDate;
+    }
+    
+    public void setUpdatedDate(Timestamp updatedDate) {
+        this.updatedDate = updatedDate;
+    }
     
     @Override
     public String toString() {
-        return "Product{" + "productID=" + productID + ", productName=" + productName + "}";
+        return "Product{" +
+                "productID=" + productID +
+                ", productName='" + productName + '\'' +
+                ", categoryID=" + categoryID +
+                ", brandID=" + brandID +
+                ", isActive=" + isActive +
+                ", createdDate=" + createdDate +
+                '}';
     }
 }
