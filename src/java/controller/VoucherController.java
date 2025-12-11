@@ -158,12 +158,37 @@ public class VoucherController extends HttpServlet {
     private void addVoucher(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
         try {
-            String voucherCode = request.getParameter("voucherCode").trim().toUpperCase();
-            String voucherName = request.getParameter("voucherName");
+            System.out.println("=== ADD VOUCHER DEBUG START ===");
+            
+            // Validate required parameters
+            String voucherCodeParam = request.getParameter("voucherCode");
+            String voucherNameParam = request.getParameter("voucherName");
+            String discountTypeParam = request.getParameter("discountType");
+            String discountValueParam = request.getParameter("discountValue");
+            String minOrderValueParam = request.getParameter("minOrderValue");
+            
+            System.out.println("voucherCode: " + voucherCodeParam);
+            System.out.println("voucherName: " + voucherNameParam);
+            System.out.println("discountType: " + discountTypeParam);
+            System.out.println("discountValue: " + discountValueParam);
+            System.out.println("minOrderValue: " + minOrderValueParam);
+            
+            if (voucherCodeParam == null || voucherCodeParam.trim().isEmpty() ||
+                voucherNameParam == null || voucherNameParam.trim().isEmpty() ||
+                discountTypeParam == null || discountValueParam == null || minOrderValueParam == null) {
+                System.err.println("❌ Missing required fields!");
+                response.sendRedirect(request.getContextPath() + "/admin/voucher?error=missing_fields");
+                return;
+            }
+            
+            String voucherCode = voucherCodeParam.trim().toUpperCase();
+            String voucherName = voucherNameParam.trim();
             String description = request.getParameter("description");
-            String discountType = request.getParameter("discountType");
-            BigDecimal discountValue = new BigDecimal(request.getParameter("discountValue"));
-            BigDecimal minOrderValue = new BigDecimal(request.getParameter("minOrderValue"));
+            String discountType = discountTypeParam;
+            BigDecimal discountValue = new BigDecimal(discountValueParam);
+            BigDecimal minOrderValue = new BigDecimal(minOrderValueParam);
+            
+            System.out.println("Parsed values OK");
             
             String maxDiscountAmountStr = request.getParameter("maxDiscountAmount");
             BigDecimal maxDiscountAmount = (maxDiscountAmountStr != null && !maxDiscountAmountStr.trim().isEmpty()) 
@@ -176,18 +201,26 @@ public class VoucherController extends HttpServlet {
             String startDateStr = request.getParameter("startDate");
             String endDateStr = request.getParameter("endDate");
             
+            System.out.println("startDate: " + startDateStr);
+            System.out.println("endDate: " + endDateStr);
+            
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
             Timestamp startDate = new Timestamp(sdf.parse(startDateStr).getTime());
             Timestamp endDate = new Timestamp(sdf.parse(endDateStr).getTime());
+            
+            System.out.println("Dates parsed OK");
             
             boolean isActive = request.getParameter("isActive") != null;
             boolean isPrivate = request.getParameter("isPrivate") != null;
             
             // Check if voucher code already exists
+            System.out.println("Checking if voucher code exists: " + voucherCode);
             if (voucherDAO.isVoucherCodeExists(voucherCode, null)) {
+                System.err.println("❌ Voucher code already exists: " + voucherCode);
                 response.sendRedirect(request.getContextPath() + "/admin/voucher?error=code_exists");
                 return;
             }
+            System.out.println("Voucher code is unique");
             
             // Get current user ID from session (if available)
             HttpSession session = request.getSession();
@@ -195,6 +228,9 @@ public class VoucherController extends HttpServlet {
             if (session.getAttribute("employee") != null) {
                 entity.Employee emp = (entity.Employee) session.getAttribute("employee");
                 createdBy = emp.getEmployeeID();
+                System.out.println("CreatedBy EmployeeID: " + createdBy);
+            } else {
+                System.out.println("No employee in session, CreatedBy will be NULL");
             }
             
             Voucher voucher = new Voucher();
@@ -212,20 +248,35 @@ public class VoucherController extends HttpServlet {
             voucher.setIsPrivate(isPrivate);
             voucher.setCreatedBy(createdBy);
             
+            System.out.println("Voucher object created, calling insertVoucher...");
+            System.out.println("Voucher details: " + voucher.toString());
+            
             boolean success = voucherDAO.insertVoucher(voucher);
             
+            System.out.println("Insert result: " + success);
+            
             if (success) {
+                System.out.println("✅ Voucher added successfully!");
                 response.sendRedirect(request.getContextPath() + "/admin/voucher?success=added");
             } else {
+                System.err.println("❌ Failed to insert voucher!");
                 response.sendRedirect(request.getContextPath() + "/admin/voucher?error=add_failed");
             }
             
         } catch (ParseException e) {
-            System.err.println("Date parsing error: " + e.getMessage());
+            System.err.println("❌ Date parsing error: " + e.getMessage());
+            e.printStackTrace();
             response.sendRedirect(request.getContextPath() + "/admin/voucher?error=invalid_date");
+        } catch (NumberFormatException e) {
+            System.err.println("❌ Number format error: " + e.getMessage());
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/admin/voucher?error=invalid_number");
         } catch (Exception e) {
+            System.err.println("❌ Unexpected error in addVoucher: " + e.getMessage());
             e.printStackTrace();
             response.sendRedirect(request.getContextPath() + "/admin/voucher?error=add_failed");
+        } finally {
+            System.out.println("=== ADD VOUCHER DEBUG END ===");
         }
     }
     
@@ -235,13 +286,28 @@ public class VoucherController extends HttpServlet {
     private void updateVoucher(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
         try {
-            int id = Integer.parseInt(request.getParameter("id"));
-            String voucherCode = request.getParameter("voucherCode").trim().toUpperCase();
-            String voucherName = request.getParameter("voucherName");
+            // Validate required parameters
+            String idParam = request.getParameter("id");
+            String voucherCodeParam = request.getParameter("voucherCode");
+            String voucherNameParam = request.getParameter("voucherName");
+            String discountTypeParam = request.getParameter("discountType");
+            String discountValueParam = request.getParameter("discountValue");
+            String minOrderValueParam = request.getParameter("minOrderValue");
+            
+            if (idParam == null || voucherCodeParam == null || voucherCodeParam.trim().isEmpty() ||
+                voucherNameParam == null || voucherNameParam.trim().isEmpty() ||
+                discountTypeParam == null || discountValueParam == null || minOrderValueParam == null) {
+                response.sendRedirect(request.getContextPath() + "/admin/voucher?error=missing_fields");
+                return;
+            }
+            
+            int id = Integer.parseInt(idParam);
+            String voucherCode = voucherCodeParam.trim().toUpperCase();
+            String voucherName = voucherNameParam.trim();
             String description = request.getParameter("description");
-            String discountType = request.getParameter("discountType");
-            BigDecimal discountValue = new BigDecimal(request.getParameter("discountValue"));
-            BigDecimal minOrderValue = new BigDecimal(request.getParameter("minOrderValue"));
+            String discountType = discountTypeParam;
+            BigDecimal discountValue = new BigDecimal(discountValueParam);
+            BigDecimal minOrderValue = new BigDecimal(minOrderValueParam);
             
             String maxDiscountAmountStr = request.getParameter("maxDiscountAmount");
             BigDecimal maxDiscountAmount = (maxDiscountAmountStr != null && !maxDiscountAmountStr.trim().isEmpty()) 

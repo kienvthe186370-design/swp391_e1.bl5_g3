@@ -41,8 +41,18 @@ public class CartController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
+        // Support both /cart/add and /cart?action=add
         String pathInfo = request.getPathInfo();
-        String action = (pathInfo != null && pathInfo.length() > 1) ? pathInfo.substring(1) : "view";
+        String actionParam = request.getParameter("action");
+        
+        String action;
+        if (pathInfo != null && pathInfo.length() > 1) {
+            action = pathInfo.substring(1);
+        } else if (actionParam != null && !actionParam.isEmpty()) {
+            action = actionParam;
+        } else {
+            action = "view";
+        }
         
         switch (action) {
             case "view":
@@ -50,6 +60,9 @@ public class CartController extends HttpServlet {
                 break;
             case "add":
                 addToCart(request, response);
+                break;
+            case "remove":
+                removeCartItem(request, response);
                 break;
             case "count":
                 getCartCount(request, response);
@@ -63,8 +76,18 @@ public class CartController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
+        // Support both /cart/add and /cart?action=add
         String pathInfo = request.getPathInfo();
-        String action = (pathInfo != null && pathInfo.length() > 1) ? pathInfo.substring(1) : "";
+        String actionParam = request.getParameter("action");
+        
+        String action;
+        if (pathInfo != null && pathInfo.length() > 1) {
+            action = pathInfo.substring(1);
+        } else if (actionParam != null && !actionParam.isEmpty()) {
+            action = actionParam;
+        } else {
+            action = "";
+        }
         
         switch (action) {
             case "add":
@@ -161,7 +184,11 @@ public class CartController extends HttpServlet {
             String variantIdStr = request.getParameter("variantId");
             Integer variantID = (variantIdStr != null && !variantIdStr.isEmpty()) 
                 ? Integer.parseInt(variantIdStr) : null;
-            int quantity = Integer.parseInt(request.getParameter("quantity"));
+            
+            // Default quantity to 1 if not provided
+            String quantityStr = request.getParameter("quantity");
+            int quantity = (quantityStr != null && !quantityStr.isEmpty()) 
+                ? Integer.parseInt(quantityStr) : 1;
             
             // Validate quantity
             if (quantity <= 0) {

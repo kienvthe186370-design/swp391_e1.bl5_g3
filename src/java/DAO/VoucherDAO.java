@@ -239,8 +239,14 @@ public class VoucherDAO extends DBContext {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, GETDATE())
         """;
         
+        System.out.println("=== INSERT VOUCHER DAO START ===");
+        System.out.println("SQL: " + sql);
+        System.out.println("Voucher: " + voucher.toString());
+        
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            System.out.println("Connection obtained: " + (conn != null));
             
             ps.setString(1, voucher.getVoucherCode());
             ps.setString(2, voucher.getVoucherName());
@@ -248,7 +254,12 @@ public class VoucherDAO extends DBContext {
             ps.setString(4, voucher.getDiscountType());
             ps.setBigDecimal(5, voucher.getDiscountValue());
             ps.setBigDecimal(6, voucher.getMinOrderValue());
-            ps.setBigDecimal(7, voucher.getMaxDiscountAmount());
+            
+            if (voucher.getMaxDiscountAmount() != null) {
+                ps.setBigDecimal(7, voucher.getMaxDiscountAmount());
+            } else {
+                ps.setNull(7, Types.DECIMAL);
+            }
             
             if (voucher.getMaxUsage() != null) {
                 ps.setInt(8, voucher.getMaxUsage());
@@ -267,13 +278,19 @@ public class VoucherDAO extends DBContext {
                 ps.setNull(13, Types.INTEGER);
             }
             
+            System.out.println("Executing INSERT...");
             int rowsAffected = ps.executeUpdate();
             System.out.println("✅ Inserted voucher: " + voucher.getVoucherCode() + " - Rows affected: " + rowsAffected);
+            System.out.println("=== INSERT VOUCHER DAO END ===");
             return rowsAffected > 0;
             
         } catch (SQLException e) {
-            System.err.println("❌ Error in insertVoucher: " + e.getMessage());
+            System.err.println("❌ SQL Error in insertVoucher:");
+            System.err.println("   Error Code: " + e.getErrorCode());
+            System.err.println("   SQL State: " + e.getSQLState());
+            System.err.println("   Message: " + e.getMessage());
             e.printStackTrace();
+            System.out.println("=== INSERT VOUCHER DAO END (ERROR) ===");
             return false;
         }
     }
@@ -299,7 +316,12 @@ public class VoucherDAO extends DBContext {
             ps.setString(4, voucher.getDiscountType());
             ps.setBigDecimal(5, voucher.getDiscountValue());
             ps.setBigDecimal(6, voucher.getMinOrderValue());
-            ps.setBigDecimal(7, voucher.getMaxDiscountAmount());
+            
+            if (voucher.getMaxDiscountAmount() != null) {
+                ps.setBigDecimal(7, voucher.getMaxDiscountAmount());
+            } else {
+                ps.setNull(7, Types.DECIMAL);
+            }
             
             if (voucher.getMaxUsage() != null) {
                 ps.setInt(8, voucher.getMaxUsage());
@@ -413,6 +435,107 @@ public class VoucherDAO extends DBContext {
         }
         
         return false;
+    }
+    
+    /**
+     * Check if voucher is valid for use
+     * @param voucher The voucher to check
+     * @return true if voucher can be used, false otherwise
+     */
+    public boolean isVoucherValid(Voucher voucher) {
+        if (voucher == null) {
+            return false;
+        }
+        
+        // Check if active
+        if (!voucher.isIsActive()) {
+            System.out.println("❌ Voucher is not active");
+            return false;
+        }
+        
+        // Check date range
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        if (now.before(voucher.getStartDate())) {
+            System.out.println("❌ Voucher has not started yet");
+            return false;
+        }
+        if (now.after(voucher.getEndDate())) {
+            System.out.println("❌ Voucher has expired");
+            return false;
+        }
+        
+        // Check usage limit
+        if (voucher.getMaxUsage() != null && voucher.getUsedCount() >= voucher.getMaxUsage()) {
+            System.out.println("❌ Voucher usage limit reached");
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Check if voucher can be applied to an order
+     * @param voucherCode The voucher code
+     * @param orderAmount The order amount
+     * @return Voucher object if valid, null otherwise
+     */
+    public Voucher validateVoucherForOrder(String voucherCode, BigDecimal orderAmount) {
+        Voucher voucher = getVoucherByCode(voucherCode);
+        
+        if (voucher == null) {
+            System.out.println("❌ Voucher not found: " + voucherCode);
+            return null;
+        }
+        
+        // Check if voucher is valid
+        if (!isVoucherValid(voucher)) {
+            return null;
+        }
+        
+        // Check minimum order value
+        if (orderAmount.compareTo(voucher.getMinOrderValue()) < 0) {
+            System.out.println("❌ Order amount is below minimum: " + voucher.getMinOrderValue());
+            return null;
+        }
+        
+        System.out.println("✅ Voucher is valid for order");
+        return voucher;
+    }
+    
+    /**
+     * Calculate discount amount for an order
+     * @param voucher The voucher to apply
+     * @param orderAmount The order amount
+     * @return Discount amount
+     */
+    public BigDecimal calculateDiscount(Voucher voucher, BigDecimal orderAmount) {
+        if (voucher == null || orderAmount == null) {
+            return BigDecimal.ZERO;
+        }
+        
+        BigDecimal discount = BigDecimal.ZERO;
+        
+        if ("percentage".equals(voucher.getDiscountType())) {
+            // Percentage discount
+            discount = orderAmount.multiply(voucher.getDiscountValue())
+                                  .divide(new BigDecimal("100"));
+            
+            // Apply max discount limit if exists
+            if (voucher.getMaxDiscountAmount() != null && 
+                discount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                discount = voucher.getMaxDiscountAmount();
+            }
+        } else if ("fixed".equals(voucher.getDiscountType())) {
+            // Fixed amount discount
+            discount = voucher.getDiscountValue();
+            
+            // Discount cannot exceed order amount
+            if (discount.compareTo(orderAmount) > 0) {
+                discount = orderAmount;
+            }
+        }
+        
+        return discount;
     }
     
     /**
