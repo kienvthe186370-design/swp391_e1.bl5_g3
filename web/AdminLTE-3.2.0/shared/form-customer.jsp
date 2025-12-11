@@ -18,7 +18,7 @@
       <%= isEditMode ? "Chỉnh sửa Khách hàng" : "Thêm Khách hàng mới" %>
     </h3>
   </div>
-  <form method="post" action="<%= request.getContextPath() %>/admin/customers" id="customerForm">
+  <form method="post" action="<%= request.getContextPath() %>/seller-manager/customers" id="customerForm">
     <div class="card-body">
       <input type="hidden" name="action" value="<%= isEditMode ? "update" : "create" %>">
       <% if (customer != null) { %>
@@ -48,13 +48,6 @@
                required placeholder="Nhập mật khẩu" minlength="6">
         <small class="form-text text-muted">Mật khẩu tối thiểu 6 ký tự</small>
       </div>
-      
-      <div class="form-group">
-        <label for="confirmPassword">Xác nhận Mật khẩu <span class="text-danger">*</span></label>
-        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" 
-               required placeholder="Nhập lại mật khẩu" minlength="6">
-        <small class="form-text text-muted">Xác nhận mật khẩu phải khớp với mật khẩu ở trên</small>
-      </div>
       <% } %>
       
       <div class="form-group">
@@ -71,7 +64,7 @@
       <button type="submit" class="btn btn-primary">
         <i class="fas fa-save"></i> <%= isEditMode ? "Cập nhật" : "Tạo mới" %>
       </button>
-      <a href="<%= request.getContextPath() %>/admin/customers" class="btn btn-secondary">
+      <a href="<%= request.getContextPath() %>/seller-manager/customers" class="btn btn-secondary">
         <i class="fas fa-times"></i> Hủy
       </a>
     </div>
@@ -79,21 +72,13 @@
 </div>
 
 <script>
-// Client-side validation: kiểm tra mật khẩu xác nhận (chỉ cho create mode)
+// Client-side validation: kiểm tra độ dài mật khẩu (chỉ cho create mode)
 <c:if test="${!isEditMode}">
 document.getElementById('customerForm').addEventListener('submit', function(e) {
     var password = document.getElementById('password').value;
-    var confirmPassword = document.getElementById('confirmPassword').value;
-    
     if (password.length < 6) {
         e.preventDefault();
         alert('Mật khẩu phải có ít nhất 6 ký tự!');
-        return false;
-    }
-    
-    if (password !== confirmPassword) {
-        e.preventDefault();
-        alert('Mật khẩu xác nhận không khớp!');
         return false;
     }
 });

@@ -220,7 +220,7 @@ public class CustomerDAO extends DBContext {
         if (isEmailVerified != null) {
             sql.append("AND IsEmailVerified = ? ");
         }
-        sql.append("ORDER BY CreatedDate DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        sql.append("ORDER BY CreatedDate ASC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
         
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
