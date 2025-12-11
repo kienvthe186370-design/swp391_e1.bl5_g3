@@ -80,13 +80,13 @@
                         
                         <!-- Stats -->
                         <div class="row mt-4">
-                            <div class="col-md-3 col-6 mb-3">
+                            <div class="col mb-3">
                                 <div class="stat-box stock">
                                     <div class="label"><i class="fas fa-cubes mr-1"></i>Tồn kho</div>
                                     <div class="value text-info" id="currentStockDisplay">${stockDetail.currentStock}</div>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-6 mb-3">
+                            <div class="col mb-3">
                                 <div class="stat-box cost">
                                     <div class="label"><i class="fas fa-coins mr-1"></i>Giá vốn TB</div>
                                     <div class="value text-warning">
@@ -94,7 +94,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-6 mb-3">
+                            <div class="col mb-3">
                                 <div class="stat-box price">
                                     <div class="label"><i class="fas fa-tag mr-1"></i>Giá bán</div>
                                     <div class="value text-success">
@@ -102,11 +102,11 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-6 mb-3">
+                            <div class="col mb-3">
                                 <div class="stat-box profit">
-                                    <div class="label"><i class="fas fa-chart-line mr-1"></i>Lợi nhuận</div>
+                                    <div class="label"><i class="fas fa-chart-line mr-1"></i>% LN mong muốn</div>
                                     <div class="value text-purple">
-                                        <fmt:formatNumber value="${stockDetail.profitPercent}" type="number" maxFractionDigits="1"/>%
+                                        <fmt:formatNumber value="${stockDetail.profitMarginTarget}" type="number" maxFractionDigits="1"/>%
                                     </div>
                                 </div>
                             </div>
@@ -181,21 +181,37 @@
                         <form method="post" action="${pageContext.request.contextPath}/admin/stock/detail" id="stockForm">
                             <input type="hidden" name="variantId" value="${variantId}">
                             
+                            <!-- % Lợi nhuận mong muốn -->
                             <div class="form-group">
-                                <label><i class="fas fa-sort-numeric-up mr-1"></i>Số lượng nhập <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="quantity" name="quantity" placeholder="Nhập số lượng..." min="1" required>
-                                <small class="form-text text-muted">Số lượng phải lớn hơn 0</small>
+                                <label><i class="fas fa-percentage mr-1"></i>% Lợi nhuận mong muốn</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="profitMarginTarget" name="profitMarginTarget" 
+                                           placeholder="VD: 30" min="0" max="500" step="0.1"
+                                           value="<fmt:formatNumber value="${stockDetail.profitMarginTarget}" type="number" maxFractionDigits="1"/>">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">Giá bán = Giá vốn TB × (1 + %/100)</small>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-sort-numeric-up mr-1"></i>Số lượng nhập</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" placeholder="Nhập số lượng..." min="0">
+                                <small class="form-text text-muted">Để trống nếu chỉ thay đổi % lợi nhuận</small>
                             </div>
 
                             <div class="form-group">
-                                <label><i class="fas fa-money-bill mr-1"></i>Giá nhập/đơn vị <span class="text-danger">*</span></label>
+                                <label><i class="fas fa-money-bill mr-1"></i>Giá nhập/đơn vị</label>
                                 <div class="input-group">
-                                    <input type="number" class="form-control" id="unitCost" name="unitCost" placeholder="Nhập giá..." min="1000" required>
+                                    <input type="number" class="form-control" id="unitCost" name="unitCost" placeholder="Nhập giá..." min="1000">
                                     <div class="input-group-append">
                                         <span class="input-group-text">đ</span>
                                     </div>
                                 </div>
-                                <small class="form-text text-muted">Giá nhập từ nhà cung cấp</small>
+                                <small class="form-text text-muted">Bắt buộc nếu có số lượng nhập</small>
                             </div>
 
                             <div class="preview-box mb-3">
@@ -205,11 +221,11 @@
 
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle mr-1"></i>
-                                <small>Sau khi nhập kho, hệ thống sẽ tự động cập nhật <strong>Tồn kho</strong> và <strong>Giá vốn TB</strong>.</small>
+                                <small>Hệ thống sẽ tự động tính <strong>Giá bán</strong> = Giá vốn TB × (1 + % LN / 100)</small>
                             </div>
 
                             <button type="submit" class="btn btn-success btn-block btn-lg">
-                                <i class="fas fa-check mr-2"></i>Xác nhận nhập kho
+                                <i class="fas fa-check mr-2"></i>Xác nhận
                             </button>
                             <a href="${pageContext.request.contextPath}/admin/stock" class="btn btn-secondary btn-block">
                                 <i class="fas fa-arrow-left mr-2"></i>Quay lại danh sách
@@ -240,13 +256,11 @@
                         </div>
                         <hr>
                         <div class="text-center">
-                            <div class="text-muted small mb-1">Lợi nhuận mới</div>
-                            <div class="h4 text-success mb-0" id="newProfitPreview">
-                                <fmt:formatNumber value="${stockDetail.profitPercent}" type="number" maxFractionDigits="1"/>%
+                            <div class="text-muted small mb-1">Giá bán mới</div>
+                            <div class="h4 text-success mb-0" id="newSellingPricePreview">
+                                <fmt:formatNumber value="${stockDetail.sellingPrice}" type="number" maxFractionDigits="0"/>đ
                             </div>
-                            <small class="text-muted" id="profitAmountPreview">
-                                (<fmt:formatNumber value="${stockDetail.profitAmount}" type="number" maxFractionDigits="0"/>đ / sản phẩm)
-                            </small>
+                            <small id="sellingPriceChangePreview"></small>
                         </div>
                     </div>
                 </div>
@@ -257,14 +271,17 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Dữ liệu hiện tại từ server
     const currentStock = parseInt('${stockDetail.currentStock}') || 0;
-    const currentTotalCost = parseFloat('${receiptSummary.totalAmount}') || 0;
-    const currentTotalQty = parseInt('${receiptSummary.totalQuantity}') || 0;
-    const sellingPrice = parseFloat('${stockDetail.sellingPrice}') || 0;
+    const currentTotalCost = parseFloat('${stockDetail.totalCost}') || 0;
+    const currentTotalQty = parseInt('${stockDetail.totalReceived}') || 0;
+    const currentSellingPrice = parseFloat('${stockDetail.sellingPrice}') || 0;
     const currentAvgCost = parseFloat('${stockDetail.avgCostPrice}') || 0;
+    const currentProfitMargin = parseFloat('${stockDetail.profitMarginTarget}') || 30;
 
     const quantityInput = document.getElementById('quantity');
     const unitCostInput = document.getElementById('unitCost');
+    const profitMarginInput = document.getElementById('profitMarginTarget');
 
     function formatCurrency(num) {
         return Math.round(num).toLocaleString('vi-VN') + 'đ';
@@ -273,10 +290,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function updatePreview() {
         const qty = parseInt(quantityInput.value) || 0;
         const cost = parseInt(unitCostInput.value) || 0;
+        const profitMargin = parseFloat(profitMarginInput.value) || currentProfitMargin;
         const total = qty * cost;
         
+        // Thành tiền
         document.getElementById('totalPreview').textContent = formatCurrency(total);
         
+        // Tồn kho mới
         const newStock = currentStock + qty;
         document.getElementById('newStockPreview').textContent = newStock;
         
@@ -288,10 +308,12 @@ document.addEventListener('DOMContentLoaded', function() {
             stockChange.textContent = '';
         }
         
+        // Tính giá vốn TB mới
+        let newAvgCost = currentAvgCost;
         if (qty > 0 && cost > 0) {
             const newTotalCost = currentTotalCost + total;
             const newTotalQty = currentTotalQty + qty;
-            const newAvgCost = newTotalQty > 0 ? newTotalCost / newTotalQty : 0;
+            newAvgCost = newTotalQty > 0 ? newTotalCost / newTotalQty : currentAvgCost;
             
             document.getElementById('newAvgCostPreview').textContent = formatCurrency(newAvgCost);
             
@@ -301,41 +323,73 @@ document.addEventListener('DOMContentLoaded', function() {
                 costChange.innerHTML = '<i class="fas fa-arrow-up"></i> +' + formatCurrency(costDiff);
                 costChange.className = 'text-danger';
             } else if (costDiff < 0) {
-                costChange.innerHTML = '<i class="fas fa-arrow-down"></i> ' + formatCurrency(costDiff);
+                costChange.innerHTML = '<i class="fas fa-arrow-down"></i> ' + formatCurrency(Math.abs(costDiff));
                 costChange.className = 'text-success';
             } else {
                 costChange.textContent = '';
             }
-            
-            if (sellingPrice > 0 && newAvgCost > 0) {
-                const newProfitAmount = sellingPrice - newAvgCost;
-                const newProfitPercent = (newProfitAmount / newAvgCost) * 100;
-                document.getElementById('newProfitPreview').textContent = newProfitPercent.toFixed(1) + '%';
-                document.getElementById('profitAmountPreview').textContent = '(' + formatCurrency(newProfitAmount) + ' / sản phẩm)';
+        } else {
+            document.getElementById('newAvgCostPreview').textContent = formatCurrency(currentAvgCost);
+            document.getElementById('costChangePreview').textContent = '';
+        }
+        
+        // Tính giá bán mới: Giá bán = Giá vốn TB × (1 + % LN / 100)
+        const newSellingPrice = newAvgCost * (1 + profitMargin / 100);
+        document.getElementById('newSellingPricePreview').textContent = formatCurrency(newSellingPrice);
+        
+        const sellingPriceDiff = newSellingPrice - currentSellingPrice;
+        const sellingPriceChange = document.getElementById('sellingPriceChangePreview');
+        if (Math.abs(sellingPriceDiff) > 1) {
+            if (sellingPriceDiff > 0) {
+                sellingPriceChange.innerHTML = '<i class="fas fa-arrow-up"></i> +' + formatCurrency(sellingPriceDiff);
+                sellingPriceChange.className = 'text-success';
+            } else {
+                sellingPriceChange.innerHTML = '<i class="fas fa-arrow-down"></i> ' + formatCurrency(Math.abs(sellingPriceDiff));
+                sellingPriceChange.className = 'text-danger';
             }
+        } else {
+            sellingPriceChange.textContent = '';
         }
     }
 
+    // Event listeners cho cả 3 input
     quantityInput.addEventListener('input', updatePreview);
     unitCostInput.addEventListener('input', updatePreview);
+    profitMarginInput.addEventListener('input', updatePreview);
 
+    // Form validation
     document.getElementById('stockForm').addEventListener('submit', function(e) {
-        const qty = parseInt(quantityInput.value);
-        const cost = parseInt(unitCostInput.value);
+        const qty = parseInt(quantityInput.value) || 0;
+        const cost = parseInt(unitCostInput.value) || 0;
+        const profitMargin = parseFloat(profitMarginInput.value);
+        const profitMarginChanged = Math.abs(profitMargin - currentProfitMargin) > 0.01;
         
-        if (!qty || qty <= 0) {
+        // Validate profit margin
+        if (profitMargin < 0 || profitMargin > 500) {
             e.preventDefault();
-            alert('Vui lòng nhập số lượng hợp lệ (> 0)');
+            alert('% Lợi nhuận phải từ 0 đến 500');
+            profitMarginInput.focus();
+            return;
+        }
+        
+        // Phải có ít nhất 1 thay đổi
+        if (qty <= 0 && !profitMarginChanged) {
+            e.preventDefault();
+            alert('Vui lòng nhập số lượng hoặc thay đổi % lợi nhuận');
             quantityInput.focus();
             return;
         }
         
-        if (!cost || cost <= 0) {
+        // Nếu có số lượng thì phải có giá nhập
+        if (qty > 0 && cost <= 0) {
             e.preventDefault();
             alert('Vui lòng nhập giá nhập hợp lệ (> 0)');
             unitCostInput.focus();
             return;
         }
     });
+    
+    // Chạy lần đầu khi load trang
+    updatePreview();
 });
 </script>

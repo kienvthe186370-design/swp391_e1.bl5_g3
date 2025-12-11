@@ -182,7 +182,7 @@ public class AdminProductEditServlet extends HttpServlet {
                 }
             }
             
-            // Handle existing variant updates
+            // Handle existing variant updates (only SKU and status, price managed via stock import)
             String existingCountStr = request.getParameter("existingVariantCount");
             if (existingCountStr != null && !existingCountStr.isEmpty()) {
                 int existingCount = Integer.parseInt(existingCountStr);
@@ -192,15 +192,10 @@ public class AdminProductEditServlet extends HttpServlet {
                     
                     int variantId = Integer.parseInt(variantIdStr);
                     String sku = request.getParameter("existingVariantSku_" + i);
-                    String costPriceStr = request.getParameter("existingVariantCostPrice_" + i);
-                    String priceStr = request.getParameter("existingVariantPrice_" + i);
                     boolean variantActive = "true".equals(request.getParameter("existingVariantActive_" + i));
                     
-                    if (sku != null && !sku.isEmpty() && priceStr != null && !priceStr.isEmpty()) {
-                        java.math.BigDecimal costPrice = (costPriceStr != null && !costPriceStr.isEmpty()) 
-                            ? new java.math.BigDecimal(costPriceStr) : java.math.BigDecimal.ZERO;
-                        java.math.BigDecimal sellingPrice = new java.math.BigDecimal(priceStr);
-                        productDAO.updateProductVariant(variantId, sku, costPrice, sellingPrice, variantActive);
+                    if (sku != null && !sku.isEmpty()) {
+                        productDAO.updateVariantSkuAndStatus(variantId, sku, variantActive);
                     }
                 }
             }
@@ -212,12 +207,11 @@ public class AdminProductEditServlet extends HttpServlet {
                 if (valueIds == null) break;
                 
                 String sku = request.getParameter("newVariant_sku_" + newVariantIndex);
-                String priceStr = request.getParameter("newVariant_price_" + newVariantIndex);
-                String stockStr = request.getParameter("newVariant_stock_" + newVariantIndex);
                 
-                if (sku != null && !sku.isEmpty() && priceStr != null && !priceStr.isEmpty()) {
-                    java.math.BigDecimal sellingPrice = new java.math.BigDecimal(priceStr);
-                    int stock = (stockStr != null && !stockStr.isEmpty()) ? Integer.parseInt(stockStr) : 0;
+                if (sku != null && !sku.isEmpty()) {
+                    // Giá bán và tồn kho sẽ được cập nhật qua chức năng nhập kho
+                    java.math.BigDecimal sellingPrice = java.math.BigDecimal.ZERO;
+                    int stock = 0;
                     
                     // Create new variant
                     int newVariantId = productDAO.insertProductVariant(productId, sku, sellingPrice, stock);

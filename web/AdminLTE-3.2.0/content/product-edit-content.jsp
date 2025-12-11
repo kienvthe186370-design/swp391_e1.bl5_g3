@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <style>
     .required-field::after {
@@ -235,7 +236,6 @@
                                                     <th><i class="fas fa-barcode"></i> SKU</th>
                                                     <th><i class="fas fa-dollar-sign"></i> Giá vốn</th>
                                                     <th><i class="fas fa-dollar-sign"></i> Giá bán</th>
-                                                    <th><i class="fas fa-warehouse"></i> Tồn kho</th>
                                                     <th><i class="fas fa-toggle-on"></i> Trạng thái</th>
                                                     <th><i class="fas fa-cog"></i></th>
                                                 </tr>
@@ -250,26 +250,14 @@
                                                                    value="${variant.sku}" required>
                                                         </td>
                                                         <td>
-                                                            <div class="input-group input-group-sm">
-                                                                <input type="number" class="form-control" 
-                                                                       name="existingVariantCostPrice_${status.index}" 
-                                                                       value="${variant.costPrice}" min="0" step="1000">
-                                                                <div class="input-group-append"><span class="input-group-text">đ</span></div>
-                                                            </div>
+                                                            <span class="text-muted">
+                                                                <fmt:formatNumber value="${variant.costPrice}" type="number" groupingUsed="true"/>đ
+                                                            </span>
                                                         </td>
                                                         <td>
-                                                            <div class="input-group input-group-sm">
-                                                                <input type="number" class="form-control" 
-                                                                       name="existingVariantPrice_${status.index}" 
-                                                                       value="${variant.sellingPrice}" min="1000" step="1000" required>
-                                                                <div class="input-group-append"><span class="input-group-text">đ</span></div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <input type="number" class="form-control form-control-sm" 
-                                                                   name="existingVariantStock_${status.index}" 
-                                                                   value="${variant.stock}" min="0" readonly 
-                                                                   title="Tồn kho chỉ thay đổi qua nhập/xuất kho">
+                                                            <span class="text-success font-weight-bold">
+                                                                <fmt:formatNumber value="${variant.sellingPrice}" type="number" groupingUsed="true"/>đ
+                                                            </span>
                                                         </td>
                                                         <td class="text-center">
                                                             <div class="custom-control custom-switch">
@@ -322,8 +310,6 @@
                                             <tr>
                                                 <th><i class="fas fa-layer-group"></i> Tổ hợp</th>
                                                 <th><i class="fas fa-barcode"></i> SKU <span class="text-danger">*</span></th>
-                                                <th><i class="fas fa-dollar-sign"></i> Giá bán <span class="text-danger">*</span></th>
-                                                <th><i class="fas fa-warehouse"></i> Tồn kho <span class="text-danger">*</span></th>
                                                 <th><i class="fas fa-cog"></i></th>
                                             </tr>
                                         </thead>
@@ -1074,10 +1060,6 @@ function renderVariantTable(combinations) {
         html += '<input type="hidden" name="newVariant_values_' + index + '" value="' + valueIds + '">';
         html += '</td>';
         html += '<td><input type="text" class="form-control form-control-sm" name="newVariant_sku_' + index + '" placeholder="VD: SKU-' + (index + 1) + '" required></td>';
-        html += '<td><div class="input-group input-group-sm">';
-        html += '<input type="number" class="form-control" name="newVariant_price_' + index + '" placeholder="0" min="1000" step="1000" required>';
-        html += '<div class="input-group-append"><span class="input-group-text">đ</span></div></div></td>';
-        html += '<td><input type="number" class="form-control form-control-sm" name="newVariant_stock_' + index + '" placeholder="0" min="0" value="0" required></td>';
         html += '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariantRow(this)">';
         html += '<i class="fas fa-trash"></i></button></td>';
         html += '</tr>';

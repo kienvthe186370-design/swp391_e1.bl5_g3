@@ -805,6 +805,31 @@ public class ProductDAO extends DBContext {
     }
     
     /**
+     * Update only SKU and active status of a product variant (price managed via stock import)
+     */
+    public boolean updateVariantSkuAndStatus(int variantId, String sku, boolean isActive) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        
+        try {
+            conn = getConnection();
+            String sql = "UPDATE ProductVariants SET SKU = ?, IsActive = ?, UpdatedDate = GETDATE() WHERE VariantID = ?";
+            
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, sku);
+            ps.setBoolean(2, isActive);
+            ps.setInt(3, variantId);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeResources(null, ps, conn);
+        }
+    }
+    
+    /**
      * Insert a new product variant and return the generated ID
      */
     public int insertProductVariant(int productId, String sku, BigDecimal sellingPrice, int stock) {

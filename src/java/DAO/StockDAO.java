@@ -22,6 +22,7 @@ public class StockDAO extends DBContext {
         Map<String, Object> result = new HashMap<>();
         
         String sql = "SELECT pv.VariantID, pv.SKU, pv.SellingPrice, pv.CostPrice, pv.Stock, " +
+                     "pv.ProfitMarginTarget, " +
                      "p.ProductID, p.ProductName, " +
                      "(SELECT TOP 1 ImageURL FROM ProductImages WHERE ProductID = p.ProductID AND ImageType = 'main') AS MainImage " +
                      "FROM ProductVariants pv " +
@@ -44,6 +45,13 @@ public class StockDAO extends DBContext {
                 result.put("mainImage", rs.getString("MainImage"));
                 result.put("variantName", rs.getString("SKU")); // Dùng SKU thay cho VariantName
                 
+                // Lấy ProfitMarginTarget (default 30 nếu null)
+                BigDecimal profitMarginTarget = rs.getBigDecimal("ProfitMarginTarget");
+                if (profitMarginTarget == null) {
+                    profitMarginTarget = new BigDecimal("30");
+                }
+                result.put("profitMarginTarget", profitMarginTarget);
+                
                 // Lấy tồn kho từ ProductVariants.Stock (đã có sẵn)
                 int currentStock = rs.getInt("Stock");
                 result.put("currentStock", currentStock);
@@ -56,6 +64,11 @@ public class StockDAO extends DBContext {
                     if (avgCostPrice == null) avgCostPrice = BigDecimal.ZERO;
                 }
                 result.put("avgCostPrice", avgCostPrice);
+                
+                // Lấy tổng tiền và tổng SL đã nhập (để JS tính preview)
+                Map<String, Object> receiptSummary = getReceiptSummaryInternal(variantId);
+                result.put("totalCost", receiptSummary.get("totalAmount"));
+                result.put("totalReceived", receiptSummary.get("totalQuantity"));
                 
                 // Tính lợi nhuận
                 BigDecimal sellingPrice = rs.getBigDecimal("SellingPrice");
@@ -74,6 +87,33 @@ public class StockDAO extends DBContext {
             e.printStackTrace();
         }
         return result;
+    }
+    
+    /**
+     * Internal method để lấy receipt summary (dùng trong getStockDetail)
+     */
+    private Map<String, Object> getReceiptSummaryInternal(int variantId) {
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("totalQuantity", 0);
+        summary.put("totalAmount", BigDecimal.ZERO);
+        
+        String sql = "SELECT ISNULL(SUM(Quantity), 0) AS TotalQuantity, " +
+                     "ISNULL(SUM(Quantity * UnitCost), 0) AS TotalAmount " +
+                     "FROM StockReceipts WHERE VariantID = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, variantId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                summary.put("totalQuantity", rs.getInt("TotalQuantity"));
+                summary.put("totalAmount", rs.getBigDecimal("TotalAmount"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error getting receipt summary: " + e.getMessage());
+        }
+        return summary;
     }
 
     /**
@@ -170,7 +210,8 @@ public class StockDAO extends DBContext {
     }
 
     /**
-     * Tính lại và cập nhật Stock, CostPrice trong ProductVariants
+     * Tính lại và cập nhật Stock, CostPrice, SellingPrice trong ProductVariants
+     * SellingPrice = CostPrice × (1 + ProfitMarginTarget / 100)
      */
     public void recalculateStock(int variantId) {
         String sql = "UPDATE ProductVariants SET " +
@@ -180,6 +221,8 @@ public class StockDAO extends DBContext {
                      "WHERE od.VariantID = ? AND o.OrderStatus = 'Delivered'), 0), " +
                      "CostPrice = ISNULL((SELECT SUM(Quantity * UnitCost) / NULLIF(SUM(Quantity), 0) " +
                      "FROM StockReceipts WHERE VariantID = ?), CostPrice), " +
+                     "SellingPrice = ISNULL((SELECT SUM(Quantity * UnitCost) / NULLIF(SUM(Quantity), 0) " +
+                     "FROM StockReceipts WHERE VariantID = ?), CostPrice) * (1 + ISNULL(ProfitMarginTarget, 30) / 100.0), " +
                      "UpdatedDate = GETDATE() " +
                      "WHERE VariantID = ?";
 
@@ -189,10 +232,35 @@ public class StockDAO extends DBContext {
             ps.setInt(2, variantId);
             ps.setInt(3, variantId);
             ps.setInt(4, variantId);
+            ps.setInt(5, variantId);
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * Cập nhật % lợi nhuận mong muốn và tính lại giá bán
+     */
+    public boolean updateProfitMarginTarget(int variantId, BigDecimal profitMarginTarget) {
+        String sql = "UPDATE ProductVariants SET ProfitMarginTarget = ?, UpdatedDate = GETDATE() " +
+                     "WHERE VariantID = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBigDecimal(1, profitMarginTarget);
+            ps.setInt(2, variantId);
+            int updated = ps.executeUpdate();
+            
+            if (updated > 0) {
+                // Tính lại SellingPrice với ProfitMarginTarget mới
+                recalculateStock(variantId);
+                return true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     /**

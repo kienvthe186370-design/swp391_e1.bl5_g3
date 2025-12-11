@@ -111,6 +111,7 @@ public class AdminStockDetailController extends HttpServlet {
         String variantIdStr = request.getParameter("variantId");
         String quantityStr = request.getParameter("quantity");
         String unitCostStr = request.getParameter("unitCost");
+        String profitMarginTargetStr = request.getParameter("profitMarginTarget");
 
         // Validate variantId
         int variantId;
@@ -125,32 +126,72 @@ public class AdminStockDetailController extends HttpServlet {
             return;
         }
 
-        // Validate quantity
-        int quantity;
-        try {
-            quantity = Integer.parseInt(quantityStr);
-            if (quantity <= 0) {
-                request.setAttribute("errorMessage", "Số lượng phải lớn hơn 0");
-                doGet(request, response);
-                return;
-            }
-        } catch (NumberFormatException e) {
-            request.setAttribute("errorMessage", "Số lượng không hợp lệ");
-            doGet(request, response);
-            return;
+        // Lấy thông tin hiện tại để so sánh profitMarginTarget
+        Map<String, Object> currentDetail = stockDAO.getStockDetail(variantId);
+        BigDecimal currentProfitMargin = (BigDecimal) currentDetail.get("profitMarginTarget");
+        if (currentProfitMargin == null) {
+            currentProfitMargin = new BigDecimal("30");
         }
 
-        // Validate unitCost
-        BigDecimal unitCost;
-        try {
-            unitCost = new BigDecimal(unitCostStr);
-            if (unitCost.compareTo(BigDecimal.ZERO) <= 0) {
-                request.setAttribute("errorMessage", "Giá nhập phải lớn hơn 0");
+        // Validate và xử lý profitMarginTarget
+        BigDecimal newProfitMarginTarget = null;
+        if (profitMarginTargetStr != null && !profitMarginTargetStr.trim().isEmpty()) {
+            try {
+                newProfitMarginTarget = new BigDecimal(profitMarginTargetStr);
+                if (newProfitMarginTarget.compareTo(BigDecimal.ZERO) < 0 || 
+                    newProfitMarginTarget.compareTo(new BigDecimal("500")) > 0) {
+                    request.setAttribute("errorMessage", "% Lợi nhuận phải từ 0 đến 500");
+                    doGet(request, response);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                request.setAttribute("errorMessage", "% Lợi nhuận không hợp lệ");
                 doGet(request, response);
                 return;
             }
-        } catch (NumberFormatException | NullPointerException e) {
-            request.setAttribute("errorMessage", "Giá nhập không hợp lệ");
+        }
+
+        // Validate quantity (cho phép 0 hoặc rỗng nếu chỉ thay đổi % lợi nhuận)
+        int quantity = 0;
+        if (quantityStr != null && !quantityStr.trim().isEmpty()) {
+            try {
+                quantity = Integer.parseInt(quantityStr);
+                if (quantity < 0) {
+                    request.setAttribute("errorMessage", "Số lượng không được âm");
+                    doGet(request, response);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                request.setAttribute("errorMessage", "Số lượng không hợp lệ");
+                doGet(request, response);
+                return;
+            }
+        }
+
+        // Validate unitCost (bắt buộc nếu quantity > 0)
+        BigDecimal unitCost = BigDecimal.ZERO;
+        if (quantity > 0) {
+            try {
+                unitCost = new BigDecimal(unitCostStr);
+                if (unitCost.compareTo(BigDecimal.ZERO) <= 0) {
+                    request.setAttribute("errorMessage", "Giá nhập phải lớn hơn 0");
+                    doGet(request, response);
+                    return;
+                }
+            } catch (NumberFormatException | NullPointerException e) {
+                request.setAttribute("errorMessage", "Giá nhập không hợp lệ");
+                doGet(request, response);
+                return;
+            }
+        }
+
+        // Kiểm tra: phải có ít nhất 1 thay đổi (nhập kho hoặc thay đổi % lợi nhuận)
+        boolean hasProfitMarginChange = newProfitMarginTarget != null && 
+                newProfitMarginTarget.compareTo(currentProfitMargin) != 0;
+        boolean hasStockImport = quantity > 0;
+        
+        if (!hasProfitMarginChange && !hasStockImport) {
+            request.setAttribute("errorMessage", "Vui lòng nhập số lượng hoặc thay đổi % lợi nhuận");
             doGet(request, response);
             return;
         }
@@ -159,21 +200,30 @@ public class AdminStockDetailController extends HttpServlet {
         Employee employee = (Employee) session.getAttribute("employee");
         Integer createdBy = employee != null ? employee.getEmployeeID() : null;
 
-        // Tạo StockReceipt object
-        StockReceipt receipt = new StockReceipt(variantId, quantity, unitCost, createdBy);
-
-        // Insert phiếu nhập
-        boolean success = stockDAO.insertReceipt(receipt);
+        boolean success = true;
+        
+        // Cập nhật % lợi nhuận nếu có thay đổi
+        if (hasProfitMarginChange) {
+            success = stockDAO.updateProfitMarginTarget(variantId, newProfitMarginTarget);
+        }
+        
+        // Insert phiếu nhập nếu có số lượng
+        if (success && hasStockImport) {
+            StockReceipt receipt = new StockReceipt(variantId, quantity, unitCost, createdBy);
+            success = stockDAO.insertReceipt(receipt);
+            
+            if (success) {
+                // Tính lại stock và giá vốn, giá bán
+                stockDAO.recalculateStock(variantId);
+            }
+        }
         
         if (success) {
-            // Tính lại stock và giá vốn
-            stockDAO.recalculateStock(variantId);
-            
             // Redirect với thông báo thành công
             response.sendRedirect(request.getContextPath() + 
                     "/admin/stock/detail?id=" + variantId + "&success=true");
         } else {
-            request.setAttribute("errorMessage", "Có lỗi xảy ra khi nhập kho. Vui lòng thử lại.");
+            request.setAttribute("errorMessage", "Có lỗi xảy ra. Vui lòng thử lại.");
             doGet(request, response);
         }
     }

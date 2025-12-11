@@ -207,8 +207,6 @@
                                             <tr>
                                                 <th><i class="fas fa-layer-group"></i> Tổ hợp</th>
                                                 <th><i class="fas fa-barcode"></i> SKU <span class="text-danger">*</span></th>
-                                                <th><i class="fas fa-dollar-sign"></i> Giá bán <span class="text-danger">*</span></th>
-                                                <th><i class="fas fa-warehouse"></i> Tồn kho <span class="text-danger">*</span></th>
                                                 <th><i class="fas fa-cog"></i></th>
                                             </tr>
                                         </thead>
@@ -825,10 +823,6 @@ function renderVariantTable(combinations) {
         html += '<input type="hidden" name="variant_values_' + index + '" value="' + valueIds + '">';
         html += '</td>';
         html += '<td><input type="text" class="form-control form-control-sm" name="variant_sku_' + index + '" placeholder="VD: SKU-' + (index + 1) + '" required></td>';
-        html += '<td><div class="input-group input-group-sm">';
-        html += '<input type="number" class="form-control" name="variant_price_' + index + '" placeholder="0" min="1000" step="1000" required>';
-        html += '<div class="input-group-append"><span class="input-group-text">đ</span></div></div></td>';
-        html += '<td><input type="number" class="form-control form-control-sm" name="variant_stock_' + index + '" placeholder="0" min="0" value="0" required></td>';
         html += '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariantRow(this)">';
         html += '<i class="fas fa-trash"></i></button></td>';
         html += '</tr>';

@@ -313,14 +313,13 @@ public class AdminProductServlet extends HttpServlet {
             int variantIndex = 0;
             while (request.getParameter("variant_sku_" + variantIndex) != null) {
                 String sku = request.getParameter("variant_sku_" + variantIndex);
-                String priceStr = request.getParameter("variant_price_" + variantIndex);
-                String stockStr = request.getParameter("variant_stock_" + variantIndex);
                 String valueIds = request.getParameter("variant_values_" + variantIndex);
                 
-                if (sku != null && !sku.trim().isEmpty() && priceStr != null && !priceStr.trim().isEmpty()) {
+                if (sku != null && !sku.trim().isEmpty()) {
                     try {
-                        BigDecimal price = new BigDecimal(priceStr);
-                        int stock = (stockStr != null && !stockStr.isEmpty()) ? Integer.parseInt(stockStr) : 0;
+                        // Giá bán và tồn kho sẽ được cập nhật qua chức năng nhập kho
+                        BigDecimal price = BigDecimal.ZERO;
+                        int stock = 0;
                         
                         // Insert variant
                         int variantId = productDAO.insertVariant(productId, sku.trim(), price, stock);
