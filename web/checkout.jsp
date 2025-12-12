@@ -73,7 +73,7 @@
                         <!-- Shipping Address -->
                         <h6 class="checkout__title">
                             <i class="fa fa-map-marker"></i> Địa chỉ giao hàng
-                            <a href="profile?tab=addresses" class="btn btn-sm btn-outline-primary float-right" style="font-size: 12px;">
+                            <a href="profile?tab=addresses&redirect=checkout" class="btn btn-sm btn-outline-primary float-right" style="font-size: 12px;">
                                 <i class="fa fa-plus"></i> Thêm địa chỉ
                             </a>
                         </h6>
@@ -84,7 +84,7 @@
                                     <strong>Bạn chưa có địa chỉ giao hàng!</strong><br>
                                     Vui lòng thêm địa chỉ để chúng tôi có thể tính phí vận chuyển và giao hàng cho bạn.
                                     <br><br>
-                                    <a href="profile?tab=addresses" class="btn btn-primary">
+                                    <a href="profile?tab=addresses&redirect=checkout" class="btn btn-primary">
                                         <i class="fa fa-plus"></i> Thêm địa chỉ ngay
                                     </a>
                                 </div>
