@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
     // Check user session
     entity.Customer customer = (entity.Customer) session.getAttribute("customer");
@@ -20,6 +21,12 @@
     request.setAttribute("isLoggedIn", isLoggedIn);
     request.setAttribute("userName", userName);
     request.setAttribute("userRole", userRole);
+    
+    // Get cart info from session
+    Integer cartCount = (Integer) session.getAttribute("cartCount");
+    java.math.BigDecimal cartTotal = (java.math.BigDecimal) session.getAttribute("cartTotal");
+    if (cartCount == null) cartCount = 0;
+    if (cartTotal == null) cartTotal = java.math.BigDecimal.ZERO;
 %>
 
 <div id="preloder">
@@ -48,8 +55,10 @@
     <div class="offcanvas__nav__option">
         <a href="#" class="search-switch"><img src="<%= request.getContextPath() %>/img/icon/search.png" alt=""></a>
         <a href="<%= request.getContextPath() %>/wishlist"><img src="<%= request.getContextPath() %>/img/icon/heart.png" alt=""></a>
-        <a href="<%= request.getContextPath() %>/cart"><img src="<%= request.getContextPath() %>/img/icon/cart.png" alt=""> <span>0</span></a>
-        <div class="price">0₫</div>
+        <a href="<%= request.getContextPath() %>/cart"><img src="<%= request.getContextPath() %>/img/icon/cart.png" alt=""> <span class="cart-count"><%= cartCount %></span></a>
+        <div class="price cart-total">
+            <fmt:formatNumber value="<%= cartTotal %>" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+        </div>
     </div>
     <div id="mobile-menu-wrap"></div>
     <div class="offcanvas__text">
@@ -142,8 +151,13 @@
                 <div class="header__nav__option">
                     <a href="#" class="search-switch"><img src="<%= request.getContextPath() %>/img/icon/search.png" alt=""></a>
                     <a href="<%= request.getContextPath() %>/wishlist"><img src="<%= request.getContextPath() %>/img/icon/heart.png" alt=""></a>
-                    <a href="<%= request.getContextPath() %>/cart"><img src="<%= request.getContextPath() %>/img/icon/cart.png" alt=""> <span>0</span></a>
-                    <div class="price">0₫</div>
+                    <a href="<%= request.getContextPath() %>/cart" class="cart-icon-link">
+                        <img src="<%= request.getContextPath() %>/img/icon/cart.png" alt=""> 
+                        <span class="cart-count"><%= cartCount %></span>
+                    </a>
+                    <div class="price cart-total">
+                        <fmt:formatNumber value="<%= cartTotal %>" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                    </div>
                 </div>
             </div>
         </div>
@@ -151,3 +165,6 @@
     </div>
 </header>
 <!-- Header End -->
+
+<!-- Cart Header Update Script -->
+<script src="<%= request.getContextPath() %>/js/cart-header.js"></script>

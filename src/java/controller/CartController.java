@@ -38,21 +38,22 @@ public class CartController extends HttpServlet {
         productDAO = new ProductDAO();
     }
     
+    /**
+     * Extract action from request (supports both path and query parameter)
+     */
+    private String getAction(HttpServletRequest request, String defaultAction) {
+        String pathInfo = request.getPathInfo();
+        if (pathInfo != null && pathInfo.length() > 1) {
+            return pathInfo.substring(1);
+        }
+        String actionParam = request.getParameter("action");
+        return (actionParam != null && !actionParam.isEmpty()) ? actionParam : defaultAction;
+    }
+    
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        // Support both /cart/add and /cart?action=add
-        String pathInfo = request.getPathInfo();
-        String actionParam = request.getParameter("action");
-        
-        String action;
-        if (pathInfo != null && pathInfo.length() > 1) {
-            action = pathInfo.substring(1);
-        } else if (actionParam != null && !actionParam.isEmpty()) {
-            action = actionParam;
-        } else {
-            action = "view";
-        }
+        String action = getAction(request, "view");
         
         switch (action) {
             case "view":
@@ -76,18 +77,7 @@ public class CartController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        // Support both /cart/add and /cart?action=add
-        String pathInfo = request.getPathInfo();
-        String actionParam = request.getParameter("action");
-        
-        String action;
-        if (pathInfo != null && pathInfo.length() > 1) {
-            action = pathInfo.substring(1);
-        } else if (actionParam != null && !actionParam.isEmpty()) {
-            action = actionParam;
-        } else {
-            action = "";
-        }
+        String action = getAction(request, "");
         
         switch (action) {
             case "add":
@@ -117,11 +107,13 @@ public class CartController extends HttpServlet {
         Customer customer = (Customer) session.getAttribute("customer");
         
         if (customer == null) {
-            // Guest user - redirect to login or show empty cart
+            // Guest user - show empty cart
             request.setAttribute("cartItems", new java.util.ArrayList<>());
             request.setAttribute("subtotal", BigDecimal.ZERO);
             request.setAttribute("total", BigDecimal.ZERO);
             request.setAttribute("itemCount", 0);
+            session.setAttribute("cartCount", 0);
+            session.setAttribute("cartTotal", BigDecimal.ZERO);
             request.getRequestDispatcher("/shopping-cart.jsp").forward(request, response);
             return;
         }
@@ -135,7 +127,7 @@ public class CartController extends HttpServlet {
                 BigDecimal subtotal = cart.getSubtotal();
                 int itemCount = cart.getTotalItems();
                 
-                // Store in session for quick access
+                // Store in session for quick access (important for header display)
                 session.setAttribute("cartCount", itemCount);
                 session.setAttribute("cartTotal", subtotal);
                 
@@ -152,6 +144,8 @@ public class CartController extends HttpServlet {
                 request.setAttribute("subtotal", BigDecimal.ZERO);
                 request.setAttribute("total", BigDecimal.ZERO);
                 request.setAttribute("itemCount", 0);
+                session.setAttribute("cartCount", 0);
+                session.setAttribute("cartTotal", BigDecimal.ZERO);
             }
             
             request.getRequestDispatcher("/shopping-cart.jsp").forward(request, response);
@@ -212,42 +206,80 @@ public class CartController extends HttpServlet {
             
             // Get price
             BigDecimal price;
-            if (variantID != null) {
-                // Get variant price
-                List<Map<String, Object>> variants = productDAO.getProductVariants(productID);
+            Integer selectedVariantID = variantID; // Create a new variable for lambda
+            
+            // Get all variants for this product
+            List<Map<String, Object>> variants = productDAO.getProductVariants(productID);
+            
+            if (variants == null || variants.isEmpty()) {
+                System.err.println("❌ Product has no variants: " + productID);
+                response.sendRedirect(request.getContextPath() + "/cart?error=no_variants");
+                return;
+            }
+            
+            if (selectedVariantID != null) {
+                // Get specific variant price
+                final Integer finalVariantID = selectedVariantID; // Make it final for lambda
                 Map<String, Object> selectedVariant = variants.stream()
-                    .filter(v -> ((Integer) v.get("variantID")).equals(variantID))
+                    .filter(v -> ((Integer) v.get("variantID")).equals(finalVariantID))
                     .findFirst()
                     .orElse(null);
                 
                 if (selectedVariant == null) {
+                    System.err.println("❌ Variant not found: " + selectedVariantID);
                     response.sendRedirect(request.getContextPath() + "/cart?error=variant_not_found");
                     return;
                 }
                 
                 price = (BigDecimal) selectedVariant.get("sellingPrice");
                 
-                // Check stock
-                int stock = (Integer) selectedVariant.get("stock");
-                if (stock < quantity) {
-                    response.sendRedirect(request.getContextPath() + "/cart?error=insufficient_stock");
-                    return;
-                }
-            } else {
-                // Get product price (min price)
-                price = (BigDecimal) product.get("minPrice");
-                
                 if (price == null) {
+                    System.err.println("❌ Variant has no price: " + selectedVariantID);
                     response.sendRedirect(request.getContextPath() + "/cart?error=no_price");
                     return;
                 }
                 
-                // Check total stock
-                int totalStock = (Integer) product.get("totalStock");
-                if (totalStock < quantity) {
+                // Check stock
+                Integer stock = (Integer) selectedVariant.get("stock");
+                if (stock == null || stock < quantity) {
                     response.sendRedirect(request.getContextPath() + "/cart?error=insufficient_stock");
                     return;
                 }
+            } else {
+                // No variant specified - get first active variant with stock
+                Map<String, Object> firstVariant = variants.stream()
+                    .filter(v -> {
+                        Boolean variantActive = (Boolean) v.get("isActive");
+                        Integer variantStock = (Integer) v.get("stock");
+                        return (variantActive != null && variantActive) && (variantStock != null && variantStock > 0);
+                    })
+                    .findFirst()
+                    .orElse(null);
+                
+                if (firstVariant == null) {
+                    System.err.println("❌ No active variant with stock for product: " + productID);
+                    response.sendRedirect(request.getContextPath() + "/cart?error=no_available_variant");
+                    return;
+                }
+                
+                // Use first variant's ID and price
+                selectedVariantID = (Integer) firstVariant.get("variantID");
+                price = (BigDecimal) firstVariant.get("sellingPrice");
+                
+                if (price == null) {
+                    System.err.println("❌ First variant has no price: " + selectedVariantID);
+                    response.sendRedirect(request.getContextPath() + "/cart?error=no_price");
+                    return;
+                }
+                
+                // Check stock
+                Integer stock = (Integer) firstVariant.get("stock");
+                if (stock == null || stock < quantity) {
+                    response.sendRedirect(request.getContextPath() + "/cart?error=insufficient_stock");
+                    return;
+                }
+                
+                System.out.println("✅ Auto-selected variant: " + selectedVariantID + " with price: " + price);
             }
             
             // Get or create cart
@@ -258,8 +290,8 @@ public class CartController extends HttpServlet {
                 return;
             }
             
-            // Add item to cart
-            boolean success = cartDAO.addItem(cart.getCartID(), productID, variantID, quantity, price);
+            // Add item to cart (use selectedVariantID instead of variantID)
+            boolean success = cartDAO.addItem(cart.getCartID(), productID, selectedVariantID, quantity, price);
             
             if (success) {
                 // Update session cart count
@@ -424,19 +456,24 @@ public class CartController extends HttpServlet {
         
         try (PrintWriter out = response.getWriter()) {
             if (customer == null) {
-                out.print("{\"count\": 0}");
+                out.print("{\"count\": 0, \"total\": 0}");
                 return;
             }
             
             Cart cart = cartDAO.getOrCreateCart(customer.getCustomerID());
             int count = (cart != null) ? cart.getTotalItems() : 0;
+            BigDecimal total = (cart != null) ? cart.getSubtotal() : BigDecimal.ZERO;
             
-            out.print("{\"count\": " + count + "}");
+            // Update session
+            session.setAttribute("cartCount", count);
+            session.setAttribute("cartTotal", total);
+            
+            out.print("{\"count\": " + count + ", \"total\": " + total.longValue() + "}");
             
         } catch (Exception e) {
             System.err.println("❌ Error in getCartCount: " + e.getMessage());
             e.printStackTrace();
-            response.getWriter().print("{\"count\": 0}");
+            response.getWriter().print("{\"count\": 0, \"total\": 0}");
         }
     }
     
