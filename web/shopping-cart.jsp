@@ -82,6 +82,11 @@
                     <c:when test="${param.error == 'insufficient_stock'}">Sản phẩm không đủ số lượng trong kho!</c:when>
                     <c:when test="${param.error == 'product_not_found'}">Không tìm thấy sản phẩm!</c:when>
                     <c:when test="${param.error == 'invalid_quantity'}">Số lượng không hợp lệ!</c:when>
+                    <c:when test="${param.error == 'no_price'}">Sản phẩm chưa có giá bán!</c:when>
+                    <c:when test="${param.error == 'no_variants'}">Sản phẩm chưa có phiên bản nào!</c:when>
+                    <c:when test="${param.error == 'no_available_variant'}">Sản phẩm hiện tại hết hàng!</c:when>
+                    <c:when test="${param.error == 'variant_not_found'}">Không tìm thấy phiên bản sản phẩm!</c:when>
+                    <c:when test="${param.error == 'product_inactive'}">Sản phẩm không còn kinh doanh!</c:when>
                     <c:otherwise>Có lỗi xảy ra. Vui lòng thử lại!</c:otherwise>
                 </c:choose>
             </div>
@@ -256,6 +261,7 @@
     
     <!-- Cart JavaScript -->
     <script src="<%= request.getContextPath() %>/js/cart.js"></script>
+    <script src="<%= request.getContextPath() %>/js/cart-header.js"></script>
     
     <script>
         // Auto-hide alerts after 5 seconds

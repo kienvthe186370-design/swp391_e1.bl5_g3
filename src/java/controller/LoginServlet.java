@@ -71,6 +71,23 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("userID", customer.getCustomerID());
                 session.setAttribute("userName", customer.getFullName());
                 session.setAttribute("userType", "customer");
+                
+                // Load cart count for header display
+                try {
+                    DAO.CartDAO cartDAO = new DAO.CartDAO();
+                    entity.Cart cart = cartDAO.getOrCreateCart(customer.getCustomerID());
+                    if (cart != null) {
+                        session.setAttribute("cartCount", cart.getTotalItems());
+                        session.setAttribute("cartTotal", cart.getSubtotal());
+                    } else {
+                        session.setAttribute("cartCount", 0);
+                        session.setAttribute("cartTotal", java.math.BigDecimal.ZERO);
+                    }
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error loading cart on login: " + e.getMessage());
+                    session.setAttribute("cartCount", 0);
+                    session.setAttribute("cartTotal", java.math.BigDecimal.ZERO);
+                }
 
                 response.sendRedirect("customer/home");
                 return;
