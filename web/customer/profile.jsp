@@ -95,7 +95,15 @@
                                 <div class="row">
                                     <c:forEach var="addr" items="${addresses}">
                                         <div class="col-md-6">
-                                            <div class="address-card ${addr['default'] ? 'default' : ''}">
+                                            <div class="address-card ${addr['default'] ? 'default' : ''}" 
+                                                 data-id="${addr.addressID}"
+                                                 data-name="${addr.recipientName}"
+                                                 data-phone="${addr.phone}"
+                                                 data-street="${addr.street}"
+                                                 data-ward="${addr.ward}"
+                                                 data-district="${addr.district}"
+                                                 data-city="${addr.city}"
+                                                 data-default="${addr['default']}">
                                                 <c:if test="${addr['default']}">
                                                     <span class="badge-default">Mặc định</span>
                                                 </c:if>
@@ -103,7 +111,7 @@
                                                 <p class="mb-1"><i class="fa fa-phone"></i> ${addr.phone}</p>
                                                 <p class="mb-0 text-muted"><i class="fa fa-home"></i> ${addr.fullAddress}</p>
                                                 <div class="actions">
-                                                    <button class="btn btn-sm btn-outline-primary" onclick="editAddress('${addr.addressID}')">
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(this)">
                                                         <i class="fa fa-edit"></i> Sửa
                                                     </button>
                                                     <c:if test="${!addr['default']}">
@@ -183,8 +191,9 @@
                     <h5 class="modal-title"><i class="fa fa-plus"></i> Thêm địa chỉ mới</h5>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
-                <form action="${pageContext.request.contextPath}/address" method="post">
+                <form action="${pageContext.request.contextPath}/address" method="post" id="addAddressForm">
                     <input type="hidden" name="action" value="add">
+                    <input type="hidden" name="redirect" value="${redirect}">
                     <div class="modal-body">
                         <div class="form-group">
                             <label>Họ tên người nhận <span class="text-danger">*</span></label>
@@ -198,13 +207,17 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Tỉnh/Thành phố <span class="text-danger">*</span></label>
-                                    <input type="text" name="city" class="form-control" placeholder="VD: Hà Nội" required>
+                                    <select name="city" id="addCity" class="form-control" required>
+                                        <option value="">-- Chọn Tỉnh/TP --</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Quận/Huyện <span class="text-danger">*</span></label>
-                                    <input type="text" name="district" class="form-control" placeholder="VD: Cầu Giấy" required>
+                                    <select name="district" id="addDistrict" class="form-control" required disabled>
+                                        <option value="">-- Chọn Quận/Huyện --</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -217,8 +230,8 @@
                             <input type="text" name="street" class="form-control" placeholder="Số nhà, tên đường..." required>
                         </div>
                         <div class="form-check">
-                            <input type="checkbox" name="isDefault" class="form-check-input" id="isDefault">
-                            <label class="form-check-label" for="isDefault">Đặt làm địa chỉ mặc định</label>
+                            <input type="checkbox" name="isDefault" class="form-check-input" id="addIsDefault">
+                            <label class="form-check-label" for="addIsDefault">Đặt làm địa chỉ mặc định</label>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -230,11 +243,77 @@
         </div>
     </div>
 
+    <!-- Edit Address Modal -->
+    <div class="modal fade" id="editAddressModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa fa-edit"></i> Sửa địa chỉ</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <form action="${pageContext.request.contextPath}/address" method="post" id="editAddressForm">
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="addressId" id="editAddressId">
+                    <input type="hidden" name="redirect" value="${redirect}">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Họ tên người nhận <span class="text-danger">*</span></label>
+                            <input type="text" name="recipientName" id="editRecipientName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Số điện thoại <span class="text-danger">*</span></label>
+                            <input type="tel" name="phone" id="editPhone" class="form-control" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Tỉnh/Thành phố <span class="text-danger">*</span></label>
+                                    <select name="city" id="editCity" class="form-control" required>
+                                        <option value="">-- Chọn Tỉnh/TP --</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Quận/Huyện <span class="text-danger">*</span></label>
+                                    <select name="district" id="editDistrict" class="form-control" required>
+                                        <option value="">-- Chọn Quận/Huyện --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Phường/Xã</label>
+                            <input type="text" name="ward" id="editWard" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Địa chỉ cụ thể <span class="text-danger">*</span></label>
+                            <input type="text" name="street" id="editStreet" class="form-control" required>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" name="isDefault" class="form-check-input" id="editIsDefault">
+                            <label class="form-check-label" for="editIsDefault">Đặt làm địa chỉ mặc định</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Cập nhật</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <%@include file="../footer.jsp"%>
 
     <script src="${pageContext.request.contextPath}/js/jquery-3.3.1.min.js"></script>
     <script src="${pageContext.request.contextPath}/js/bootstrap.min.js"></script>
     <script>
+        var contextPath = '${pageContext.request.contextPath}';
+        var redirectUrl = '${redirect}';
+        var citiesData = [];
+        var districtsCache = {};
+        
         $(window).on('load', function() {
             $(".loader").fadeOut();
             $("#preloder").delay(200).fadeOut("slow");
@@ -244,20 +323,147 @@
             $("#preloder").fadeOut("slow");
         }, 2000);
         
+        // Load cities when page loads
+        $(document).ready(function() {
+            loadCities();
+        });
+        
+        function loadCities() {
+            $.ajax({
+                url: contextPath + '/api/goship/cities',
+                method: 'GET',
+                dataType: 'json',
+                timeout: 10000,
+                success: function(data) {
+                    if (data.success && data.cities) {
+                        citiesData = data.cities;
+                        var options = '<option value="">-- Chọn Tỉnh/TP --</option>';
+                        data.cities.forEach(function(city) {
+                            options += '<option value="' + city.name + '" data-id="' + city.id + '">' + city.name + '</option>';
+                        });
+                        $('#addCity, #editCity').html(options);
+                    }
+                },
+                error: function() {
+                    console.log('Failed to load cities from Goship API');
+                }
+            });
+        }
+        
+        // Load districts when city changes
+        $('#addCity').on('change', function() {
+            var cityId = $(this).find(':selected').data('id');
+            loadDistricts(cityId, '#addDistrict');
+        });
+        
+        $('#editCity').on('change', function() {
+            var cityId = $(this).find(':selected').data('id');
+            loadDistricts(cityId, '#editDistrict');
+        });
+        
+        function loadDistricts(cityId, targetSelect) {
+            if (!cityId) {
+                $(targetSelect).html('<option value="">-- Chọn Quận/Huyện --</option>').prop('disabled', true);
+                return;
+            }
+            
+            $(targetSelect).html('<option value="">Đang tải...</option>').prop('disabled', true);
+            
+            // Check cache
+            if (districtsCache[cityId]) {
+                renderDistricts(districtsCache[cityId], targetSelect);
+                return;
+            }
+            
+            $.ajax({
+                url: contextPath + '/api/goship/districts',
+                method: 'GET',
+                data: { cityId: cityId },
+                dataType: 'json',
+                timeout: 10000,
+                success: function(data) {
+                    if (data.success && data.districts) {
+                        districtsCache[cityId] = data.districts;
+                        renderDistricts(data.districts, targetSelect);
+                    } else {
+                        $(targetSelect).html('<option value="">-- Không có dữ liệu --</option>');
+                    }
+                },
+                error: function() {
+                    $(targetSelect).html('<option value="">-- Lỗi tải dữ liệu --</option>');
+                }
+            });
+        }
+        
+        function renderDistricts(districts, targetSelect) {
+            var options = '<option value="">-- Chọn Quận/Huyện --</option>';
+            districts.forEach(function(district) {
+                options += '<option value="' + district.name + '" data-id="' + district.id + '">' + district.name + '</option>';
+            });
+            $(targetSelect).html(options).prop('disabled', false);
+        }
+        
         function setDefaultAddress(addressId) {
             if (confirm('Đặt địa chỉ này làm mặc định?')) {
-                window.location.href = '${pageContext.request.contextPath}/address?action=setDefault&addressId=' + addressId;
+                var url = contextPath + '/address?action=setDefault&addressId=' + addressId;
+                if (redirectUrl) url += '&redirect=' + encodeURIComponent(redirectUrl);
+                window.location.href = url;
             }
         }
         
         function deleteAddress(addressId) {
             if (confirm('Bạn có chắc muốn xóa địa chỉ này?')) {
-                window.location.href = '${pageContext.request.contextPath}/address?action=delete&addressId=' + addressId;
+                var url = contextPath + '/address?action=delete&addressId=' + addressId;
+                if (redirectUrl) url += '&redirect=' + encodeURIComponent(redirectUrl);
+                window.location.href = url;
             }
         }
         
-        function editAddress(addressId) {
-            alert('Chức năng sửa địa chỉ đang phát triển');
+        function openEditModal(btn) {
+            var card = $(btn).closest('.address-card');
+            var addressId = card.data('id');
+            var name = card.data('name');
+            var phone = card.data('phone');
+            var street = card.data('street');
+            var ward = card.data('ward');
+            var district = card.data('district');
+            var city = card.data('city');
+            var isDefault = card.data('default');
+            
+            $('#editAddressId').val(addressId);
+            $('#editRecipientName').val(name);
+            $('#editPhone').val(phone);
+            $('#editStreet').val(street);
+            $('#editWard').val(ward);
+            $('#editIsDefault').prop('checked', isDefault === true || isDefault === 'true');
+            
+            // Set city and load districts
+            $('#editCity').val(city);
+            var cityId = $('#editCity').find(':selected').data('id');
+            
+            if (cityId) {
+                // Load districts then set value
+                if (districtsCache[cityId]) {
+                    renderDistricts(districtsCache[cityId], '#editDistrict');
+                    $('#editDistrict').val(district);
+                } else {
+                    $.ajax({
+                        url: contextPath + '/api/goship/districts',
+                        method: 'GET',
+                        data: { cityId: cityId },
+                        dataType: 'json',
+                        success: function(data) {
+                            if (data.success && data.districts) {
+                                districtsCache[cityId] = data.districts;
+                                renderDistricts(data.districts, '#editDistrict');
+                                $('#editDistrict').val(district);
+                            }
+                        }
+                    });
+                }
+            }
+            
+            $('#editAddressModal').modal('show');
         }
     </script>
 </body>
