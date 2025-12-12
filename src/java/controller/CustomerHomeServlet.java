@@ -9,6 +9,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+/**
+ * CustomerHomeServlet - Redirect customer về trang chủ chung
+ * Customer sẽ dùng chung trang index.jsp với guest, chỉ khác ở header (hiển thị tên, giỏ hàng, etc.)
+ */
 @WebServlet(name = "CustomerHomeServlet", urlPatterns = {"/customer/home"})
 public class CustomerHomeServlet extends HttpServlet {
 
@@ -16,14 +20,7 @@ public class CustomerHomeServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        HttpSession session = request.getSession();
-        Customer customer = (Customer) session.getAttribute("customer");
-        
-        if (customer != null) {
-            request.setAttribute("customer", customer);
-            request.getRequestDispatcher("/customer/home.jsp").forward(request, response);
-        } else {
-            response.sendRedirect(request.getContextPath() + "/login");
-        }
+        // Redirect về trang chủ chung - header.jsp sẽ tự động hiển thị thông tin customer nếu đã đăng nhập
+        response.sendRedirect(request.getContextPath() + "/Home");
     }
 }
