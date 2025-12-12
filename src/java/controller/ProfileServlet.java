@@ -39,6 +39,12 @@ public class ProfileServlet extends HttpServlet {
         if (tab == null) tab = "profile";
         request.setAttribute("activeTab", tab);
         
+        // Pass redirect parameter to JSP for address form
+        String redirect = request.getParameter("redirect");
+        if (redirect != null && !redirect.isEmpty()) {
+            request.setAttribute("redirect", redirect);
+        }
+        
         // Forward to profile page
         request.getRequestDispatcher("/customer/profile.jsp").forward(request, response);
     }

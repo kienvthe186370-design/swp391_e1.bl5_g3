@@ -29,9 +29,48 @@
     if (cartTotal == null) cartTotal = java.math.BigDecimal.ZERO;
 %>
 
+<!-- Preloader - will be hidden by main.js -->
 <div id="preloder">
     <div class="loader"></div>
 </div>
+<style>
+    /* Preloader styles - ensure it can be hidden */
+    #preloder {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: #000;
+        z-index: 999999;
+    }
+    .loader {
+        width: 40px;
+        height: 40px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin: -20px 0 0 -20px;
+        border: 4px solid #6c5ce7;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    /* Auto-hide after 3 seconds as fallback */
+    #preloder.loaded, #preloder.loaded .loader {
+        display: none !important;
+    }
+</style>
+<script>
+    // Auto-hide preloader after 3 seconds as fallback
+    setTimeout(function() {
+        var p = document.getElementById('preloder');
+        if (p) p.classList.add('loaded');
+    }, 3000);
+</script>
 
 <!-- Offcanvas Menu Begin -->
 <div class="offcanvas-menu-overlay"></div>

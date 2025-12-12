@@ -17,6 +17,15 @@ public class AddressServlet extends HttpServlet {
 
     private CustomerAddressDAO addressDAO = new CustomerAddressDAO();
 
+    private String getRedirectUrl(HttpServletRequest request) {
+        String redirect = request.getParameter("redirect");
+        if (redirect != null && !redirect.isEmpty()) {
+            // Redirect to checkout or other page if specified
+            return request.getContextPath() + "/" + redirect;
+        }
+        return request.getContextPath() + "/profile?tab=addresses";
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -30,34 +39,30 @@ public class AddressServlet extends HttpServlet {
         }
         
         String action = request.getParameter("action");
-        String redirectUrl = request.getContextPath() + "/profile?tab=addresses";
+        String redirectUrl = getRedirectUrl(request);
+        String separator = redirectUrl.contains("?") ? "&" : "?";
         
         try {
             if ("setDefault".equals(action)) {
                 int addressId = Integer.parseInt(request.getParameter("addressId"));
                 boolean success = addressDAO.setDefaultAddress(customer.getCustomerID(), addressId);
-                if (success) {
-                    redirectUrl += "&success=" + URLEncoder.encode("Đã đặt địa chỉ mặc định", "UTF-8");
-                } else {
-                    redirectUrl += "&error=" + URLEncoder.encode("Không thể đặt địa chỉ mặc định", "UTF-8");
+                if (!success) {
+                    redirectUrl += separator + "error=" + URLEncoder.encode("Không thể đặt địa chỉ mặc định", "UTF-8");
                 }
             } else if ("delete".equals(action)) {
                 int addressId = Integer.parseInt(request.getParameter("addressId"));
-                // Verify ownership
                 CustomerAddress addr = addressDAO.getAddressById(addressId);
                 if (addr != null && addr.getCustomerID() == customer.getCustomerID()) {
                     boolean success = addressDAO.deleteAddress(addressId);
-                    if (success) {
-                        redirectUrl += "&success=" + URLEncoder.encode("Đã xóa địa chỉ", "UTF-8");
-                    } else {
-                        redirectUrl += "&error=" + URLEncoder.encode("Không thể xóa địa chỉ", "UTF-8");
+                    if (!success) {
+                        redirectUrl += separator + "error=" + URLEncoder.encode("Không thể xóa địa chỉ", "UTF-8");
                     }
                 } else {
-                    redirectUrl += "&error=" + URLEncoder.encode("Địa chỉ không hợp lệ", "UTF-8");
+                    redirectUrl += separator + "error=" + URLEncoder.encode("Địa chỉ không hợp lệ", "UTF-8");
                 }
             }
         } catch (Exception e) {
-            redirectUrl += "&error=" + URLEncoder.encode("Có lỗi xảy ra: " + e.getMessage(), "UTF-8");
+            redirectUrl += separator + "error=" + URLEncoder.encode("Có lỗi xảy ra: " + e.getMessage(), "UTF-8");
         }
         
         response.sendRedirect(redirectUrl);
@@ -77,7 +82,8 @@ public class AddressServlet extends HttpServlet {
         }
         
         String action = request.getParameter("action");
-        String redirectUrl = request.getContextPath() + "/profile?tab=addresses";
+        String redirectUrl = getRedirectUrl(request);
+        String separator = redirectUrl.contains("?") ? "&" : "?";
         
         try {
             if ("add".equals(action)) {
@@ -92,11 +98,10 @@ public class AddressServlet extends HttpServlet {
                 address.setDefault("on".equals(request.getParameter("isDefault")));
                 
                 int newId = addressDAO.addAddress(address);
-                if (newId > 0) {
-                    redirectUrl += "&success=" + URLEncoder.encode("Đã thêm địa chỉ mới", "UTF-8");
-                } else {
-                    redirectUrl += "&error=" + URLEncoder.encode("Không thể thêm địa chỉ", "UTF-8");
+                if (newId <= 0) {
+                    redirectUrl += separator + "error=" + URLEncoder.encode("Không thể thêm địa chỉ", "UTF-8");
                 }
+                // Success: redirect without message for smoother UX
             } else if ("update".equals(action)) {
                 int addressId = Integer.parseInt(request.getParameter("addressId"));
                 CustomerAddress address = addressDAO.getAddressById(addressId);
@@ -111,17 +116,15 @@ public class AddressServlet extends HttpServlet {
                     address.setDefault("on".equals(request.getParameter("isDefault")));
                     
                     boolean success = addressDAO.updateAddress(address);
-                    if (success) {
-                        redirectUrl += "&success=" + URLEncoder.encode("Đã cập nhật địa chỉ", "UTF-8");
-                    } else {
-                        redirectUrl += "&error=" + URLEncoder.encode("Không thể cập nhật địa chỉ", "UTF-8");
+                    if (!success) {
+                        redirectUrl += separator + "error=" + URLEncoder.encode("Không thể cập nhật địa chỉ", "UTF-8");
                     }
                 } else {
-                    redirectUrl += "&error=" + URLEncoder.encode("Địa chỉ không hợp lệ", "UTF-8");
+                    redirectUrl += separator + "error=" + URLEncoder.encode("Địa chỉ không hợp lệ", "UTF-8");
                 }
             }
         } catch (Exception e) {
-            redirectUrl += "&error=" + URLEncoder.encode("Có lỗi xảy ra: " + e.getMessage(), "UTF-8");
+            redirectUrl += separator + "error=" + URLEncoder.encode("Có lỗi xảy ra: " + e.getMessage(), "UTF-8");
         }
         
         response.sendRedirect(redirectUrl);

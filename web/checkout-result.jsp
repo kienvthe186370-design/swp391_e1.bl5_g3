@@ -11,6 +11,9 @@
     <link rel="stylesheet" href="css/font-awesome.min.css" type="text/css">
     <link rel="stylesheet" href="css/style.css" type="text/css">
     <style>
+        /* Force hide preloader immediately */
+        #preloder, .loader { display: none !important; }
+        
         .result-container {
             max-width: 600px;
             margin: 50px auto;
@@ -123,5 +126,15 @@
     
     <script src="js/jquery-3.3.1.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Backup: Hide preloader immediately
+        document.addEventListener('DOMContentLoaded', function() {
+            var loader = document.querySelector('.loader');
+            var preloder = document.getElementById('preloder');
+            if (loader) loader.style.display = 'none';
+            if (preloder) preloder.style.display = 'none';
+        });
+    </script>
 </body>
 </html>
