@@ -56,14 +56,14 @@
             </c:choose>
           </h3>
           <div class="card-tools">
-            <a href="<%= request.getContextPath() %>/admin/customers?action=create" class="btn btn-primary btn-sm">
+            <a href="<%= request.getContextPath() %>/seller-manager/customers?action=create" class="btn btn-primary btn-sm">
               <i class="fas fa-plus"></i> Thêm Khách hàng
             </a>
           </div>
         </div>
         <div class="card-body">
           <!-- Search Form -->
-          <form method="get" action="<%= request.getContextPath() %>/admin/customers" class="mb-3">
+          <form method="get" action="<%= request.getContextPath() %>/seller-manager/customers" class="mb-3">
             <div class="row">
               <div class="col-md-3">
                 <input type="text" name="search" value="${search}" class="form-control" 
@@ -140,15 +140,15 @@
                       <fmt:formatDate value="${customer.createdDate}" pattern="dd/MM/yyyy HH:mm"/>
                     </td>
                     <td>
-                      <a href="<%= request.getContextPath() %>/admin/customers?action=detail&id=${customer.customerID}" 
+                      <a href="<%= request.getContextPath() %>/seller-manager/customers?action=detail&id=${customer.customerID}" 
                          class="btn btn-sm btn-info" title="Xem chi tiết">
                         <i class="fas fa-eye"></i>
                       </a>
-                      <a href="<%= request.getContextPath() %>/admin/customers?action=edit&id=${customer.customerID}" 
+                      <a href="<%= request.getContextPath() %>/seller-manager/customers?action=edit&id=${customer.customerID}" 
                          class="btn btn-sm btn-warning" title="Chỉnh sửa">
                         <i class="fas fa-edit"></i>
                       </a>
-                      <form method="post" action="<%= request.getContextPath() %>/admin/customers" 
+                      <form method="post" action="<%= request.getContextPath() %>/seller-manager/customers" 
                             style="display:inline;" 
                             onsubmit="return confirm('Bạn có chắc muốn ${customer.active ? 'khóa' : 'mở khóa'} tài khoản này?');">
                         <input type="hidden" name="action" value="toggleActive">
@@ -174,49 +174,67 @@
           </div>
 
          <!-- Pagination -->
-          <nav>
-            <ul class="pagination justify-content-center">
-              <!-- Nút Trước -->
-              <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
-                <c:choose>
-                  <c:when test="${currentPage == 1}">
-                    <span class="page-link">Trước</span>
-                  </c:when>
-                  <c:otherwise>
-                    <a class="page-link" 
-                       href="<%= request.getContextPath() %>/admin/customers?page=${currentPage - 1}&status=${status}&emailVerified=${emailVerified}&search=${search}">
-                      Trước
-                    </a>
-                  </c:otherwise>
-                </c:choose>
-              </li>
-              
-              <!-- Số trang -->
-              <c:forEach var="i" begin="1" end="${totalPages > 0 ? totalPages : 1}">
-                <li class="page-item ${i == currentPage ? 'active' : ''}">
-                  <a class="page-link" 
-                     href="<%= request.getContextPath() %>/admin/customers?page=${i}&status=${status}&emailVerified=${emailVerified}&search=${search}">
-                    ${i}
-                  </a>
+          <%
+            Object psObj = request.getAttribute("pageSize");
+            int pageSizeVal = (psObj instanceof Integer) ? (Integer) psObj : 5;
+          %>
+          <c:set var="pageSize" value="<%= pageSizeVal %>"/>
+          <c:set var="startIndex" value="${total > 0 ? ((currentPage - 1) * pageSize + 1) : 0}"/>
+          <c:if test="${startIndex > total}">
+            <c:set var="startIndex" value="${total}"/>
+          </c:if>
+          <c:set var="endIndex" value="${currentPage * pageSize}"/>
+          <c:if test="${endIndex > total}">
+            <c:set var="endIndex" value="${total}"/>
+          </c:if>
+          <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+            <div class="mb-2 mb-md-0">
+              Hiển thị <strong>${startIndex}</strong> đến <strong>${endIndex}</strong> của <strong>${total}</strong> bản ghi
+            </div>
+            <nav>
+              <ul class="pagination mb-0">
+                <!-- Nút Trước -->
+                <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                  <c:choose>
+                    <c:when test="${currentPage == 1}">
+                      <span class="page-link">Trước</span>
+                    </c:when>
+                    <c:otherwise>
+                      <a class="page-link" 
+                         href="<%= request.getContextPath() %>/seller-manager/customers?page=${currentPage - 1}&status=${status}&emailVerified=${emailVerified}&search=${search}">
+                        Trước
+                      </a>
+                    </c:otherwise>
+                  </c:choose>
                 </li>
-              </c:forEach>
-              
-              <!-- Nút Sau -->
-              <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
-                <c:choose>
-                  <c:when test="${currentPage >= totalPages}">
-                    <span class="page-link">Sau</span>
-                  </c:when>
-                  <c:otherwise>
+                
+                <!-- Số trang -->
+                <c:forEach var="i" begin="1" end="${totalPages > 0 ? totalPages : 1}">
+                  <li class="page-item ${i == currentPage ? 'active' : ''}">
                     <a class="page-link" 
-                       href="<%= request.getContextPath() %>/admin/customers?page=${currentPage + 1}&status=${status}&emailVerified=${emailVerified}&search=${search}">
-                      Sau
+                       href="<%= request.getContextPath() %>/seller-manager/customers?page=${i}&status=${status}&emailVerified=${emailVerified}&search=${search}">
+                      ${i}
                     </a>
-                  </c:otherwise>
-                </c:choose>
-              </li>
-            </ul>
-          </nav>
+                  </li>
+                </c:forEach>
+                
+                <!-- Nút Sau -->
+                <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
+                  <c:choose>
+                    <c:when test="${currentPage >= totalPages}">
+                      <span class="page-link">Sau</span>
+                    </c:when>
+                    <c:otherwise>
+                      <a class="page-link" 
+                         href="<%= request.getContextPath() %>/seller-manager/customers?page=${currentPage + 1}&status=${status}&emailVerified=${emailVerified}&search=${search}">
+                        Sau
+                      </a>
+                    </c:otherwise>
+                  </c:choose>
+                </li>
+              </ul>
+            </nav>
+          </div>
         </div>
       </div>
     </div>

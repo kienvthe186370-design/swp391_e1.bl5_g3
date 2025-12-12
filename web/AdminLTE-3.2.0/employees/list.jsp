@@ -106,7 +106,7 @@
                   <th>Số điện thoại</th>
                   <th>Vai trò</th>
                   <th>Trạng thái</th>
-                  <th>Ngày tạo</th>
+                  <th>Ngày vào công ty</th>
                   <th>Thao tác</th>
                 </tr>
               </thead>
@@ -180,49 +180,66 @@
           </div>
 
           <!-- Pagination -->
-          <nav>
-            <ul class="pagination justify-content-center">
-              <!-- Nút Trước -->
-              <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
-                <c:choose>
-                  <c:when test="${currentPage == 1}">
-                    <span class="page-link">Trước</span>
-                  </c:when>
-                  <c:otherwise>
-                    <a class="page-link" 
-                       href="<%= request.getContextPath() %>/admin/employees?page=${currentPage - 1}&status=${status}&role=${role}&search=${search}">
-                      Trước
-                    </a>
-                  </c:otherwise>
-                </c:choose>
-              </li>
-              
-              <!-- Số trang -->
-              <c:forEach var="i" begin="1" end="${totalPages > 0 ? totalPages : 1}">
-                <li class="page-item ${i == currentPage ? 'active' : ''}">
-                  <a class="page-link" 
-                     href="<%= request.getContextPath() %>/admin/employees?page=${i}&status=${status}&role=${role}&search=${search}">
-                    ${i}
-                  </a>
+          <%
+            int empPageSizeVal = 5; // đồng bộ với AdminEmployeeServlet
+          %>
+          <c:set var="pageSize" value="<%= empPageSizeVal %>"/>
+          <c:set var="startIndex" value="${total > 0 ? ((currentPage - 1) * pageSize + 1) : 0}"/>
+          <c:if test="${startIndex > total}">
+            <c:set var="startIndex" value="${total}"/>
+          </c:if>
+          <c:set var="endIndex" value="${currentPage * pageSize}"/>
+          <c:if test="${endIndex > total}">
+            <c:set var="endIndex" value="${total}"/>
+          </c:if>
+          <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+            <div class="mb-2 mb-md-0">
+              Hiển thị <strong>${startIndex}</strong> đến <strong>${endIndex}</strong> của <strong>${total}</strong> bản ghi
+            </div>
+            <nav>
+              <ul class="pagination mb-0">
+                <!-- Nút Trước -->
+                <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                  <c:choose>
+                    <c:when test="${currentPage == 1}">
+                      <span class="page-link">Trước</span>
+                    </c:when>
+                    <c:otherwise>
+                      <a class="page-link" 
+                         href="<%= request.getContextPath() %>/admin/employees?page=${currentPage - 1}&status=${status}&role=${role}&search=${search}">
+                        Trước
+                      </a>
+                    </c:otherwise>
+                  </c:choose>
                 </li>
-              </c:forEach>
-              
-              <!-- Nút Sau -->
-              <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
-                <c:choose>
-                  <c:when test="${currentPage >= totalPages}">
-                    <span class="page-link">Sau</span>
-                  </c:when>
-                  <c:otherwise>
+                
+                <!-- Số trang -->
+                <c:forEach var="i" begin="1" end="${totalPages > 0 ? totalPages : 1}">
+                  <li class="page-item ${i == currentPage ? 'active' : ''}">
                     <a class="page-link" 
-                       href="<%= request.getContextPath() %>/admin/employees?page=${currentPage + 1}&status=${status}&role=${role}&search=${search}">
-                      Sau
+                       href="<%= request.getContextPath() %>/admin/employees?page=${i}&status=${status}&role=${role}&search=${search}">
+                      ${i}
                     </a>
-                  </c:otherwise>
-                </c:choose>
-              </li>
-            </ul>
-          </nav>
+                  </li>
+                </c:forEach>
+                
+                <!-- Nút Sau -->
+                <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
+                  <c:choose>
+                    <c:when test="${currentPage >= totalPages}">
+                      <span class="page-link">Sau</span>
+                    </c:when>
+                    <c:otherwise>
+                      <a class="page-link" 
+                         href="<%= request.getContextPath() %>/admin/employees?page=${currentPage + 1}&status=${status}&role=${role}&search=${search}">
+                        Sau
+                      </a>
+                    </c:otherwise>
+                  </c:choose>
+                </li>
+              </ul>
+            </nav>
+          </div>
         </div>
       </div>
     </div>

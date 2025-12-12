@@ -22,7 +22,7 @@ public class LoginServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session != null) {
             if (session.getAttribute("customer") != null) {
-                response.sendRedirect("Home");
+                response.sendRedirect("customer/home");
                 return;
             } else if (session.getAttribute("employee") != null) {
                 Employee emp = (Employee) session.getAttribute("employee");
@@ -72,7 +72,7 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("userName", customer.getFullName());
                 session.setAttribute("userType", "customer");
 
-                response.sendRedirect("Home");
+                response.sendRedirect("customer/home");
                 return;
             }
         }
