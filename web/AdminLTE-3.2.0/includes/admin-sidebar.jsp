@@ -227,7 +227,7 @@
         
         <!-- Vouchers - Admin -->
         <li class="nav-item">
-          <a href="<%= contextPath %>/admin/vouchers" 
+          <a href="<%= contextPath %>/admin/voucher" 
              class="nav-link <%= isVoucherPage ? "active" : "" %>">
             <i class="nav-icon fas fa-ticket-alt"></i>
             <p>Voucher</p>
@@ -362,7 +362,7 @@
         <!-- Voucher - Chỉ Marketer -->
         <% if (canAccessVouchers) { %>
         <li class="nav-item">
-          <a href="<%= contextPath %>/admin/vouchers" 
+          <a href="<%= contextPath %>/admin/voucher" 
              class="nav-link <%= isVoucherPage ? "active" : "" %>">
             <i class="nav-icon fas fa-ticket-alt"></i>
             <p>Voucher</p>

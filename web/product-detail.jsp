@@ -37,22 +37,12 @@
         .breadcrumb-option .breadcrumb__text h4 {
             color: white;
             margin: 0;
-            font-size: clamp(18px, 3vw, 24px);
+            font-size: 24px;
             font-weight: 700;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            word-break: break-word;
-            line-height: 1.3;
         }
         
         .breadcrumb-option .breadcrumb__links {
             margin-top: 8px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            align-items: center;
         }
         
         .breadcrumb-option .breadcrumb__links a,
@@ -60,14 +50,6 @@
             color: rgba(255, 255, 255, 0.9);
             font-size: 14px;
             transition: all 0.3s;
-        }
-        
-        .breadcrumb-option .breadcrumb__links span:last-child {
-            max-width: 200px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: inline-block;
         }
         
         .breadcrumb-option .breadcrumb__links a:hover {
@@ -146,16 +128,11 @@
         }
         
         .product__details__text h3 {
-            font-size: clamp(22px, 4vw, 32px);
+            font-size: 32px;
             font-weight: 800;
             margin-bottom: 15px;
             color: #1a1a1a;
             line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            word-break: break-word;
         }
         
         .product__details__text .product__brand {
@@ -237,12 +214,10 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            flex-wrap: wrap;
         }
         
         .pro-qty {
-            width: 140px;
-            min-width: 140px;
+            width: 160px;
             height: 55px;
             border: 2px solid #d1d5db;
             border-radius: 8px;
@@ -252,7 +227,6 @@
             padding: 0 15px;
             background: white;
             transition: all 0.3s;
-            flex-shrink: 0;
         }
         
         .pro-qty:hover {
@@ -347,34 +321,13 @@
             border: 2px solid #d91f4e;
             box-shadow: none;
             flex: 1;
-            min-width: 180px;
             height: 55px;
-            white-space: nowrap;
-            padding: 16px 20px;
         }
         
         .primary-btn.outline:hover {
             background: #fef2f2;
             color: #d91f4e;
             border-color: #d91f4e;
-        }
-        
-        /* Responsive cho quantity + button */
-        @media (max-width: 576px) {
-            .product__details__quantity {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .pro-qty {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .primary-btn.outline {
-                width: 100%;
-                min-width: unset;
-            }
         }
         
         .primary-btn.buy-now-btn {
@@ -528,15 +481,6 @@
             transition: all 0.3s;
             background: white;
             cursor: pointer;
-            text-overflow: ellipsis;
-            max-width: 100%;
-            box-sizing: border-box;
-        }
-        
-        .variant-selector select option {
-            white-space: normal;
-            word-break: break-word;
-            padding: 10px;
         }
         
         .variant-selector select:hover,
@@ -624,38 +568,6 @@
             
             .product__details__price {
                 font-size: 32px;
-            }
-        }
-        
-        @media (max-width: 767px) {
-            .product__details__text {
-                padding: 20px 15px;
-            }
-            
-            .product__details__text h3 {
-                font-size: 22px;
-            }
-            
-            .product__details__price {
-                font-size: 26px;
-            }
-            
-            .product__details__price .discount-badge {
-                font-size: 16px;
-            }
-            
-            .primary-btn.buy-now-btn {
-                font-size: 14px;
-                padding: 14px 20px;
-            }
-            
-            .product__details__features {
-                padding: 15px;
-            }
-            
-            .product__details__features ul li {
-                font-size: 13px;
-                padding: 12px 0;
             }
         }
     </style>
@@ -797,60 +709,40 @@
                             </c:choose>
                         </div>
                         
-                        <!-- Draft Product Notice -->
-                        <c:if test="${product.status == 'draft'}">
-                            <div class="alert alert-info" style="margin: 20px 0; padding: 15px; border-radius: 8px; background: #e7f3ff; border: 1px solid #b3d9ff;">
-                                <h5 style="color: #007bff; margin-bottom: 10px;">
-                                    <i class="fa fa-info-circle"></i> Sản phẩm sắp ra mắt
-                                </h5>
-                                <p style="margin-bottom: 10px; color: #666;">
-                                    Sản phẩm này đang trong quá trình chuẩn bị và sẽ sớm có mặt tại cửa hàng.
-                                </p>
-                                <button class="primary-btn" style="background: #007bff; border-color: #007bff;" onclick="notifyWhenAvailable()">
-                                    <i class="fa fa-bell"></i> Thông báo khi có hàng
-                                </button>
+                        <!-- Variant Selector -->
+                        <c:if test="${not empty variants && variants.size() > 1}">
+                            <div class="variant-selector">
+                                <label>Chọn phiên bản:</label>
+                                <select id="variantSelect" onchange="updateVariantInfo()">
+                                    <c:forEach var="variant" items="${variants}" varStatus="status">
+                                        <option value="${variant.variantID}" 
+                                                data-price="${variant.sellingPrice}"
+                                                data-compare-price="${variant.compareAtPrice}"
+                                                data-stock="${variant.stock}"
+                                                data-sku="${variant.sku}">
+                                            ${variant.sku} - <fmt:formatNumber value="${variant.sellingPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                            <c:if test="${variant.stock <= 0}"> (Hết hàng)</c:if>
+                                        </option>
+                                    </c:forEach>
+                                </select>
                             </div>
                         </c:if>
                         
-                        <!-- Normal Purchase Options (only show if not Draft) -->
-                        <c:if test="${product.status != 'draft'}">
-                            <!-- Variant Selector -->
-                            <c:if test="${not empty variants && variants.size() > 1}">
-                                <div class="variant-selector">
-                                    <label>Chọn phiên bản:</label>
-                                    <select id="variantSelect" onchange="updateVariantInfo()">
-                                        <c:forEach var="variant" items="${variants}" varStatus="status">
-                                            <option value="${variant.variantID}" 
-                                                    data-price="${variant.sellingPrice}"
-                                                    data-compare-price="${variant.compareAtPrice}"
-                                                    data-stock="${variant.stock}"
-                                                    data-sku="${variant.sku}">
-                                                ${variant.sku} - <fmt:formatNumber value="${variant.sellingPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
-                                                <c:if test="${variant.stock <= 0}"> (Hết hàng)</c:if>
-                                            </option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
-                            </c:if>
-                            
-                            <!-- Quantity and Add to Cart -->
-                            <div class="product__details__quantity">
-                                <div class="pro-qty">
-                                    <span class="qtybtn" onclick="decreaseQty()">-</span>
-                                    <input type="text" id="quantity" value="1" readonly>
-                                    <span class="qtybtn" onclick="increaseQty()">+</span>
-                                </div>
-                                <button class="primary-btn outline" onclick="addToCart()" 
-                                        ${product.status == 'out_of_stock' ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
-                                    ${product.status == 'out_of_stock' ? 'HẾT HÀNG' : 'BỎ VÀO GIỎ HÀNG'}
-                                </button>
+                        <!-- Quantity and Add to Cart -->
+                        <div class="product__details__quantity">
+                            <div class="pro-qty">
+                                <span class="qtybtn" onclick="decreaseQty()">-</span>
+                                <input type="text" id="quantity" value="1" readonly>
+                                <span class="qtybtn" onclick="increaseQty()">+</span>
                             </div>
-                            
-                            <button class="primary-btn buy-now-btn" onclick="buyNow()"
-                                    ${product.status == 'out_of_stock' ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
-                                ${product.status == 'out_of_stock' ? 'HẾT HÀNG' : 'MUA NGAY'}
+                            <button class="primary-btn outline" onclick="addToCart()">
+                                BỎ VÀO GIỎ HÀNG
                             </button>
-                        </c:if>
+                        </div>
+                        
+                        <button class="primary-btn buy-now-btn" onclick="buyNow()">
+                            MUA NGAY
+                        </button>
                         
                         <!-- Features -->
                         <div class="product__details__features">
@@ -1102,13 +994,6 @@
         function buyNow() {
             addToCart();
             window.location.href = '${pageContext.request.contextPath}/checkout';
-        }
-        
-        // Notify when available (for Draft products)
-        function notifyWhenAvailable() {
-            const productName = '${product.productName}';
-            alert('Cảm ơn bạn đã quan tâm đến sản phẩm "' + productName + '"!\n\nChúng tôi sẽ thông báo cho bạn ngay khi sản phẩm có sẵn.');
-            // TODO: Implement email notification subscription
         }
     </script>
 </body>

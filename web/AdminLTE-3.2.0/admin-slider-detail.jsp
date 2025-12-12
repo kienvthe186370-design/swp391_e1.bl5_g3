@@ -80,10 +80,11 @@
                 <h3 class="card-title">Thông tin Slider</h3>
               </div>
               
-              <form method="post" action="<%= request.getContextPath() %>/admin/slider" id="sliderForm">
+              <form method="post" action="<%= request.getContextPath() %>/admin/slider" id="sliderForm" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="${slider != null ? 'update' : 'add'}">
                 <c:if test="${slider != null}">
                   <input type="hidden" name="id" value="${slider.sliderID}">
+                  <input type="hidden" name="currentImageURL" value="${slider.imageURL}">
                 </c:if>
 
                 <div class="card-body">
@@ -96,19 +97,54 @@
                     <small class="form-text text-muted">Tiêu đề mô tả cho slider (tối đa 200 ký tự)</small>
                   </div>
 
-                  <!-- Image URL -->
+                  <!-- Image Upload Options -->
                   <div class="form-group">
-                    <label for="imageURL">URL Hình ảnh <span class="text-danger">*</span></label>
-                    <input type="url" class="form-control" id="imageURL" name="imageURL" 
-                           value="${slider != null ? slider.imageURL : ''}" 
-                           placeholder="https://example.com/image.jpg" 
-                           onchange="previewImage()" required>
-                    <small class="form-text text-muted">Nhập URL đầy đủ của hình ảnh slider</small>
+                    <label>Hình ảnh Slider <span class="text-danger">*</span></label>
+                    
+                    <!-- Upload Method Tabs -->
+                    <ul class="nav nav-tabs" id="uploadTabs" role="tablist">
+                      <li class="nav-item">
+                        <a class="nav-link active" id="upload-tab" data-toggle="tab" href="#uploadMethod" role="tab">
+                          <i class="fas fa-upload"></i> Upload từ máy
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="url-tab" data-toggle="tab" href="#urlMethod" role="tab">
+                          <i class="fas fa-link"></i> Nhập URL
+                        </a>
+                      </li>
+                    </ul>
+                    
+                    <div class="tab-content border border-top-0 p-3" id="uploadTabContent">
+                      <!-- Upload from Computer -->
+                      <div class="tab-pane fade show active" id="uploadMethod" role="tabpanel">
+                        <div class="custom-file">
+                          <input type="file" class="custom-file-input" id="imageFile" name="imageFile" 
+                                 accept="image/jpeg,image/png,image/jpg,image/gif" onchange="previewUploadedImage(this)">
+                          <label class="custom-file-label" for="imageFile">Chọn file ảnh...</label>
+                        </div>
+                        <small class="form-text text-muted">
+                          <i class="fas fa-info-circle"></i> Chấp nhận: JPG, PNG, GIF. Tối đa 5MB. Khuyến nghị: 1920x600px
+                        </small>
+                      </div>
+                      
+                      <!-- URL Method -->
+                      <div class="tab-pane fade" id="urlMethod" role="tabpanel">
+                        <input type="url" class="form-control" id="imageURL" name="imageURL" 
+                               value="${slider != null ? slider.imageURL : ''}" 
+                               placeholder="https://example.com/image.jpg" 
+                               onchange="previewImageURL()">
+                        <small class="form-text text-muted">
+                          <i class="fas fa-info-circle"></i> Nhập URL đầy đủ của hình ảnh từ internet
+                        </small>
+                      </div>
+                    </div>
                     
                     <!-- Image Preview -->
                     <div class="mt-3 text-center">
                       <img id="imagePreview" class="image-preview ${slider != null && slider.imageURL != null ? 'show' : ''}" 
                            src="${slider != null ? slider.imageURL : ''}" alt="Preview">
+                      <div id="imageInfo" class="text-muted small mt-2" style="display: none;"></div>
                     </div>
                   </div>
 
@@ -208,31 +244,100 @@
   <!-- Footer -->
   <jsp:include page="includes/admin-footer.jsp" />
 
+</div>
+<!-- ./wrapper -->
+
+<!-- jQuery -->
+<script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
+
 <script>
+// Preview uploaded image from file input
+function previewUploadedImage(input) {
+    const preview = $('#imagePreview');
+    const imageInfo = $('#imageInfo');
+    const label = $(input).next('.custom-file-label');
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        // Update label
+        label.text(file.name);
+        
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File quá lớn! Vui lòng chọn file nhỏ hơn 5MB.');
+            input.value = '';
+            label.text('Chọn file ảnh...');
+            preview.removeClass('show');
+            imageInfo.hide();
+            return;
+        }
+        
+        // Validate file type
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (!validTypes.includes(file.type)) {
+            alert('Định dạng file không hợp lệ! Chỉ chấp nhận JPG, PNG, GIF.');
+            input.value = '';
+            label.text('Chọn file ảnh...');
+            preview.removeClass('show');
+            imageInfo.hide();
+            return;
+        }
+        
+        // Preview image
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.attr('src', e.target.result);
+            preview.addClass('show');
+            
+            // Show file info
+            const sizeKB = (file.size / 1024).toFixed(2);
+            imageInfo.html('<i class="fas fa-file-image"></i> ' + file.name + ' (' + sizeKB + ' KB)');
+            imageInfo.show();
+        };
+        reader.readAsDataURL(file);
+    } else {
+        label.text('Chọn file ảnh...');
+        preview.removeClass('show');
+        imageInfo.hide();
+    }
+}
+
 // Preview image when URL is entered
-function previewImage() {
+function previewImageURL() {
     const imageURL = $('#imageURL').val();
     const preview = $('#imagePreview');
+    const imageInfo = $('#imageInfo');
     
     if (imageURL) {
         preview.attr('src', imageURL);
         preview.addClass('show');
+        imageInfo.html('<i class="fas fa-link"></i> URL: ' + imageURL);
+        imageInfo.show();
         
         // Handle image load error
         preview.on('error', function() {
             preview.removeClass('show');
+            imageInfo.hide();
             alert('Không thể tải hình ảnh. Vui lòng kiểm tra lại URL.');
         });
     } else {
         preview.removeClass('show');
+        imageInfo.hide();
     }
 }
 
 // Form validation
 $('#sliderForm').on('submit', function(e) {
     const title = $('#title').val().trim();
-    const imageURL = $('#imageURL').val().trim();
     const displayOrder = $('#displayOrder').val();
+    const imageFile = $('#imageFile')[0].files[0];
+    const imageURL = $('#imageURL').val().trim();
+    const currentImageURL = $('input[name="currentImageURL"]').val();
     
     if (!title) {
         e.preventDefault();
@@ -241,10 +346,10 @@ $('#sliderForm').on('submit', function(e) {
         return false;
     }
     
-    if (!imageURL) {
+    // Check if image is provided (file upload or URL or existing image)
+    if (!imageFile && !imageURL && !currentImageURL) {
         e.preventDefault();
-        alert('Vui lòng nhập URL hình ảnh!');
-        $('#imageURL').focus();
+        alert('Vui lòng chọn hình ảnh hoặc nhập URL!');
         return false;
     }
     
@@ -262,7 +367,10 @@ $('#sliderForm').on('submit', function(e) {
 $(document).ready(function() {
     const imageURL = $('#imageURL').val();
     if (imageURL) {
-        previewImage();
+        previewImageURL();
     }
 });
 </script>
+
+</body>
+</html>

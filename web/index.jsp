@@ -66,7 +66,263 @@
 </section>
     <!-- Hero Section End -->
 
+    <!-- Top Selling Products by Category Section Begin -->
+    <section class="categories spad">
+        <div class="container">
+            <!-- Top Vợt Bán Chạy -->
+            <div class="row mb-5">
+                <div class="col-lg-12">
+                    <div class="section-title">
+                        <span>Sản phẩm bán chạy</span>
+                        <h2>Top Vợt Pickleball</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <c:forEach var="product" items="${topRackets}">
+                    <div class="col-lg-3 col-md-6 col-sm-6">
+                        <div class="product__item">
+                            <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}" 
+                                 style="cursor: pointer;" 
+                                 onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
+                                
+                                <c:if test="${product.totalSold > 0}">
+                                    <span class="label" style="background: #e53637;">Bán chạy</span>
+                                </c:if>
+                                
+                                <ul class="product__hover">
+                                    <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
+                                    <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" title="Xem chi tiết" onclick="event.stopPropagation();"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt=""></a></li>
+                                </ul>
+                            </div>
+                            <div class="product__item__text">
+                                <c:if test="${not empty product.brandName}">
+                                    <div class="product__brand" style="margin-bottom: 8px;">
+                                        <small style="color: #888; font-size: 12px;">
+                                            <i class="fa fa-tag"></i> ${product.brandName}
+                                        </small>
+                                    </div>
+                                </c:if>
+                                
+                                <h6><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}">${product.productName}</a></h6>
+                                
+                                <c:choose>
+                                    <c:when test="${product.minPrice != null && product.maxPrice != null}">
+                                        <c:choose>
+                                            <c:when test="${product.minPrice.compareTo(product.maxPrice) == 0}">
+                                                <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫ - <fmt:formatNumber value="${product.maxPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <h5>Liên hệ</h5>
+                                    </c:otherwise>
+                                </c:choose>
+                                
+                                <c:if test="${product.totalSold > 0}">
+                                    <small style="color: #666; font-size: 12px;">
+                                        <i class="fa fa-shopping-cart"></i> Đã bán: ${product.totalSold}
+                                    </small>
+                                </c:if>
+                            </div>
+                        </div>
+                    </div>
+                </c:forEach>
+                
+                <c:if test="${empty topRackets}">
+                    <div class="col-12 text-center py-3">
+                        <p class="text-muted">Chưa có sản phẩm nào.</p>
+                    </div>
+                </c:if>
+            </div>
+            
+            <!-- Top Bóng Bán Chạy -->
+            <div class="row mb-5 mt-5">
+                <div class="col-lg-12">
+                    <div class="section-title">
+                        <h2>Top Bóng Pickleball</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <c:forEach var="product" items="${topBalls}">
+                    <div class="col-lg-3 col-md-6 col-sm-6">
+                        <div class="product__item">
+                            <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}" 
+                                 style="cursor: pointer;" 
+                                 onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
+                                
+                                <c:if test="${product.totalSold > 0}">
+                                    <span class="label" style="background: #e53637;">Bán chạy</span>
+                                </c:if>
+                                
+                                <ul class="product__hover">
+                                    <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
+                                    <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" title="Xem chi tiết" onclick="event.stopPropagation();"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt=""></a></li>
+                                </ul>
+                            </div>
+                            <div class="product__item__text">
+                                <c:if test="${not empty product.brandName}">
+                                    <div class="product__brand" style="margin-bottom: 8px;">
+                                        <small style="color: #888; font-size: 12px;">
+                                            <i class="fa fa-tag"></i> ${product.brandName}
+                                        </small>
+                                    </div>
+                                </c:if>
+                                
+                                <h6><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}">${product.productName}</a></h6>
+                                
+                                <c:choose>
+                                    <c:when test="${product.minPrice != null && product.maxPrice != null}">
+                                        <c:choose>
+                                            <c:when test="${product.minPrice.compareTo(product.maxPrice) == 0}">
+                                                <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫ - <fmt:formatNumber value="${product.maxPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <h5>Liên hệ</h5>
+                                    </c:otherwise>
+                                </c:choose>
+                                
+                                <c:if test="${product.totalSold > 0}">
+                                    <small style="color: #666; font-size: 12px;">
+                                        <i class="fa fa-shopping-cart"></i> Đã bán: ${product.totalSold}
+                                    </small>
+                                </c:if>
+                            </div>
+                        </div>
+                    </div>
+                </c:forEach>
+                
+                <c:if test="${empty topBalls}">
+                    <div class="col-12 text-center py-3">
+                        <p class="text-muted">Chưa có sản phẩm nào.</p>
+                    </div>
+                </c:if>
+            </div>
+            
+            <!-- Top Trang Phục Bán Chạy -->
+            <div class="row mb-5 mt-5">
+                <div class="col-lg-12">
+                    <div class="section-title">
+                        <h2>Top Trang Phục</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <c:forEach var="product" items="${topClothing}">
+                    <div class="col-lg-3 col-md-6 col-sm-6">
+                        <div class="product__item">
+                            <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}" 
+                                 style="cursor: pointer;" 
+                                 onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
+                                
+                                <c:if test="${product.totalSold > 0}">
+                                    <span class="label" style="background: #e53637;">Bán chạy</span>
+                                </c:if>
+                                
+                                <ul class="product__hover">
+                                    <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
+                                    <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" title="Xem chi tiết" onclick="event.stopPropagation();"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt=""></a></li>
+                                </ul>
+                            </div>
+                            <div class="product__item__text">
+                                <c:if test="${not empty product.brandName}">
+                                    <div class="product__brand" style="margin-bottom: 8px;">
+                                        <small style="color: #888; font-size: 12px;">
+                                            <i class="fa fa-tag"></i> ${product.brandName}
+                                        </small>
+                                    </div>
+                                </c:if>
+                                
+                                <h6><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}">${product.productName}</a></h6>
+                                
+                                <c:choose>
+                                    <c:when test="${product.minPrice != null && product.maxPrice != null}">
+                                        <c:choose>
+                                            <c:when test="${product.minPrice.compareTo(product.maxPrice) == 0}">
+                                                <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫ - <fmt:formatNumber value="${product.maxPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <h5>Liên hệ</h5>
+                                    </c:otherwise>
+                                </c:choose>
+                                
+                                <c:if test="${product.totalSold > 0}">
+                                    <small style="color: #666; font-size: 12px;">
+                                        <i class="fa fa-shopping-cart"></i> Đã bán: ${product.totalSold}
+                                    </small>
+                                </c:if>
+                            </div>
+                        </div>
+                    </div>
+                </c:forEach>
+                
+                <c:if test="${empty topClothing}">
+                    <div class="col-12 text-center py-3">
+                        <p class="text-muted">Chưa có sản phẩm nào.</p>
+                    </div>
+                </c:if>
+            </div>
+        </div>
+    </section>
+    <!-- Top Selling Products by Category Section End -->
 
+    <!-- Brands Section Begin -->
+    <section class="brands spad" style="background: #f3f2ee;">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="section-title">
+                        <span>Thương hiệu</span>
+                        <h2>Các Thương Hiệu Nổi Tiếng</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <c:forEach var="brand" items="${brands}">
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
+                        <a href="${pageContext.request.contextPath}/shop?brand=${brand.brandID}" 
+                           class="brand__item" 
+                           style="display: block; text-align: center; padding: 20px; background: white; border-radius: 8px; transition: all 0.3s; text-decoration: none;">
+                            <c:choose>
+                                <c:when test="${not empty brand.logo}">
+                                    <img src="${pageContext.request.contextPath}${brand.logo}" 
+                                         alt="${brand.brandName}" 
+                                         style="max-width: 100%; height: 60px; object-fit: contain; margin-bottom: 10px;">
+                                </c:when>
+                                <c:otherwise>
+                                    <div style="height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                                        <i class="fa fa-tag" style="font-size: 40px; color: #ddd;"></i>
+                                    </div>
+                                </c:otherwise>
+                            </c:choose>
+                            <h6 style="margin: 0; color: #333; font-size: 14px; font-weight: 600;">${brand.brandName}</h6>
+                        </a>
+                    </div>
+                </c:forEach>
+                
+                <c:if test="${empty brands}">
+                    <div class="col-12 text-center py-5">
+                        <p class="text-muted">Chưa có thương hiệu nào.</p>
+                    </div>
+                </c:if>
+            </div>
+        </div>
+    </section>
+    <!-- Brands Section End -->
 
     <!-- Product Section Begin -->
     <section class="product spad">
@@ -368,42 +624,80 @@
                 <c:forEach var="product" items="${featuredProducts}">
                     <div class="col-lg-3 col-md-6 col-sm-6">
                         <div class="product__item">
-                            <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}">
-                                <c:choose>
-                                    <c:when test="${product.variantCount == 0}">
-                                        <span class="label" style="background: #ffc107; color: #111;">Sắp ra mắt</span>
-                                    </c:when>
-                                    <c:when test="${product.totalStock == 0}">
-                                        <span class="label" style="background: #dc3545; color: #fff;">Hết hàng</span>
-                                    </c:when>
-                                    <c:when test="${product.totalStock <= 10}">
-                                        <span class="label" style="background: #fd7e14; color: #fff;">Sắp hết</span>
-                                    </c:when>
-                                    <c:otherwise>
+                            <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}" 
+                                 style="cursor: pointer;" 
+                                 onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
+                                <!-- Show "New" badge if product created within last 30 days -->
+                                <c:if test="${not empty product.createdDate}">
+                                    <jsp:useBean id="now" class="java.util.Date"/>
+                                    <c:set var="daysDiff" value="${(now.time - product.createdDate.time) / (1000 * 60 * 60 * 24)}"/>
+                                    <c:if test="${daysDiff <= 30}">
                                         <span class="label">New</span>
-                                    </c:otherwise>
-                                </c:choose>
+                                    </c:if>
+                                </c:if>
+                                
+                                <!-- Show "Out of Stock" badge if no stock -->
+                                <c:if test="${product.totalStock == 0}">
+                                    <span class="label" style="background: #dc3545;">Hết hàng</span>
+                                </c:if>
+                                
                                 <ul class="product__hover">
-                                    <li><a href="#"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt="Wishlist"></a></li>
-                                    <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt="View"></a></li>
+                                    <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
+                                    <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" title="Xem chi tiết" onclick="event.stopPropagation();"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt=""></a></li>
                                 </ul>
                             </div>
                             <div class="product__item__text">
+                                <!-- Show brand if available -->
                                 <c:if test="${not empty product.brandName}">
-                                    <span class="product__brand">${product.brandName}</span>
+                                    <div class="product__brand" style="margin-bottom: 8px;">
+                                        <small style="color: #888; font-size: 12px;">
+                                            <i class="fa fa-tag"></i> ${product.brandName}
+                                        </small>
+                                    </div>
                                 </c:if>
+                                
                                 <h6><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}">${product.productName}</a></h6>
-                                <a href="${pageContext.request.contextPath}/cart?action=add&productId=${product.productID}" class="add-cart">+ Add To Cart</a>
-                                <h5>
-                                    <c:choose>
-                                        <c:when test="${product.minPrice != null}">
-                                            <fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
-                                        </c:when>
-                                        <c:otherwise>
-                                            Liên hệ
-                                        </c:otherwise>
-                                    </c:choose>
-                                </h5>
+                                
+                                <!-- Price display -->
+                                <c:choose>
+                                    <c:when test="${product.minPrice != null && product.maxPrice != null}">
+                                        <c:choose>
+                                            <c:when test="${product.minPrice.compareTo(product.maxPrice) == 0}">
+                                                <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫ - <fmt:formatNumber value="${product.maxPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <h5>Liên hệ</h5>
+                                    </c:otherwise>
+                                </c:choose>
+                                
+                                <!-- Add to cart button - disabled if out of stock -->
+                                <c:choose>
+                                    <c:when test="${product.totalStock > 0}">
+                                        <a href="${pageContext.request.contextPath}/cart/add?id=${product.productID}" class="add-cart">+ Thêm vào giỏ</a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <a href="#" class="add-cart" style="background: #ccc; cursor: not-allowed;" onclick="return false;">Hết hàng</a>
+                                    </c:otherwise>
+                                </c:choose>
+                                
+                                <!-- Category and stock info -->
+                                <div style="margin-top: 8px;">
+                                    <c:if test="${not empty product.categoryName}">
+                                        <small style="color: #666; font-size: 12px;">
+                                            <i class="fa fa-folder-o"></i> ${product.categoryName}
+                                        </small>
+                                    </c:if>
+                                    <c:if test="${product.totalStock > 0 && product.totalStock <= 10}">
+                                        <small style="color: #ff6b6b; font-size: 12px; margin-left: 10px;">
+                                            <i class="fa fa-exclamation-circle"></i> Chỉ còn ${product.totalStock} sản phẩm
+                                        </small>
+                                    </c:if>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -499,6 +793,21 @@
     <%@include  file="footer.jsp"%>
 
     
+
+    <style>
+        .brand__item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .brand__item h6 {
+            transition: color 0.3s;
+        }
+        
+        .brand__item:hover h6 {
+            color: #e53637 !important;
+        }
+    </style>
 
     <!-- Js Plugins -->
     <script src="js/jquery-3.3.1.min.js"></script>

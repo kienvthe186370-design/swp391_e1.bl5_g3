@@ -82,7 +82,25 @@ public class HomeServlet extends HttpServlet {
             request.setAttribute("categories", categories);
             System.out.println("✅ Loaded " + (categories != null ? categories.size() : 0) + " categories");
             
-            // 4. Load Latest Blogs (3 bài mới nhất)
+            // 4. Load Top Selling Products by Category
+            // Giả sử: CategoryID 1 = Vợt, 2 = Bóng, 3 = Trang phục
+            // Bạn cần điều chỉnh theo CategoryID thực tế trong database
+            List<java.util.Map<String, Object>> topRackets = productDAO.getTopSellingProductsByCategory(1, 4);
+            List<java.util.Map<String, Object>> topBalls = productDAO.getTopSellingProductsByCategory(2, 4);
+            List<java.util.Map<String, Object>> topClothing = productDAO.getTopSellingProductsByCategory(3, 4);
+            
+            request.setAttribute("topRackets", topRackets);
+            request.setAttribute("topBalls", topBalls);
+            request.setAttribute("topClothing", topClothing);
+            System.out.println("✅ Loaded top selling: Rackets=" + topRackets.size() + ", Balls=" + topBalls.size() + ", Clothing=" + topClothing.size());
+            
+            // 5. Load Active Brands
+            DAO.BrandDAO brandDAO = new DAO.BrandDAO();
+            List<entity.Brand> brands = brandDAO.getBrands(null, true, "BrandName", "ASC", 1, 100);
+            request.setAttribute("brands", brands);
+            System.out.println("✅ Loaded " + (brands != null ? brands.size() : 0) + " brands");
+            
+            // 6. Load Latest Blogs (3 bài mới nhất)
             try {
                 DAO.BlogPostDAO blogDAO = new DAO.BlogPostDAO();
                 List<entity.BlogPost> latestBlogs = blogDAO.search(null, "published");
@@ -107,6 +125,10 @@ public class HomeServlet extends HttpServlet {
             request.setAttribute("sliders", new java.util.ArrayList<>());
             request.setAttribute("featuredProducts", new java.util.ArrayList<>());
             request.setAttribute("categories", new java.util.ArrayList<>());
+            request.setAttribute("topRackets", new java.util.ArrayList<>());
+            request.setAttribute("topBalls", new java.util.ArrayList<>());
+            request.setAttribute("topClothing", new java.util.ArrayList<>());
+            request.setAttribute("brands", new java.util.ArrayList<>());
             request.setAttribute("latestBlogs", new java.util.ArrayList<>());
             
             request.getRequestDispatcher("index.jsp").forward(request, response);
