@@ -45,6 +45,38 @@ public class VoucherDAO extends DBContext {
     }
     
     /**
+     * Get all active PUBLIC vouchers (not private) for checkout page
+     */
+    public List<Voucher> getActivePublicVouchers() {
+        List<Voucher> list = new ArrayList<>();
+        String sql = """
+            SELECT VoucherID, VoucherCode, VoucherName, Description, DiscountType, 
+                   DiscountValue, MinOrderValue, MaxDiscountAmount, MaxUsage, UsedCount,
+                   StartDate, EndDate, IsActive, IsPrivate, CreatedBy, CreatedDate
+            FROM Vouchers
+            WHERE IsActive = 1 
+              AND IsPrivate = 0 
+              AND GETDATE() BETWEEN StartDate AND EndDate
+              AND (MaxUsage IS NULL OR UsedCount < MaxUsage)
+            ORDER BY DiscountValue DESC
+        """;
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                list.add(mapResultSetToVoucher(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error in getActivePublicVouchers: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return list;
+    }
+    
+    /**
      * Get all vouchers with pagination, search, filter and sort
      */
     public List<Voucher> getAllVouchers(String search, String status, String discountType, 
