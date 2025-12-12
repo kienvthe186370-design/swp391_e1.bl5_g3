@@ -89,10 +89,13 @@
                                         </a>
                                     </c:if>
                                     
-                                    <!-- Customer Profile -->
+                                    <!-- Customer Profile & Actions -->
                                     <c:if test="${userRole == 'customer'}">
-                                        <a href="<%= request.getContextPath() %>/customer/home">
+                                        <a href="<%= request.getContextPath() %>/customer/profile">
                                             <i class="fa fa-user"></i> ${userName}
+                                        </a>
+                                        <a href="<%= request.getContextPath() %>/customer/orders">
+                                            <i class="fa fa-list-alt"></i> Đơn hàng
                                         </a>
                                     </c:if>
                                     
