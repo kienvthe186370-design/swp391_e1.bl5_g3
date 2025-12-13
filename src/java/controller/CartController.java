@@ -332,7 +332,7 @@ public class CartController extends HttpServlet {
         
         try (PrintWriter out = response.getWriter()) {
             if (customer == null) {
-                out.print("{\"success\": false, \"message\": \"Not logged in\"}");
+                out.print("{\"success\": false, \"message\": \"Chưa đăng nhập\"}");
                 return;
             }
             
@@ -340,33 +340,62 @@ public class CartController extends HttpServlet {
             int newQuantity = Integer.parseInt(request.getParameter("quantity"));
             
             if (newQuantity < 0) {
-                out.print("{\"success\": false, \"message\": \"Invalid quantity\"}");
+                out.print("{\"success\": false, \"message\": \"Số lượng không hợp lệ\"}");
                 return;
             }
             
+            // Get cart item to check stock
+            Cart cart = cartDAO.getOrCreateCart(customer.getCustomerID());
+            CartItem item = null;
+            for (CartItem ci : cart.getItems()) {
+                if (ci.getCartItemID() == cartItemID) {
+                    item = ci;
+                    break;
+                }
+            }
+            
+            if (item == null) {
+                out.print("{\"success\": false, \"message\": \"Không tìm thấy sản phẩm trong giỏ hàng\"}");
+                return;
+            }
+            
+            // Check if new quantity exceeds available stock
+            int availableStock = item.getAvailableStock();
+            if (newQuantity > availableStock) {
+                out.print("{\"success\": false, \"message\": \"Chỉ còn " + availableStock + " sản phẩm trong kho\", \"maxStock\": " + availableStock + "}");
+                return;
+            }
+            
+            // Update quantity
             boolean success = cartDAO.updateQuantity(cartItemID, newQuantity);
             
             if (success) {
-                // Get updated cart info
-                Cart cart = cartDAO.getOrCreateCart(customer.getCustomerID());
+                // Reload cart to get updated totals
+                cart = cartDAO.getOrCreateCart(customer.getCustomerID());
                 int newCount = cart.getTotalItems();
                 BigDecimal newSubtotal = cart.getSubtotal();
+                
+                // Calculate item total
+                BigDecimal itemTotal = item.getPrice().multiply(new BigDecimal(newQuantity));
                 
                 // Update session
                 session.setAttribute("cartCount", newCount);
                 session.setAttribute("cartTotal", newSubtotal);
                 
-                // Return JSON response
-                out.print("{\"success\": true, \"itemCount\": " + newCount + 
-                         ", \"subtotal\": " + newSubtotal.longValue() + "}");
+                // Return JSON response with updated values
+                out.print("{\"success\": true, " +
+                         "\"itemCount\": " + newCount + ", " +
+                         "\"subtotal\": " + newSubtotal.longValue() + ", " +
+                         "\"itemTotal\": " + itemTotal.longValue() + ", " +
+                         "\"quantity\": " + newQuantity + "}");
             } else {
-                out.print("{\"success\": false, \"message\": \"Update failed\"}");
+                out.print("{\"success\": false, \"message\": \"Cập nhật thất bại\"}");
             }
             
         } catch (Exception e) {
             System.err.println("❌ Error in updateCartItem: " + e.getMessage());
             e.printStackTrace();
-            response.getWriter().print("{\"success\": false, \"message\": \"Error: " + e.getMessage() + "\"}");
+            response.getWriter().print("{\"success\": false, \"message\": \"Lỗi: " + e.getMessage() + "\"}");
         }
     }
     
