@@ -31,6 +31,29 @@ public class RolePermission {
     public static boolean canViewSalesReports(String role) {
         return SELLER_MANAGER.equalsIgnoreCase(role);
     }
+    
+    // ==================== ORDER MANAGEMENT PERMISSIONS ====================
+    
+    /**
+     * Quyền phân công đơn hàng (SellerManager và Admin)
+     */
+    public static boolean canAssignOrders(String role) {
+        return SELLER_MANAGER.equalsIgnoreCase(role) || ADMIN.equalsIgnoreCase(role);
+    }
+    
+    /**
+     * Quyền xem tất cả đơn hàng (SellerManager và Admin xem tất cả, Seller chỉ xem đơn được phân)
+     */
+    public static boolean canViewAllOrders(String role) {
+        return SELLER_MANAGER.equalsIgnoreCase(role) || ADMIN.equalsIgnoreCase(role);
+    }
+    
+    /**
+     * Quyền cập nhật trạng thái đơn hàng
+     */
+    public static boolean canUpdateOrderStatus(String role) {
+        return SELLER_MANAGER.equalsIgnoreCase(role) || SELLER.equalsIgnoreCase(role) || ADMIN.equalsIgnoreCase(role);
+    }
 
     public static boolean canManageProducts(String role) {
         return MARKETER.equalsIgnoreCase(role);
