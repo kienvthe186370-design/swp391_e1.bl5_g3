@@ -162,6 +162,8 @@
                             </c:choose>
                         </div>
                         <input type="hidden" name="carrierId" id="selectedCarrierId" value="${not empty shippingRates ? (not empty shippingRates[0].carrierId ? shippingRates[0].carrierId : shippingRates[0].rateID) : '0'}">
+                        <input type="hidden" name="carrierName" id="selectedCarrierName" value="${not empty shippingRates ? shippingRates[0].carrierName : 'Giao Hàng Tiết Kiệm'}">
+                        <input type="hidden" name="estimatedDelivery" id="selectedEstimatedDelivery" value="${not empty shippingRates ? shippingRates[0].estimatedDelivery : '2-3 ngày'}">
 
                         <!-- Payment Method -->
                         <h6 class="checkout__title"><i class="fa fa-credit-card"></i> Phương thức thanh toán</h6>
@@ -467,6 +469,8 @@
             if (rates.length > 0) {
                 shippingFee = rates[0].price;
                 $('#selectedCarrierId').val(rates[0].id);
+                $('#selectedCarrierName').val(rates[0].carrierName);
+                $('#selectedEstimatedDelivery').val(rates[0].estimatedDelivery);
                 updateTotal();
             }
         }
@@ -519,9 +523,14 @@
             $(el).find('input[type="radio"]').prop('checked', true);
             shippingFee = parseFloat($(el).data('price')) || 30000;
             
-            // Update carrier ID
+            // Update carrier ID, name, and estimated delivery
             var carrierId = $(el).find('.carrier-id').val();
+            var carrierName = $(el).find('strong').first().text();
+            var estimatedDelivery = $(el).find('small').text().replace(/.*\s/, ''); // Get delivery time
+            
             $('#selectedCarrierId').val(carrierId);
+            $('#selectedCarrierName').val(carrierName);
+            $('#selectedEstimatedDelivery').val(estimatedDelivery);
             
             updateTotal();
         }

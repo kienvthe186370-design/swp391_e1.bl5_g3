@@ -258,7 +258,44 @@ public class AdminOrderServlet extends HttpServlet {
             boolean success = orderDAO.updateOrderStatus(orderId, newStatus, employee.getEmployeeID(), note);
             
             if (success) {
-                request.getSession().setAttribute("success", "Cập nhật trạng thái thành công");
+                String successMsg = "Cập nhật trạng thái thành công";
+                
+                // Nếu chuyển sang Shipping, tự động tạo vận đơn Goship với carrier đã chọn từ checkout
+                if ("Shipping".equals(newStatus)) {
+                    try {
+                        // Lấy shipping info để lấy carrier ID đã chọn từ checkout
+                        DAO.ShippingDAO shippingDAO = new DAO.ShippingDAO();
+                        entity.Shipping shipping = shippingDAO.getShippingByOrderId(orderId);
+                        
+                        String carrierId = null;
+                        if (shipping != null && shipping.getGoshipCarrierId() != null) {
+                            carrierId = shipping.getGoshipCarrierId();
+                        }
+                        
+                        if (carrierId != null && !carrierId.isEmpty()) {
+                            service.GoshipService goshipService = new service.GoshipService();
+                            service.GoshipService.GoshipShipmentResult shipmentResult = 
+                                goshipService.createShipment(order, carrierId);
+                            
+                            if (shipmentResult.isSuccess()) {
+                                // Cập nhật thông tin vận đơn vào database
+                                orderDAO.updateOrderGoshipInfo(orderId, 
+                                    shipmentResult.getGoshipOrderCode(), 
+                                    shipmentResult.getTrackingCode());
+                                successMsg += ". Đã tạo vận đơn Goship: " + shipmentResult.getTrackingCode();
+                            } else {
+                                successMsg += ". Lưu ý: " + shipmentResult.getMessage();
+                            }
+                        } else {
+                            successMsg += ". (Không có Goship carrier ID - vận đơn không được tạo tự động)";
+                        }
+                    } catch (Exception e) {
+                        successMsg += ". Lưu ý: Lỗi khi tạo vận đơn Goship";
+                        e.printStackTrace();
+                    }
+                }
+                
+                request.getSession().setAttribute("success", successMsg);
             } else {
                 request.getSession().setAttribute("error", "Cập nhật trạng thái thất bại");
             }

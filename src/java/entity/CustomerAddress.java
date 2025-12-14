@@ -12,6 +12,11 @@ public class CustomerAddress {
     private String postalCode;
     private boolean isDefault;
     private boolean isActive;
+    
+    // Goship location codes
+    private String cityCode;
+    private String districtCode;
+    private String wardCode;
 
     public CustomerAddress() {
     }
@@ -49,6 +54,16 @@ public class CustomerAddress {
 
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
+    
+    // Goship location codes
+    public String getCityCode() { return cityCode; }
+    public void setCityCode(String cityCode) { this.cityCode = cityCode; }
+    
+    public String getDistrictCode() { return districtCode; }
+    public void setDistrictCode(String districtCode) { this.districtCode = districtCode; }
+    
+    public String getWardCode() { return wardCode; }
+    public void setWardCode(String wardCode) { this.wardCode = wardCode; }
 
     // Helper method to get full address
     public String getFullAddress() {

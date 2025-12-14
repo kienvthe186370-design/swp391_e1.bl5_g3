@@ -138,16 +138,29 @@ public class CheckoutServlet extends HttpServlet {
             String voucherCode = request.getParameter("voucherCode");
             String shippingFeeStr = request.getParameter("shippingFee");
             String carrierIdStr = request.getParameter("carrierId");
+            String carrierName = request.getParameter("carrierName");
+            String estimatedDelivery = request.getParameter("estimatedDelivery");
             String notes = request.getParameter("notes");
             
             BigDecimal shippingFee = new BigDecimal(shippingFeeStr != null ? shippingFeeStr : "30000");
             Integer rateID = null;
+            String goshipCarrierId = null;
+            
             if (carrierIdStr != null && !carrierIdStr.isEmpty()) {
                 try {
                     rateID = Integer.parseInt(carrierIdStr);
                 } catch (NumberFormatException e) {
-                    // Goship returns string ID, ignore
+                    // Goship returns string ID, save as goshipCarrierId
+                    goshipCarrierId = carrierIdStr;
                 }
+            }
+            
+            // Default values
+            if (carrierName == null || carrierName.isEmpty()) {
+                carrierName = "Giao Hàng Tiết Kiệm";
+            }
+            if (estimatedDelivery == null || estimatedDelivery.isEmpty()) {
+                estimatedDelivery = "2-3 ngày";
             }
 
             
@@ -209,12 +222,14 @@ public class CheckoutServlet extends HttpServlet {
                 return;
             }
             
-            // Create Shipping record
+            // Create Shipping record with carrier info from checkout
             Shipping shipping = new Shipping();
             shipping.setOrderID(orderID);
             shipping.setRateID(rateID);
             shipping.setShippingFee(shippingFee);
-            shipping.setEstimatedDelivery("2-3 ngày");
+            shipping.setEstimatedDelivery(estimatedDelivery);
+            shipping.setGoshipCarrierId(goshipCarrierId);  // Lưu Goship carrier ID để dùng khi tạo vận đơn
+            shipping.setCarrierName(carrierName);          // Lưu tên đơn vị vận chuyển
             shippingDAO.createShipping(shipping);
             
             // Clear cart after order created

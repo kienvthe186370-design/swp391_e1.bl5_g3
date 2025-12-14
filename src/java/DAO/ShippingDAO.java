@@ -111,8 +111,8 @@ public class ShippingDAO extends DBContext {
      * Tạo bản ghi shipping cho order
      */
     public int createShipping(Shipping shipping) {
-        String sql = "INSERT INTO Shipping (OrderID, CarrierID, RateID, TrackingCode, ShippingFee, EstimatedDelivery) " +
-                     "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Shipping (OrderID, CarrierID, RateID, TrackingCode, ShippingFee, EstimatedDelivery, GoshipCarrierId, CarrierName) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -131,6 +131,8 @@ public class ShippingDAO extends DBContext {
             ps.setString(4, shipping.getTrackingCode());
             ps.setBigDecimal(5, shipping.getShippingFee());
             ps.setString(6, shipping.getEstimatedDelivery());
+            ps.setString(7, shipping.getGoshipCarrierId());
+            ps.setString(8, shipping.getCarrierName());
             
             int affectedRows = ps.executeUpdate();
             if (affectedRows > 0) {
@@ -178,6 +180,12 @@ public class ShippingDAO extends DBContext {
                 shipping.setShippedDate(rs.getTimestamp("ShippedDate"));
                 shipping.setDeliveredDate(rs.getTimestamp("DeliveredDate"));
                 
+                // Goship fields
+                shipping.setGoshipOrderCode(rs.getString("GoshipOrderCode"));
+                shipping.setGoshipStatus(rs.getString("GoshipStatus"));
+                shipping.setGoshipCarrierId(rs.getString("GoshipCarrierId"));
+                shipping.setCarrierName(rs.getString("CarrierName"));
+                
                 if (shipping.getCarrierID() != null) {
                     ShippingCarrier carrier = new ShippingCarrier();
                     carrier.setCarrierID(shipping.getCarrierID());
@@ -208,5 +216,88 @@ public class ShippingDAO extends DBContext {
             Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
         }
         return false;
+    }
+    
+    /**
+     * Cập nhật Goship order code và tracking
+     */
+    public boolean updateGoshipInfo(int shippingID, String goshipOrderCode, String trackingCode) {
+        String sql = "UPDATE Shipping SET GoshipOrderCode = ?, TrackingCode = ?, ShippedDate = GETDATE() WHERE ShippingID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, goshipOrderCode);
+            ps.setString(2, trackingCode);
+            ps.setInt(3, shippingID);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return false;
+    }
+    
+    /**
+     * Cập nhật Goship status
+     */
+    public boolean updateGoshipStatus(int shippingID, String goshipStatus) {
+        String sql = "UPDATE Shipping SET GoshipStatus = ? WHERE ShippingID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, goshipStatus);
+            ps.setInt(2, shippingID);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return false;
+    }
+    
+    /**
+     * Cập nhật ngày giao hàng
+     */
+    public boolean updateDeliveredDate(int shippingID) {
+        String sql = "UPDATE Shipping SET DeliveredDate = GETDATE() WHERE ShippingID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, shippingID);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return false;
+    }
+    
+    /**
+     * Lấy shipping theo Goship order code
+     */
+    public Shipping getShippingByGoshipCode(String goshipOrderCode) {
+        String sql = "SELECT s.*, c.CarrierName FROM Shipping s " +
+                     "LEFT JOIN ShippingCarriers c ON s.CarrierID = c.CarrierID " +
+                     "WHERE s.GoshipOrderCode = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, goshipOrderCode);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                Shipping shipping = new Shipping();
+                shipping.setShippingID(rs.getInt("ShippingID"));
+                shipping.setOrderID(rs.getInt("OrderID"));
+                shipping.setTrackingCode(rs.getString("TrackingCode"));
+                shipping.setShippingFee(rs.getBigDecimal("ShippingFee"));
+                shipping.setGoshipOrderCode(rs.getString("GoshipOrderCode"));
+                shipping.setGoshipStatus(rs.getString("GoshipStatus"));
+                shipping.setShippedDate(rs.getTimestamp("ShippedDate"));
+                shipping.setDeliveredDate(rs.getTimestamp("DeliveredDate"));
+                return shipping;
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return null;
     }
 }

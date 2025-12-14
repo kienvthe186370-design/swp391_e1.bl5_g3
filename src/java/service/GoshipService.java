@@ -289,4 +289,204 @@ public class GoshipService {
         String response = callApi(GoshipConfig.ENDPOINT_CITIES, "GET", null);
         return response != null && response.contains("data");
     }
+    
+    // ==================== TẠO VẬN ĐƠN (SHIPMENT) ====================
+    
+    /**
+     * Tạo vận đơn trên Goship
+     * @param order Thông tin đơn hàng
+     * @param carrierId ID của carrier được chọn từ rates
+     * @return GoshipShipmentResult chứa tracking code và order code
+     */
+    public GoshipShipmentResult createShipment(entity.Order order, String carrierId) {
+        GoshipShipmentResult result = new GoshipShipmentResult();
+        
+        try {
+            // Lấy địa chỉ giao hàng
+            entity.CustomerAddress address = order.getAddress();
+            if (address == null) {
+                result.setSuccess(false);
+                result.setMessage("Không có địa chỉ giao hàng");
+                return result;
+            }
+            
+            // Lấy mã địa chỉ
+            String fromCityCode = getCityCodeCached(GoshipConfig.SHOP_CITY);
+            String fromDistrictCode = getDistrictCodeCached(fromCityCode, GoshipConfig.SHOP_DISTRICT);
+            String toCityCode = getCityCodeCached(address.getCity());
+            String toDistrictCode = toCityCode != null ? getDistrictCodeCached(toCityCode, address.getDistrict()) : null;
+            
+            if (fromDistrictCode == null || toDistrictCode == null) {
+                result.setSuccess(false);
+                result.setMessage("Không thể xác định địa chỉ giao hàng");
+                return result;
+            }
+            
+            // Tính tổng khối lượng (giả định mỗi sản phẩm 500g)
+            int totalWeight = 500;
+            if (order.getOrderDetails() != null) {
+                totalWeight = order.getOrderDetails().size() * 500;
+            }
+            
+            // Tính COD amount (nếu thanh toán COD)
+            int codAmount = 0;
+            if ("COD".equalsIgnoreCase(order.getPaymentMethod()) && 
+                !"Paid".equalsIgnoreCase(order.getPaymentStatus())) {
+                codAmount = order.getTotalAmount().intValue();
+            }
+            
+            // Build request body
+            JSONObject requestBody = new JSONObject();
+            JSONObject shipment = new JSONObject();
+            
+            // Địa chỉ gửi (shop)
+            JSONObject addressFrom = new JSONObject();
+            addressFrom.put("name", "Pickleball Shop");
+            addressFrom.put("phone", "0123456789");
+            addressFrom.put("street", GoshipConfig.SHOP_ADDRESS);
+            addressFrom.put("city", fromCityCode);
+            addressFrom.put("district", fromDistrictCode);
+            
+            // Địa chỉ nhận
+            JSONObject addressTo = new JSONObject();
+            addressTo.put("name", address.getRecipientName());
+            addressTo.put("phone", address.getPhone());
+            addressTo.put("street", address.getStreet());
+            addressTo.put("city", toCityCode);
+            addressTo.put("district", toDistrictCode);
+            
+            // Thông tin kiện hàng
+            JSONObject parcel = new JSONObject();
+            parcel.put("cod", codAmount);
+            parcel.put("weight", totalWeight);
+            parcel.put("width", 20);
+            parcel.put("height", 10);
+            parcel.put("length", 30);
+            parcel.put("metadata", order.getOrderCode()); // Lưu mã đơn hàng
+            
+            shipment.put("rate", carrierId); // ID carrier từ rates
+            shipment.put("address_from", addressFrom);
+            shipment.put("address_to", addressTo);
+            shipment.put("parcel", parcel);
+            requestBody.put("shipment", shipment);
+            
+            System.out.println("[GoshipService] Creating shipment: " + requestBody.toString());
+            
+            String response = callApi(GoshipConfig.ENDPOINT_SHIPMENTS, "POST", requestBody.toString());
+            
+            if (response != null) {
+                JSONObject json = new JSONObject(response);
+                System.out.println("[GoshipService] Shipment response: " + response);
+                
+                if (json.has("data")) {
+                    JSONObject data = json.getJSONObject("data");
+                    result.setSuccess(true);
+                    result.setGoshipOrderCode(data.optString("code", ""));
+                    result.setTrackingCode(data.optString("tracking_number", ""));
+                    result.setCarrierTrackingCode(data.optString("carrier_tracking_code", ""));
+                    result.setStatus(data.optString("status", ""));
+                    result.setMessage("Tạo vận đơn thành công");
+                    return result;
+                } else if (json.has("message")) {
+                    result.setSuccess(false);
+                    result.setMessage(json.getString("message"));
+                    return result;
+                }
+            }
+            
+            result.setSuccess(false);
+            result.setMessage("Không thể tạo vận đơn trên Goship");
+            
+        } catch (Exception e) {
+            System.err.println("[GoshipService] Error creating shipment: " + e.getMessage());
+            e.printStackTrace();
+            result.setSuccess(false);
+            result.setMessage("Lỗi: " + e.getMessage());
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Lấy thông tin vận đơn từ Goship
+     */
+    public JSONObject getShipmentInfo(String goshipOrderCode) {
+        try {
+            String response = callApi(GoshipConfig.ENDPOINT_SHIPMENTS + "/" + goshipOrderCode, "GET", null);
+            if (response != null) {
+                JSONObject json = new JSONObject(response);
+                if (json.has("data")) {
+                    return json.getJSONObject("data");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[GoshipService] Error getting shipment: " + e.getMessage());
+        }
+        return null;
+    }
+    
+    /**
+     * Hủy vận đơn trên Goship
+     */
+    public boolean cancelShipment(String goshipOrderCode) {
+        try {
+            String response = callApi(GoshipConfig.ENDPOINT_SHIPMENTS + "/" + goshipOrderCode + "/cancel", 
+                                     "POST", "{}");
+            if (response != null) {
+                JSONObject json = new JSONObject(response);
+                return json.optBoolean("success", false) || json.has("data");
+            }
+        } catch (Exception e) {
+            System.err.println("[GoshipService] Error canceling shipment: " + e.getMessage());
+        }
+        return false;
+    }
+    
+    /**
+     * In vận đơn (lấy URL)
+     */
+    public String getPrintUrl(String goshipOrderCode) {
+        try {
+            String response = callApi(GoshipConfig.ENDPOINT_SHIPMENTS + "/" + goshipOrderCode + "/print", 
+                                     "GET", null);
+            if (response != null) {
+                JSONObject json = new JSONObject(response);
+                if (json.has("data")) {
+                    return json.getJSONObject("data").optString("url", "");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[GoshipService] Error getting print URL: " + e.getMessage());
+        }
+        return null;
+    }
+    
+    // ==================== INNER CLASS FOR RESULT ====================
+    
+    public static class GoshipShipmentResult {
+        private boolean success;
+        private String message;
+        private String goshipOrderCode;
+        private String trackingCode;
+        private String carrierTrackingCode;
+        private String status;
+        
+        public boolean isSuccess() { return success; }
+        public void setSuccess(boolean success) { this.success = success; }
+        
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+        
+        public String getGoshipOrderCode() { return goshipOrderCode; }
+        public void setGoshipOrderCode(String goshipOrderCode) { this.goshipOrderCode = goshipOrderCode; }
+        
+        public String getTrackingCode() { return trackingCode; }
+        public void setTrackingCode(String trackingCode) { this.trackingCode = trackingCode; }
+        
+        public String getCarrierTrackingCode() { return carrierTrackingCode; }
+        public void setCarrierTrackingCode(String carrierTrackingCode) { this.carrierTrackingCode = carrierTrackingCode; }
+        
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+    }
 }

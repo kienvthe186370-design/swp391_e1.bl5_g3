@@ -13,6 +13,10 @@ public class Shipping {
     private String estimatedDelivery;
     private Timestamp shippedDate;
     private Timestamp deliveredDate;
+    private String goshipOrderCode;
+    private String goshipStatus;
+    private String goshipCarrierId;  // Carrier ID từ Goship mà khách đã chọn khi checkout
+    private String carrierName;      // Tên đơn vị vận chuyển
     
     // Related objects
     private ShippingCarrier carrier;
@@ -54,4 +58,16 @@ public class Shipping {
 
     public ShippingRate getRate() { return rate; }
     public void setRate(ShippingRate rate) { this.rate = rate; }
+
+    public String getGoshipOrderCode() { return goshipOrderCode; }
+    public void setGoshipOrderCode(String goshipOrderCode) { this.goshipOrderCode = goshipOrderCode; }
+
+    public String getGoshipStatus() { return goshipStatus; }
+    public void setGoshipStatus(String goshipStatus) { this.goshipStatus = goshipStatus; }
+    
+    public String getGoshipCarrierId() { return goshipCarrierId; }
+    public void setGoshipCarrierId(String goshipCarrierId) { this.goshipCarrierId = goshipCarrierId; }
+    
+    public String getCarrierName() { return carrierName; }
+    public void setCarrierName(String carrierName) { this.carrierName = carrierName; }
 }

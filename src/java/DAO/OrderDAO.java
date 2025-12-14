@@ -667,7 +667,9 @@ public class OrderDAO extends DBContext {
     
     private List<OrderDetail> getOrderDetailsByOrderId(int orderId) {
         List<OrderDetail> details = new ArrayList<>();
-        String sql = "SELECT od.*, p.Thumbnail as ProductImage FROM OrderDetails od " +
+        String sql = "SELECT od.*, " +
+                     "(SELECT TOP 1 pi.ImageURL FROM ProductImages pi WHERE pi.ProductID = p.ProductID AND pi.IsPrimary = 1) as ProductImage " +
+                     "FROM OrderDetails od " +
                      "LEFT JOIN ProductVariants pv ON od.VariantID = pv.VariantID " +
                      "LEFT JOIN Products p ON pv.ProductID = p.ProductID " +
                      "WHERE od.OrderID = ?";
@@ -762,7 +764,7 @@ public class OrderDAO extends DBContext {
                 
                 shipping.setTrackingCode(rs.getString("TrackingCode"));
                 shipping.setShippingFee(rs.getBigDecimal("ShippingFee"));
-                shipping.setEstimatedDelivery(rs.getTimestamp("EstimatedDelivery"));
+                shipping.setEstimatedDelivery(rs.getString("EstimatedDelivery"));
                 shipping.setShippedDate(rs.getTimestamp("ShippedDate"));
                 shipping.setDeliveredDate(rs.getTimestamp("DeliveredDate"));
                 shipping.setGoshipOrderCode(rs.getString("GoshipOrderCode"));
@@ -774,5 +776,316 @@ public class OrderDAO extends DBContext {
             System.out.println("Shipping table may not exist: " + e.getMessage());
         }
         return null;
+    }
+    
+    // ==================== TẠO ĐƠN HÀNG (CHO CHECKOUT) ====================
+    
+    /**
+     * Tạo mã đơn hàng unique
+     */
+    public String generateOrderCode() {
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMdd");
+        String dateStr = sdf.format(new java.util.Date());
+        String prefix = "ORD-" + dateStr + "-";
+        
+        String sql = "SELECT TOP 1 OrderCode FROM Orders WHERE OrderCode LIKE ? ORDER BY OrderID DESC";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, prefix + "%");
+            ResultSet rs = ps.executeQuery();
+            
+            int nextNum = 1;
+            if (rs.next()) {
+                String lastCode = rs.getString("OrderCode");
+                String numPart = lastCode.substring(lastCode.lastIndexOf("-") + 1);
+                try {
+                    nextNum = Integer.parseInt(numPart) + 1;
+                } catch (NumberFormatException e) {
+                    nextNum = 1;
+                }
+            }
+            return prefix + String.format("%03d", nextNum);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Fallback: dùng timestamp
+            return "ORD-" + System.currentTimeMillis();
+        }
+    }
+    
+    /**
+     * Tạo đơn hàng mới với chi tiết
+     */
+    public int createOrder(Order order, List<OrderDetail> orderDetails) {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+            
+            // Insert Order
+            String orderSql = "INSERT INTO Orders (OrderCode, CustomerID, AddressID, SubtotalAmount, DiscountAmount, " +
+                             "VoucherDiscount, ShippingFee, TotalAmount, TotalCost, TotalProfit, VoucherID, " +
+                             "PaymentMethod, PaymentStatus, OrderStatus, Notes, OrderDate, UpdatedDate) " +
+                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())";
+            
+            int orderID = -1;
+            try (PreparedStatement ps = conn.prepareStatement(orderSql, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, order.getOrderCode());
+                ps.setInt(2, order.getCustomerID());
+                if (order.getAddressID() != null) {
+                    ps.setInt(3, order.getAddressID());
+                } else {
+                    ps.setNull(3, Types.INTEGER);
+                }
+                ps.setBigDecimal(4, order.getSubtotalAmount());
+                ps.setBigDecimal(5, order.getDiscountAmount());
+                ps.setBigDecimal(6, order.getVoucherDiscount());
+                ps.setBigDecimal(7, order.getShippingFee());
+                ps.setBigDecimal(8, order.getTotalAmount());
+                ps.setBigDecimal(9, order.getTotalCost());
+                ps.setBigDecimal(10, order.getTotalProfit());
+                if (order.getVoucherID() != null) {
+                    ps.setInt(11, order.getVoucherID());
+                } else {
+                    ps.setNull(11, Types.INTEGER);
+                }
+                ps.setString(12, order.getPaymentMethod());
+                ps.setString(13, order.getPaymentStatus());
+                ps.setString(14, order.getOrderStatus());
+                ps.setString(15, order.getNotes());
+                
+                int affectedRows = ps.executeUpdate();
+                if (affectedRows > 0) {
+                    ResultSet rs = ps.getGeneratedKeys();
+                    if (rs.next()) {
+                        orderID = rs.getInt(1);
+                    }
+                }
+            }
+            
+            if (orderID <= 0) {
+                conn.rollback();
+                return -1;
+            }
+            
+            // Insert OrderDetails
+            String detailSql = "INSERT INTO OrderDetails (OrderID, VariantID, ProductName, SKU, Quantity, " +
+                              "CostPrice, UnitPrice, DiscountAmount, FinalPrice, IsReviewed) " +
+                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)";
+            
+            try (PreparedStatement ps = conn.prepareStatement(detailSql)) {
+                for (OrderDetail detail : orderDetails) {
+                    ps.setInt(1, orderID);
+                    ps.setInt(2, detail.getVariantID());
+                    ps.setString(3, detail.getProductName());
+                    ps.setString(4, detail.getSku());
+                    ps.setInt(5, detail.getQuantity());
+                    ps.setBigDecimal(6, detail.getCostPrice());
+                    ps.setBigDecimal(7, detail.getUnitPrice());
+                    ps.setBigDecimal(8, detail.getDiscountAmount() != null ? detail.getDiscountAmount() : java.math.BigDecimal.ZERO);
+                    ps.setBigDecimal(9, detail.getFinalPrice());
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+            
+            // Insert initial status history
+            String historySql = "INSERT INTO OrderStatusHistory (OrderID, OldStatus, NewStatus, Notes, ChangedDate) " +
+                               "VALUES (?, NULL, 'Pending', N'Đơn hàng mới được tạo', GETDATE())";
+            try (PreparedStatement ps = conn.prepareStatement(historySql)) {
+                ps.setInt(1, orderID);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                // Bảng có thể chưa tồn tại, bỏ qua
+                System.out.println("OrderStatusHistory insert skipped: " + e.getMessage());
+            }
+            
+            conn.commit();
+            return orderID;
+            
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+            e.printStackTrace();
+            return -1;
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            }
+        }
+    }
+    
+    /**
+     * Cập nhật payment status của đơn hàng
+     */
+    public boolean updatePaymentStatus(int orderId, String paymentStatus) {
+        String sql = "UPDATE Orders SET PaymentStatus = ?, UpdatedDate = GETDATE() WHERE OrderID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, paymentStatus);
+            ps.setInt(2, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Cập nhật payment status với transaction ID (cho VNPay callback)
+     */
+    public boolean updatePaymentStatus(int orderId, String paymentStatus, String transactionId) {
+        String sql = "UPDATE Orders SET PaymentStatus = ?, PaymentToken = ?, UpdatedDate = GETDATE() WHERE OrderID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, paymentStatus);
+            ps.setString(2, transactionId);
+            ps.setInt(3, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Cập nhật trạng thái đơn hàng (không cần log history - dùng cho VNPay callback)
+     */
+    public boolean updateOrderStatus(int orderId, String newStatus) {
+        String sql = "UPDATE Orders SET OrderStatus = ?, UpdatedDate = GETDATE() WHERE OrderID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, newStatus);
+            ps.setInt(2, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Cập nhật payment token (cho VNPay)
+     */
+    public boolean updatePaymentToken(int orderId, String paymentToken, java.sql.Timestamp expiry) {
+        String sql = "UPDATE Orders SET PaymentToken = ?, PaymentExpiry = ?, UpdatedDate = GETDATE() WHERE OrderID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, paymentToken);
+            ps.setTimestamp(2, expiry);
+            ps.setInt(3, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Lấy đơn hàng theo CustomerID với paging (không cần filter)
+     */
+    public List<Order> getOrdersByCustomerId(int customerId, int page, int pageSize) {
+        List<Order> orders = new ArrayList<>();
+        String sql = "SELECT o.*, c.FullName as CustomerName, c.Email as CustomerEmail, c.Phone as CustomerPhone " +
+                     "FROM Orders o " +
+                     "LEFT JOIN Customers c ON o.CustomerID = c.CustomerID " +
+                     "WHERE o.CustomerID = ? " +
+                     "ORDER BY o.OrderDate DESC " +
+                     "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, customerId);
+            ps.setInt(2, (page - 1) * pageSize);
+            ps.setInt(3, pageSize);
+            
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Order order = mapResultSetToOrder(rs);
+                
+                Customer customer = new Customer();
+                customer.setCustomerID(rs.getInt("CustomerID"));
+                customer.setFullName(rs.getString("CustomerName"));
+                customer.setEmail(rs.getString("CustomerEmail"));
+                customer.setPhone(rs.getString("CustomerPhone"));
+                order.setCustomer(customer);
+                
+                // Load order details for display
+                order.setOrderDetails(getOrderDetailsByOrderId(order.getOrderID()));
+                
+                orders.add(order);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orders;
+    }
+    
+    /**
+     * Đếm số đơn hàng của customer
+     */
+    public int countOrdersByCustomerId(int customerId) {
+        String sql = "SELECT COUNT(*) FROM Orders WHERE CustomerID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, customerId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
+    /**
+     * Lấy đơn hàng theo Goship order code (dùng cho webhook)
+     */
+    public Order getOrderByGoshipCode(String goshipOrderCode) {
+        String sql = "SELECT o.OrderID FROM Orders o " +
+                     "INNER JOIN Shipping s ON o.OrderID = s.OrderID " +
+                     "WHERE s.GoshipOrderCode = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, goshipOrderCode);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return getOrderById(rs.getInt("OrderID"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    /**
+     * Cập nhật Goship info cho shipping của order
+     */
+    public boolean updateOrderGoshipInfo(int orderId, String goshipOrderCode, String trackingCode) {
+        String sql = "UPDATE Shipping SET GoshipOrderCode = ?, TrackingCode = ?, ShippedDate = GETDATE() " +
+                     "WHERE OrderID = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, goshipOrderCode);
+            ps.setString(2, trackingCode);
+            ps.setInt(3, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

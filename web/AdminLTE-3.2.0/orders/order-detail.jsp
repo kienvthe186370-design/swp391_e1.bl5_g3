@@ -257,17 +257,26 @@
                                     <h3 class="card-title">Cập nhật trạng thái</h3>
                                 </div>
                                 <div class="card-body">
-                                    <form method="post" action="${pageContext.request.contextPath}/admin/orders">
+                                    <form method="post" action="${pageContext.request.contextPath}/admin/orders" id="updateStatusForm">
                                         <input type="hidden" name="action" value="updateStatus">
                                         <input type="hidden" name="orderId" value="${order.orderID}">
                                         <div class="form-group">
-                                            <select name="newStatus" class="form-control" required>
+                                            <select name="newStatus" class="form-control" required id="newStatusSelect">
                                                 <option value="">-- Chọn trạng thái --</option>
                                                 <c:forEach var="status" items="${availableStatuses}">
                                                     <option value="${status.key}">${status.value}</option>
                                                 </c:forEach>
                                             </select>
                                         </div>
+                                        
+                                        <!-- Hiển thị đơn vị vận chuyển đã chọn từ checkout -->
+                                        <c:if test="${order.shipping != null && order.shipping.carrierName != null}">
+                                        <div class="alert alert-info mb-2">
+                                            <i class="fas fa-truck"></i> <strong>Đơn vị vận chuyển:</strong> ${order.shipping.carrierName}
+                                            <br><small>Dự kiến: ${order.shipping.estimatedDelivery}</small>
+                                        </div>
+                                        </c:if>
+                                        
                                         <div class="form-group">
                                             <textarea name="note" class="form-control" rows="2" 
                                                       placeholder="Ghi chú (tùy chọn)"></textarea>
@@ -414,5 +423,9 @@
 </div>
 
 <jsp:include page="../includes/admin-scripts.jsp" />
+
+<script>
+// Không cần chọn carrier nữa vì đã lưu từ checkout
+</script>
 </body>
 </html>
