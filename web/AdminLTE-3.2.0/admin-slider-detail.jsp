@@ -141,8 +141,15 @@
                     
                     <!-- Image Preview -->
                     <div class="mt-3 text-center">
-                      <img id="imagePreview" class="image-preview ${slider != null && slider.imageURL != null ? 'show' : ''}" 
-                           src="${slider != null ? slider.imageURL : ''}" alt="Preview">
+                      <c:choose>
+                        <c:when test="${slider != null && slider.imageURL != null}">
+                          <c:set var="previewSrc" value="${slider.imageURL.startsWith('http://') || slider.imageURL.startsWith('https://') || slider.imageURL.startsWith('/') ? slider.imageURL : pageContext.request.contextPath.concat('/').concat(slider.imageURL)}" />
+                          <img id="imagePreview" class="image-preview show" src="${previewSrc}" alt="Preview">
+                        </c:when>
+                        <c:otherwise>
+                          <img id="imagePreview" class="image-preview" src="" alt="Preview">
+                        </c:otherwise>
+                      </c:choose>
                       <div id="imageInfo" class="text-muted small mt-2" style="display: none;"></div>
                     </div>
                   </div>
@@ -315,23 +322,31 @@ function previewImageURL(showAlert = true) {
     if (imageURL) {
         // Remove old error handler
         preview.off('error');
+        preview.off('load');
         
-        preview.attr('src', imageURL);
+        // Build correct image path
+        let imageSrc = imageURL;
+        // If it's a relative path (not starting with http:// or https:// or /), prepend context path
+        if (!imageURL.startsWith('http://') && !imageURL.startsWith('https://') && !imageURL.startsWith('/')) {
+            imageSrc = '<%= request.getContextPath() %>/' + imageURL;
+        }
+        
+        preview.attr('src', imageSrc);
         preview.addClass('show');
-        imageInfo.html('<i class="fas fa-link"></i> URL: ' + imageURL);
+        imageInfo.html('<i class="fas fa-link"></i> Đang tải ảnh...');
         imageInfo.show();
         
-        // Handle image load error (only show alert if user just entered URL)
+        // Handle image load error
         preview.on('error', function() {
             preview.removeClass('show');
-            imageInfo.hide();
             if (showAlert) {
-                alert('Không thể tải hình ảnh. Vui lòng kiểm tra lại URL.');
+                alert('Không thể tải hình ảnh. Vui lòng kiểm tra lại URL: ' + imageURL);
+                imageInfo.html('<i class="fas fa-exclamation-triangle text-danger"></i> Không thể tải hình ảnh');
             } else {
                 // Just show a warning message without alert
                 imageInfo.html('<i class="fas fa-exclamation-triangle text-warning"></i> Không thể tải hình ảnh từ URL này');
-                imageInfo.show();
             }
+            imageInfo.show();
         });
         
         // Handle successful load
