@@ -283,26 +283,24 @@
                   </div>
                 </div>
                 <div class="col-sm-12 col-md-7">
-                  <c:if test="${totalPages > 1}">
-                    <div class="dataTables_paginate paging_simple_numbers float-right">
-                      <ul class="pagination">
-                        <li class="paginate_button page-item previous ${currentPage == 1 ? 'disabled' : ''}">
-                          <a href="?page=${currentPage - 1}&search=${search}&status=${status}&sortBy=${sortBy}&pageSize=${pageSize}" 
-                             class="page-link">Trước</a>
+                  <div class="dataTables_paginate paging_simple_numbers float-right">
+                    <ul class="pagination">
+                      <li class="paginate_button page-item previous ${currentPage == 1 ? 'disabled' : ''}">
+                        <a href="?page=${currentPage - 1}&search=${search}&status=${status}&sortBy=${sortBy}&pageSize=${pageSize}" 
+                           class="page-link">Trước</a>
+                      </li>
+                      <c:forEach begin="1" end="${totalPages}" var="i">
+                        <li class="paginate_button page-item ${currentPage == i ? 'active' : ''}">
+                          <a href="?page=${i}&search=${search}&status=${status}&sortBy=${sortBy}&pageSize=${pageSize}" 
+                             class="page-link">${i}</a>
                         </li>
-                        <c:forEach begin="1" end="${totalPages}" var="i">
-                          <li class="paginate_button page-item ${currentPage == i ? 'active' : ''}">
-                            <a href="?page=${i}&search=${search}&status=${status}&sortBy=${sortBy}&pageSize=${pageSize}" 
-                               class="page-link">${i}</a>
-                          </li>
-                        </c:forEach>
-                        <li class="paginate_button page-item next ${currentPage >= totalPages ? 'disabled' : ''}">
-                          <a href="?page=${currentPage + 1}&search=${search}&status=${status}&sortBy=${sortBy}&pageSize=${pageSize}" 
-                             class="page-link">Sau</a>
-                        </li>
-                      </ul>
-                    </div>
-                  </c:if>
+                      </c:forEach>
+                      <li class="paginate_button page-item next ${currentPage >= totalPages ? 'disabled' : ''}">
+                        <a href="?page=${currentPage + 1}&search=${search}&status=${status}&sortBy=${sortBy}&pageSize=${pageSize}" 
+                           class="page-link">Sau</a>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </c:if>

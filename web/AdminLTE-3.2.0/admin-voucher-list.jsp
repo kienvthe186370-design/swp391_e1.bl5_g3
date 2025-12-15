@@ -142,25 +142,15 @@
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>Sắp xếp theo</label>
-                    <select name="sortBy" class="form-control">
-                      <option value="CreatedDate" ${sortBy == 'CreatedDate' ? 'selected' : ''}>Ngày tạo</option>
-                      <option value="VoucherCode" ${sortBy == 'VoucherCode' ? 'selected' : ''}>Mã voucher</option>
-                      <option value="DiscountValue" ${sortBy == 'DiscountValue' ? 'selected' : ''}>Giá trị giảm</option>
-                      <option value="UsedCount" ${sortBy == 'UsedCount' ? 'selected' : ''}>Số lần dùng</option>
+                    <label>Số voucher/trang</label>
+                    <select name="pageSize" class="form-control">
+                      <option value="5" ${pageSize == 5 ? 'selected' : ''}>5</option>
+                      <option value="10" ${pageSize == 10 ? 'selected' : ''}>10</option>
+                      <option value="20" ${pageSize == 20 ? 'selected' : ''}>20</option>
                     </select>
                   </div>
                 </div>
-                <div class="col-md-1">
-                  <div class="form-group">
-                    <label>Thứ tự</label>
-                    <select name="sortOrder" class="form-control">
-                      <option value="ASC" ${sortOrder == 'ASC' ? 'selected' : ''}>Tăng</option>
-                      <option value="DESC" ${sortOrder == 'DESC' ? 'selected' : ''}>Giảm</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                   <div class="form-group">
                     <label>&nbsp;</label>
                     <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-search"></i> Tìm</button>
@@ -252,19 +242,25 @@
                     <td>
                       <div class="btn-group">
                         <a href="<%= request.getContextPath() %>/admin/voucher?action=edit&id=${voucher.voucherID}" 
-                           class="btn btn-info btn-sm" title="Sửa">
+                           class="btn btn-warning btn-sm" title="Chỉnh sửa">
                           <i class="fas fa-edit"></i>
                         </a>
-                        <a href="<%= request.getContextPath() %>/admin/voucher?action=toggleStatus&id=${voucher.voucherID}" 
-                           class="btn btn-warning btn-sm" title="Bật/Tắt"
-                           onclick="return confirm('Bạn có chắc muốn thay đổi trạng thái voucher này?')">
-                          <i class="fas fa-power-off"></i>
-                        </a>
-                        <a href="<%= request.getContextPath() %>/admin/voucher?action=delete&id=${voucher.voucherID}" 
-                           class="btn btn-danger btn-sm" title="Xóa"
-                           onclick="return confirm('Bạn có chắc muốn xóa voucher này?')">
-                          <i class="fas fa-trash"></i>
-                        </a>
+                        <c:choose>
+                          <c:when test="${voucher.isActive}">
+                            <button type="button" class="btn btn-danger btn-sm" 
+                                    onclick="confirmToggleStatus(${voucher.voucherID}, '${voucher.voucherCode}', false)" 
+                                    title="Khóa voucher">
+                              <i class="fas fa-lock"></i>
+                            </button>
+                          </c:when>
+                          <c:otherwise>
+                            <button type="button" class="btn btn-success btn-sm" 
+                                    onclick="confirmToggleStatus(${voucher.voucherID}, '${voucher.voucherCode}', true)" 
+                                    title="Mở khóa voucher">
+                              <i class="fas fa-unlock"></i>
+                            </button>
+                          </c:otherwise>
+                        </c:choose>
                       </div>
                     </td>
                   </tr>
@@ -279,29 +275,27 @@
           </div>
           
           <!-- Pagination -->
-          <c:if test="${totalPages > 1}">
-            <div class="card-footer clearfix">
-              <ul class="pagination pagination-sm m-0 float-right">
-                <c:if test="${currentPage > 1}">
-                  <li class="page-item">
-                    <a class="page-link" href="?page=${currentPage - 1}&search=${search}&status=${status}&discountType=${discountType}&sortBy=${sortBy}&sortOrder=${sortOrder}">«</a>
-                  </li>
-                </c:if>
-                
-                <c:forEach begin="1" end="${totalPages}" var="i">
-                  <li class="page-item ${currentPage == i ? 'active' : ''}">
-                    <a class="page-link" href="?page=${i}&search=${search}&status=${status}&discountType=${discountType}&sortBy=${sortBy}&sortOrder=${sortOrder}">${i}</a>
-                  </li>
-                </c:forEach>
-                
-                <c:if test="${currentPage < totalPages}">
-                  <li class="page-item">
-                    <a class="page-link" href="?page=${currentPage + 1}&search=${search}&status=${status}&discountType=${discountType}&sortBy=${sortBy}&sortOrder=${sortOrder}">»</a>
-                  </li>
-                </c:if>
-              </ul>
-            </div>
-          </c:if>
+          <div class="card-footer clearfix">
+            <ul class="pagination pagination-sm m-0 float-right">
+              <c:if test="${currentPage > 1}">
+                <li class="page-item">
+                  <a class="page-link" href="?page=${currentPage - 1}&search=${search}&status=${status}&discountType=${discountType}&pageSize=${pageSize}">«</a>
+                </li>
+              </c:if>
+              
+              <c:forEach begin="1" end="${totalPages}" var="i">
+                <li class="page-item ${currentPage == i ? 'active' : ''}">
+                  <a class="page-link" href="?page=${i}&search=${search}&status=${status}&discountType=${discountType}&pageSize=${pageSize}">${i}</a>
+                </li>
+              </c:forEach>
+              
+              <c:if test="${currentPage < totalPages}">
+                <li class="page-item">
+                  <a class="page-link" href="?page=${currentPage + 1}&search=${search}&status=${status}&discountType=${discountType}&pageSize=${pageSize}">»</a>
+                </li>
+              </c:if>
+            </ul>
+          </div>
         </div>
 
       </div>
@@ -310,6 +304,28 @@
 
   <!-- Footer -->
   <jsp:include page="includes/admin-footer.jsp" />
+
+<!-- Toggle Status Confirmation Modal -->
+<div class="modal fade" id="toggleStatusModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" id="modalHeader">
+        <h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i> <span id="modalTitle"></span></h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="modalMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Hủy</button>
+        <a href="#" id="confirmToggleBtn" class="btn">
+          <i id="modalIcon"></i> <span id="modalBtnText"></span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <!-- jQuery -->
@@ -320,10 +336,30 @@
 <script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
 
 <script>
-  // Auto hide alerts after 5 seconds
-  setTimeout(function() {
+function confirmToggleStatus(id, voucherCode, isActivating) {
+    if (!isActivating) {
+        $('#modalHeader').removeClass('bg-success').addClass('bg-danger');
+        $('#modalTitle').text('Xác nhận khóa voucher');
+        $('#modalMessage').html('Bạn có chắc chắn muốn <strong>khóa</strong> voucher <strong>' + voucherCode + '</strong>?<br><small class="text-muted">Voucher sẽ không thể sử dụng.</small>');
+        $('#confirmToggleBtn').removeClass('btn-success').addClass('btn-danger');
+        $('#modalIcon').removeClass('fa-unlock').addClass('fa-lock');
+        $('#modalBtnText').text('Khóa');
+    } else {
+        $('#modalHeader').removeClass('bg-danger').addClass('bg-success');
+        $('#modalTitle').text('Xác nhận mở khóa voucher');
+        $('#modalMessage').html('Bạn có chắc chắn muốn <strong>mở khóa</strong> voucher <strong>' + voucherCode + '</strong>?<br><small class="text-muted">Voucher sẽ có thể sử dụng trở lại.</small>');
+        $('#confirmToggleBtn').removeClass('btn-danger').addClass('btn-success');
+        $('#modalIcon').removeClass('fa-lock').addClass('fa-unlock');
+        $('#modalBtnText').text('Mở khóa');
+    }
+    $('#confirmToggleBtn').attr('href', '<%= request.getContextPath() %>/admin/voucher?action=toggleStatus&id=' + id);
+    $('#toggleStatusModal').modal('show');
+}
+
+// Auto hide alerts after 5 seconds
+setTimeout(function() {
     $('.alert').fadeOut('slow');
-  }, 5000);
+}, 5000);
 </script>
 
 </body>
