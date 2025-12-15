@@ -1,11 +1,72 @@
 package DAO;
 
 import entity.*;
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OrderDAO extends DBContext {
+
+    /**
+     * Thống kê đơn hàng theo khách hàng
+     */
+    public static class CustomerOrderStats {
+        private int totalOrders;
+        private int completedOrders;
+        private int cancelledOrders;
+        private int activeOrders;
+        private BigDecimal totalSpent = BigDecimal.ZERO;
+        private Timestamp lastOrderDate;
+
+        public int getTotalOrders() {
+            return totalOrders;
+        }
+
+        public void setTotalOrders(int totalOrders) {
+            this.totalOrders = totalOrders;
+        }
+
+        public int getCompletedOrders() {
+            return completedOrders;
+        }
+
+        public void setCompletedOrders(int completedOrders) {
+            this.completedOrders = completedOrders;
+        }
+
+        public int getCancelledOrders() {
+            return cancelledOrders;
+        }
+
+        public void setCancelledOrders(int cancelledOrders) {
+            this.cancelledOrders = cancelledOrders;
+        }
+
+        public int getActiveOrders() {
+            return activeOrders;
+        }
+
+        public void setActiveOrders(int activeOrders) {
+            this.activeOrders = activeOrders;
+        }
+
+        public BigDecimal getTotalSpent() {
+            return totalSpent;
+        }
+
+        public void setTotalSpent(BigDecimal totalSpent) {
+            this.totalSpent = totalSpent;
+        }
+
+        public Timestamp getLastOrderDate() {
+            return lastOrderDate;
+        }
+
+        public void setLastOrderDate(Timestamp lastOrderDate) {
+            this.lastOrderDate = lastOrderDate;
+        }
+    }
 
     // ==================== LẤY ĐƠN HÀNG ====================
     
@@ -1059,6 +1120,43 @@ public class OrderDAO extends DBContext {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    /**
+     * Lấy thống kê đơn hàng của một khách
+     */
+    public CustomerOrderStats getCustomerOrderStats(int customerId) {
+        CustomerOrderStats stats = new CustomerOrderStats();
+        String sql = "SELECT COUNT(*) AS TotalOrders, " +
+                     "SUM(CASE WHEN OrderStatus IN ('Pending','Confirmed','Processing','Shipping') THEN 1 ELSE 0 END) AS ActiveOrders, " +
+                     "SUM(CASE WHEN OrderStatus IN ('Completed','Delivered','Success','Done') THEN 1 ELSE 0 END) AS CompletedOrders, " +
+                     "SUM(CASE WHEN OrderStatus = 'Cancelled' THEN 1 ELSE 0 END) AS CancelledOrders, " +
+                     "SUM(TotalAmount) AS TotalSpent, " +
+                     "MAX(OrderDate) AS LastOrderDate " +
+                     "FROM Orders WHERE CustomerID = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, customerId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                stats.setTotalOrders(rs.getInt("TotalOrders"));
+                stats.setActiveOrders(rs.getInt("ActiveOrders"));
+                stats.setCompletedOrders(rs.getInt("CompletedOrders"));
+                stats.setCancelledOrders(rs.getInt("CancelledOrders"));
+
+                BigDecimal totalSpent = rs.getBigDecimal("TotalSpent");
+                if (totalSpent != null) {
+                    stats.setTotalSpent(totalSpent);
+                }
+
+                stats.setLastOrderDate(rs.getTimestamp("LastOrderDate"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return stats;
     }
     
     /**
