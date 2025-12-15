@@ -275,9 +275,21 @@
                            style="display: block; text-align: center; padding: 20px; background: white; border-radius: 8px; transition: all 0.3s; text-decoration: none;">
                             <c:choose>
                                 <c:when test="${not empty brand.logo}">
-                                    <img src="${pageContext.request.contextPath}${brand.logo}" 
-                                         alt="${brand.brandName}" 
-                                         style="max-width: 100%; height: 60px; object-fit: contain; margin-bottom: 10px;">
+                                    <c:set var="logoUrl" value="${brand.logo}" />
+                                    <c:choose>
+                                        <c:when test="${logoUrl.startsWith('http://') || logoUrl.startsWith('https://')}">
+                                            <img src="${brand.logo}" 
+                                                 alt="${brand.brandName}" 
+                                                 style="max-width: 100%; height: 60px; object-fit: contain; margin-bottom: 10px;"
+                                                 onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\'height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;\'><i class=\'fa fa-tag\' style=\'font-size: 40px; color: #ddd;\'></i></div>';">
+                                        </c:when>
+                                        <c:otherwise>
+                                            <img src="${pageContext.request.contextPath}${brand.logo}" 
+                                                 alt="${brand.brandName}" 
+                                                 style="max-width: 100%; height: 60px; object-fit: contain; margin-bottom: 10px;"
+                                                 onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\'height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;\'><i class=\'fa fa-tag\' style=\'font-size: 40px; color: #ddd;\'></i></div>';">
+                                        </c:otherwise>
+                                    </c:choose>
                                 </c:when>
                                 <c:otherwise>
                                     <div style="height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
@@ -300,9 +312,6 @@
     </section>
     <!-- Brands Section End -->
 
-    
-
-    
 
     <!-- Latest Blog Section Begin -->
     <section class="latest spad">
