@@ -366,26 +366,40 @@
                                 </c:forEach>
                             </ul>
 
-                            <!-- Voucher -->
+                            <!-- Voucher Section -->
                             <div class="voucher-section">
-                                <h6 style="margin-bottom: 10px;"><i class="fa fa-ticket"></i> Mã giảm giá</h6>
-                                <div class="voucher-input">
-                                    <input type="text" id="voucherCode" name="voucherCode" placeholder="Nhập mã voucher">
-                                    <button type="button" class="site-btn" onclick="applyVoucher()" style="padding: 10px 20px;">Áp dụng</button>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 style="margin: 0;"><i class="fa fa-ticket"></i> Mã giảm giá</h6>
+                                    <a href="javascript:void(0)" onclick="openVoucherModal()" style="font-size: 13px; color: #e53637;">
+                                        Xem voucher <i class="fa fa-chevron-right"></i>
+                                    </a>
+                                </div>
+                                
+                                <!-- Selected Voucher Display -->
+                                <div id="selectedVoucherDisplay" style="display: none;" class="mb-2">
+                                    <div class="d-flex align-items-center justify-content-between p-2" style="background: #e8f5e9; border-radius: 4px; border: 1px solid #4caf50;">
+                                        <div>
+                                            <i class="fa fa-check-circle text-success"></i>
+                                            <strong id="selectedVoucherCode"></strong>
+                                            <span id="selectedVoucherDesc" class="text-muted" style="font-size: 12px;"></span>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-link text-danger" onclick="removeVoucher()">
+                                            <i class="fa fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Private Voucher Input -->
+                                <div id="voucherInputSection">
+                                    <div class="voucher-input">
+                                        <input type="text" id="voucherCode" name="voucherCode" placeholder="Nhập mã voucher riêng">
+                                        <button type="button" class="btn btn-dark" onclick="applyVoucher()" style="padding: 10px 15px; white-space: nowrap;">
+                                            Áp dụng
+                                        </button>
+                                    </div>
+                                    <small class="text-muted"><i class="fa fa-lock"></i> Dành cho mã voucher riêng tư</small>
                                 </div>
                                 <div id="voucherMessage"></div>
-                                
-                                <c:if test="${not empty vouchers}">
-                                    <div class="mt-2">
-                                        <small class="text-muted">Mã có sẵn: </small>
-                                        <c:forEach var="v" items="${vouchers}" varStatus="vs">
-                                            <c:if test="${vs.index < 3}">
-                                                <span class="badge badge-secondary" style="cursor:pointer; margin: 2px;" 
-                                                      onclick="$('#voucherCode').val('${v.voucherCode}');">${v.voucherCode}</span>
-                                            </c:if>
-                                        </c:forEach>
-                                    </div>
-                                </c:if>
                             </div>
 
                             <!-- Totals -->
@@ -531,6 +545,135 @@
             </div>
         </div>
     </div>
+
+    <!-- Voucher Modal -->
+    <div class="modal fade checkout-modal" id="voucherModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa fa-ticket"></i> Chọn Voucher giảm giá</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <c:choose>
+                        <c:when test="${empty publicVouchers}">
+                            <div class="text-center py-4">
+                                <i class="fa fa-ticket fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Hiện không có voucher công khai nào</p>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="voucher-list">
+                                <c:forEach var="v" items="${publicVouchers}">
+                                    <div class="voucher-card" data-code="${v.voucherCode}" 
+                                         data-discount-type="${v.discountType}"
+                                         data-discount-value="${v.discountValue}"
+                                         data-min-order="${v.minOrderValue}"
+                                         data-max-discount="${v.maxDiscountAmount}"
+                                         data-name="${v.voucherName}"
+                                         onclick="selectVoucherInModal(this)">
+                                        <div class="d-flex">
+                                            <div class="voucher-icon">
+                                                <c:choose>
+                                                    <c:when test="${v.discountType == 'percentage'}">
+                                                        <span class="discount-badge">${v.discountValue}%</span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="discount-badge"><fmt:formatNumber value="${v.discountValue}" type="number" groupingUsed="true" maxFractionDigits="0"/>đ</span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </div>
+                                            <div class="voucher-info flex-grow-1">
+                                                <div class="voucher-code"><strong>${v.voucherCode}</strong></div>
+                                                <div class="voucher-name">${v.voucherName}</div>
+                                                <div class="voucher-condition">
+                                                    <small class="text-muted">
+                                                        <i class="fa fa-info-circle"></i>
+                                                        Đơn tối thiểu: <fmt:formatNumber value="${v.minOrderValue}" type="number" groupingUsed="true" maxFractionDigits="0"/>đ
+                                                        <c:if test="${v.discountType == 'percentage' && v.maxDiscountAmount != null}">
+                                                            | Giảm tối đa: <fmt:formatNumber value="${v.maxDiscountAmount}" type="number" groupingUsed="true" maxFractionDigits="0"/>đ
+                                                        </c:if>
+                                                    </small>
+                                                </div>
+                                                <div class="voucher-expiry">
+                                                    <small class="text-warning">
+                                                        <i class="fa fa-clock-o"></i> HSD: <fmt:formatDate value="${v.endDate}" pattern="dd/MM/yyyy"/>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            <div class="voucher-select">
+                                                <i class="fa fa-check-circle text-success" style="font-size: 24px; display: none;"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                    <button type="button" class="site-btn" onclick="confirmVoucherSelection()">Áp dụng Voucher</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Voucher Card Styles */
+        .voucher-card {
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+        }
+        .voucher-card:hover {
+            border-color: #e53637;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .voucher-card.selected {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
+        .voucher-card.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f5f5f5;
+        }
+        .voucher-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #e53637, #ff6b6b);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+        .voucher-icon .discount-badge {
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            text-align: center;
+        }
+        .voucher-info .voucher-code {
+            font-size: 16px;
+            color: #e53637;
+        }
+        .voucher-info .voucher-name {
+            font-size: 14px;
+            color: #333;
+            margin: 3px 0;
+        }
+        .voucher-select {
+            display: flex;
+            align-items: center;
+            padding-left: 15px;
+        }
+    </style>
 
     <%@include file="footer.jsp"%>
 
@@ -962,6 +1105,106 @@
 
         function formatCurrency(num) {
             return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+        
+        // ========== VOUCHER FUNCTIONS ==========
+        var selectedVoucher = null;
+        
+        function openVoucherModal() {
+            // Check eligibility for each voucher based on subtotal
+            $('.voucher-card').each(function() {
+                var minOrder = parseFloat($(this).data('min-order')) || 0;
+                if (subtotal < minOrder) {
+                    $(this).addClass('disabled');
+                    $(this).find('.voucher-condition small').removeClass('text-muted').addClass('text-danger');
+                } else {
+                    $(this).removeClass('disabled');
+                    $(this).find('.voucher-condition small').removeClass('text-danger').addClass('text-muted');
+                }
+            });
+            $('#voucherModal').modal('show');
+        }
+        
+        function selectVoucherInModal(el) {
+            if ($(el).hasClass('disabled')) {
+                var minOrder = parseFloat($(el).data('min-order')) || 0;
+                alert('Đơn hàng chưa đạt giá trị tối thiểu ' + formatCurrency(minOrder) + 'đ để sử dụng voucher này');
+                return;
+            }
+            
+            $('.voucher-card').removeClass('selected');
+            $('.voucher-card .fa-check-circle').hide();
+            $(el).addClass('selected');
+            $(el).find('.fa-check-circle').show();
+        }
+        
+        function confirmVoucherSelection() {
+            var $selected = $('.voucher-card.selected');
+            if ($selected.length === 0) {
+                alert('Vui lòng chọn một voucher');
+                return;
+            }
+            
+            var code = $selected.data('code');
+            var discountType = $selected.data('discount-type');
+            var discountValue = parseFloat($selected.data('discount-value')) || 0;
+            var maxDiscount = parseFloat($selected.data('max-discount')) || null;
+            var name = $selected.data('name');
+            
+            // Calculate discount
+            var discount = 0;
+            if (discountType === 'percentage') {
+                discount = subtotal * discountValue / 100;
+                if (maxDiscount && discount > maxDiscount) {
+                    discount = maxDiscount;
+                }
+            } else {
+                discount = discountValue;
+                if (discount > subtotal) {
+                    discount = subtotal;
+                }
+            }
+            
+            // Apply voucher
+            selectedVoucher = { code: code, discount: discount, name: name };
+            voucherDiscount = discount;
+            
+            $('#voucherCode').val(code);
+            $('#voucherDiscount').val(discount);
+            $('#voucherRow').show();
+            $('#voucherDisplay').text('-' + formatCurrency(discount) + 'đ');
+            
+            // Update display
+            var descText = discountType === 'percentage' ? 
+                ('Giảm ' + discountValue + '%') : 
+                ('Giảm ' + formatCurrency(discountValue) + 'đ');
+            
+            $('#selectedVoucherCode').text(code);
+            $('#selectedVoucherDesc').text(' - ' + descText);
+            $('#selectedVoucherDisplay').show();
+            $('#voucherInputSection').hide();
+            $('#voucherMessage').html('<span class="voucher-success"><i class="fa fa-check-circle"></i> Áp dụng voucher thành công!</span>');
+            
+            updateTotal();
+            $('#voucherModal').modal('hide');
+        }
+        
+        function removeVoucher() {
+            selectedVoucher = null;
+            voucherDiscount = 0;
+            
+            $('#voucherCode').val('');
+            $('#voucherDiscount').val(0);
+            $('#voucherRow').hide();
+            $('#selectedVoucherDisplay').hide();
+            $('#voucherInputSection').show();
+            $('#voucherMessage').html('');
+            
+            // Reset selection in modal
+            $('.voucher-card').removeClass('selected');
+            $('.voucher-card .fa-check-circle').hide();
+            
+            updateTotal();
         }
         
         // Form validation

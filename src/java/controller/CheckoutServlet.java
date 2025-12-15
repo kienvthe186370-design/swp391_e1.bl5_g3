@@ -105,6 +105,7 @@ public class CheckoutServlet extends HttpServlet {
         request.setAttribute("addresses", addresses);
         request.setAttribute("defaultAddress", defaultAddress);
         request.setAttribute("vouchers", vouchers);
+        request.setAttribute("publicVouchers", vouchers); // For voucher modal
         request.setAttribute("shippingRates", shippingRates);
         
         System.out.println("[Checkout] === FORWARDING to checkout.jsp === Total time: " + (System.currentTimeMillis() - startTime) + "ms");
