@@ -145,6 +145,9 @@
                                         <a href="<%= request.getContextPath() %>/customer/orders">
                                             <i class="fa fa-list-alt"></i> Đơn hàng
                                         </a>
+                                        <a href="<%= request.getContextPath() %>/rfq/list" style="color: #ffc107;">
+                                            <i class="fa fa-file-text"></i> Mua Buôn
+                                        </a>
                                     </c:if>
                                     
                                     <a href="<%= request.getContextPath() %>/logout">Đăng xuất</a>
@@ -183,6 +186,9 @@
                         <li><a href="<%= request.getContextPath() %>/blog">Blog</a></li>
                         <li><a href="<%= request.getContextPath() %>/about.jsp">Giới thiệu</a></li>
                         <li><a href="<%= request.getContextPath() %>/contact.jsp">Liên hệ</a></li>
+                        <c:if test="${isLoggedIn && userRole == 'customer'}">
+                            <li><a href="<%= request.getContextPath() %>/rfq/form" style="color: #e53637;"><i class="fa fa-file-text"></i> Mua Buôn</a></li>
+                        </c:if>
                     </ul>
                 </nav>
             </div>
