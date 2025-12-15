@@ -294,7 +294,7 @@
             <div class="row">
                 <c:forEach var="brand" items="${brands}">
                     <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
-                        <a href="${pageContext.request.contextPath}/shop?brand=${brand.brandID}" 
+                        <a href="${pageContext.request.contextPath}/shop?brandId=${brand.brandID}" 
                            class="brand__item" 
                            style="display: block; text-align: center; padding: 20px; background: white; border-radius: 8px; transition: all 0.3s; text-decoration: none;">
                             <c:choose>
