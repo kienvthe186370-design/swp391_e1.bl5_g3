@@ -94,6 +94,23 @@
                     <small class="form-text text-muted">Ví dụ: Joola, Selkirk, Franklin</small>
                   </div>
 
+                  <!-- Brandfetch Auto Logo -->
+                  <div class="form-group">
+                    <label for="brandDomain">Tự động lấy Logo từ Brandfetch</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="brandDomain" 
+                             placeholder="Nhập domain thương hiệu (vd: joola.com, selkirk.com)">
+                      <div class="input-group-append">
+                        <button type="button" class="btn btn-info" onclick="fetchBrandLogo()">
+                          <i class="fas fa-magic"></i> Lấy Logo
+                        </button>
+                      </div>
+                    </div>
+                    <small class="form-text text-muted">
+                      <i class="fas fa-lightbulb text-warning"></i> Nhập domain website của thương hiệu để tự động lấy logo
+                    </small>
+                  </div>
+
                   <!-- Logo URL -->
                   <div class="form-group">
                     <label for="logo">URL Logo</label>
@@ -101,12 +118,14 @@
                            value="${brand != null ? brand.logo : ''}" 
                            placeholder="https://example.com/logo.png" 
                            onchange="previewLogo()">
-                    <small class="form-text text-muted">Nhập URL đầy đủ của logo thương hiệu</small>
+                    <small class="form-text text-muted">Nhập URL đầy đủ hoặc sử dụng Brandfetch ở trên</small>
                     
                     <!-- Logo Preview -->
                     <div class="mt-3 text-center">
                       <img id="logoPreview" class="logo-preview ${brand != null && brand.logo != null ? 'show' : ''}" 
-                           src="${brand != null ? brand.logo : ''}" alt="Logo Preview">
+                           src="${brand != null ? brand.logo : ''}" alt="Logo Preview"
+                           onerror="this.classList.remove('show')">
+                      <p id="logoSource" class="text-muted small mt-2" style="display:none;"></p>
                     </div>
                   </div>
 
@@ -149,20 +168,27 @@
                 <h3 class="card-title"><i class="fas fa-info-circle"></i> Hướng dẫn</h3>
               </div>
               <div class="card-body">
-                <h6><i class="fas fa-lightbulb"></i> Lưu ý:</h6>
+                <h6><i class="fas fa-magic text-info"></i> Brandfetch CDN:</h6>
+                <ul class="pl-3">
+                  <li>Nhập domain thương hiệu (vd: <code>joola.com</code>)</li>
+                  <li>Click "Lấy Logo" để tự động lấy</li>
+                  <li>Logo được lấy từ Brandfetch CDN</li>
+                  <li>Miễn phí và chất lượng cao</li>
+                </ul>
+
+                <h6 class="mt-3"><i class="fas fa-lightbulb text-warning"></i> Lưu ý:</h6>
                 <ul class="pl-3">
                   <li>Tên thương hiệu phải <strong>duy nhất</strong></li>
-                  <li>Logo nên có nền trong suốt (PNG)</li>
-                  <li>Kích thước logo: <strong>200x100px</strong></li>
+                  <li>Có thể nhập URL logo thủ công</li>
                   <li>Mô tả giúp khách hàng hiểu rõ hơn</li>
                 </ul>
 
-                <h6 class="mt-3"><i class="fas fa-exclamation-triangle"></i> Khuyến nghị:</h6>
-                <ul class="pl-3">
-                  <li>Sử dụng logo chính thức</li>
-                  <li>Định dạng: PNG hoặc SVG</li>
-                  <li>Dung lượng tối đa: 500KB</li>
-                  <li>Nền trắng hoặc trong suốt</li>
+                <h6 class="mt-3"><i class="fas fa-globe text-success"></i> Domain phổ biến:</h6>
+                <ul class="pl-3 small">
+                  <li><code>joola.com</code> - Joola</li>
+                  <li><code>selkirk.com</code> - Selkirk</li>
+                  <li><code>head.com</code> - Head</li>
+                  <li><code>wilson.com</code> - Wilson</li>
                 </ul>
               </div>
             </div>
@@ -193,6 +219,61 @@
   <jsp:include page="includes/admin-footer.jsp" />
 
 <script>
+// Brandfetch CDN - Lấy logo tự động từ domain
+function fetchBrandLogo() {
+    let domain = $('#brandDomain').val().trim();
+    
+    if (!domain) {
+        alert('Vui lòng nhập domain thương hiệu!');
+        $('#brandDomain').focus();
+        return;
+    }
+    
+    // Clean domain - remove http/https and trailing slashes
+    domain = domain.replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/.*$/, '');
+    
+    // Brandfetch CDN URL formats
+    const logoFormats = [
+        'https://cdn.brandfetch.io/' + domain + '/w/400/h/400/logo',
+        'https://cdn.brandfetch.io/' + domain + '/w/200/h/200/icon',
+        'https://cdn.brandfetch.io/' + domain + '/fallback/transparent/logo'
+    ];
+    
+    // Try the main logo format first
+    const logoUrl = logoFormats[0];
+    
+    // Test if image loads
+    const testImg = new Image();
+    testImg.onload = function() {
+        $('#logo').val(logoUrl);
+        $('#logoPreview').attr('src', logoUrl).addClass('show');
+        $('#logoSource').text('Logo từ Brandfetch CDN: ' + domain).show();
+        
+        // Auto-fill brand name if empty
+        if (!$('#brandName').val().trim()) {
+            // Capitalize first letter of domain name
+            const brandName = domain.split('.')[0];
+            const capitalizedName = brandName.charAt(0).toUpperCase() + brandName.slice(1);
+            $('#brandName').val(capitalizedName);
+        }
+    };
+    testImg.onerror = function() {
+        // Try icon format
+        const iconUrl = logoFormats[1];
+        const testIcon = new Image();
+        testIcon.onload = function() {
+            $('#logo').val(iconUrl);
+            $('#logoPreview').attr('src', iconUrl).addClass('show');
+            $('#logoSource').text('Icon từ Brandfetch CDN: ' + domain).show();
+        };
+        testIcon.onerror = function() {
+            alert('Không tìm thấy logo cho domain: ' + domain + '\nHãy thử nhập URL logo thủ công.');
+        };
+        testIcon.src = iconUrl;
+    };
+    testImg.src = logoUrl;
+}
+
 // Preview logo when URL is entered
 function previewLogo() {
     const logoURL = $('#logo').val();
@@ -201,14 +282,10 @@ function previewLogo() {
     if (logoURL) {
         preview.attr('src', logoURL);
         preview.addClass('show');
-        
-        // Handle image load error
-        preview.on('error', function() {
-            preview.removeClass('show');
-            alert('Không thể tải logo. Vui lòng kiểm tra lại URL.');
-        });
+        $('#logoSource').hide();
     } else {
         preview.removeClass('show');
+        $('#logoSource').hide();
     }
 }
 
@@ -239,5 +316,13 @@ $(document).ready(function() {
     if (logoURL) {
         previewLogo();
     }
+    
+    // Enter key on domain input triggers fetch
+    $('#brandDomain').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            fetchBrandLogo();
+        }
+    });
 });
 </script>
