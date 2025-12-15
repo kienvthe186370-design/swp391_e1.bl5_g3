@@ -66,15 +66,15 @@
 </section>
     <!-- Hero Section End -->
 
-    <!-- Top Selling Products by Category Section Begin -->
+    <!-- Newest Products by Category Section Begin -->
     <section class="categories spad">
         <div class="container">
-            <!-- Top Vợt Bán Chạy -->
+            <!-- Vợt Mới Nhất -->
             <div class="row mb-5">
                 <div class="col-lg-12">
                     <div class="section-title">
-                        <span>Sản phẩm bán chạy</span>
-                        <h2>Top Vợt Pickleball</h2>
+                        <span>Sản phẩm mới nhất</span>
+                        <h2>Vợt Pickleball Mới Nhất</h2>
                     </div>
                 </div>
             </div>
@@ -86,9 +86,7 @@
                                  style="cursor: pointer;" 
                                  onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
                                 
-                                <c:if test="${product.totalSold > 0}">
-                                    <span class="label" style="background: #e53637;">Bán chạy</span>
-                                </c:if>
+                                <span class="label" style="background: #28a745;">Mới</span>
                                 
                                 <ul class="product__hover">
                                     <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
@@ -121,12 +119,6 @@
                                         <h5>Liên hệ</h5>
                                     </c:otherwise>
                                 </c:choose>
-                                
-                                <c:if test="${product.totalSold > 0}">
-                                    <small style="color: #666; font-size: 12px;">
-                                        <i class="fa fa-shopping-cart"></i> Đã bán: ${product.totalSold}
-                                    </small>
-                                </c:if>
                             </div>
                         </div>
                     </div>
@@ -139,11 +131,11 @@
                 </c:if>
             </div>
             
-            <!-- Top Bóng Bán Chạy -->
+            <!-- Bóng Mới Nhất -->
             <div class="row mb-5 mt-5">
                 <div class="col-lg-12">
                     <div class="section-title">
-                        <h2>Top Bóng Pickleball</h2>
+                        <h2>Bóng Pickleball Mới Nhất</h2>
                     </div>
                 </div>
             </div>
@@ -155,9 +147,7 @@
                                  style="cursor: pointer;" 
                                  onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
                                 
-                                <c:if test="${product.totalSold > 0}">
-                                    <span class="label" style="background: #e53637;">Bán chạy</span>
-                                </c:if>
+                                <span class="label" style="background: #28a745;">Mới</span>
                                 
                                 <ul class="product__hover">
                                     <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
@@ -190,12 +180,6 @@
                                         <h5>Liên hệ</h5>
                                     </c:otherwise>
                                 </c:choose>
-                                
-                                <c:if test="${product.totalSold > 0}">
-                                    <small style="color: #666; font-size: 12px;">
-                                        <i class="fa fa-shopping-cart"></i> Đã bán: ${product.totalSold}
-                                    </small>
-                                </c:if>
                             </div>
                         </div>
                     </div>
@@ -208,11 +192,11 @@
                 </c:if>
             </div>
             
-            <!-- Top Trang Phục Bán Chạy -->
+            <!-- Trang Phục Mới Nhất -->
             <div class="row mb-5 mt-5">
                 <div class="col-lg-12">
                     <div class="section-title">
-                        <h2>Top Trang Phục</h2>
+                        <h2>Trang Phục Mới Nhất</h2>
                     </div>
                 </div>
             </div>
@@ -224,9 +208,7 @@
                                  style="cursor: pointer;" 
                                  onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
                                 
-                                <c:if test="${product.totalSold > 0}">
-                                    <span class="label" style="background: #e53637;">Bán chạy</span>
-                                </c:if>
+                                <span class="label" style="background: #28a745;">Mới</span>
                                 
                                 <ul class="product__hover">
                                     <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
@@ -259,12 +241,6 @@
                                         <h5>Liên hệ</h5>
                                     </c:otherwise>
                                 </c:choose>
-                                
-                                <c:if test="${product.totalSold > 0}">
-                                    <small style="color: #666; font-size: 12px;">
-                                        <i class="fa fa-shopping-cart"></i> Đã bán: ${product.totalSold}
-                                    </small>
-                                </c:if>
                             </div>
                         </div>
                     </div>
@@ -278,7 +254,7 @@
             </div>
         </div>
     </section>
-    <!-- Top Selling Products by Category Section End -->
+    <!-- Newest Products by Category Section End -->
 
     <!-- Brands Section Begin -->
     <section class="brands spad" style="background: #f3f2ee;">
@@ -294,7 +270,7 @@
             <div class="row">
                 <c:forEach var="brand" items="${brands}">
                     <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
-                        <a href="${pageContext.request.contextPath}/shop?brand=${brand.brandID}" 
+                        <a href="${pageContext.request.contextPath}/shop?brandId=${brand.brandID}" 
                            class="brand__item" 
                            style="display: block; text-align: center; padding: 20px; background: white; border-radius: 8px; transition: all 0.3s; text-decoration: none;">
                             <c:choose>
@@ -324,405 +300,7 @@
     </section>
     <!-- Brands Section End -->
 
-    <!-- Product Section Begin -->
-    <section class="product spad">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <ul class="filter__controls">
-                        <li class="active" data-filter="*">Best Sellers</li>
-                        <li data-filter=".new-arrivals">New Arrivals</li>
-                        <li data-filter=".hot-sales">Hot Sales</li>
-                    </ul>
-                    
-                    
-                    
-                    
-                    
-                    
-                </div>
-            </div>
-            <div class="row product__filter">
-                <div class="col-lg-3 col-md-6 col-sm-6 col-md-6 col-sm-6 mix new-arrivals">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-1.jpg">
-                            <span class="label">New</span>
-                            <ul class="product__hover">
-                                <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                <li><a href="#"><img src="img/icon/compare.png" alt=""> <span>Compare</span></a></li>
-                                <li><a href="#"><img src="img/icon/search.png" alt=""></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6>Piqué Biker Jacket</h6>
-                            <a href="#" class="add-cart">+ Add To Cart</a>
-                            <div class="rating">
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                            </div>
-                            <h5>$67.24</h5>
-                            <div class="product__color__select">
-                                <label for="pc-1">
-                                    <input type="radio" id="pc-1">
-                                </label>
-                                <label class="active black" for="pc-2">
-                                    <input type="radio" id="pc-2">
-                                </label>
-                                <label class="grey" for="pc-3">
-                                    <input type="radio" id="pc-3">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-md-6 col-sm-6 mix hot-sales">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-2.jpg">
-                            <ul class="product__hover">
-                                <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                <li><a href="#"><img src="img/icon/compare.png" alt=""> <span>Compare</span></a></li>
-                                <li><a href="#"><img src="img/icon/search.png" alt=""></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6>Piqué Biker Jacket</h6>
-                            <a href="#" class="add-cart">+ Add To Cart</a>
-                            <div class="rating">
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                            </div>
-                            <h5>$67.24</h5>
-                            <div class="product__color__select">
-                                <label for="pc-4">
-                                    <input type="radio" id="pc-4">
-                                </label>
-                                <label class="active black" for="pc-5">
-                                    <input type="radio" id="pc-5">
-                                </label>
-                                <label class="grey" for="pc-6">
-                                    <input type="radio" id="pc-6">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-md-6 col-sm-6 mix new-arrivals">
-                    <div class="product__item sale">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-3.jpg">
-                            <span class="label">Sale</span>
-                            <ul class="product__hover">
-                                <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                <li><a href="#"><img src="img/icon/compare.png" alt=""> <span>Compare</span></a></li>
-                                <li><a href="#"><img src="img/icon/search.png" alt=""></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6>Multi-pocket Chest Bag</h6>
-                            <a href="#" class="add-cart">+ Add To Cart</a>
-                            <div class="rating">
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star-o"></i>
-                            </div>
-                            <h5>$43.48</h5>
-                            <div class="product__color__select">
-                                <label for="pc-7">
-                                    <input type="radio" id="pc-7">
-                                </label>
-                                <label class="active black" for="pc-8">
-                                    <input type="radio" id="pc-8">
-                                </label>
-                                <label class="grey" for="pc-9">
-                                    <input type="radio" id="pc-9">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-md-6 col-sm-6 mix hot-sales">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-4.jpg">
-                            <ul class="product__hover">
-                                <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                <li><a href="#"><img src="img/icon/compare.png" alt=""> <span>Compare</span></a></li>
-                                <li><a href="#"><img src="img/icon/search.png" alt=""></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6>Diagonal Textured Cap</h6>
-                            <a href="#" class="add-cart">+ Add To Cart</a>
-                            <div class="rating">
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                            </div>
-                            <h5>$60.9</h5>
-                            <div class="product__color__select">
-                                <label for="pc-10">
-                                    <input type="radio" id="pc-10">
-                                </label>
-                                <label class="active black" for="pc-11">
-                                    <input type="radio" id="pc-11">
-                                </label>
-                                <label class="grey" for="pc-12">
-                                    <input type="radio" id="pc-12">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-md-6 col-sm-6 mix new-arrivals">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-5.jpg">
-                            <ul class="product__hover">
-                                <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                <li><a href="#"><img src="img/icon/compare.png" alt=""> <span>Compare</span></a></li>
-                                <li><a href="#"><img src="img/icon/search.png" alt=""></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6>Lether Backpack</h6>
-                            <a href="#" class="add-cart">+ Add To Cart</a>
-                            <div class="rating">
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                            </div>
-                            <h5>$31.37</h5>
-                            <div class="product__color__select">
-                                <label for="pc-13">
-                                    <input type="radio" id="pc-13">
-                                </label>
-                                <label class="active black" for="pc-14">
-                                    <input type="radio" id="pc-14">
-                                </label>
-                                <label class="grey" for="pc-15">
-                                    <input type="radio" id="pc-15">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-md-6 col-sm-6 mix hot-sales">
-                    <div class="product__item sale">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-6.jpg">
-                            <span class="label">Sale</span>
-                            <ul class="product__hover">
-                                <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                <li><a href="#"><img src="img/icon/compare.png" alt=""> <span>Compare</span></a></li>
-                                <li><a href="#"><img src="img/icon/search.png" alt=""></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6>Ankle Boots</h6>
-                            <a href="#" class="add-cart">+ Add To Cart</a>
-                            <div class="rating">
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star-o"></i>
-                            </div>
-                            <h5>$98.49</h5>
-                            <div class="product__color__select">
-                                <label for="pc-16">
-                                    <input type="radio" id="pc-16">
-                                </label>
-                                <label class="active black" for="pc-17">
-                                    <input type="radio" id="pc-17">
-                                </label>
-                                <label class="grey" for="pc-18">
-                                    <input type="radio" id="pc-18">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-md-6 col-sm-6 mix new-arrivals">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-7.jpg">
-                            <ul class="product__hover">
-                                <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                <li><a href="#"><img src="img/icon/compare.png" alt=""> <span>Compare</span></a></li>
-                                <li><a href="#"><img src="img/icon/search.png" alt=""></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6>T-shirt Contrast Pocket</h6>
-                            <a href="#" class="add-cart">+ Add To Cart</a>
-                            <div class="rating">
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                            </div>
-                            <h5>$49.66</h5>
-                            <div class="product__color__select">
-                                <label for="pc-19">
-                                    <input type="radio" id="pc-19">
-                                </label>
-                                <label class="active black" for="pc-20">
-                                    <input type="radio" id="pc-20">
-                                </label>
-                                <label class="grey" for="pc-21">
-                                    <input type="radio" id="pc-21">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-md-6 col-sm-6 mix hot-sales">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-8.jpg">
-                            <ul class="product__hover">
-                                <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                <li><a href="#"><img src="img/icon/compare.png" alt=""> <span>Compare</span></a></li>
-                                <li><a href="#"><img src="img/icon/search.png" alt=""></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6>Basic Flowing Scarf</h6>
-                            <a href="#" class="add-cart">+ Add To Cart</a>
-                            <div class="rating">
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                            </div>
-                            <h5>$26.28</h5>
-                            <div class="product__color__select">
-                                <label for="pc-22">
-                                    <input type="radio" id="pc-22">
-                                </label>
-                                <label class="active black" for="pc-23">
-                                    <input type="radio" id="pc-23">
-                                </label>
-                                <label class="grey" for="pc-24">
-                                    <input type="radio" id="pc-24">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <!-- Loop through featured products from database -->
-                <c:forEach var="product" items="${featuredProducts}">
-                    <div class="col-lg-3 col-md-6 col-sm-6">
-                        <div class="product__item">
-                            <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}" 
-                                 style="cursor: pointer;" 
-                                 onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
-                                <!-- Show "New" badge if product created within last 30 days -->
-                                <c:if test="${not empty product.createdDate}">
-                                    <jsp:useBean id="now" class="java.util.Date"/>
-                                    <c:set var="daysDiff" value="${(now.time - product.createdDate.time) / (1000 * 60 * 60 * 24)}"/>
-                                    <c:if test="${daysDiff <= 30}">
-                                        <span class="label">New</span>
-                                    </c:if>
-                                </c:if>
-                                
-                                <!-- Show "Out of Stock" badge if no stock -->
-                                <c:if test="${product.totalStock == 0}">
-                                    <span class="label" style="background: #dc3545;">Hết hàng</span>
-                                </c:if>
-                                
-                                <ul class="product__hover">
-                                    <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
-                                    <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" title="Xem chi tiết" onclick="event.stopPropagation();"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt=""></a></li>
-                                </ul>
-                            </div>
-                            <div class="product__item__text">
-                                <!-- Show brand if available -->
-                                <c:if test="${not empty product.brandName}">
-                                    <div class="product__brand" style="margin-bottom: 8px;">
-                                        <small style="color: #888; font-size: 12px;">
-                                            <i class="fa fa-tag"></i> ${product.brandName}
-                                        </small>
-                                    </div>
-                                </c:if>
-                                
-                                <h6><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}">${product.productName}</a></h6>
-                                
-                                <!-- Price display -->
-                                <c:choose>
-                                    <c:when test="${product.minPrice != null && product.maxPrice != null}">
-                                        <c:choose>
-                                            <c:when test="${product.minPrice.compareTo(product.maxPrice) == 0}">
-                                                <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <h5><fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫ - <fmt:formatNumber value="${product.maxPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <h5>Liên hệ</h5>
-                                    </c:otherwise>
-                                </c:choose>
-                                
-                                <!-- Add to cart button - disabled if out of stock -->
-                                <c:choose>
-                                    <c:when test="${product.totalStock > 0}">
-                                        <a href="${pageContext.request.contextPath}/cart/add?id=${product.productID}" class="add-cart">+ Thêm vào giỏ</a>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <a href="#" class="add-cart" style="background: #ccc; cursor: not-allowed;" onclick="return false;">Hết hàng</a>
-                                    </c:otherwise>
-                                </c:choose>
-                                
-                                <!-- Category and stock info -->
-                                <div style="margin-top: 8px;">
-                                    <c:if test="${not empty product.categoryName}">
-                                        <small style="color: #666; font-size: 12px;">
-                                            <i class="fa fa-folder-o"></i> ${product.categoryName}
-                                        </small>
-                                    </c:if>
-                                    <c:if test="${product.totalStock > 0 && product.totalStock <= 10}">
-                                        <small style="color: #ff6b6b; font-size: 12px; margin-left: 10px;">
-                                            <i class="fa fa-exclamation-circle"></i> Chỉ còn ${product.totalStock} sản phẩm
-                                        </small>
-                                    </c:if>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </c:forEach>
-                
-                <!-- Show message if no products -->
-                <c:if test="${empty featuredProducts}">
-                    <div class="col-12 text-center py-5">
-                        <p class="text-muted">Chưa có sản phẩm nào.</p>
-                    </div>
-                </c:if>
-            </div>
-            
-            <!-- View All Products Button -->
-            <div class="row mt-4">
-                <div class="col-12 text-center">
-                    <a href="${pageContext.request.contextPath}/shop" class="primary-btn">
-                        Xem tất cả sản phẩm
-                        <span class="arrow_right"></span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-    <!-- Product Section End -->
+    
 
     
 

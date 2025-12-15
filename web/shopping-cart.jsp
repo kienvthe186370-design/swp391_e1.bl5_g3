@@ -203,11 +203,11 @@
                         <div class="col-lg-4">
                             <!-- Discount Code -->
                             <div class="cart__discount">
-                                <h6>Mã giảm giá</h6>
-                                <form action="<%= request.getContextPath() %>/cart/apply-voucher" method="post">
+<!--                                <h6>Mã giảm giá</h6>-->
+<!--                                <form action="<%= request.getContextPath() %>/cart/apply-voucher" method="post">
                                     <input type="text" name="voucherCode" placeholder="Nhập mã giảm giá" required>
                                     <button type="submit">Áp dụng</button>
-                                </form>
+                                </form>-->
                             </div>
                             
                             <!-- Cart Total -->

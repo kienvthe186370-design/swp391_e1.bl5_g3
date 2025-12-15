@@ -220,6 +220,17 @@
     </section>
     <!-- Breadcrumb Section End -->
 
+    <!-- Success Message -->
+    <c:if test="${param.success == 'added_to_cart'}">
+        <div class="container mt-3">
+            <div class="alert alert-success alert-dismissible fade show">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <i class="fa fa-check-circle"></i> Đã thêm sản phẩm vào giỏ hàng! 
+                <a href="${pageContext.request.contextPath}/cart" class="alert-link">Xem giỏ hàng</a>
+            </div>
+        </div>
+    </c:if>
+
     <!-- Shop Section Begin -->
     <section class="shop spad">
         <div class="container">
@@ -397,7 +408,7 @@
                                             <span class="product__brand">${product.brandName}</span>
                                         </c:if>
                                         <h6><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}">${product.productName}</a></h6>
-                                        <a href="${pageContext.request.contextPath}/cart?action=add&productId=${product.productID}" class="add-cart">+ Add To Cart</a>
+                                        <a href="${pageContext.request.contextPath}/cart/add?productId=${product.productID}&source=shop" class="add-cart">+ Add To Cart</a>
                                         <h5>
                                             <c:choose>
                                                 <c:when test="${product.minPrice != null}">
@@ -557,6 +568,21 @@
             currentParams.set('page', '1'); // Reset to page 1
             window.location.href = '${pageContext.request.contextPath}/shop?' + currentParams.toString();
         }
+    </script>
+    
+    <!-- Auto-hide success message and update cart count -->
+    <script>
+        // Auto-hide alert after 5 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut('slow');
+        }, 5000);
+        
+        // Update cart count in header when product added
+        <c:if test="${param.success == 'added_to_cart'}">
+            if (typeof window.updateCartHeader === 'function') {
+                window.updateCartHeader();
+            }
+        </c:if>
     </script>
 </body>
 </html>

@@ -923,4 +923,71 @@ public class ProductDAO extends DBContext {
         
         return list;
     }
+    
+    /**
+     * Get newest products by category
+     * @param categoryId Category ID
+     * @param limit Number of products to return
+     * @return List of newest products
+     */
+    public List<Map<String, Object>> getNewestProductsByCategory(int categoryId, int limit) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getConnection();
+            
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT TOP (?) p.*, ");
+            sql.append("c.CategoryName, ");
+            sql.append("b.BrandName, ");
+            sql.append("(SELECT TOP 1 ImageURL FROM ProductImages WHERE ProductID = p.ProductID AND ImageType = 'main') AS MainImage, ");
+            sql.append("(SELECT MIN(SellingPrice) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS MinPrice, ");
+            sql.append("(SELECT MAX(SellingPrice) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS MaxPrice, ");
+            sql.append("(SELECT ISNULL(SUM(Stock), 0) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS TotalStock ");
+            sql.append("FROM Products p ");
+            sql.append("LEFT JOIN Categories c ON p.CategoryID = c.CategoryID ");
+            sql.append("LEFT JOIN Brands b ON p.BrandID = b.BrandID ");
+            sql.append("WHERE p.IsActive = 1 AND p.CategoryID = ? ");
+            sql.append("ORDER BY p.CreatedDate DESC");
+            
+            ps = conn.prepareStatement(sql.toString());
+            ps.setInt(1, limit);
+            ps.setInt(2, categoryId);
+            
+            rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Map<String, Object> product = new HashMap<>();
+                product.put("productID", rs.getInt("ProductID"));
+                product.put("productName", rs.getString("ProductName"));
+                product.put("categoryID", rs.getInt("CategoryID"));
+                product.put("brandID", rs.getObject("BrandID"));
+                product.put("categoryName", rs.getString("CategoryName"));
+                product.put("brandName", rs.getString("BrandName"));
+                product.put("mainImageUrl", rs.getString("MainImage"));
+                product.put("minPrice", rs.getBigDecimal("MinPrice"));
+                product.put("maxPrice", rs.getBigDecimal("MaxPrice"));
+                product.put("totalStock", rs.getInt("TotalStock"));
+                product.put("createdDate", rs.getTimestamp("CreatedDate"));
+                list.add(product);
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error in getNewestProductsByCategory: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return list;
+    }
 }
