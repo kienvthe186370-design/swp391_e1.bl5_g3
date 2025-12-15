@@ -33,7 +33,8 @@ public class VNPayService {
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
         String vnp_TmnCode = VNPayConfig.VNP_TMN_CODE;
-        String vnp_TxnRef = orderCode;
+        // Thêm timestamp để đảm bảo vnp_TxnRef luôn unique (tránh lỗi "đã tồn tại" khi thanh toán lại)
+        String vnp_TxnRef = orderCode + "_" + System.currentTimeMillis();
         String vnp_IpAddr = getIpAddress(request);
         long vnpAmount = amount.multiply(BigDecimal.valueOf(100)).longValue();
         
