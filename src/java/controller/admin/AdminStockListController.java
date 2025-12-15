@@ -90,7 +90,7 @@ public class AdminStockListController extends HttpServlet {
 
         // Default sortBy
         if (sortBy == null || sortBy.trim().isEmpty()) {
-            sortBy = "created_date";
+            sortBy = "id";
         }
 
         // Lấy danh sách tồn kho

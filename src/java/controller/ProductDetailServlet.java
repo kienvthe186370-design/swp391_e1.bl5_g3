@@ -50,6 +50,9 @@ public class ProductDetailServlet extends HttpServlet {
             // Get product variants
             List<Map<String, Object>> variants = productDAO.getProductVariants(productId);
             
+            // Get product attribute groups for variant selection
+            List<Map<String, Object>> attributeGroups = productDAO.getProductAttributeGroups(productId);
+            
             // Get related products (same category, limit 8)
             Integer categoryId = (Integer) product.get("categoryID");
             List<Map<String, Object>> relatedProducts = productDAO.getProducts(
@@ -68,6 +71,7 @@ public class ProductDetailServlet extends HttpServlet {
             request.setAttribute("product", product);
             request.setAttribute("images", images);
             request.setAttribute("variants", variants);
+            request.setAttribute("attributeGroups", attributeGroups);
             request.setAttribute("relatedProducts", relatedProducts);
             
             // Forward to JSP

@@ -22,54 +22,6 @@
 <!-- Main content -->
 <section class="content">
     <div class="container-fluid">
-        <!-- Stat Cards -->
-        <div class="row">
-            <div class="col-lg-3 col-6">
-                <div class="small-box bg-info">
-                    <div class="inner">
-                        <h3>${stats.totalVariants}</h3>
-                        <p>Tổng biến thể</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-boxes"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6">
-                <div class="small-box bg-success">
-                    <div class="inner">
-                        <h3>${stats.inStockCount}</h3>
-                        <p>Còn hàng</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6">
-                <div class="small-box bg-warning">
-                    <div class="inner">
-                        <h3>${stats.lowStockCount}</h3>
-                        <p>Sắp hết hàng</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6">
-                <div class="small-box bg-danger">
-                    <div class="inner">
-                        <h3>${stats.outStockCount}</h3>
-                        <p>Hết hàng</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-times-circle"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Filter Card -->
         <div class="card">
             <div class="card-header">
@@ -117,6 +69,7 @@
                         <div class="col-md-2">
                             <div class="form-group">
                                 <select name="sortBy" class="form-control">
+                                    <option value="id" ${sortBy == 'id' ? 'selected' : ''}>ID</option>
                                     <option value="created_date" ${sortBy == 'created_date' ? 'selected' : ''}>Ngày tạo</option>
                                     <option value="stock" ${sortBy == 'stock' ? 'selected' : ''}>Tồn kho</option>
                                     <option value="cost_price" ${sortBy == 'cost_price' ? 'selected' : ''}>Giá vốn</option>
@@ -162,7 +115,7 @@
                                 <td>
                                     <c:choose>
                                         <c:when test="${not empty item.imageUrl}">
-                                            <img src="${item.imageUrl}" alt="${item.productName}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                            <img src="${pageContext.request.contextPath}${item.imageUrl}" alt="${item.productName}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
                                         </c:when>
                                         <c:otherwise>
                                             <img src="${pageContext.request.contextPath}/img/product/product-1.jpg" alt="No image" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">

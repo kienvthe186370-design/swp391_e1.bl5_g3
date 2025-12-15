@@ -74,13 +74,14 @@ public class ProductDAO extends DBContext {
             
             // Sorting
             sql.append("ORDER BY ");
-            switch (sortBy != null ? sortBy : "date") {
-                case "name": sql.append("p.ProductName "); break;
-                case "price": sql.append("MinPrice "); break;
-                case "stock": sql.append("TotalStock "); break;
-                default: sql.append("p.CreatedDate "); break;
+            switch (sortBy != null ? sortBy : "id") {
+                case "name": sql.append("p.ProductName ").append("desc".equalsIgnoreCase(sortOrder) ? "DESC " : "ASC "); break;
+                case "price": sql.append("MinPrice ").append("desc".equalsIgnoreCase(sortOrder) ? "DESC " : "ASC "); break;
+                case "stock": sql.append("TotalStock ").append("desc".equalsIgnoreCase(sortOrder) ? "DESC " : "ASC "); break;
+                case "date": sql.append("p.CreatedDate ").append("desc".equalsIgnoreCase(sortOrder) ? "DESC " : "ASC "); break;
+                case "id":
+                default: sql.append("p.ProductID ASC "); break;
             }
-            sql.append("desc".equalsIgnoreCase(sortOrder) ? "DESC " : "ASC ");
             
             int offset = (page - 1) * pageSize;
             sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
@@ -223,13 +224,14 @@ public class ProductDAO extends DBContext {
             if (maxPrice != null) sql.append("AND (SELECT MIN(SellingPrice) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) <= ? ");
             
             sql.append("ORDER BY ");
-            switch (sortBy != null ? sortBy : "date") {
-                case "name": sql.append("p.ProductName "); break;
-                case "price": sql.append("MinPrice "); break;
-                case "stock": sql.append("TotalStock "); break;
-                default: sql.append("p.CreatedDate "); break;
+            switch (sortBy != null ? sortBy : "id") {
+                case "name": sql.append("p.ProductName ").append("desc".equalsIgnoreCase(sortOrder) ? "DESC " : "ASC "); break;
+                case "price": sql.append("MinPrice ").append("desc".equalsIgnoreCase(sortOrder) ? "DESC " : "ASC "); break;
+                case "stock": sql.append("TotalStock ").append("desc".equalsIgnoreCase(sortOrder) ? "DESC " : "ASC "); break;
+                case "date": sql.append("p.CreatedDate ").append("desc".equalsIgnoreCase(sortOrder) ? "DESC " : "ASC "); break;
+                case "id":
+                default: sql.append("p.ProductID ASC "); break;
             }
-            sql.append("desc".equalsIgnoreCase(sortOrder) ? "DESC " : "ASC ");
             
             int offset = (page - 1) * pageSize;
             sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
@@ -923,15 +925,77 @@ public class ProductDAO extends DBContext {
         
         return list;
     }
+
+    /**
+     * Lấy danh sách thuộc tính và giá trị của sản phẩm theo nhóm
+     * Ví dụ: {Màu sắc: [Trắng, Đen], Size: [S, M, L]}
+     */
+    public List<Map<String, Object>> getProductAttributeGroups(int productId) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getConnection();
+            // Lấy tất cả thuộc tính và giá trị của các variant thuộc sản phẩm này
+            String sql = "SELECT DISTINCT pa.AttributeID, pa.AttributeName, av.ValueID, av.ValueName " +
+                        "FROM ProductVariants pv " +
+                        "JOIN VariantAttributes va ON pv.VariantID = va.VariantID " +
+                        "JOIN AttributeValues av ON va.ValueID = av.ValueID " +
+                        "JOIN ProductAttributes pa ON av.AttributeID = pa.AttributeID " +
+                        "WHERE pv.ProductID = ? AND pv.IsActive = 1 " +
+                        "ORDER BY pa.AttributeID, av.ValueName";
+            
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, productId);
+            rs = ps.executeQuery();
+            
+            // Group by attribute
+            Map<Integer, Map<String, Object>> attrMap = new HashMap<>();
+            
+            while (rs.next()) {
+                int attrId = rs.getInt("AttributeID");
+                String attrName = rs.getString("AttributeName");
+                int valueId = rs.getInt("ValueID");
+                String valueName = rs.getString("ValueName");
+                
+                if (!attrMap.containsKey(attrId)) {
+                    Map<String, Object> attr = new HashMap<>();
+                    attr.put("attributeId", attrId);
+                    attr.put("attributeName", attrName);
+                    attr.put("values", new ArrayList<Map<String, Object>>());
+                    attrMap.put(attrId, attr);
+                }
+                
+                Map<String, Object> value = new HashMap<>();
+                value.put("valueId", valueId);
+                value.put("valueName", valueName);
+                ((List<Map<String, Object>>) attrMap.get(attrId).get("values")).add(value);
+            }
+            
+            result.addAll(attrMap.values());
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, ps, conn);
+        }
+        
+        return result;
+    }
     
     /**
-     * Get newest products by category
-     * @param categoryId Category ID
-     * @param limit Number of products to return
-     * @return List of newest products
+     * Tìm variant theo tổ hợp các giá trị thuộc tính đã chọn
+     * @param productId ID sản phẩm
+     * @param selectedValueIds Danh sách các ValueID đã chọn
+     * @return Thông tin variant nếu tìm thấy, null nếu không
      */
-    public List<Map<String, Object>> getNewestProductsByCategory(int categoryId, int limit) {
-        List<Map<String, Object>> list = new ArrayList<>();
+    public Map<String, Object> findVariantByAttributes(int productId, List<Integer> selectedValueIds) {
+        if (selectedValueIds == null || selectedValueIds.isEmpty()) {
+            return null;
+        }
+        
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -939,55 +1003,91 @@ public class ProductDAO extends DBContext {
         try {
             conn = getConnection();
             
+            // Tìm variant có đúng tất cả các giá trị thuộc tính đã chọn
             StringBuilder sql = new StringBuilder();
-            sql.append("SELECT TOP (?) p.*, ");
-            sql.append("c.CategoryName, ");
-            sql.append("b.BrandName, ");
-            sql.append("(SELECT TOP 1 ImageURL FROM ProductImages WHERE ProductID = p.ProductID AND ImageType = 'main') AS MainImage, ");
-            sql.append("(SELECT MIN(SellingPrice) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS MinPrice, ");
-            sql.append("(SELECT MAX(SellingPrice) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS MaxPrice, ");
-            sql.append("(SELECT ISNULL(SUM(Stock), 0) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS TotalStock ");
-            sql.append("FROM Products p ");
-            sql.append("LEFT JOIN Categories c ON p.CategoryID = c.CategoryID ");
-            sql.append("LEFT JOIN Brands b ON p.BrandID = b.BrandID ");
-            sql.append("WHERE p.IsActive = 1 AND p.CategoryID = ? ");
-            sql.append("ORDER BY p.CreatedDate DESC");
+            sql.append("SELECT pv.VariantID, pv.SKU, pv.SellingPrice, pv.CompareAtPrice, pv.Stock, pv.ReservedStock ");
+            sql.append("FROM ProductVariants pv ");
+            sql.append("WHERE pv.ProductID = ? AND pv.IsActive = 1 ");
+            sql.append("AND (SELECT COUNT(*) FROM VariantAttributes va WHERE va.VariantID = pv.VariantID) = ? ");
+            sql.append("AND ? = (SELECT COUNT(*) FROM VariantAttributes va WHERE va.VariantID = pv.VariantID AND va.ValueID IN (");
+            
+            // Build IN clause
+            for (int i = 0; i < selectedValueIds.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append("))");
             
             ps = conn.prepareStatement(sql.toString());
-            ps.setInt(1, limit);
-            ps.setInt(2, categoryId);
+            int paramIndex = 1;
+            ps.setInt(paramIndex++, productId);
+            ps.setInt(paramIndex++, selectedValueIds.size());
+            ps.setInt(paramIndex++, selectedValueIds.size());
+            
+            for (Integer valueId : selectedValueIds) {
+                ps.setInt(paramIndex++, valueId);
+            }
             
             rs = ps.executeQuery();
             
-            while (rs.next()) {
-                Map<String, Object> product = new HashMap<>();
-                product.put("productID", rs.getInt("ProductID"));
-                product.put("productName", rs.getString("ProductName"));
-                product.put("categoryID", rs.getInt("CategoryID"));
-                product.put("brandID", rs.getObject("BrandID"));
-                product.put("categoryName", rs.getString("CategoryName"));
-                product.put("brandName", rs.getString("BrandName"));
-                product.put("mainImageUrl", rs.getString("MainImage"));
-                product.put("minPrice", rs.getBigDecimal("MinPrice"));
-                product.put("maxPrice", rs.getBigDecimal("MaxPrice"));
-                product.put("totalStock", rs.getInt("TotalStock"));
-                product.put("createdDate", rs.getTimestamp("CreatedDate"));
-                list.add(product);
+            if (rs.next()) {
+                Map<String, Object> variant = new HashMap<>();
+                variant.put("variantId", rs.getInt("VariantID"));
+                variant.put("sku", rs.getString("SKU"));
+                variant.put("sellingPrice", rs.getBigDecimal("SellingPrice"));
+                variant.put("compareAtPrice", rs.getBigDecimal("CompareAtPrice"));
+                variant.put("stock", rs.getInt("Stock"));
+                variant.put("reservedStock", rs.getInt("ReservedStock"));
+                variant.put("availableStock", rs.getInt("Stock") - rs.getInt("ReservedStock"));
+                return variant;
             }
             
         } catch (SQLException e) {
-            System.err.println("Error in getNewestProductsByCategory: " + e.getMessage());
             e.printStackTrace();
         } finally {
-            try {
-                if (rs != null) rs.close();
-                if (ps != null) ps.close();
-                if (conn != null) conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            closeResources(rs, ps, conn);
         }
         
-        return list;
+        return null;
+    }
+    
+    /**
+     * Lấy thông tin thuộc tính của một variant cụ thể
+     */
+    public List<Map<String, Object>> getVariantAttributeValues(int variantId) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getConnection();
+            String sql = "SELECT pa.AttributeID, pa.AttributeName, av.ValueID, av.ValueName " +
+                        "FROM VariantAttributes va " +
+                        "JOIN AttributeValues av ON va.ValueID = av.ValueID " +
+                        "JOIN ProductAttributes pa ON av.AttributeID = pa.AttributeID " +
+                        "WHERE va.VariantID = ? " +
+                        "ORDER BY pa.AttributeID";
+            
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, variantId);
+            rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Map<String, Object> attr = new HashMap<>();
+                attr.put("attributeId", rs.getInt("AttributeID"));
+                attr.put("attributeName", rs.getString("AttributeName"));
+                attr.put("valueId", rs.getInt("ValueID"));
+                attr.put("valueName", rs.getString("ValueName"));
+                result.add(attr);
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, ps, conn);
+        }
+        
+        return result;
     }
 }
