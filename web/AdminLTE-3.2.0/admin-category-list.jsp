@@ -130,7 +130,6 @@
                   <th style="width: 60px;">ID</th>
                   <th>Tên Danh mục</th>
                   <th>Mô tả</th>
-                  <th style="width: 100px;">Icon</th>
                   <th style="width: 80px;">Thứ tự</th>
                   <th style="width: 100px;">Trạng thái</th>
                   <th style="width: 150px;" class="text-center">Thao tác</th>
@@ -142,7 +141,6 @@
                     <td><strong>#${cat.categoryID}</strong></td>
                     <td><strong>${cat.categoryName}</strong></td>
                     <td><small>${cat.description}</small></td>
-                    <td><i class="${cat.icon}"></i> ${cat.icon}</td>
                     <td><span class="badge badge-info">${cat.displayOrder}</span></td>
                     <td>
                       <c:choose>
@@ -172,7 +170,7 @@
                 </c:forEach>
                 <c:if test="${empty categories}">
                   <tr>
-                    <td colspan="7" class="text-center">
+                    <td colspan="6" class="text-center">
                       <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                       <p class="text-muted">Không có danh mục nào.</p>
                     </td>

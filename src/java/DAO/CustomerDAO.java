@@ -200,6 +200,18 @@ public class CustomerDAO extends DBContext {
         customer.setActive(rs.getBoolean("IsActive"));
         customer.setCreatedDate(rs.getTimestamp("CreatedDate"));
         customer.setLastLogin(rs.getTimestamp("LastLogin"));
+        
+        // New fields - handle if columns don't exist
+        try {
+            customer.setGender(rs.getString("Gender"));
+        } catch (SQLException e) { /* Column may not exist */ }
+        try {
+            customer.setDateOfBirth(rs.getDate("DateOfBirth"));
+        } catch (SQLException e) { /* Column may not exist */ }
+        try {
+            customer.setAvatar(rs.getString("Avatar"));
+        } catch (SQLException e) { /* Column may not exist */ }
+        
         return customer;
     }
     
@@ -272,7 +284,7 @@ public class CustomerDAO extends DBContext {
     }
     
     /**
-     * Cập nhật thông tin khách hàng
+     * Cập nhật thông tin khách hàng (cho admin)
      */
     public boolean updateCustomer(int customerID, String fullName, String phone, boolean isEmailVerified) {
         String sql = "UPDATE Customers SET FullName = ?, Phone = ?, IsEmailVerified = ? WHERE CustomerID = ?";
@@ -287,6 +299,72 @@ public class CustomerDAO extends DBContext {
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
+            return false;
+        }
+    }
+    
+    /**
+     * Cập nhật thông tin profile khách hàng (cho customer tự cập nhật)
+     * Có fallback nếu columns Gender, DateOfBirth chưa tồn tại
+     */
+    public boolean updateProfile(int customerID, String fullName, String phone, String gender, java.sql.Date dateOfBirth) {
+        // Try full update first (with Gender, DateOfBirth)
+        String sql = "UPDATE Customers SET FullName = ?, Phone = ?, Gender = ?, DateOfBirth = ? WHERE CustomerID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, fullName);
+            ps.setString(2, phone);
+            ps.setString(3, gender);
+            if (dateOfBirth != null) {
+                ps.setDate(4, dateOfBirth);
+            } else {
+                ps.setNull(4, Types.DATE);
+            }
+            ps.setInt(5, customerID);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            // If columns don't exist, fallback to basic update
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.WARNING, "Full update failed, trying basic update: " + e.getMessage());
+            return updateProfileBasic(customerID, fullName, phone);
+        }
+    }
+    
+    /**
+     * Fallback: Cập nhật chỉ FullName và Phone (khi columns mới chưa tồn tại)
+     */
+    private boolean updateProfileBasic(int customerID, String fullName, String phone) {
+        String sql = "UPDATE Customers SET FullName = ?, Phone = ? WHERE CustomerID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, fullName);
+            ps.setString(2, phone);
+            ps.setInt(3, customerID);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
+            return false;
+        }
+    }
+    
+    /**
+     * Cập nhật avatar khách hàng
+     * Trả về false nếu column Avatar chưa tồn tại
+     */
+    public boolean updateAvatar(int customerID, String avatarPath) {
+        String sql = "UPDATE Customers SET Avatar = ? WHERE CustomerID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, avatarPath);
+            ps.setInt(2, customerID);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.WARNING, "Avatar column may not exist: " + e.getMessage());
             return false;
         }
     }

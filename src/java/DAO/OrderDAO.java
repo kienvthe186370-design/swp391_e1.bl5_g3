@@ -889,6 +889,21 @@ public class OrderDAO extends DBContext {
                 ps.executeBatch();
             }
             
+            // Update Stock: trừ Stock và cộng ReservedStock
+            String updateStockSql = "UPDATE ProductVariants SET Stock = Stock - ?, ReservedStock = ISNULL(ReservedStock, 0) + ? WHERE VariantID = ?";
+            try (PreparedStatement ps = conn.prepareStatement(updateStockSql)) {
+                for (OrderDetail detail : orderDetails) {
+                    if (detail.getVariantID() > 0) {
+                        ps.setInt(1, detail.getQuantity());
+                        ps.setInt(2, detail.getQuantity());
+                        ps.setInt(3, detail.getVariantID());
+                        ps.addBatch();
+                    }
+                }
+                ps.executeBatch();
+                System.out.println("[OrderDAO] Stock updated for " + orderDetails.size() + " variants");
+            }
+            
             // Insert initial status history
             String historySql = "INSERT INTO OrderStatusHistory (OrderID, OldStatus, NewStatus, Notes, ChangedDate) " +
                                "VALUES (?, NULL, 'Pending', N'Đơn hàng mới được tạo', GETDATE())";
