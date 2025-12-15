@@ -342,15 +342,19 @@ public class StockDAO extends DBContext {
         }
         
         // Sort
-        switch (sortBy != null ? sortBy : "created_date") {
+        switch (sortBy != null ? sortBy : "id") {
             case "stock":
                 sql.append("ORDER BY pv.Stock DESC ");
                 break;
             case "cost_price":
                 sql.append("ORDER BY pv.CostPrice DESC ");
                 break;
+            case "created_date":
+                sql.append("ORDER BY pv.CreatedDate DESC ");
+                break;
+            case "id":
             default:
-                sql.append("ORDER BY pv.VariantID DESC ");
+                sql.append("ORDER BY pv.VariantID ASC ");
         }
         
         // Paging

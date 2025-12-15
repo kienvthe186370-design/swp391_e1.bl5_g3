@@ -73,27 +73,6 @@
         .table-row:hover {
             background-color: #f8f9fa;
         }
-        .stat-card {
-            border-radius: 8px;
-            padding: 20px;
-            color: white;
-        }
-        .stat-card.primary { background: linear-gradient(135deg, #007bff, #0056b3); }
-        .stat-card.success { background: linear-gradient(135deg, #28a745, #1e7e34); }
-        .stat-card.warning { background: linear-gradient(135deg, #ffc107, #d39e00); color: #333; }
-        .stat-card.danger { background: linear-gradient(135deg, #dc3545, #bd2130); }
-        .stat-card .stat-icon {
-            font-size: 2.5rem;
-            opacity: 0.7;
-        }
-        .stat-card .stat-number {
-            font-size: 1.75rem;
-            font-weight: 700;
-        }
-        .stat-card .stat-label {
-            font-size: 0.875rem;
-            opacity: 0.9;
-        }
         .breadcrumb-item a {
             text-decoration: none;
         }
@@ -111,46 +90,6 @@
                     <li class="breadcrumb-item active" aria-current="page">Quản lý kho</li>
                 </ol>
             </nav>
-        </div>
-    </div>
-
-    <!-- Stat Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="stat-card primary d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="stat-number">${stats.totalVariants}</div>
-                    <div class="stat-label">Tổng biến thể</div>
-                </div>
-                <i class="fas fa-boxes stat-icon"></i>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="stat-card success d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="stat-number">${stats.inStockCount}</div>
-                    <div class="stat-label">Còn hàng</div>
-                </div>
-                <i class="fas fa-check-circle stat-icon"></i>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="stat-card warning d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="stat-number">${stats.lowStockCount}</div>
-                    <div class="stat-label">Sắp hết hàng</div>
-                </div>
-                <i class="fas fa-exclamation-triangle stat-icon"></i>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="stat-card danger d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="stat-number">${stats.outStockCount}</div>
-                    <div class="stat-label">Hết hàng</div>
-                </div>
-                <i class="fas fa-times-circle stat-icon"></i>
-            </div>
         </div>
     </div>
 
