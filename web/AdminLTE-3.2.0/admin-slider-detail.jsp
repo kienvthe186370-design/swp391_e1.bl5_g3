@@ -130,12 +130,11 @@
                       
                       <!-- URL Method -->
                       <div class="tab-pane fade" id="urlMethod" role="tabpanel">
-                        <input type="url" class="form-control" id="imageURL" name="imageURL" 
+                        <input type="text" class="form-control" id="imageURL" name="imageURL" 
                                value="${slider != null ? slider.imageURL : ''}" 
-                               placeholder="https://example.com/image.jpg" 
-                               onchange="previewImageURL()">
+                               placeholder="img/sliders/image.jpg hoặc https://example.com/image.jpg">
                         <small class="form-text text-muted">
-                          <i class="fas fa-info-circle"></i> Nhập URL đầy đủ của hình ảnh từ internet
+                          <i class="fas fa-info-circle"></i> Nhập đường dẫn ảnh (relative path) hoặc URL đầy đủ
                         </small>
                       </div>
                     </div>
@@ -151,10 +150,10 @@
                   <!-- Link URL -->
                   <div class="form-group">
                     <label for="linkURL">Link URL</label>
-                    <input type="url" class="form-control" id="linkURL" name="linkURL" 
+                    <input type="text" class="form-control" id="linkURL" name="linkURL" 
                            value="${slider != null ? slider.linkURL : ''}" 
-                           placeholder="https://example.com/page">
-                    <small class="form-text text-muted">URL trang đích khi click vào slider (có thể để trống)</small>
+                           placeholder="/shop hoặc https://example.com/page">
+                    <small class="form-text text-muted">Đường dẫn hoặc URL trang đích khi click vào slider (có thể để trống)</small>
                   </div>
 
                   <!-- Display Order -->
@@ -308,22 +307,38 @@ function previewUploadedImage(input) {
 }
 
 // Preview image when URL is entered
-function previewImageURL() {
+function previewImageURL(showAlert = true) {
     const imageURL = $('#imageURL').val();
     const preview = $('#imagePreview');
     const imageInfo = $('#imageInfo');
     
     if (imageURL) {
+        // Remove old error handler
+        preview.off('error');
+        
         preview.attr('src', imageURL);
         preview.addClass('show');
         imageInfo.html('<i class="fas fa-link"></i> URL: ' + imageURL);
         imageInfo.show();
         
-        // Handle image load error
+        // Handle image load error (only show alert if user just entered URL)
         preview.on('error', function() {
             preview.removeClass('show');
             imageInfo.hide();
-            alert('Không thể tải hình ảnh. Vui lòng kiểm tra lại URL.');
+            if (showAlert) {
+                alert('Không thể tải hình ảnh. Vui lòng kiểm tra lại URL.');
+            } else {
+                // Just show a warning message without alert
+                imageInfo.html('<i class="fas fa-exclamation-triangle text-warning"></i> Không thể tải hình ảnh từ URL này');
+                imageInfo.show();
+            }
+        });
+        
+        // Handle successful load
+        preview.on('load', function() {
+            preview.addClass('show');
+            imageInfo.html('<i class="fas fa-check-circle text-success"></i> Hình ảnh đã tải thành công');
+            imageInfo.show();
         });
     } else {
         preview.removeClass('show');
@@ -363,12 +378,17 @@ $('#sliderForm').on('submit', function(e) {
     return true;
 });
 
-// Load preview on page load if editing
+// Load preview on page load if editing (don't show alert)
 $(document).ready(function() {
     const imageURL = $('#imageURL').val();
     if (imageURL) {
-        previewImageURL();
+        previewImageURL(false); // Pass false to not show alert on page load
     }
+    
+    // Show alert only when user manually changes URL
+    $('#imageURL').on('change', function() {
+        previewImageURL(true); // Pass true to show alert when user changes
+    });
 });
 </script>
 
