@@ -51,6 +51,9 @@
     // Order pages
     boolean isOrderPage = currentURI.contains("/admin/order");
     
+    // RFQ pages
+    boolean isRFQPage = currentURI.contains("/admin/rfq");
+    
     // Other pages
     boolean isReportsPage = currentURI.contains("/admin/reports");
     boolean isVoucherPage = currentURI.contains("/admin/voucher");
@@ -71,6 +74,7 @@
     boolean canViewCustomers = RolePermission.canViewCustomers(userRole);
     boolean canAccessOrders = RolePermission.canManageOrders(userRole);
     boolean canAccessReports = RolePermission.canViewSalesReports(userRole);
+    boolean canAccessRFQ = RolePermission.canManageRFQ(userRole);
     
     // Marketer permissions
     boolean canAccessProductManagement = RolePermission.canManageProducts(userRole);
@@ -268,50 +272,24 @@
         <% } %>
         
         <!-- Quản lý Đơn hàng - SellerManager và Seller -->
-        <% if (canAccessOrders) { 
-            // Lấy số đơn chưa phân công cho SellerManager
-            int unassignedOrderCount = 0;
-            boolean canAssignOrders = RolePermission.canAssignOrders(userRole);
-            if (canAssignOrders) {
-                try {
-                    DAO.OrderDAO orderDAO = new DAO.OrderDAO();
-                    unassignedOrderCount = orderDAO.countUnassignedOrders();
-                } catch (Exception e) {
-                    // Ignore
-                }
-            }
-        %>
-        <li class="nav-item has-treeview <%= isOrderPage ? "menu-open" : "" %>">
-          <a href="#" class="nav-link <%= isOrderPage ? "active" : "" %>">
+        <% if (canAccessOrders) { %>
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/orders" 
+             class="nav-link <%= isOrderPage ? "active" : "" %>">
             <i class="nav-icon fas fa-shopping-cart"></i>
-            <p>
-              Quản lý đơn hàng
-              <i class="right fas fa-angle-left"></i>
-              <% if (unassignedOrderCount > 0 && canAssignOrders) { %>
-                <span class="badge badge-warning right"><%= unassignedOrderCount %></span>
-              <% } %>
-            </p>
+            <p>Đơn hàng</p>
           </a>
-          <ul class="nav nav-treeview">
-            <li class="nav-item">
-              <a href="<%= contextPath %>/admin/orders" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Danh sách đơn hàng</p>
-              </a>
-            </li>
-            <% if (canAssignOrders) { %>
-            <li class="nav-item">
-              <a href="<%= contextPath %>/admin/orders?action=assignment" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Phân công đơn hàng
-                  <% if (unassignedOrderCount > 0) { %>
-                    <span class="badge badge-warning right"><%= unassignedOrderCount %></span>
-                  <% } %>
-                </p>
-              </a>
-            </li>
-            <% } %>
-          </ul>
+        </li>
+        <% } %>
+        
+        <!-- RFQ Management - Chỉ SellerManager -->
+        <% if (canAccessRFQ) { %>
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/rfq" 
+             class="nav-link <%= isRFQPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-file-invoice"></i>
+            <p>Yêu cầu báo giá (RFQ)</p>
+          </a>
         </li>
         <% } %>
         
