@@ -44,7 +44,12 @@ public class VNPayCallbackServlet extends HttpServlet {
         }
         
         // Extract important fields
-        String orderCode = params.get("vnp_TxnRef");
+             String vnpTxnRef = params.get("vnp_TxnRef");
+        // vnp_TxnRef có format: orderCode_timestamp, cần lấy phần orderCode
+        String orderCode = vnpTxnRef;
+        if (vnpTxnRef != null && vnpTxnRef.contains("_")) {
+            orderCode = vnpTxnRef.substring(0, vnpTxnRef.lastIndexOf("_"));
+        }
         String responseCode = params.get("vnp_ResponseCode");
         String transactionNo = params.get("vnp_TransactionNo");
         String amountStr = params.get("vnp_Amount");
