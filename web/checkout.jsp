@@ -13,29 +13,206 @@
     <link rel="stylesheet" href="css/elegant-icons.css" type="text/css">
     <link rel="stylesheet" href="css/style.css" type="text/css">
     <style>
-        .address-card { border: 2px solid #e1e1e1; padding: 15px; margin-bottom: 10px; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
-        .address-card.selected { border-color: #e53637; background: #fff5f5; }
-        .address-card:hover { border-color: #e53637; }
-        .shipping-option { border: 1px solid #e1e1e1; padding: 12px; margin-bottom: 8px; cursor: pointer; border-radius: 6px; transition: all 0.2s; }
-        .shipping-option.selected { border-color: #e53637; background: #fff5f5; }
-        .shipping-option:hover { border-color: #e53637; }
-        .shipping-option .carrier-logo { height: 24px; margin-right: 10px; vertical-align: middle; }
-        .payment-option { border: 1px solid #e1e1e1; padding: 15px; margin-bottom: 10px; cursor: pointer; border-radius: 8px; display: flex; align-items: center; transition: all 0.2s; }
-        .payment-option.selected { border-color: #e53637; background: #fff5f5; }
-        .payment-option:hover { border-color: #e53637; }
-        .payment-option img { height: 30px; margin-right: 15px; }
-        .voucher-section { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        .voucher-input { display: flex; gap: 10px; }
-        .voucher-input input { flex: 1; border: 1px solid #ddd; padding: 10px; border-radius: 4px; }
-        .voucher-success { color: #28a745; font-size: 14px; margin-top: 8px; }
-        .voucher-error { color: #dc3545; font-size: 14px; margin-top: 8px; }
-        .checkout__order { background: #f5f5f5; padding: 30px; border-radius: 8px; }
-        .order__title { font-weight: 700; margin-bottom: 20px; }
-        .checkout__total__products li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e1e1e1; font-size: 14px; }
-        .checkout__total__all li { display: flex; justify-content: space-between; padding: 12px 0; }
-        .checkout__total__all li:last-child { font-weight: 700; font-size: 18px; color: #e53637; border-top: 2px solid #e53637; margin-top: 10px; padding-top: 15px; }
-        .btn-checkout { width: 100%; padding: 15px; font-size: 16px; font-weight: 700; }
-        .badge-default { background: #e53637; color: white; font-size: 11px; padding: 3px 8px; border-radius: 3px; }
+        /* Section Cards - Compact Display */
+        .checkout-section {
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+        }
+        .checkout-section:hover {
+            border-color: #e53637;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .checkout-section .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .checkout-section .section-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        .checkout-section .section-action {
+            color: #e53637;
+            font-size: 13px;
+        }
+        .checkout-section .section-content {
+            color: #666;
+            font-size: 14px;
+        }
+        .checkout-section .section-content strong {
+            color: #333;
+        }
+        .checkout-section.empty {
+            border-style: dashed;
+            text-align: center;
+            color: #999;
+        }
+        
+        /* Modal Styles */
+        .checkout-modal .modal-header {
+            border-bottom: 1px solid #eee;
+            padding: 15px 20px;
+        }
+        .checkout-modal .modal-title {
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .checkout-modal .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        /* Address Card in Modal */
+        .address-card {
+            border: 2px solid #e1e1e1;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .address-card.selected {
+            border-color: #e53637;
+            background: #fff5f5;
+        }
+        .address-card:hover {
+            border-color: #e53637;
+        }
+        .badge-default {
+            background: #e53637;
+            color: white;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        /* Shipping Option in Modal */
+        .shipping-option {
+            border: 1px solid #e1e1e1;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .shipping-option.selected {
+            border-color: #e53637;
+            background: #fff5f5;
+        }
+        .shipping-option:hover {
+            border-color: #e53637;
+        }
+        .shipping-option .carrier-logo {
+            height: 24px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        /* Payment Options */
+        .payment-option {
+            border: 1px solid #e1e1e1;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        .payment-option.selected {
+            border-color: #e53637;
+            background: #fff5f5;
+        }
+        .payment-option:hover {
+            border-color: #e53637;
+        }
+        .payment-option img {
+            height: 30px;
+            margin-right: 15px;
+        }
+        
+        /* Voucher Section */
+        .voucher-section {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .voucher-input {
+            display: flex;
+            gap: 10px;
+        }
+        .voucher-input input {
+            flex: 1;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .voucher-success {
+            color: #28a745;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        .voucher-error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        
+        /* Order Summary */
+        .checkout__order {
+            background: #f5f5f5;
+            padding: 30px;
+            border-radius: 8px;
+        }
+        .order__title {
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        .checkout__total__products li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e1e1e1;
+            font-size: 14px;
+        }
+        .checkout__total__all li {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+        }
+        .checkout__total__all li:last-child {
+            font-weight: 700;
+            font-size: 18px;
+            color: #e53637;
+            border-top: 2px solid #e53637;
+            margin-top: 10px;
+            padding-top: 15px;
+        }
+        .btn-checkout {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        
+        /* Loading Spinner */
+        .loading-spinner {
+            text-align: center;
+            padding: 30px;
+        }
+        .loading-spinner i {
+            font-size: 24px;
+            color: #e53637;
+        }
     </style>
 </head>
 <body>
@@ -70,103 +247,76 @@
             <form action="checkout" method="post" id="checkoutForm">
                 <div class="row">
                     <div class="col-lg-8">
-                        <!-- Shipping Address -->
-                        <h6 class="checkout__title">
-                            <i class="fa fa-map-marker"></i> Địa chỉ giao hàng
-                            <a href="profile?tab=addresses&redirect=checkout" class="btn btn-sm btn-outline-primary float-right" style="font-size: 12px;">
-                                <i class="fa fa-plus"></i> Thêm địa chỉ
-                            </a>
-                        </h6>
-                        <c:choose>
-                            <c:when test="${empty addresses}">
-                                <div class="alert alert-warning">
-                                    <i class="fa fa-exclamation-triangle"></i> 
-                                    <strong>Bạn chưa có địa chỉ giao hàng!</strong><br>
-                                    Vui lòng thêm địa chỉ để chúng tôi có thể tính phí vận chuyển và giao hàng cho bạn.
-                                    <br><br>
-                                    <a href="profile?tab=addresses&redirect=checkout" class="btn btn-primary">
-                                        <i class="fa fa-plus"></i> Thêm địa chỉ ngay
-                                    </a>
-                                </div>
-                            </c:when>
-                            <c:otherwise>
-                                <div class="address-list mb-4">
-                                    <c:forEach var="addr" items="${addresses}">
-                                        <div class="address-card ${addr['default'] ? 'selected' : ''}" 
-                                             data-address-id="${addr.addressID}"
-                                             data-city="${addr.city}"
-                                             data-district="${addr.district}"
-                                             onclick="selectAddress(this)">
-                                            <input type="radio" name="addressId" value="${addr.addressID}" 
-                                                   ${addr['default'] ? 'checked' : ''} style="display:none;">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div>
-                                                    <strong>${addr.recipientName}</strong> 
-                                                    <span class="text-muted">| ${addr.phone}</span>
-                                                    <c:if test="${addr['default']}">
-                                                        <span class="badge-default ml-2">Mặc định</span>
-                                                    </c:if>
-                                                </div>
-                                            </div>
-                                            <div class="mt-2 text-muted" style="font-size: 14px;">
-                                                <i class="fa fa-home"></i> ${addr.fullAddress}
-                                            </div>
-                                        </div>
-                                    </c:forEach>
-                                </div>
-                            </c:otherwise>
-                        </c:choose>
-
-                        <!-- Shipping Method -->
-                        <h6 class="checkout__title"><i class="fa fa-truck"></i> Phương thức vận chuyển</h6>
-                        <div class="shipping-options mb-4" id="shippingOptions">
+                        <!-- Address Section - Compact -->
+                        <div class="checkout-section ${empty addresses ? 'empty' : ''}" onclick="openAddressModal()" id="addressSection">
                             <c:choose>
-                                <c:when test="${not empty shippingRates}">
-                                    <c:forEach var="rate" items="${shippingRates}" varStatus="status">
-                                        <div class="shipping-option ${status.first ? 'selected' : ''}" 
-                                             data-price="${rate.basePrice}" 
-                                             data-rate-id="${not empty rate.carrierId ? rate.carrierId : rate.rateID}"
-                                             onclick="selectShipping(this)">
-                                            <input type="radio" name="shippingFee" value="${rate.basePrice}" 
-                                                   ${status.first ? 'checked' : ''} style="display:none;">
-                                            <input type="hidden" class="carrier-id" value="${not empty rate.carrierId ? rate.carrierId : rate.rateID}">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <c:if test="${not empty rate.carrierLogo}">
-                                                        <img src="${rate.carrierLogo}" alt="${rate.carrierShortName}" class="carrier-logo">
-                                                    </c:if>
-                                                    <strong>${not empty rate.carrierName ? rate.carrierName : (not empty rate.carrier ? rate.carrier.carrierName : 'Vận chuyển')}</strong>
-                                                    <span class="text-muted">- ${rate.serviceName}</span>
-                                                    <br><small class="text-muted"><i class="fa fa-clock-o"></i> ${rate.estimatedDelivery}</small>
-                                                </div>
-                                                <strong class="text-danger">
-                                                    <fmt:formatNumber value="${rate.basePrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>đ
-                                                </strong>
-                                            </div>
-                                        </div>
-                                    </c:forEach>
+                                <c:when test="${empty addresses}">
+                                    <i class="fa fa-map-marker fa-2x mb-2"></i>
+                                    <div>Chưa có địa chỉ giao hàng</div>
+                                    <small class="text-muted">Nhấn để thêm địa chỉ</small>
                                 </c:when>
                                 <c:otherwise>
-                                    <div class="shipping-option selected" data-price="30000" data-rate-id="0" onclick="selectShipping(this)">
-                                        <input type="radio" name="shippingFee" value="30000" checked style="display:none;">
-                                        <input type="hidden" class="carrier-id" value="0">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <strong>Giao hàng tiêu chuẩn</strong>
-                                                <br><small class="text-muted"><i class="fa fa-clock-o"></i> 2-3 ngày</small>
-                                            </div>
-                                            <strong class="text-danger">30,000đ</strong>
-                                        </div>
+                                    <div class="section-header">
+                                        <span class="section-title"><i class="fa fa-map-marker"></i> Địa chỉ giao hàng</span>
+                                        <span class="section-action">Thay đổi <i class="fa fa-chevron-right"></i></span>
+                                    </div>
+                                    <div class="section-content" id="selectedAddressDisplay">
+                                        <c:forEach var="addr" items="${addresses}">
+                                            <c:if test="${addr['default']}">
+                                                <strong>${addr.recipientName}</strong> | ${addr.phone}
+                                                <c:if test="${addr['default']}">
+                                                    <span class="badge-default ml-1">Mặc định</span>
+                                                </c:if>
+                                                <br>
+                                                <span class="text-muted"><i class="fa fa-home"></i> ${addr.fullAddress}</span>
+                                            </c:if>
+                                        </c:forEach>
+                                        <!-- Fallback if no default -->
+                                        <c:if test="${not empty addresses}">
+                                            <c:set var="hasDefault" value="false"/>
+                                            <c:forEach var="addr" items="${addresses}">
+                                                <c:if test="${addr['default']}"><c:set var="hasDefault" value="true"/></c:if>
+                                            </c:forEach>
+                                            <c:if test="${not hasDefault}">
+                                                <c:set var="firstAddr" value="${addresses[0]}"/>
+                                                <strong>${firstAddr.recipientName}</strong> | ${firstAddr.phone}
+                                                <br>
+                                                <span class="text-muted"><i class="fa fa-home"></i> ${firstAddr.fullAddress}</span>
+                                            </c:if>
+                                        </c:if>
                                     </div>
                                 </c:otherwise>
                             </c:choose>
                         </div>
+                        <input type="hidden" name="addressId" id="selectedAddressId" value="${not empty addresses ? (addresses[0]['default'] ? addresses[0].addressID : addresses[0].addressID) : ''}">
+
+                        <!-- Shipping Section - Compact -->
+                        <div class="checkout-section" onclick="openShippingModal()" id="shippingSection">
+                            <div class="section-header">
+                                <span class="section-title"><i class="fa fa-truck"></i> Phương thức vận chuyển</span>
+                                <span class="section-action">Thay đổi <i class="fa fa-chevron-right"></i></span>
+                            </div>
+                            <div class="section-content" id="selectedShippingDisplay">
+                                <c:choose>
+                                    <c:when test="${not empty shippingRates}">
+                                        <strong>${shippingRates[0].carrierName}</strong> - ${shippingRates[0].serviceName}
+                                        <br>
+                                        <span class="text-muted"><i class="fa fa-clock-o"></i> ${shippingRates[0].estimatedDelivery}</span>
+                                        <span class="text-danger float-right"><fmt:formatNumber value="${shippingRates[0].basePrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>đ</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="text-muted">Chọn địa chỉ để xem phí vận chuyển</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                        <input type="hidden" name="shippingFee" id="selectedShippingFee" value="${not empty shippingRates ? shippingRates[0].basePrice : 30000}">
                         <input type="hidden" name="carrierId" id="selectedCarrierId" value="${not empty shippingRates ? (not empty shippingRates[0].carrierId ? shippingRates[0].carrierId : shippingRates[0].rateID) : '0'}">
                         <input type="hidden" name="carrierName" id="selectedCarrierName" value="${not empty shippingRates ? shippingRates[0].carrierName : 'Giao Hàng Tiết Kiệm'}">
                         <input type="hidden" name="estimatedDelivery" id="selectedEstimatedDelivery" value="${not empty shippingRates ? shippingRates[0].estimatedDelivery : '2-3 ngày'}">
 
                         <!-- Payment Method -->
-                        <h6 class="checkout__title"><i class="fa fa-credit-card"></i> Phương thức thanh toán</h6>
+                        <h6 class="checkout__title mt-4"><i class="fa fa-credit-card"></i> Phương thức thanh toán</h6>
                         <div class="payment-options mb-4">
                             <div class="payment-option selected" onclick="selectPayment(this, 'COD')">
                                 <input type="radio" name="paymentMethod" value="COD" checked style="display:none;">
@@ -225,7 +375,6 @@
                                 </div>
                                 <div id="voucherMessage"></div>
                                 
-                                <!-- Available vouchers hint -->
                                 <c:if test="${not empty vouchers}">
                                     <div class="mt-2">
                                         <small class="text-muted">Mã có sẵn: </small>
@@ -296,79 +445,291 @@
         </div>
     </section>
 
+    <!-- Address Modal -->
+    <div class="modal fade checkout-modal" id="addressModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa fa-map-marker"></i> Chọn địa chỉ giao hàng</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <c:choose>
+                        <c:when test="${empty addresses}">
+                            <div class="text-center py-4">
+                                <i class="fa fa-map-marker fa-3x text-muted mb-3"></i>
+                                <p>Bạn chưa có địa chỉ giao hàng nào</p>
+                                <a href="profile?tab=addresses&redirect=checkout" class="btn btn-primary">
+                                    <i class="fa fa-plus"></i> Thêm địa chỉ mới
+                                </a>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="address-list" id="addressList">
+                                <c:forEach var="addr" items="${addresses}">
+                                    <div class="address-card ${addr['default'] ? 'selected' : ''}" 
+                                         data-address-id="${addr.addressID}"
+                                         data-city="${addr.city}"
+                                         data-district="${addr.district}"
+                                         data-name="${addr.recipientName}"
+                                         data-phone="${addr.phone}"
+                                         data-full-address="${addr.fullAddress}"
+                                         data-is-default="${addr['default']}"
+                                         onclick="selectAddressInModal(this)">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <strong>${addr.recipientName}</strong> 
+                                                <span class="text-muted">| ${addr.phone}</span>
+                                                <c:if test="${addr['default']}">
+                                                    <span class="badge-default ml-2">Mặc định</span>
+                                                </c:if>
+                                            </div>
+                                            <i class="fa fa-check-circle text-danger" style="display: ${addr['default'] ? 'inline' : 'none'}; font-size: 20px;"></i>
+                                        </div>
+                                        <div class="mt-2 text-muted" style="font-size: 14px;">
+                                            <i class="fa fa-home"></i> ${addr.fullAddress}
+                                        </div>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="profile?tab=addresses&redirect=checkout" class="btn btn-outline-primary">
+                                    <i class="fa fa-plus"></i> Thêm địa chỉ mới
+                                </a>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                    <button type="button" class="site-btn" onclick="confirmAddressSelection()">Xác nhận</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shipping Modal -->
+    <div class="modal fade checkout-modal" id="shippingModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa fa-truck"></i> Chọn phương thức vận chuyển</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="shippingOptionsModal">
+                        <div class="loading-spinner">
+                            <i class="fa fa-spinner fa-spin"></i>
+                            <p class="text-muted mt-2">Đang tải phương thức vận chuyển...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                    <button type="button" class="site-btn" onclick="confirmShippingSelection()">Xác nhận</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <%@include file="footer.jsp"%>
 
     <script src="js/jquery-3.3.1.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+
     <script>
         // Hide preloader when page loads
         $(window).on('load', function() {
             $(".loader").fadeOut();
             $("#preloder").delay(200).fadeOut("slow");
         });
-        // Fallback: hide preloader after 2 seconds anyway
         setTimeout(function() {
             $(".loader").fadeOut();
             $("#preloder").fadeOut("slow");
         }, 2000);
         
         var subtotal = parseFloat($('#subtotalValue').val()) || 0;
-        var shippingFee = parseFloat($('input[name="shippingFee"]:checked').val()) || 30000;
+        var shippingFee = parseFloat($('#selectedShippingFee').val()) || 30000;
         var voucherDiscount = 0;
-
-        function selectAddress(el) {
-            $('.address-card').removeClass('selected');
-            $(el).addClass('selected');
-            $(el).find('input[type="radio"]').prop('checked', true);
-            
-            // Load shipping rates from Goship API for selected address
-            var city = $(el).data('city');
-            var district = $(el).data('district');
-            loadShippingRatesFromGoship(city, district);
-        }
+        
+        // Selected data
+        var selectedAddress = null;
+        var selectedShipping = null;
+        var shippingRatesData = [];
         
         // Cache for city/district IDs
         var cityCache = {};
         var districtCache = {};
         
-        function loadShippingRatesFromGoship(cityName, districtName) {
-            var $shippingOptions = $('#shippingOptions');
-            $shippingOptions.html('<div class="text-center p-3"><i class="fa fa-spinner fa-spin fa-2x"></i><br><small class="text-muted">Đang lấy phí vận chuyển từ Goship...</small></div>');
+        // Initialize selected address from default
+        $(document).ready(function() {
+            var $defaultAddr = $('.address-card.selected');
+            if ($defaultAddr.length > 0) {
+                selectedAddress = {
+                    id: $defaultAddr.data('address-id'),
+                    name: $defaultAddr.data('name'),
+                    phone: $defaultAddr.data('phone'),
+                    fullAddress: $defaultAddr.data('full-address'),
+                    city: $defaultAddr.data('city'),
+                    district: $defaultAddr.data('district'),
+                    isDefault: $defaultAddr.data('is-default')
+                };
+                $('#selectedAddressId').val(selectedAddress.id);
+                
+                // Load shipping rates for default address
+                loadShippingRatesFromGoship(selectedAddress.city, selectedAddress.district);
+            }
+        });
+        
+        // Open Address Modal
+        function openAddressModal() {
+            $('#addressModal').modal('show');
+        }
+        
+        // Select address in modal
+        function selectAddressInModal(el) {
+            $('#addressList .address-card').removeClass('selected');
+            $('#addressList .address-card .fa-check-circle').hide();
+            $(el).addClass('selected');
+            $(el).find('.fa-check-circle').show();
+        }
+        
+        // Confirm address selection
+        function confirmAddressSelection() {
+            var $selected = $('#addressList .address-card.selected');
+            if ($selected.length === 0) {
+                alert('Vui lòng chọn một địa chỉ');
+                return;
+            }
             
-            // First get city ID
+            selectedAddress = {
+                id: $selected.data('address-id'),
+                name: $selected.data('name'),
+                phone: $selected.data('phone'),
+                fullAddress: $selected.data('full-address'),
+                city: $selected.data('city'),
+                district: $selected.data('district'),
+                isDefault: $selected.data('is-default')
+            };
+            
+            // Update display
+            var html = '<strong>' + selectedAddress.name + '</strong> | ' + selectedAddress.phone;
+            if (selectedAddress.isDefault) {
+                html += ' <span class="badge-default ml-1">Mặc định</span>';
+            }
+            html += '<br><span class="text-muted"><i class="fa fa-home"></i> ' + selectedAddress.fullAddress + '</span>';
+            
+            $('#selectedAddressDisplay').html(html);
+            $('#selectedAddressId').val(selectedAddress.id);
+            
+            // Update section style
+            $('#addressSection').removeClass('empty');
+            if (!$('#addressSection .section-header').length) {
+                $('#addressSection').html(
+                    '<div class="section-header">' +
+                    '<span class="section-title"><i class="fa fa-map-marker"></i> Địa chỉ giao hàng</span>' +
+                    '<span class="section-action">Thay đổi <i class="fa fa-chevron-right"></i></span>' +
+                    '</div>' +
+                    '<div class="section-content" id="selectedAddressDisplay">' + html + '</div>'
+                );
+            }
+            
+            // Enable checkout button
+            $('.btn-checkout').prop('disabled', false);
+            
+            // Close modal and load shipping rates
+            $('#addressModal').modal('hide');
+            loadShippingRatesFromGoship(selectedAddress.city, selectedAddress.district);
+        }
+        
+        // Open Shipping Modal
+        function openShippingModal() {
+            if (!selectedAddress) {
+                alert('Vui lòng chọn địa chỉ giao hàng trước');
+                openAddressModal();
+                return;
+            }
+            
+            $('#shippingModal').modal('show');
+            
+            // If no rates loaded yet, load them
+            if (shippingRatesData.length === 0) {
+                loadShippingRatesForModal(selectedAddress.city, selectedAddress.district);
+            } else {
+                renderShippingOptionsInModal(shippingRatesData);
+            }
+        }
+        
+        // Load shipping rates from Goship
+        function loadShippingRatesFromGoship(cityName, districtName) {
+            // Show loading in shipping section
+            $('#selectedShippingDisplay').html('<span class="text-muted"><i class="fa fa-spinner fa-spin"></i> Đang tải phí vận chuyển...</span>');
+            
             getCityId(cityName, function(cityId) {
                 if (!cityId) {
-                    showDefaultShippingRates('Không tìm thấy thành phố: ' + cityName);
+                    useDefaultShippingRates('Không tìm thấy thành phố');
                     return;
                 }
                 
-                // Then get district ID
                 getDistrictId(cityId, districtName, function(districtId) {
                     if (!districtId) {
-                        showDefaultShippingRates('Không tìm thấy quận/huyện: ' + districtName);
+                        useDefaultShippingRates('Không tìm thấy quận/huyện');
                         return;
                     }
                     
-                    // Finally get shipping rates
                     $.ajax({
                         url: 'api/goship/rates',
                         method: 'GET',
-                        data: { 
-                            toCityId: cityId, 
-                            toDistrictId: districtId,
-                            weight: 500
-                        },
+                        data: { toCityId: cityId, toDistrictId: districtId, weight: 500 },
                         dataType: 'json',
                         timeout: 10000,
                         success: function(data) {
                             if (data.success && data.rates && data.rates.length > 0) {
-                                renderShippingRates(data.rates);
+                                shippingRatesData = data.rates;
+                                selectFirstShippingRate();
                             } else {
-                                showDefaultShippingRates(data.message || 'Không lấy được phí vận chuyển');
+                                useDefaultShippingRates(data.message || 'Không lấy được phí vận chuyển');
                             }
                         },
                         error: function() {
-                            showDefaultShippingRates('Lỗi kết nối Goship API');
+                            useDefaultShippingRates('Lỗi kết nối API');
+                        }
+                    });
+                });
+            });
+        }
+        
+        function loadShippingRatesForModal(cityName, districtName) {
+            $('#shippingOptionsModal').html('<div class="loading-spinner"><i class="fa fa-spinner fa-spin"></i><p class="text-muted mt-2">Đang tải phương thức vận chuyển...</p></div>');
+            
+            getCityId(cityName, function(cityId) {
+                if (!cityId) {
+                    renderDefaultShippingInModal('Không tìm thấy thành phố');
+                    return;
+                }
+                
+                getDistrictId(cityId, districtName, function(districtId) {
+                    if (!districtId) {
+                        renderDefaultShippingInModal('Không tìm thấy quận/huyện');
+                        return;
+                    }
+                    
+                    $.ajax({
+                        url: 'api/goship/rates',
+                        method: 'GET',
+                        data: { toCityId: cityId, toDistrictId: districtId, weight: 500 },
+                        dataType: 'json',
+                        timeout: 10000,
+                        success: function(data) {
+                            if (data.success && data.rates && data.rates.length > 0) {
+                                shippingRatesData = data.rates;
+                                renderShippingOptionsInModal(data.rates);
+                            } else {
+                                renderDefaultShippingInModal(data.message || 'Không lấy được phí vận chuyển');
+                            }
+                        },
+                        error: function() {
+                            renderDefaultShippingInModal('Lỗi kết nối API');
                         }
                     });
                 });
@@ -376,7 +737,6 @@
         }
         
         function getCityId(cityName, callback) {
-            // Check cache
             if (cityCache[cityName]) {
                 callback(cityCache[cityName]);
                 return;
@@ -402,9 +762,7 @@
                     }
                     callback(null);
                 },
-                error: function() {
-                    callback(null);
-                }
+                error: function() { callback(null); }
             });
         }
         
@@ -436,20 +794,41 @@
                     }
                     callback(null);
                 },
-                error: function() {
-                    callback(null);
-                }
+                error: function() { callback(null); }
             });
         }
         
-        function renderShippingRates(rates) {
+        function selectFirstShippingRate() {
+            if (shippingRatesData.length > 0) {
+                var rate = shippingRatesData[0];
+                selectedShipping = rate;
+                shippingFee = rate.price;
+                
+                $('#selectedShippingFee').val(rate.price);
+                $('#selectedCarrierId').val(rate.id);
+                $('#selectedCarrierName').val(rate.carrierName);
+                $('#selectedEstimatedDelivery').val(rate.estimatedDelivery);
+                
+                updateShippingDisplay();
+                updateTotal();
+            }
+        }
+        
+        function useDefaultShippingRates(message) {
+            console.log('[Checkout] Using default rates: ' + message);
+            shippingRatesData = [
+                { id: '1', carrierName: 'Giao Hàng Tiết Kiệm', serviceName: 'Giao Chuẩn', price: 30000, estimatedDelivery: '3-5 ngày' },
+                { id: '2', carrierName: 'Giao Hàng Nhanh', serviceName: 'Giao Nhanh', price: 45000, estimatedDelivery: '1-2 ngày' },
+                { id: '3', carrierName: 'Viettel Post', serviceName: 'Chuyển phát thường', price: 25000, estimatedDelivery: '3-5 ngày' }
+            ];
+            selectFirstShippingRate();
+        }
+        
+        function renderShippingOptionsInModal(rates) {
             var html = '';
             rates.forEach(function(rate, index) {
-                var selected = index === 0 ? 'selected' : '';
-                var checked = index === 0 ? 'checked' : '';
-                html += '<div class="shipping-option ' + selected + '" data-price="' + rate.price + '" data-rate-id="' + rate.id + '" onclick="selectShipping(this)">';
-                html += '<input type="radio" name="shippingFee" value="' + rate.price + '" ' + checked + ' style="display:none;">';
-                html += '<input type="hidden" class="carrier-id" value="' + rate.id + '">';
+                var selected = (selectedShipping && selectedShipping.id === rate.id) || (!selectedShipping && index === 0);
+                html += '<div class="shipping-option ' + (selected ? 'selected' : '') + '" data-index="' + index + '" onclick="selectShippingInModal(this, ' + index + ')">';
                 html += '<div class="d-flex justify-content-between align-items-center">';
                 html += '<div>';
                 if (rate.carrierLogo) {
@@ -459,80 +838,77 @@
                 html += '<span class="text-muted"> - ' + rate.serviceName + '</span>';
                 html += '<br><small class="text-muted"><i class="fa fa-clock-o"></i> ' + rate.estimatedDelivery + '</small>';
                 html += '</div>';
+                html += '<div class="text-right">';
                 html += '<strong class="text-danger">' + formatCurrency(rate.price) + 'đ</strong>';
+                html += '<br><i class="fa fa-check-circle text-danger" style="font-size: 18px; display: ' + (selected ? 'inline' : 'none') + ';"></i>';
+                html += '</div>';
                 html += '</div></div>';
             });
             
-            $('#shippingOptions').html(html);
-            
-            // Update shipping fee with first rate
-            if (rates.length > 0) {
-                shippingFee = rates[0].price;
-                $('#selectedCarrierId').val(rates[0].id);
-                $('#selectedCarrierName').val(rates[0].carrierName);
-                $('#selectedEstimatedDelivery').val(rates[0].estimatedDelivery);
-                updateTotal();
-            }
+            $('#shippingOptionsModal').html(html);
         }
         
-        function showDefaultShippingRates(message) {
-            console.log('[Checkout] Using default rates: ' + message);
-            var html = '';
-            html += '<div class="alert alert-info mb-2" style="font-size:12px;"><i class="fa fa-info-circle"></i> ' + message + '. Sử dụng giá mặc định.</div>';
-            
-            var defaultRates = [
+        function renderDefaultShippingInModal(message) {
+            shippingRatesData = [
                 { id: '1', carrierName: 'Giao Hàng Tiết Kiệm', serviceName: 'Giao Chuẩn', price: 30000, estimatedDelivery: '3-5 ngày' },
                 { id: '2', carrierName: 'Giao Hàng Nhanh', serviceName: 'Giao Nhanh', price: 45000, estimatedDelivery: '1-2 ngày' },
                 { id: '3', carrierName: 'Viettel Post', serviceName: 'Chuyển phát thường', price: 25000, estimatedDelivery: '3-5 ngày' }
             ];
             
-            defaultRates.forEach(function(rate, index) {
-                var selected = index === 0 ? 'selected' : '';
-                var checked = index === 0 ? 'checked' : '';
-                html += '<div class="shipping-option ' + selected + '" data-price="' + rate.price + '" data-rate-id="' + rate.id + '" onclick="selectShipping(this)">';
-                html += '<input type="radio" name="shippingFee" value="' + rate.price + '" ' + checked + ' style="display:none;">';
-                html += '<input type="hidden" class="carrier-id" value="' + rate.id + '">';
+            var html = '<div class="alert alert-info mb-3" style="font-size:13px;"><i class="fa fa-info-circle"></i> ' + message + '. Sử dụng giá mặc định.</div>';
+            
+            shippingRatesData.forEach(function(rate, index) {
+                var selected = index === 0;
+                html += '<div class="shipping-option ' + (selected ? 'selected' : '') + '" data-index="' + index + '" onclick="selectShippingInModal(this, ' + index + ')">';
                 html += '<div class="d-flex justify-content-between align-items-center">';
                 html += '<div><strong>' + rate.carrierName + '</strong><span class="text-muted"> - ' + rate.serviceName + '</span>';
                 html += '<br><small class="text-muted"><i class="fa fa-clock-o"></i> ' + rate.estimatedDelivery + '</small></div>';
+                html += '<div class="text-right">';
                 html += '<strong class="text-danger">' + formatCurrency(rate.price) + 'đ</strong>';
+                html += '<br><i class="fa fa-check-circle text-danger" style="font-size: 18px; display: ' + (selected ? 'inline' : 'none') + ';"></i>';
+                html += '</div>';
                 html += '</div></div>';
             });
             
-            $('#shippingOptions').html(html);
-            shippingFee = 30000;
-            $('#selectedCarrierId').val('1');
-            updateTotal();
+            $('#shippingOptionsModal').html(html);
         }
         
-        // Auto-load shipping rates for default address on page load
-        $(document).ready(function() {
-            var $selectedAddress = $('.address-card.selected');
-            if ($selectedAddress.length > 0) {
-                var city = $selectedAddress.data('city');
-                var district = $selectedAddress.data('district');
-                if (city && district) {
-                    loadShippingRatesFromGoship(city, district);
-                }
-            }
-        });
-
-        function selectShipping(el) {
-            $('.shipping-option').removeClass('selected');
+        function selectShippingInModal(el, index) {
+            $('#shippingOptionsModal .shipping-option').removeClass('selected');
+            $('#shippingOptionsModal .shipping-option .fa-check-circle').hide();
             $(el).addClass('selected');
-            $(el).find('input[type="radio"]').prop('checked', true);
-            shippingFee = parseFloat($(el).data('price')) || 30000;
+            $(el).find('.fa-check-circle').show();
+        }
+        
+        function confirmShippingSelection() {
+            var $selected = $('#shippingOptionsModal .shipping-option.selected');
+            if ($selected.length === 0) {
+                alert('Vui lòng chọn phương thức vận chuyển');
+                return;
+            }
             
-            // Update carrier ID, name, and estimated delivery
-            var carrierId = $(el).find('.carrier-id').val();
-            var carrierName = $(el).find('strong').first().text();
-            var estimatedDelivery = $(el).find('small').text().replace(/.*\s/, ''); // Get delivery time
+            var index = $selected.data('index');
+            selectedShipping = shippingRatesData[index];
+            shippingFee = selectedShipping.price;
             
-            $('#selectedCarrierId').val(carrierId);
-            $('#selectedCarrierName').val(carrierName);
-            $('#selectedEstimatedDelivery').val(estimatedDelivery);
+            $('#selectedShippingFee').val(selectedShipping.price);
+            $('#selectedCarrierId').val(selectedShipping.id);
+            $('#selectedCarrierName').val(selectedShipping.carrierName);
+            $('#selectedEstimatedDelivery').val(selectedShipping.estimatedDelivery);
             
+            updateShippingDisplay();
             updateTotal();
+            
+            $('#shippingModal').modal('hide');
+        }
+        
+        function updateShippingDisplay() {
+            if (selectedShipping) {
+                var html = '<strong>' + selectedShipping.carrierName + '</strong> - ' + selectedShipping.serviceName;
+                html += '<br><span class="text-muted"><i class="fa fa-clock-o"></i> ' + selectedShipping.estimatedDelivery + '</span>';
+                html += '<span class="text-danger float-right">' + formatCurrency(selectedShipping.price) + 'đ</span>';
+                $('#selectedShippingDisplay').html(html);
+            }
         }
 
         function selectPayment(el, method) {
@@ -548,7 +924,6 @@
                 return;
             }
             
-            // Show loading
             $('#voucherMessage').html('<span class="text-muted"><i class="fa fa-spinner fa-spin"></i> Đang kiểm tra...</span>');
             
             $.ajax({
@@ -591,13 +966,13 @@
         
         // Form validation
         $('#checkoutForm').on('submit', function(e) {
-            if (!$('input[name="addressId"]:checked').val()) {
+            if (!$('#selectedAddressId').val()) {
                 e.preventDefault();
                 alert('Vui lòng chọn địa chỉ giao hàng');
+                openAddressModal();
                 return false;
             }
             
-            // Show loading on button
             $(this).find('button[type="submit"]').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Đang xử lý...');
         });
     </script>

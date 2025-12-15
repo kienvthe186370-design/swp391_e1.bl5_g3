@@ -79,7 +79,7 @@
         <div class="offcanvas__links">
             <c:choose>
                 <c:when test="${isLoggedIn}">
-                    <a href="<%= request.getContextPath() %>/customer/profile">
+                    <a href="<%= request.getContextPath() %>/profile">
                         <i class="fa fa-user"></i> ${userName}
                     </a>
                     <a href="<%= request.getContextPath() %>/logout">Đăng xuất</a>
@@ -139,7 +139,7 @@
                                     
                                     <!-- Customer Profile & Actions -->
                                     <c:if test="${userRole == 'customer'}">
-                                        <a href="<%= request.getContextPath() %>/customer/profile">
+                                        <a href="<%= request.getContextPath() %>/profile">
                                             <i class="fa fa-user"></i> ${userName}
                                         </a>
                                         <a href="<%= request.getContextPath() %>/customer/orders">
