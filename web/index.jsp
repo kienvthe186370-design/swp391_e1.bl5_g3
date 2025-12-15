@@ -66,15 +66,15 @@
 </section>
     <!-- Hero Section End -->
 
-    <!-- Top Selling Products by Category Section Begin -->
+    <!-- Newest Products by Category Section Begin -->
     <section class="categories spad">
         <div class="container">
-            <!-- Top Vợt Bán Chạy -->
+            <!-- Vợt Mới Nhất -->
             <div class="row mb-5">
                 <div class="col-lg-12">
                     <div class="section-title">
-                        <span>Sản phẩm bán chạy</span>
-                        <h2>Top Vợt Pickleball</h2>
+                        <span>Sản phẩm mới nhất</span>
+                        <h2>Vợt Pickleball Mới Nhất</h2>
                     </div>
                 </div>
             </div>
@@ -86,9 +86,7 @@
                                  style="cursor: pointer;" 
                                  onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
                                 
-                                <c:if test="${product.totalSold > 0}">
-                                    <span class="label" style="background: #e53637;">Bán chạy</span>
-                                </c:if>
+                                <span class="label" style="background: #28a745;">Mới</span>
                                 
                                 <ul class="product__hover">
                                     <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
@@ -121,12 +119,6 @@
                                         <h5>Liên hệ</h5>
                                     </c:otherwise>
                                 </c:choose>
-                                
-                                <c:if test="${product.totalSold > 0}">
-                                    <small style="color: #666; font-size: 12px;">
-                                        <i class="fa fa-shopping-cart"></i> Đã bán: ${product.totalSold}
-                                    </small>
-                                </c:if>
                             </div>
                         </div>
                     </div>
@@ -139,11 +131,11 @@
                 </c:if>
             </div>
             
-            <!-- Top Bóng Bán Chạy -->
+            <!-- Bóng Mới Nhất -->
             <div class="row mb-5 mt-5">
                 <div class="col-lg-12">
                     <div class="section-title">
-                        <h2>Top Bóng Pickleball</h2>
+                        <h2>Bóng Pickleball Mới Nhất</h2>
                     </div>
                 </div>
             </div>
@@ -155,9 +147,7 @@
                                  style="cursor: pointer;" 
                                  onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
                                 
-                                <c:if test="${product.totalSold > 0}">
-                                    <span class="label" style="background: #e53637;">Bán chạy</span>
-                                </c:if>
+                                <span class="label" style="background: #28a745;">Mới</span>
                                 
                                 <ul class="product__hover">
                                     <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
@@ -190,12 +180,6 @@
                                         <h5>Liên hệ</h5>
                                     </c:otherwise>
                                 </c:choose>
-                                
-                                <c:if test="${product.totalSold > 0}">
-                                    <small style="color: #666; font-size: 12px;">
-                                        <i class="fa fa-shopping-cart"></i> Đã bán: ${product.totalSold}
-                                    </small>
-                                </c:if>
                             </div>
                         </div>
                     </div>
@@ -208,11 +192,11 @@
                 </c:if>
             </div>
             
-            <!-- Top Trang Phục Bán Chạy -->
+            <!-- Trang Phục Mới Nhất -->
             <div class="row mb-5 mt-5">
                 <div class="col-lg-12">
                     <div class="section-title">
-                        <h2>Top Trang Phục</h2>
+                        <h2>Trang Phục Mới Nhất</h2>
                     </div>
                 </div>
             </div>
@@ -224,9 +208,7 @@
                                  style="cursor: pointer;" 
                                  onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
                                 
-                                <c:if test="${product.totalSold > 0}">
-                                    <span class="label" style="background: #e53637;">Bán chạy</span>
-                                </c:if>
+                                <span class="label" style="background: #28a745;">Mới</span>
                                 
                                 <ul class="product__hover">
                                     <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
@@ -259,12 +241,6 @@
                                         <h5>Liên hệ</h5>
                                     </c:otherwise>
                                 </c:choose>
-                                
-                                <c:if test="${product.totalSold > 0}">
-                                    <small style="color: #666; font-size: 12px;">
-                                        <i class="fa fa-shopping-cart"></i> Đã bán: ${product.totalSold}
-                                    </small>
-                                </c:if>
                             </div>
                         </div>
                     </div>
@@ -278,7 +254,7 @@
             </div>
         </div>
     </section>
-    <!-- Top Selling Products by Category Section End -->
+    <!-- Newest Products by Category Section End -->
 
     <!-- Brands Section Begin -->
     <section class="brands spad" style="background: #f3f2ee;">

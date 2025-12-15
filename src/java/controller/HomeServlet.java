@@ -82,17 +82,17 @@ public class HomeServlet extends HttpServlet {
             request.setAttribute("categories", categories);
             System.out.println("✅ Loaded " + (categories != null ? categories.size() : 0) + " categories");
             
-            // 4. Load Top Selling Products by Category
-            // Giả sử: CategoryID 1 = Vợt, 2 = Bóng, 3 = Trang phục
+            // 4. Load Newest Products by Category
+            // CategoryID 1 = Vợt, 2 = Bóng, 3 = Trang phục
             // Bạn cần điều chỉnh theo CategoryID thực tế trong database
-            List<java.util.Map<String, Object>> topRackets = productDAO.getTopSellingProductsByCategory(1, 4);
-            List<java.util.Map<String, Object>> topBalls = productDAO.getTopSellingProductsByCategory(2, 4);
-            List<java.util.Map<String, Object>> topClothing = productDAO.getTopSellingProductsByCategory(3, 4);
+            List<java.util.Map<String, Object>> topRackets = productDAO.getNewestProductsByCategory(1, 4);
+            List<java.util.Map<String, Object>> topBalls = productDAO.getNewestProductsByCategory(2, 4);
+            List<java.util.Map<String, Object>> topClothing = productDAO.getNewestProductsByCategory(3, 4);
             
             request.setAttribute("topRackets", topRackets);
             request.setAttribute("topBalls", topBalls);
             request.setAttribute("topClothing", topClothing);
-            System.out.println("✅ Loaded top selling: Rackets=" + topRackets.size() + ", Balls=" + topBalls.size() + ", Clothing=" + topClothing.size());
+            System.out.println("✅ Loaded newest products: Rackets=" + topRackets.size() + ", Balls=" + topBalls.size() + ", Clothing=" + topClothing.size());
             
             // 5. Load Active Brands
             DAO.BrandDAO brandDAO = new DAO.BrandDAO();
