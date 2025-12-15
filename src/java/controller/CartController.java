@@ -302,6 +302,16 @@ public class CartController extends HttpServlet {
                 String source = request.getParameter("source");
                 if ("product-detail".equals(source)) {
                     response.sendRedirect(request.getContextPath() + "/product-detail?id=" + productID + "&success=added_to_cart");
+                } else if ("shop".equals(source)) {
+    // Stay on shop page with success message
+    String referer = request.getHeader("Referer");
+    if (referer != null && referer.contains("/shop")) {
+        response.sendRedirect(referer + (referer.contains("?") ? "&" : "?") + "success=added_to_cart");
+    } else {
+        response.sendRedirect(request.getContextPath() + "/shop?success=added_to_cart");
+    }
+
+
                 } else {
                     response.sendRedirect(request.getContextPath() + "/cart?success=added");
                 }
