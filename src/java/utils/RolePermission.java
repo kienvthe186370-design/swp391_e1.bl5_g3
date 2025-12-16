@@ -167,7 +167,7 @@ public class RolePermission {
             return canManageCatalog(role);
         }
 
-        if (path.startsWith("/slider") || path.startsWith("/banner") || path.startsWith("/blog")) {
+        if (path.startsWith("/slider") || path.startsWith("/banner") || path.startsWith("/blog") || path.startsWith("/discount")) {
             return canManageMarketing(role);
         }
 

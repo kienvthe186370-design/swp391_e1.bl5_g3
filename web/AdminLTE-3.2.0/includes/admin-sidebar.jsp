@@ -47,6 +47,8 @@
     
     // Marketing pages
     boolean isSliderPage = currentURI.contains("/admin/slider");
+    boolean isBlogPage = currentURI.contains("/admin/blog");
+    boolean isPromotionPage = currentURI.contains("/admin/discount");
     
     // Order pages
     boolean isOrderPage = currentURI.contains("/admin/order");
@@ -64,6 +66,7 @@
     boolean isProductManagement = isProductPage || isStockPage; // Products and Stock pages
     boolean isCatalogManagement = isCategoryPage || isBrandPage || isAttributePage; // Categories, Brands, Attributes
     boolean isMarketing = isSliderPage;
+    
     
     // ===== ROLE-BASED ACCESS CONTROL FLAGS =====
     // Admin: giữ nguyên tất cả menu như cũ (code của bạn bạn)
@@ -231,6 +234,24 @@
                  class="nav-link <%= isSliderPage ? "active" : "" %>">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Sliders</p>
+              </a>
+            </li>
+          </ul>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/blog" 
+                 class="nav-link <%= isBlogPage ? "active" : "" %>">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Blog</p>
+              </a>
+            </li>
+          </ul>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/discount" 
+                 class="nav-link <%= isPromotionPage ? "active" : "" %>">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Promotion</p>
               </a>
             </li>
           </ul>
@@ -433,6 +454,24 @@
                  class="nav-link <%= isSliderPage ? "active" : "" %>">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Sliders</p>
+              </a>
+            </li>
+          </ul>
+                <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/blog" 
+                 class="nav-link <%= isBlogPage ? "active" : "" %>">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Blog</p>
+              </a>
+            </li>
+          </ul>
+                <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/discount" 
+                 class="nav-link <%= isPromotionPage ? "active" : "" %>">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Promotion</p>
               </a>
             </li>
           </ul>
