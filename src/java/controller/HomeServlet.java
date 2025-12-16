@@ -6,9 +6,12 @@
 package controller;
 
 import DAO.SliderDAO;
+import DAO.DiscountCampaignDAO;
 import entity.Slider;
+import entity.DiscountCampaign;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -70,9 +73,15 @@ public class HomeServlet extends HttpServlet {
             
             // 2. Load Featured Products (12 sản phẩm mới nhất)
             DAO.ProductDAO productDAO = new DAO.ProductDAO();
+            DiscountCampaignDAO discountDAO = new DiscountCampaignDAO();
+            
             List<java.util.Map<String, Object>> featuredProducts = productDAO.getProducts(
                 null, null, null, true, "date", "desc", 1, 12
             );
+            
+            // Add promotion info to featured products
+            addPromotionInfo(featuredProducts, discountDAO);
+            
             request.setAttribute("featuredProducts", featuredProducts);
             System.out.println("✅ Loaded " + (featuredProducts != null ? featuredProducts.size() : 0) + " products");
             
@@ -88,6 +97,11 @@ public class HomeServlet extends HttpServlet {
             List<java.util.Map<String, Object>> topRackets = productDAO.getNewestProductsByCategory(1, 4);
             List<java.util.Map<String, Object>> topBalls = productDAO.getNewestProductsByCategory(2, 4);
             List<java.util.Map<String, Object>> topClothing = productDAO.getNewestProductsByCategory(3, 4);
+            
+            // Add promotion info
+            addPromotionInfo(topRackets, discountDAO);
+            addPromotionInfo(topBalls, discountDAO);
+            addPromotionInfo(topClothing, discountDAO);
             
             request.setAttribute("topRackets", topRackets);
             request.setAttribute("topBalls", topBalls);
@@ -156,5 +170,47 @@ public class HomeServlet extends HttpServlet {
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
+    
+    /**
+     * Helper method to add promotion info to product list
+     */
+    private void addPromotionInfo(List<java.util.Map<String, Object>> products, DiscountCampaignDAO discountDAO) {
+        if (products == null || products.isEmpty()) return;
+        
+        for (java.util.Map<String, Object> product : products) {
+            Integer productId = (Integer) product.get("productID");
+            Integer catId = (Integer) product.get("categoryID");
+            Integer brId = (Integer) product.get("brandID");
+            BigDecimal minPrice = (BigDecimal) product.get("minPrice");
+            
+            if (productId != null && minPrice != null) {
+                DiscountCampaign bestCampaign = discountDAO.getBestCampaignForProduct(
+                    productId, catId, brId, minPrice
+                );
+                
+                if (bestCampaign != null) {
+                    BigDecimal discountAmount = discountDAO.calculateDiscount(bestCampaign, minPrice);
+                    BigDecimal finalPrice = discountDAO.calculateFinalPrice(bestCampaign, minPrice);
+                    
+                    product.put("hasPromotion", true);
+                    product.put("promotionCampaign", bestCampaign);
+                    product.put("discountAmount", discountAmount);
+                    product.put("finalPrice", finalPrice);
+                    
+                    // Calculate discount percentage for display
+                    if ("percentage".equals(bestCampaign.getDiscountType())) {
+                        product.put("discountPercent", bestCampaign.getDiscountValue().intValue());
+                    } else {
+                        // For fixed discount, calculate percentage
+                        BigDecimal percent = discountAmount.multiply(new BigDecimal("100"))
+                                                          .divide(minPrice, 0, BigDecimal.ROUND_HALF_UP);
+                        product.put("discountPercent", percent.intValue());
+                    }
+                } else {
+                    product.put("hasPromotion", false);
+                }
+            }
+        }
+    }
 
 }

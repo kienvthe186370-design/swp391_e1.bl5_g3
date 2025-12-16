@@ -1,6 +1,8 @@
 package controller;
 
 import DAO.ProductDAO;
+import DAO.DiscountCampaignDAO;
+import entity.DiscountCampaign;
 import java.io.IOException;
 import java.math.BigDecimal;
 import jakarta.servlet.ServletException;
@@ -15,10 +17,12 @@ import java.util.Map;
 public class ShopServlet extends HttpServlet {
     
     private ProductDAO productDAO;
+    private DiscountCampaignDAO discountDAO;
     
     @Override
     public void init() throws ServletException {
         productDAO = new ProductDAO();
+        discountDAO = new DiscountCampaignDAO();
     }
     
     @Override
@@ -66,6 +70,42 @@ public class ShopServlet extends HttpServlet {
             List<Map<String, Object>> products = productDAO.getProductsWithPriceFilter(
                 search, categoryId, brandId, minPrice, maxPrice, true, sortBy, sortOrder, page, pageSize
             );
+            
+            // Add promotion info to each product
+            for (Map<String, Object> product : products) {
+                Integer productId = (Integer) product.get("productID");
+                Integer catId = (Integer) product.get("categoryID");
+                Integer brId = (Integer) product.get("brandID");
+                BigDecimal minPriceProduct = (BigDecimal) product.get("minPrice");
+                
+                if (productId != null && minPriceProduct != null) {
+                    DiscountCampaign bestCampaign = discountDAO.getBestCampaignForProduct(
+                        productId, catId, brId, minPriceProduct
+                    );
+                    
+                    if (bestCampaign != null) {
+                        BigDecimal discountAmount = discountDAO.calculateDiscount(bestCampaign, minPriceProduct);
+                        BigDecimal finalPrice = discountDAO.calculateFinalPrice(bestCampaign, minPriceProduct);
+                        
+                        product.put("hasPromotion", true);
+                        product.put("promotionCampaign", bestCampaign);
+                        product.put("discountAmount", discountAmount);
+                        product.put("finalPrice", finalPrice);
+                        
+                        // Calculate discount percentage for display
+                        if ("percentage".equals(bestCampaign.getDiscountType())) {
+                            product.put("discountPercent", bestCampaign.getDiscountValue().intValue());
+                        } else {
+                            // For fixed discount, calculate percentage
+                            BigDecimal percent = discountAmount.multiply(new BigDecimal("100"))
+                                                              .divide(minPriceProduct, 0, BigDecimal.ROUND_HALF_UP);
+                            product.put("discountPercent", percent.intValue());
+                        }
+                    } else {
+                        product.put("hasPromotion", false);
+                    }
+                }
+            }
             
             // Get total count for pagination
             int totalProducts = productDAO.getTotalProductsWithPriceFilter(search, categoryId, brandId, minPrice, maxPrice, true);

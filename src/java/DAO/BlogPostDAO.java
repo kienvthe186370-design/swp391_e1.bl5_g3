@@ -20,7 +20,7 @@ public class BlogPostDAO {
     public List<BlogPost> search(String keyword, String status) throws SQLException {
         List<BlogPost> list = new ArrayList<>();
         String sql = """
-                SELECT  p.PostID, p.Title, p.Slug, p.Status, p.PublishedDate,
+                SELECT  p.PostID, p.Title, p.Slug, p.FeaturedImage, p.Summary, p.Status, p.PublishedDate,
                         p.ViewCount, p.CreatedDate, p.UpdatedDate,
                         e.FullName AS AuthorName
                 FROM    BlogPosts p
@@ -55,6 +55,8 @@ public class BlogPostDAO {
                     p.setPostId(rs.getInt("PostID"));
                     p.setTitle(rs.getString("Title"));
                     p.setSlug(rs.getString("Slug"));
+                    p.setFeaturedImage(rs.getString("FeaturedImage"));
+                    p.setSummary(rs.getString("Summary"));
                     p.setStatus(rs.getString("Status"));
                     p.setViewCount(rs.getInt("ViewCount"));
                     Timestamp pub = rs.getTimestamp("PublishedDate");
