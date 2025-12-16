@@ -288,7 +288,7 @@
                         <!-- Category Filter -->
                         <div class="shop__sidebar__filter">
                             <h5 class="shop__sidebar__title">DANH MỤC</h5>
-                            <c:forEach var="cat" items="${categories}">
+                            <c:forEach var="cat" items="${categoriesForFilter}">
                                 <label>
                                     <input type="checkbox" 
                                            onchange="filterByCategory(${cat.categoryID})"

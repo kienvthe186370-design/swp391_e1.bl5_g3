@@ -1135,6 +1135,7 @@
             $.ajax({
                 url: '${pageContext.request.contextPath}/cart',
                 type: 'POST',
+                dataType: 'json',
                 data: {
                     action: 'add',
                     productId: productId,
@@ -1144,15 +1145,23 @@
                 success: function(response) {
                     if (response.success) {
                         alert('Đã thêm sản phẩm vào giỏ hàng!');
-                        // Update cart count if exists
+                        // Update cart count and total in header
                         if (response.cartCount !== undefined) {
                             $('.cart-count').text(response.cartCount);
                         }
+                        if (response.cartTotal !== undefined) {
+                            $('.cart-total').text(formatPrice(response.cartTotal) + '₫');
+                        }
                     } else {
-                        alert(response.message || 'Có lỗi xảy ra, vui lòng thử lại');
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        } else {
+                            alert(response.message || 'Có lỗi xảy ra, vui lòng thử lại');
+                        }
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('Add to cart error:', status, error);
                     // Fallback: redirect to cart page
                     window.location.href = '${pageContext.request.contextPath}/cart?action=add&productId=' + productId + '&variantId=' + variantId + '&quantity=' + quantity;
                 }
