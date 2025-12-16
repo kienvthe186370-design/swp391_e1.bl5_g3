@@ -15,10 +15,10 @@
                     <div class="footer__widget">
                         <h6>Shopping</h6>
                         <ul>
-                            <li><a href="#">Clothing Store</a></li>
-                            <li><a href="#">Trending Shoes</a></li>
+                            <li><a href="#">Pickleball Balls</a></li>
+                            <li><a href="#">Sportswear</a></li>
                             <li><a href="#">Accessories</a></li>
-                            <li><a href="#">Sale</a></li>
+                            <li><a href="#">Pickleball Paddles</a></li>
                         </ul>
                     </div>
                 </div>
@@ -53,7 +53,7 @@
                         <p>Copyright ©
                             <script>
                                 document.write(new Date().getFullYear());
-                            </script>2020
+                            </script>
                             All rights reserved 
                         </p>
                         <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->

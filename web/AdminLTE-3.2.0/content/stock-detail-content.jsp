@@ -63,7 +63,7 @@
                         <div class="d-flex">
                             <c:choose>
                                 <c:when test="${not empty stockDetail.mainImage}">
-                                    <img src="${stockDetail.mainImage}" alt="Product" class="product-image mr-3">
+                                    <img src="${pageContext.request.contextPath}${stockDetail.mainImage}" alt="Product" class="product-image mr-3">
                                 </c:when>
                                 <c:otherwise>
                                     <img src="${pageContext.request.contextPath}/img/product/product-1.jpg" alt="No image" class="product-image mr-3">

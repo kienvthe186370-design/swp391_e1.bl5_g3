@@ -99,6 +99,7 @@
                             <th style="width: 60px;">Ảnh</th>
                             <th>Sản phẩm / SKU</th>
                             <th class="text-center">Tồn kho</th>
+                            <th class="text-center">Đã giữ</th>
                             <th class="text-right">Giá vốn TB</th>
                             <th class="text-right">Giá bán</th>
                             <th class="text-right">Lợi nhuận</th>
@@ -136,6 +137,16 @@
                                         </c:when>
                                         <c:otherwise>
                                             <span class="text-danger font-weight-bold">${item.currentStock}</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td class="text-center">
+                                    <c:choose>
+                                        <c:when test="${item.reservedStock == 0}">
+                                            <span class="badge badge-light">0</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="badge badge-info">${item.reservedStock}</span>
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
@@ -177,7 +188,7 @@
                         </c:forEach>
                         <c:if test="${empty stockList}">
                             <tr>
-                                <td colspan="9" class="text-center py-4">
+                                <td colspan="10" class="text-center py-4">
                                     <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
                                     <p class="text-muted mb-0">Không có dữ liệu tồn kho.</p>
                                 </td>

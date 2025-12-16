@@ -226,7 +226,14 @@
                         <h4>Thanh toán</h4>
                         <div class="breadcrumb__links">
                             <a href="home">Trang chủ</a>
-                            <a href="cart">Giỏ hàng</a>
+                            <c:choose>
+                                <c:when test="${buyNowMode}">
+                                    <a href="product-detail?id=${buyNowItem.productId}">Sản phẩm</a>
+                                </c:when>
+                                <c:otherwise>
+                                    <a href="cart">Giỏ hàng</a>
+                                </c:otherwise>
+                            </c:choose>
                             <span>Thanh toán</span>
                         </div>
                     </div>
@@ -348,23 +355,49 @@
                         <div class="checkout__order">
                             <h4 class="order__title"><i class="fa fa-shopping-bag"></i> Đơn hàng của bạn</h4>
                             
-                            <!-- Cart Items -->
+                            <!-- Cart Items / Buy Now Item -->
                             <div class="checkout__order__products" style="font-weight:600; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 10px;">
                                 Sản phẩm <span style="float:right;">Thành tiền</span>
                             </div>
                             <ul class="checkout__total__products" style="list-style: none; padding: 0; margin: 0 0 20px 0;">
-                                <c:forEach var="item" items="${cartItems}" varStatus="status">
-                                    <li>
-                                        <span style="flex:1;">${status.count}. ${item.productName} 
-                                            <c:if test="${not empty item.variantName}">
-                                                <small class="text-muted">(${item.variantName})</small>
-                                            </c:if>
-                                            <strong>x${item.quantity}</strong>
-                                        </span>
-                                        <span><fmt:formatNumber value="${item.total}" type="number" groupingUsed="true" maxFractionDigits="0"/>đ</span>
-                                    </li>
-                                </c:forEach>
+                                <c:choose>
+                                    <%-- Chế độ Mua ngay --%>
+                                    <c:when test="${buyNowMode}">
+                                        <li>
+                                            <span style="flex:1;">1. ${buyNowItem.productName} 
+                                                <c:if test="${not empty buyNowItem.variantName}">
+                                                    <small class="text-muted">(${buyNowItem.variantName})</small>
+                                                </c:if>
+                                                <strong>x${buyNowItem.quantity}</strong>
+                                            </span>
+                                            <span><fmt:formatNumber value="${buyNowItem.total}" type="number" groupingUsed="true" maxFractionDigits="0"/>đ</span>
+                                        </li>
+                                    </c:when>
+                                    <%-- Chế độ checkout từ giỏ hàng --%>
+                                    <c:otherwise>
+                                        <c:forEach var="item" items="${cartItems}" varStatus="status">
+                                            <li>
+                                                <span style="flex:1;">${status.count}. ${item.productName} 
+                                                    <c:if test="${not empty item.variantName}">
+                                                        <small class="text-muted">(${item.variantName})</small>
+                                                    </c:if>
+                                                    <strong>x${item.quantity}</strong>
+                                                </span>
+                                                <span><fmt:formatNumber value="${item.total}" type="number" groupingUsed="true" maxFractionDigits="0"/>đ</span>
+                                            </li>
+                                        </c:forEach>
+                                    </c:otherwise>
+                                </c:choose>
                             </ul>
+                            
+                            <%-- Hidden field để đánh dấu chế độ mua ngay --%>
+                            <c:if test="${buyNowMode}">
+                                <input type="hidden" name="buyNowMode" value="true">
+                                <input type="hidden" name="buyNowProductId" value="${buyNowItem.productId}">
+                                <input type="hidden" name="buyNowVariantId" value="${buyNowItem.variantId}">
+                                <input type="hidden" name="buyNowQuantity" value="${buyNowItem.quantity}">
+                                <input type="hidden" name="buyNowPrice" value="${buyNowItem.price}">
+                            </c:if>
 
                             <!-- Voucher Section -->
                             <div class="voucher-section">

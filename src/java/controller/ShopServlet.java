@@ -1,6 +1,7 @@
 package controller;
 
 import DAO.ProductDAO;
+import DAO.CategoryDAO;
 import DAO.DiscountCampaignDAO;
 import entity.DiscountCampaign;
 import java.io.IOException;
@@ -16,13 +17,15 @@ import java.util.Map;
 @WebServlet(name = "ShopServlet", urlPatterns = {"/shop"})
 public class ShopServlet extends HttpServlet {
     
+    
     private ProductDAO productDAO;
     private DiscountCampaignDAO discountDAO;
-    
+    private CategoryDAO categoryDAO;
     @Override
     public void init() throws ServletException {
         productDAO = new ProductDAO();
         discountDAO = new DiscountCampaignDAO();
+        categoryDAO = new CategoryDAO();
     }
     
     @Override
@@ -112,12 +115,16 @@ public class ShopServlet extends HttpServlet {
             int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
             
             // Get categories and brands for filters
-            List<Map<String, Object>> categories = productDAO.getCategoriesForFilter();
+            List<Map<String, Object>> categoriesForFilter = productDAO.getCategoriesForFilter();
             List<Map<String, Object>> brands = productDAO.getBrandsForFilter();
+            
+            // Get categories for header menu dropdown (entity objects)
+            List<entity.Category> categories = categoryDAO.getAllCategories();
             
             // Set attributes
             request.setAttribute("products", products);
-            request.setAttribute("categories", categories);
+            request.setAttribute("categories", categories);  // For header menu
+            request.setAttribute("categoriesForFilter", categoriesForFilter);  // For sidebar filter
             request.setAttribute("brands", brands);
             request.setAttribute("totalProducts", totalProducts);
             request.setAttribute("totalPages", totalPages);

@@ -27,6 +27,12 @@
     java.math.BigDecimal cartTotal = (java.math.BigDecimal) session.getAttribute("cartTotal");
     if (cartCount == null) cartCount = 0;
     if (cartTotal == null) cartTotal = java.math.BigDecimal.ZERO;
+    
+    // Get current page for menu highlighting
+    String currentURI = request.getRequestURI();
+    String servletPath = request.getServletPath();
+    request.setAttribute("currentURI", currentURI);
+    request.setAttribute("servletPath", servletPath);
 %>
 
 <!-- Preloader - will be hidden by main.js -->
@@ -62,6 +68,51 @@
     /* Auto-hide after 3 seconds as fallback */
     #preloder.loaded, #preloder.loaded .loader {
         display: none !important;
+    }
+    
+    /* Header alignment fix - logo smaller, all items in one row */
+    .header__logo {
+        padding: 15px 0 !important;
+    }
+    .header__logo img {
+        max-height: 60px;
+        width: auto;
+    }
+    .header__menu {
+        padding: 20px 0 !important;
+    }
+    .header__menu ul li {
+        margin-right: 20px !important;
+    }
+    .header__menu ul li a {
+        font-size: 15px !important;
+        white-space: nowrap;
+    }
+    .header__nav__option {
+        padding: 20px 0 !important;
+    }
+    .header__nav__option a {
+        margin-right: 15px !important;
+    }
+    /* Cart icon and price spacing */
+    .header__nav__option .cart-icon-link {
+        margin-right: 10px !important;
+    }
+    .header__nav__option .price {
+        margin-left: 10px;
+    }
+    /* Ensure all columns align vertically */
+    .header > .container > .row {
+        align-items: center;
+    }
+    
+    /* Sticky header */
+    .header {
+        position: sticky;
+        top: 0;
+        z-index: 999;
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
 </style>
 <script>
@@ -173,8 +224,8 @@
             <div class="col-lg-6 col-md-6">
                 <nav class="header__menu mobile-menu">
                     <ul>
-                        <li class="active"><a href="<%= request.getContextPath() %>/Home">Trang chủ</a></li>
-                        <li><a href="<%= request.getContextPath() %>/shop">Sản phẩm</a>
+                        <li class="${servletPath == '/Home' || currentURI.endsWith('/index.jsp') || currentURI.endsWith('/main.jsp') ? 'active' : ''}"><a href="<%= request.getContextPath() %>/Home">Trang chủ</a></li>
+                        <li class="${servletPath == '/shop' || currentURI.contains('/shop') || currentURI.contains('product-detail') ? 'active' : ''}"><a href="<%= request.getContextPath() %>/shop">Sản phẩm</a>
                             <ul class="dropdown">
                                 <c:forEach var="cat" items="${categories}">
                                     <c:if test="${cat.isActive}">
@@ -183,11 +234,11 @@
                                 </c:forEach>
                             </ul>
                         </li>
-                        <li><a href="<%= request.getContextPath() %>/blog">Blog</a></li>
-                        <li><a href="<%= request.getContextPath() %>/about.jsp">Giới thiệu</a></li>
-                        <li><a href="<%= request.getContextPath() %>/contact.jsp">Liên hệ</a></li>
+                        <li class="${servletPath == '/blog' || currentURI.contains('/blog') ? 'active' : ''}"><a href="<%= request.getContextPath() %>/blog">Blog</a></li>
+                        <li class="${currentURI.contains('about') ? 'active' : ''}"><a href="<%= request.getContextPath() %>/about.jsp">Giới thiệu</a></li>
+                        <li class="${currentURI.contains('contact') ? 'active' : ''}"><a href="<%= request.getContextPath() %>/contact.jsp">Liên hệ</a></li>
                         <c:if test="${isLoggedIn && userRole == 'customer'}">
-                            <li><a href="<%= request.getContextPath() %>/rfq/form" style="color: #e53637;"><i class="fa fa-file-text"></i> Mua Buôn</a></li>
+                            <li class="${currentURI.contains('/rfq/') ? 'active' : ''}"><a href="<%= request.getContextPath() %>/rfq/form" style="color: #e53637;"><i class="fa fa-file-text"></i> Mua Buôn</a></li>
                         </c:if>
                     </ul>
                 </nav>

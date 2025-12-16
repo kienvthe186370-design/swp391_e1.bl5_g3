@@ -117,6 +117,7 @@
                             <th>Danh mục</th>
                             <th>Thương hiệu</th>
                             <th class="text-center">Tồn kho</th>
+                            <th class="text-center">Đã giữ</th>
                             <th class="text-right">Giá bán</th>
                             <th class="text-center">Tình trạng</th>
                             <th class="text-center">Trạng thái</th>
@@ -165,6 +166,19 @@
                                         </c:when>
                                         <c:otherwise>
                                             <span class="badge badge-success">${item.totalStock}</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td class="text-center">
+                                    <c:choose>
+                                        <c:when test="${item.status == 'draft'}">
+                                            <span class="text-muted">-</span>
+                                        </c:when>
+                                        <c:when test="${item.reservedStock == 0}">
+                                            <span class="badge badge-light">0</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="badge badge-info">${item.reservedStock}</span>
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
@@ -235,7 +249,7 @@
                         </c:forEach>
                         <c:if test="${empty products}">
                             <tr>
-                                <td colspan="10" class="text-center py-4">
+                                <td colspan="11" class="text-center py-4">
                                     <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                     <p class="text-muted mb-0">Không có sản phẩm nào.</p>
                                 </td>

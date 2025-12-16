@@ -1108,8 +1108,6 @@ public class ProductDAO extends DBContext {
                 variant.put("sellingPrice", rs.getBigDecimal("SellingPrice"));
                 variant.put("compareAtPrice", rs.getBigDecimal("CompareAtPrice"));
                 variant.put("stock", rs.getInt("Stock"));
-                variant.put("reservedStock", rs.getInt("ReservedStock"));
-                variant.put("availableStock", rs.getInt("Stock") - rs.getInt("ReservedStock"));
                 return variant;
             }
             

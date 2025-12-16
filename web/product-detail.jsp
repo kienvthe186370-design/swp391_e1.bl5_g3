@@ -573,6 +573,9 @@
                                 <p class="variant-label">
                                     Phiên bản: <span class="variant-selected" id="selectedVariantSku">-</span>
                                 </p>
+                                <p class="variant-label" id="stockInfo" style="margin-top: 8px;">
+                                    Còn lại: <span class="variant-selected" id="stockQuantity" style="color: #28a745; font-weight: 600;">-</span>
+                                </p>
                             </div>
                         </c:when>
                         <c:when test="${not empty variants && variants.size() > 1}">
@@ -996,8 +999,7 @@
                         updatePriceDisplay(variant.sellingPrice, variant.compareAtPrice);
                         
                         // Cập nhật trạng thái còn hàng
-                        var availableStock = variant.availableStock || variant.stock;
-                        updateStockStatus(availableStock);
+                        updateStockStatus(variant.stock);
                     } else {
                         // Không tìm thấy variant
                         document.getElementById('selectedVariantId').value = '';
@@ -1037,6 +1039,25 @@
         function updateStockStatus(stock) {
             var addToCartBtn = document.querySelector('.add-to-cart-btn');
             var buyNowBtn = document.querySelector('.buy-now-btn');
+            var stockQuantityEl = document.getElementById('stockQuantity');
+            var stockInfoEl = document.getElementById('stockInfo');
+            
+            // Hiển thị số lượng stock
+            if (stockQuantityEl) {
+                if (stock <= 0) {
+                    stockQuantityEl.textContent = 'Hết hàng';
+                    stockQuantityEl.style.color = '#dc3545';
+                } else if (stock <= 10) {
+                    stockQuantityEl.textContent = stock + ' sản phẩm (Sắp hết)';
+                    stockQuantityEl.style.color = '#fd7e14';
+                } else {
+                    stockQuantityEl.textContent = stock + ' sản phẩm';
+                    stockQuantityEl.style.color = '#28a745';
+                }
+            }
+            if (stockInfoEl) {
+                stockInfoEl.style.display = 'block';
+            }
             
             if (stock <= 0) {
                 addToCartBtn.disabled = true;
@@ -1114,6 +1135,7 @@
             $.ajax({
                 url: '${pageContext.request.contextPath}/cart',
                 type: 'POST',
+                dataType: 'json',
                 data: {
                     action: 'add',
                     productId: productId,
@@ -1123,22 +1145,30 @@
                 success: function(response) {
                     if (response.success) {
                         alert('Đã thêm sản phẩm vào giỏ hàng!');
-                        // Update cart count if exists
+                        // Update cart count and total in header
                         if (response.cartCount !== undefined) {
                             $('.cart-count').text(response.cartCount);
                         }
+                        if (response.cartTotal !== undefined) {
+                            $('.cart-total').text(formatPrice(response.cartTotal) + '₫');
+                        }
                     } else {
-                        alert(response.message || 'Có lỗi xảy ra, vui lòng thử lại');
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        } else {
+                            alert(response.message || 'Có lỗi xảy ra, vui lòng thử lại');
+                        }
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('Add to cart error:', status, error);
                     // Fallback: redirect to cart page
                     window.location.href = '${pageContext.request.contextPath}/cart?action=add&productId=' + productId + '&variantId=' + variantId + '&quantity=' + quantity;
                 }
             });
         }
         
-        // Buy now
+        // Buy now - Chuyển thẳng đến checkout với sản phẩm đã chọn
         function buyNow() {
             var productId = document.getElementById('productId').value;
             var variantId = document.getElementById('selectedVariantId').value;
@@ -1159,7 +1189,8 @@
                 return;
             }
             
-            window.location.href = '${pageContext.request.contextPath}/cart?action=add&productId=' + productId + '&variantId=' + variantId + '&quantity=' + quantity + '&redirect=checkout';
+            // Redirect đến trang buy-now để checkout trực tiếp
+            window.location.href = '${pageContext.request.contextPath}/buy-now?productId=' + productId + '&variantId=' + variantId + '&quantity=' + quantity;
         }
         
         // Keyboard support for zoom
