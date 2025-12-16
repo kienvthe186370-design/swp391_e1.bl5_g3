@@ -190,6 +190,23 @@
                             <button type="submit" class="site-btn" id="submitBtn">Đăng Ký</button>
                         </form>
                         
+                        <!-- Divider -->
+                        <div class="text-center my-4">
+                            <span style="color: #999; position: relative; display: inline-block; padding: 0 15px; background: #fff;">
+                                hoặc đăng ký với
+                            </span>
+                            <hr style="margin-top: -10px; border-color: #e1e1e1;">
+                        </div>
+                        
+                        <!-- Google Signup Button -->
+                        <a href="google-login" 
+                           class="btn btn-block" 
+                           style="background: #fff; border: 1px solid #ddd; padding: 12px; border-radius: 4px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #333; font-weight: 600; transition: all 0.3s;">
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                                 alt="Google" style="width: 20px; height: 20px; margin-right: 10px;">
+                            Đăng ký với Google
+                        </a>
+                        
                         <div class="register-links">
                             <p>Đã có tài khoản? <a href="login">Đăng nhập ngay</a></p>
                         </div>

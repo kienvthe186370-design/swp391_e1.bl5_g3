@@ -81,3 +81,9 @@ gradle-app.setting
 **/*password*
 **/*secret*
 **/*key*.properties
+
+# OAuth Credentials - NEVER COMMIT!
+*.local
+**/GoogleOAuthCredentials*
+**/credentials.json
+**/client_secret*.json
