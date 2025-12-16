@@ -41,6 +41,10 @@ public class AdminAuthFilter implements Filter {
         }
 
         String role = employee.getRole();
+        
+        // Shipper được vào admin dashboard và các trang shipper
+        // Không cần redirect riêng nữa
+        
         if (!RolePermission.hasPermission(role, path)) {
             session.setAttribute("accessDeniedMessage", "Bạn không có quyền truy cập chức năng này");
             httpResponse.sendRedirect(httpRequest.getContextPath() + "/admin/dashboard");

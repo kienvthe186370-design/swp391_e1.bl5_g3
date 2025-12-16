@@ -6,16 +6,18 @@ package entity;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+
 /**
  *
  * @author xuand
  */
 public class Voucher {
+
     private int voucherID;
     private String voucherCode;
     private String voucherName;
     private String description;
-    private String discountType; 
+    private String discountType;
     private BigDecimal discountValue;
     private BigDecimal minOrderValue;
     private BigDecimal maxDiscountAmount;
@@ -57,8 +59,6 @@ public class Voucher {
     public void setDiscountType(String discountType) {
         this.discountType = discountType;
     }
-
-    
 
     public int getVoucherID() {
         return voucherID;
@@ -192,7 +192,7 @@ public class Voucher {
         if (!isActive) {
             return false;
         }
-        
+
         Timestamp now = new Timestamp(System.currentTimeMillis());
         if (startDate != null && now.before(startDate)) {
             return false;
@@ -200,11 +200,11 @@ public class Voucher {
         if (endDate != null && now.after(endDate)) {
             return false;
         }
-        
+
         if (maxUsage != null && usedCount >= maxUsage) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -215,13 +215,13 @@ public class Voucher {
         if (subtotal == null || discountValue == null) {
             return BigDecimal.ZERO;
         }
-        
+
         BigDecimal discount = BigDecimal.ZERO;
-        
+
         if ("percentage".equalsIgnoreCase(discountType)) {
             // Percentage discount: subtotal * discountValue / 100
             discount = subtotal.multiply(discountValue).divide(new BigDecimal("100"));
-            
+
             // Apply max discount limit if exists
             if (maxDiscountAmount != null && discount.compareTo(maxDiscountAmount) > 0) {
                 discount = maxDiscountAmount;
@@ -229,13 +229,13 @@ public class Voucher {
         } else if ("fixed".equalsIgnoreCase(discountType)) {
             // Fixed amount discount
             discount = discountValue;
-            
+
             // Discount cannot exceed subtotal
             if (discount.compareTo(subtotal) > 0) {
                 discount = subtotal;
             }
         }
-        
+
         return discount;
     }
 }

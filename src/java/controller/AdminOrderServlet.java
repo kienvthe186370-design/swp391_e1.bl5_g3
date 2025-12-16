@@ -1,6 +1,8 @@
 package controller;
 
 import DAO.OrderDAO;
+import DAO.ShippingDAO;
+import DAO.ShippingTrackingDAO;
 import entity.*;
 import utils.OrderStatusValidator;
 import utils.RolePermission;
@@ -21,10 +23,14 @@ import java.util.Map;
 public class AdminOrderServlet extends HttpServlet {
     
     private OrderDAO orderDAO;
+    private ShippingDAO shippingDAO;
+    private ShippingTrackingDAO trackingDAO;
     
     @Override
     public void init() throws ServletException {
         orderDAO = new OrderDAO();
+        shippingDAO = new ShippingDAO();
+        trackingDAO = new ShippingTrackingDAO();
     }
 
     @Override
@@ -41,18 +47,42 @@ public class AdminOrderServlet extends HttpServlet {
         
         String role = employee.getRole();
         
-        // Chỉ SellerManager và Seller mới được truy cập
-        if (!RolePermission.canManageOrders(role)) {
+        // SellerManager, Seller và Shipper được truy cập
+        if (!RolePermission.canManageOrders(role) && !RolePermission.isShipper(role)) {
             response.sendRedirect(request.getContextPath() + "/access-denied.jsp");
             return;
         }
         
         String action = request.getParameter("action");
-        if (action == null) action = "list";
+        if (action == null) {
+            // Shipper mặc định vào trang đơn hàng của mình
+            action = RolePermission.isShipper(role) ? "shipperOrders" : "list";
+        }
         
         switch (action) {
             case "list":
-                listOrders(request, response, employee);
+                if (RolePermission.isShipper(role)) {
+                    // Shipper không được xem list chung
+                    listShipperOrders(request, response, employee);
+                } else {
+                    listOrders(request, response, employee);
+                }
+                break;
+            case "shipperOrders":
+                // Trang đơn hàng của Shipper
+                if (RolePermission.isShipper(role)) {
+                    listShipperOrders(request, response, employee);
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/access-denied.jsp");
+                }
+                break;
+            case "shipperDetail":
+                // Chi tiết đơn hàng cho Shipper
+                if (RolePermission.isShipper(role)) {
+                    viewShipperOrderDetail(request, response, employee);
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/access-denied.jsp");
+                }
                 break;
             case "detail":
                 viewOrderDetail(request, response, employee);
@@ -65,8 +95,20 @@ public class AdminOrderServlet extends HttpServlet {
                     response.sendRedirect(request.getContextPath() + "/access-denied.jsp");
                 }
                 break;
+            case "shipperAssignment":
+                // Phân công shipper
+                if (RolePermission.canAssignShipper(role)) {
+                    showShipperAssignmentPage(request, response);
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/access-denied.jsp");
+                }
+                break;
             default:
-                listOrders(request, response, employee);
+                if (RolePermission.isShipper(role)) {
+                    listShipperOrders(request, response, employee);
+                } else {
+                    listOrders(request, response, employee);
+                }
         }
     }
     
@@ -123,13 +165,23 @@ public class AdminOrderServlet extends HttpServlet {
                                 Employee employee) throws ServletException, IOException {
         
         String idParam = request.getParameter("id");
+        System.out.println("[AdminOrder] viewOrderDetail - id param: " + idParam);
+        
         if (idParam == null || idParam.isEmpty()) {
+            request.getSession().setAttribute("error", "Thiếu ID đơn hàng");
             response.sendRedirect(request.getContextPath() + "/admin/orders");
             return;
         }
         
         try {
             int orderId = Integer.parseInt(idParam);
+            
+            if (orderId <= 0) {
+                request.getSession().setAttribute("error", "ID đơn hàng không hợp lệ: " + orderId);
+                response.sendRedirect(request.getContextPath() + "/admin/orders");
+                return;
+            }
+            
             Order order = orderDAO.getOrderById(orderId);
             
             if (order == null) {
@@ -176,13 +228,13 @@ public class AdminOrderServlet extends HttpServlet {
     private void showAssignmentPage(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // Lấy đơn chưa phân công
+        // Lấy đơn chưa phân công (nếu có - thường sẽ trống vì đã tự động phân công)
         List<Order> unassignedOrders = orderDAO.getUnassignedOrders();
         List<Object[]> sellers = orderDAO.getSellersWithActiveOrderCount();
         
         request.setAttribute("unassignedOrders", unassignedOrders);
         request.setAttribute("sellers", sellers);
-        request.setAttribute("pageTitle", "Phân công đơn hàng");
+        request.setAttribute("pageTitle", "Giám sát Seller");
         
         request.getRequestDispatcher("/AdminLTE-3.2.0/orders/order-assignment.jsp")
                .forward(request, response);
@@ -220,6 +272,21 @@ public class AdminOrderServlet extends HttpServlet {
             case "updateNote":
                 updateInternalNote(request, response);
                 break;
+            case "assignShipper":
+                assignShipperToOrder(request, response, employee);
+                break;
+            case "autoAssignShipper":
+                autoAssignShipperToOrder(request, response, employee);
+                break;
+            case "autoAssignAllShippers":
+                autoAssignAllShippers(request, response, employee);
+                break;
+            case "reassignShipper":
+                reassignShipperToOrder(request, response, employee);
+                break;
+            case "updateShippingStatus":
+                updateShippingStatus(request, response, employee);
+                break;
             default:
                 response.sendRedirect(request.getContextPath() + "/admin/orders");
         }
@@ -232,17 +299,34 @@ public class AdminOrderServlet extends HttpServlet {
         String newStatus = request.getParameter("newStatus");
         String note = request.getParameter("note");
         
-        if (orderIdParam == null || newStatus == null) {
+        System.out.println("[AdminOrder] updateOrderStatus - orderId: " + orderIdParam + ", newStatus: " + newStatus);
+        
+        if (orderIdParam == null || orderIdParam.isEmpty() || newStatus == null || newStatus.isEmpty()) {
+            request.getSession().setAttribute("error", "Thiếu thông tin đơn hàng hoặc trạng thái");
+            response.sendRedirect(request.getContextPath() + "/admin/orders");
+            return;
+        }
+        
+        int orderId = 0;
+        try {
+            orderId = Integer.parseInt(orderIdParam);
+        } catch (NumberFormatException e) {
+            request.getSession().setAttribute("error", "ID đơn hàng không hợp lệ: " + orderIdParam);
+            response.sendRedirect(request.getContextPath() + "/admin/orders");
+            return;
+        }
+        
+        if (orderId <= 0) {
+            request.getSession().setAttribute("error", "ID đơn hàng không hợp lệ: " + orderId);
             response.sendRedirect(request.getContextPath() + "/admin/orders");
             return;
         }
         
         try {
-            int orderId = Integer.parseInt(orderIdParam);
             Order order = orderDAO.getOrderById(orderId);
             
             if (order == null) {
-                request.getSession().setAttribute("error", "Không tìm thấy đơn hàng");
+                request.getSession().setAttribute("error", "Không tìm thấy đơn hàng ID: " + orderId);
                 response.sendRedirect(request.getContextPath() + "/admin/orders");
                 return;
             }
@@ -250,7 +334,7 @@ public class AdminOrderServlet extends HttpServlet {
             // Validate transition
             String role = employee.getRole();
             if (!OrderStatusValidator.canTransition(order.getOrderStatus(), newStatus, role, false)) {
-                request.getSession().setAttribute("error", "Không thể chuyển sang trạng thái này");
+                request.getSession().setAttribute("error", "Không thể chuyển từ '" + order.getOrderStatus() + "' sang '" + newStatus + "'");
                 response.sendRedirect(request.getContextPath() + "/admin/orders?action=detail&id=" + orderId);
                 return;
             }
@@ -258,51 +342,18 @@ public class AdminOrderServlet extends HttpServlet {
             boolean success = orderDAO.updateOrderStatus(orderId, newStatus, employee.getEmployeeID(), note);
             
             if (success) {
-                String successMsg = "Cập nhật trạng thái thành công";
-                
-                // Nếu chuyển sang Shipping, tự động tạo vận đơn Goship với carrier đã chọn từ checkout
-                if ("Shipping".equals(newStatus)) {
-                    try {
-                        // Lấy shipping info để lấy carrier ID đã chọn từ checkout
-                        DAO.ShippingDAO shippingDAO = new DAO.ShippingDAO();
-                        entity.Shipping shipping = shippingDAO.getShippingByOrderId(orderId);
-                        
-                        String carrierId = null;
-                        if (shipping != null && shipping.getGoshipCarrierId() != null) {
-                            carrierId = shipping.getGoshipCarrierId();
-                        }
-                        
-                        if (carrierId != null && !carrierId.isEmpty()) {
-                            service.GoshipService goshipService = new service.GoshipService();
-                            service.GoshipService.GoshipShipmentResult shipmentResult = 
-                                goshipService.createShipment(order, carrierId);
-                            
-                            if (shipmentResult.isSuccess()) {
-                                // Cập nhật thông tin vận đơn vào database
-                                orderDAO.updateOrderGoshipInfo(orderId, 
-                                    shipmentResult.getGoshipOrderCode(), 
-                                    shipmentResult.getTrackingCode());
-                                successMsg += ". Đã tạo vận đơn Goship: " + shipmentResult.getTrackingCode();
-                            } else {
-                                successMsg += ". Lưu ý: " + shipmentResult.getMessage();
-                            }
-                        } else {
-                            successMsg += ". (Không có Goship carrier ID - vận đơn không được tạo tự động)";
-                        }
-                    } catch (Exception e) {
-                        successMsg += ". Lưu ý: Lỗi khi tạo vận đơn Goship";
-                        e.printStackTrace();
-                    }
-                }
-                
-                request.getSession().setAttribute("success", successMsg);
+                request.getSession().setAttribute("success", "Cập nhật trạng thái thành công: " + newStatus);
             } else {
                 request.getSession().setAttribute("error", "Cập nhật trạng thái thất bại");
             }
             
+            // Redirect về trang detail
             response.sendRedirect(request.getContextPath() + "/admin/orders?action=detail&id=" + orderId);
             
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
+            System.err.println("[AdminOrder] Error updating status: " + e.getMessage());
+            e.printStackTrace();
+            request.getSession().setAttribute("error", "Lỗi hệ thống: " + e.getMessage());
             response.sendRedirect(request.getContextPath() + "/admin/orders");
         }
     }
@@ -492,5 +543,457 @@ public class AdminOrderServlet extends HttpServlet {
             }
         }
         return 10;
+    }
+    
+    // ==================== SHIPPER ASSIGNMENT ====================
+    
+    /**
+     * Hiển thị trang giám sát shipper
+     */
+    private void showShipperAssignmentPage(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        // Lấy đơn đã phân shipper (đang vận chuyển)
+        List<Shipping> assignedShippings = shippingDAO.getAssignedShippings();
+        
+        // Lấy danh sách shipper với số đơn đang giao
+        List<Object[]> shippers = orderDAO.getShippersWithActiveOrderCount();
+        
+        request.setAttribute("assignedShippings", assignedShippings);
+        request.setAttribute("shippers", shippers);
+        request.setAttribute("pageTitle", "Giám sát Shipper");
+        
+        request.getRequestDispatcher("/AdminLTE-3.2.0/orders/shipper-assignment.jsp")
+               .forward(request, response);
+    }
+    
+    /**
+     * Phân công shipper cho đơn hàng
+     */
+    private void assignShipperToOrder(HttpServletRequest request, HttpServletResponse response,
+                                     Employee employee) throws IOException {
+        
+        if (!RolePermission.canAssignShipper(employee.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/access-denied.jsp");
+            return;
+        }
+        
+        String shippingIdParam = request.getParameter("shippingId");
+        String shipperIdParam = request.getParameter("shipperId");
+        
+        if (shippingIdParam == null || shipperIdParam == null) {
+            response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperAssignment");
+            return;
+        }
+        
+        try {
+            int shippingId = Integer.parseInt(shippingIdParam);
+            int shipperId = Integer.parseInt(shipperIdParam);
+            
+            // Tạo tracking code
+            String trackingCode = "SIM" + System.currentTimeMillis();
+            
+            // Phân công shipper
+            boolean success = shippingDAO.assignShipper(shippingId, shipperId, trackingCode);
+            
+            if (success) {
+                // Tạo tracking record đầu tiên
+                ShippingTracking tracking = new ShippingTracking();
+                tracking.setShippingID(shippingId);
+                tracking.setStatusCode(ShippingTracking.STATUS_PICKING);
+                tracking.setStatusDescription("Đơn hàng đã được xác nhận, đang chờ lấy hàng");
+                tracking.setLocation("Pickleball Shop");
+                tracking.setUpdatedBy(shipperId);
+                trackingDAO.createTracking(tracking);
+                
+                // Cập nhật goship status
+                shippingDAO.updateGoshipStatus(shippingId, ShippingTracking.STATUS_PICKING);
+                
+                request.getSession().setAttribute("success", "Phân công shipper thành công");
+            } else {
+                request.getSession().setAttribute("error", "Phân công shipper thất bại");
+            }
+            
+        } catch (NumberFormatException e) {
+            request.getSession().setAttribute("error", "Dữ liệu không hợp lệ");
+        }
+        
+        response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperAssignment");
+    }
+    
+    /**
+     * Thay đổi shipper cho đơn hàng đã phân công
+     */
+    private void reassignShipperToOrder(HttpServletRequest request, HttpServletResponse response,
+                                       Employee employee) throws IOException {
+        
+        if (!RolePermission.canAssignShipper(employee.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/access-denied.jsp");
+            return;
+        }
+        
+        String shippingIdParam = request.getParameter("shippingId");
+        String shipperIdParam = request.getParameter("shipperId");
+        
+        if (shippingIdParam == null || shipperIdParam == null) {
+            response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperAssignment");
+            return;
+        }
+        
+        try {
+            int shippingId = Integer.parseInt(shippingIdParam);
+            int newShipperId = Integer.parseInt(shipperIdParam);
+            
+            // Cập nhật shipper mới
+            boolean success = shippingDAO.updateShipperAssignment(shippingId, newShipperId);
+            
+            if (success) {
+                request.getSession().setAttribute("success", "Đã thay đổi shipper thành công");
+            } else {
+                request.getSession().setAttribute("error", "Thay đổi shipper thất bại");
+            }
+            
+        } catch (NumberFormatException e) {
+            request.getSession().setAttribute("error", "Dữ liệu không hợp lệ");
+        }
+        
+        response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperAssignment");
+    }
+    
+    /**
+     * Tự động phân công shipper (chọn shipper ít đơn nhất)
+     */
+    private void autoAssignShipperToOrder(HttpServletRequest request, HttpServletResponse response,
+                                         Employee employee) throws IOException {
+        
+        if (!RolePermission.canAssignShipper(employee.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/access-denied.jsp");
+            return;
+        }
+        
+        String shippingIdParam = request.getParameter("shippingId");
+        
+        if (shippingIdParam == null) {
+            response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperAssignment");
+            return;
+        }
+        
+        try {
+            int shippingId = Integer.parseInt(shippingIdParam);
+            
+            // Lấy shipper có ít đơn nhất
+            Employee shipper = orderDAO.getShipperWithLeastActiveOrders();
+            
+            if (shipper == null) {
+                request.getSession().setAttribute("error", "Không có shipper nào khả dụng");
+                response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperAssignment");
+                return;
+            }
+            
+            // Tạo tracking code
+            String trackingCode = "SIM" + System.currentTimeMillis();
+            
+            // Phân công shipper
+            boolean success = shippingDAO.assignShipper(shippingId, shipper.getEmployeeID(), trackingCode);
+            
+            if (success) {
+                // Tạo tracking record đầu tiên
+                ShippingTracking tracking = new ShippingTracking();
+                tracking.setShippingID(shippingId);
+                tracking.setStatusCode(ShippingTracking.STATUS_PICKING);
+                tracking.setStatusDescription("Đơn hàng đã được xác nhận, đang chờ lấy hàng");
+                tracking.setLocation("Pickleball Shop");
+                tracking.setUpdatedBy(shipper.getEmployeeID());
+                trackingDAO.createTracking(tracking);
+                
+                // Cập nhật goship status
+                shippingDAO.updateGoshipStatus(shippingId, ShippingTracking.STATUS_PICKING);
+                
+                request.getSession().setAttribute("success", 
+                    "Đã phân công đơn cho shipper: " + shipper.getFullName());
+            } else {
+                request.getSession().setAttribute("error", "Phân công shipper thất bại");
+            }
+            
+        } catch (NumberFormatException e) {
+            request.getSession().setAttribute("error", "Dữ liệu không hợp lệ");
+        }
+        
+        response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperAssignment");
+    }
+    
+    /**
+     * Tự động phân công TẤT CẢ đơn hàng cho các shipper (round-robin theo số đơn ít nhất)
+     */
+    private void autoAssignAllShippers(HttpServletRequest request, HttpServletResponse response,
+                                       Employee employee) throws IOException {
+        
+        if (!RolePermission.canAssignShipper(employee.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/access-denied.jsp");
+            return;
+        }
+        
+        try {
+            // Lấy tất cả đơn chưa phân shipper
+            List<Shipping> unassignedShippings = shippingDAO.getUnassignedShippings();
+            
+            if (unassignedShippings.isEmpty()) {
+                request.getSession().setAttribute("success", "Không có đơn hàng nào cần phân công");
+                response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperAssignment");
+                return;
+            }
+            
+            int successCount = 0;
+            int failCount = 0;
+            
+            for (Shipping shipping : unassignedShippings) {
+                // Lấy shipper có ít đơn nhất (refresh mỗi lần để cân bằng)
+                Employee shipper = orderDAO.getShipperWithLeastActiveOrders();
+                
+                if (shipper == null) {
+                    failCount++;
+                    continue;
+                }
+                
+                // Tạo tracking code
+                String trackingCode = "SIM" + System.currentTimeMillis() + shipping.getShippingID();
+                
+                // Phân công shipper
+                boolean success = shippingDAO.assignShipper(shipping.getShippingID(), shipper.getEmployeeID(), trackingCode);
+                
+                if (success) {
+                    // Tạo tracking record đầu tiên
+                    ShippingTracking tracking = new ShippingTracking();
+                    tracking.setShippingID(shipping.getShippingID());
+                    tracking.setStatusCode(ShippingTracking.STATUS_PICKING);
+                    tracking.setStatusDescription("Đơn hàng đã được xác nhận, đang chờ lấy hàng");
+                    tracking.setLocation("Pickleball Shop");
+                    tracking.setUpdatedBy(shipper.getEmployeeID());
+                    trackingDAO.createTracking(tracking);
+                    
+                    // Cập nhật goship status
+                    shippingDAO.updateGoshipStatus(shipping.getShippingID(), ShippingTracking.STATUS_PICKING);
+                    
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+            }
+            
+            if (failCount == 0) {
+                request.getSession().setAttribute("success", 
+                    "Đã tự động phân công thành công " + successCount + " đơn hàng!");
+            } else {
+                request.getSession().setAttribute("success", 
+                    "Đã phân công " + successCount + " đơn, " + failCount + " đơn thất bại");
+            }
+            
+        } catch (Exception e) {
+            System.err.println("[AdminOrder] Auto assign all error: " + e.getMessage());
+            e.printStackTrace();
+            request.getSession().setAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        
+        response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperAssignment");
+    }
+    
+    // ==================== SHIPPER ORDER MANAGEMENT ====================
+    
+    /**
+     * Hiển thị danh sách đơn hàng của Shipper
+     */
+    private void listShipperOrders(HttpServletRequest request, HttpServletResponse response,
+                                   Employee shipper) throws ServletException, IOException {
+        
+        // Lấy đơn hàng được phân công cho shipper này
+        List<Order> orders = orderDAO.getOrdersByShipperId(shipper.getEmployeeID());
+        
+        // Thống kê
+        int pendingCount = 0;
+        int deliveredToday = shippingDAO.countDeliveredTodayByShipper(shipper.getEmployeeID());
+        
+        for (Order order : orders) {
+            if ("Shipping".equals(order.getOrderStatus())) {
+                pendingCount++;
+            }
+        }
+        
+        request.setAttribute("orders", orders);
+        request.setAttribute("pendingCount", pendingCount);
+        request.setAttribute("deliveredToday", deliveredToday);
+        request.setAttribute("shipper", shipper);
+        request.setAttribute("pageTitle", "Đơn hàng giao");
+        
+        request.getRequestDispatcher("/AdminLTE-3.2.0/orders/shipper-order-list.jsp")
+               .forward(request, response);
+    }
+    
+    /**
+     * Xem chi tiết đơn hàng cho Shipper
+     */
+    private void viewShipperOrderDetail(HttpServletRequest request, HttpServletResponse response,
+                                       Employee shipper) throws ServletException, IOException {
+        
+        String idParam = request.getParameter("id");
+        if (idParam == null || idParam.isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperOrders");
+            return;
+        }
+        
+        try {
+            int orderId = Integer.parseInt(idParam);
+            Order order = orderDAO.getOrderById(orderId);
+            
+            if (order == null) {
+                request.getSession().setAttribute("error", "Không tìm thấy đơn hàng");
+                response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperOrders");
+                return;
+            }
+            
+            // Kiểm tra đơn có được phân cho shipper này không
+            Shipping shipping = order.getShipping();
+            if (shipping == null || shipping.getShipperID() == null || 
+                shipping.getShipperID() != shipper.getEmployeeID()) {
+                request.getSession().setAttribute("error", "Bạn không có quyền xem đơn hàng này");
+                response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperOrders");
+                return;
+            }
+            
+            // Lấy lịch sử tracking
+            List<ShippingTracking> trackingHistory = trackingDAO.getTrackingHistory(shipping.getShippingID());
+            
+            // Lấy trạng thái hiện tại và các trạng thái tiếp theo hợp lệ
+            String currentStatus = trackingHistory.isEmpty() ? null : trackingHistory.get(0).getStatusCode();
+            String[] nextStatuses = ShippingTracking.getNextValidStatuses(currentStatus);
+            
+            request.setAttribute("order", order);
+            request.setAttribute("shipping", shipping);
+            request.setAttribute("trackingHistory", trackingHistory);
+            request.setAttribute("currentStatus", currentStatus);
+            request.setAttribute("nextStatuses", nextStatuses);
+            request.setAttribute("pageTitle", "Chi tiết đơn hàng #" + order.getOrderCode());
+            
+            request.getRequestDispatcher("/AdminLTE-3.2.0/orders/shipper-order-detail.jsp")
+                   .forward(request, response);
+            
+        } catch (NumberFormatException e) {
+            response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperOrders");
+        }
+    }
+    
+    /**
+     * Cập nhật trạng thái vận chuyển (cho Shipper)
+     */
+    private void updateShippingStatus(HttpServletRequest request, HttpServletResponse response,
+                                     Employee shipper) throws IOException {
+        
+        if (!RolePermission.isShipper(shipper.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/access-denied.jsp");
+            return;
+        }
+        
+        String orderIdParam = request.getParameter("orderId");
+        String newStatus = request.getParameter("newStatus");
+        String notes = request.getParameter("notes");
+        String location = request.getParameter("location");
+        
+        if (orderIdParam == null || newStatus == null) {
+            response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperOrders");
+            return;
+        }
+        
+        int orderId = Integer.parseInt(orderIdParam);
+        
+        try {
+            Order order = orderDAO.getOrderById(orderId);
+            if (order == null || order.getShipping() == null) {
+                request.getSession().setAttribute("error", "Không tìm thấy đơn hàng");
+                response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperOrders");
+                return;
+            }
+            
+            Shipping shipping = order.getShipping();
+            
+            // Kiểm tra quyền
+            if (shipping.getShipperID() == null || shipping.getShipperID() != shipper.getEmployeeID()) {
+                request.getSession().setAttribute("error", "Bạn không có quyền cập nhật đơn hàng này");
+                response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperOrders");
+                return;
+            }
+            
+            // Validate status transition
+            ShippingTracking latestTracking = trackingDAO.getLatestTracking(shipping.getShippingID());
+            String currentStatus = latestTracking != null ? latestTracking.getStatusCode() : null;
+            String[] validNextStatuses = ShippingTracking.getNextValidStatuses(currentStatus);
+            
+            boolean isValidTransition = false;
+            for (String valid : validNextStatuses) {
+                if (valid.equals(newStatus)) {
+                    isValidTransition = true;
+                    break;
+                }
+            }
+            
+            if (!isValidTransition) {
+                request.getSession().setAttribute("error", "Trạng thái không hợp lệ");
+                response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperDetail&id=" + orderId);
+                return;
+            }
+            
+            // Validate COD collection - bắt buộc xác nhận thu tiền khi giao thành công đơn COD
+            String codCollected = request.getParameter("codCollected");
+            if (ShippingTracking.STATUS_DELIVERED.equals(newStatus) 
+                && "COD".equals(order.getPaymentMethod()) 
+                && !"Paid".equals(order.getPaymentStatus())
+                && !"true".equals(codCollected)) {
+                request.getSession().setAttribute("error", "Vui lòng xác nhận đã thu tiền COD trước khi hoàn thành đơn hàng!");
+                response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperDetail&id=" + orderId);
+                return;
+            }
+            
+            // Tạo tracking record mới
+            ShippingTracking tracking = new ShippingTracking();
+            tracking.setShippingID(shipping.getShippingID());
+            tracking.setStatusCode(newStatus);
+            tracking.setStatusDescription(ShippingTracking.getVietnameseName(newStatus));
+            tracking.setLocation(location);
+            tracking.setNotes(notes);
+            tracking.setUpdatedBy(shipper.getEmployeeID());
+            
+            int trackingId = trackingDAO.createTracking(tracking);
+            
+            if (trackingId > 0) {
+                // Cập nhật GoshipStatus trong Shipping
+                shippingDAO.updateGoshipStatus(shipping.getShippingID(), newStatus);
+                
+                // Cập nhật Order status nếu cần
+                if (ShippingTracking.STATUS_DELIVERED.equals(newStatus)) {
+                    orderDAO.updateOrderStatus(orderId, "Delivered", shipper.getEmployeeID(), 
+                        "Shipper xác nhận đã giao hàng thành công");
+                    shippingDAO.updateDeliveredDate(shipping.getShippingID());
+                    
+                    // Xử lý thu tiền COD (codCollected đã được lấy ở trên)
+                    if ("true".equals(codCollected) && "COD".equals(order.getPaymentMethod())) {
+                        orderDAO.updatePaymentStatus(orderId, "Paid");
+                        System.out.println("[AdminOrder] COD collected for order " + orderId);
+                    }
+                } else if (ShippingTracking.STATUS_RETURNED.equals(newStatus)) {
+                    orderDAO.updateOrderStatus(orderId, "Cancelled", shipper.getEmployeeID(), 
+                        "Đơn hàng đã hoàn về shop");
+                }
+                
+                request.getSession().setAttribute("success", 
+                    "Cập nhật trạng thái thành công: " + ShippingTracking.getVietnameseName(newStatus));
+            } else {
+                request.getSession().setAttribute("error", "Cập nhật trạng thái thất bại");
+            }
+            
+        } catch (Exception e) {
+            System.err.println("[AdminOrder] Shipper update error: " + e.getMessage());
+            e.printStackTrace();
+            request.getSession().setAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        
+        response.sendRedirect(request.getContextPath() + "/admin/orders?action=shipperDetail&id=" + orderId);
     }
 }

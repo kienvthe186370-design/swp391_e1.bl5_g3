@@ -78,6 +78,10 @@
     boolean canAccessMarketing = RolePermission.canManageMarketing(userRole);
     boolean canAccessVouchers = RolePermission.canManageVouchers(userRole);
     
+    // Shipper permissions
+    boolean isShipper = RolePermission.isShipper(userRole);
+    boolean canViewShipperOrders = RolePermission.canViewShipperOrders(userRole);
+    
     // Check for access denied message
     String accessDeniedMsg = (String) session.getAttribute("accessDeniedMessage");
     if (accessDeniedMsg != null) {
@@ -303,11 +307,17 @@
             <li class="nav-item">
               <a href="<%= contextPath %>/admin/orders?action=assignment" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
-                <p>Phân công đơn hàng
+                <p>Giám sát Seller
                   <% if (unassignedOrderCount > 0) { %>
                     <span class="badge badge-warning right"><%= unassignedOrderCount %></span>
                   <% } %>
                 </p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/orders?action=shipperAssignment" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p><i class="fas fa-motorcycle text-info"></i> Giám sát Shipper</p>
               </a>
             </li>
             <% } %>
@@ -403,6 +413,17 @@
              class="nav-link <%= isVoucherPage ? "active" : "" %>">
             <i class="nav-icon fas fa-ticket-alt"></i>
             <p>Voucher</p>
+          </a>
+        </li>
+        <% } %>
+        
+        <!-- ===== SHIPPER SECTION ===== -->
+        <% if (isShipper) { %>
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/orders?action=shipperOrders" 
+             class="nav-link <%= isOrderPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-motorcycle"></i>
+            <p>Đơn hàng giao</p>
           </a>
         </li>
         <% } %>

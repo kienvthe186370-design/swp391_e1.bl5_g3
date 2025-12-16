@@ -24,7 +24,7 @@ public class VNPayConfig {
     
     // Cloudflare Tunnel URL - Set this when using tunnel for VNPay callback
     // Set to null or empty to use auto-detect from request
-    public static final String TUNNEL_BASE_URL = "http://localhost:9999";
+    public static final String TUNNEL_BASE_URL = "http://localhost:8080";
     public static final String APP_CONTEXT = "/swp391_e1.bl5_gr3";
     
     // Helper method to get return URL

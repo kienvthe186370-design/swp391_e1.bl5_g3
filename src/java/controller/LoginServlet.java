@@ -113,6 +113,7 @@ public class LoginServlet extends HttpServlet {
     }
 
     private String getRedirectUrlByRole(String role) {
+        // Tất cả employee đều vào admin/dashboard, phân quyền theo sidebar
         return "admin/dashboard";
     }
 }

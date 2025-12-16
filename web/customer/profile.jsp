@@ -61,7 +61,7 @@
                             <a class="nav-link ${activeTab == 'addresses' ? 'active' : ''}" href="?tab=addresses">
                                 <i class="fa fa-map-marker"></i> Địa chỉ giao hàng
                             </a>
-                            <a class="nav-link" href="${pageContext.request.contextPath}/customer/orders.jsp">
+                            <a class="nav-link" href="${pageContext.request.contextPath}/customer/orders">
                                 <i class="fa fa-list-alt"></i> Đơn hàng của tôi
                             </a>
                             <a class="nav-link" href="${pageContext.request.contextPath}/logout">
