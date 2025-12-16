@@ -329,7 +329,15 @@
                 <c:forEach var="blog" items="${latestBlogs}">
                     <div class="col-lg-4 col-md-6 col-sm-6">
                         <div class="blog__item">
-                            <div class="blog__item__pic set-bg" data-setbg="${not empty blog.featuredImage ? blog.featuredImage : pageContext.request.contextPath.concat('/img/blog/default.jpg')}"></div>
+                            <c:choose>
+                                <c:when test="${not empty blog.featuredImage}">
+                                    <c:set var="blogImageUrl" value="${blog.featuredImage.startsWith('http://') || blog.featuredImage.startsWith('https://') || blog.featuredImage.startsWith('/') ? blog.featuredImage : pageContext.request.contextPath.concat('/').concat(blog.featuredImage)}" />
+                                    <div class="blog__item__pic set-bg" data-setbg="${blogImageUrl}"></div>
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="blog__item__pic set-bg" data-setbg="${pageContext.request.contextPath}/img/blog/blog-1.jpg"></div>
+                                </c:otherwise>
+                            </c:choose>
                             <div class="blog__item__text">
                                 <span>
                                     <img src="${pageContext.request.contextPath}/img/icon/calendar.png" alt=""> 
