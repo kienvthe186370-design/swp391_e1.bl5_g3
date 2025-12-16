@@ -19,6 +19,10 @@ public class Customer {
     private boolean isActive;
     private Timestamp createdDate;
     private Timestamp lastLogin;
+    
+    // Google OAuth fields
+    private String googleId;
+    private String loginProvider; // 'local', 'google'
 
     public Customer() {
     }
@@ -145,5 +149,29 @@ public class Customer {
 
     public void setAvatar(String avatar) {
         this.avatar = avatar;
+    }
+    
+    // Google OAuth getters/setters
+    public String getGoogleId() {
+        return googleId;
+    }
+
+    public void setGoogleId(String googleId) {
+        this.googleId = googleId;
+    }
+
+    public String getLoginProvider() {
+        return loginProvider;
+    }
+
+    public void setLoginProvider(String loginProvider) {
+        this.loginProvider = loginProvider;
+    }
+    
+    /**
+     * Check if this customer logged in via Google
+     */
+    public boolean isGoogleUser() {
+        return "google".equals(loginProvider) || (googleId != null && !googleId.isEmpty());
     }
 }
