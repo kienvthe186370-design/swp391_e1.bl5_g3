@@ -97,7 +97,7 @@
                                 <a href="checkout?retry=${failedOrder.orderID}" class="btn btn-primary mr-2">
                                     <i class="fa fa-refresh"></i> Thử lại thanh toán
                                 </a>
-                                <a href="customer/orders.jsp" class="btn btn-outline-secondary">
+                                <a href="${pageContext.request.contextPath}/customer/orders" class="btn btn-outline-secondary">
                                     <i class="fa fa-list"></i> Xem đơn hàng
                                 </a>
                             </div>

@@ -233,6 +233,18 @@ public class CheckoutServlet extends HttpServlet {
             shipping.setCarrierName(carrierName);          // Lưu tên đơn vị vận chuyển
             shippingDAO.createShipping(shipping);
             
+            // ===== TỰ ĐỘNG PHÂN CÔNG SELLER =====
+            try {
+                Employee seller = orderDAO.getSellerWithLeastActiveOrders();
+                if (seller != null) {
+                    // assignedById = 0 vì là hệ thống tự động phân công
+                    orderDAO.assignOrderToSeller(orderID, seller.getEmployeeID(), 0);
+                    System.out.println("[Checkout] Auto-assigned order " + orderID + " to seller: " + seller.getFullName());
+                }
+            } catch (Exception e) {
+                System.err.println("[Checkout] Auto-assign seller failed: " + e.getMessage());
+            }
+            
             // Clear cart after order created
             cartDAO.clearCart(cart.getCartID());
 

@@ -7,6 +7,7 @@ public class RolePermission {
     public static final String SELLER = "Seller";
     public static final String MARKETER = "Marketer";
     public static final String STAFF = "Staff";
+    public static final String SHIPPER = "Shipper";
 
     public static boolean canManageEmployees(String role) {
         return ADMIN.equalsIgnoreCase(role);
@@ -61,6 +62,36 @@ public class RolePermission {
     public static boolean canUpdateOrderStatus(String role) {
         return SELLER_MANAGER.equalsIgnoreCase(role) || SELLER.equalsIgnoreCase(role) || ADMIN.equalsIgnoreCase(role);
     }
+    
+    // ==================== SHIPPER PERMISSIONS ====================
+    
+    /**
+     * Kiểm tra có phải Shipper không
+     */
+    public static boolean isShipper(String role) {
+        return SHIPPER.equalsIgnoreCase(role);
+    }
+    
+    /**
+     * Quyền xem đơn hàng của shipper (chỉ đơn được phân công)
+     */
+    public static boolean canViewShipperOrders(String role) {
+        return SHIPPER.equalsIgnoreCase(role);
+    }
+    
+    /**
+     * Quyền cập nhật trạng thái vận chuyển
+     */
+    public static boolean canUpdateShippingStatus(String role) {
+        return SHIPPER.equalsIgnoreCase(role);
+    }
+    
+    /**
+     * Quyền phân công shipper cho đơn hàng
+     */
+    public static boolean canAssignShipper(String role) {
+        return SELLER_MANAGER.equalsIgnoreCase(role) || ADMIN.equalsIgnoreCase(role);
+    }
 
     public static boolean canManageProducts(String role) {
         return MARKETER.equalsIgnoreCase(role);
@@ -110,7 +141,8 @@ public class RolePermission {
         }
 
         if (path.startsWith("/orders")) {
-            return canManageOrders(role);
+            // Shipper có thể xem đơn hàng của mình
+            return canManageOrders(role) || isShipper(role);
         }
 
         if (path.startsWith("/products")) {
@@ -158,6 +190,8 @@ public class RolePermission {
                 return "Nhân viên marketing";
             case "staff":
                 return "Nhân viên";
+            case "shipper":
+                return "Nhân viên giao hàng";
             default:
                 return role;
         }

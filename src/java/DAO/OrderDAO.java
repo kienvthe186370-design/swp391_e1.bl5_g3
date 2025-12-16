@@ -1,13 +1,12 @@
 package DAO;
 
 import entity.*;
-import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 public class OrderDAO extends DBContext {
-
     /**
      * Thống kê đơn hàng theo khách hàng
      */
@@ -67,7 +66,7 @@ public class OrderDAO extends DBContext {
             this.lastOrderDate = lastOrderDate;
         }
     }
-
+    
     // ==================== LẤY ĐƠN HÀNG ====================
     
     /**
@@ -353,6 +352,22 @@ public class OrderDAO extends DBContext {
             }
             
             conn.commit();
+            
+            // ===== TỰ ĐỘNG PHÂN CÔNG SHIPPER KHI CHUYỂN SANG SHIPPING =====
+            if ("Shipping".equals(newStatus)) {
+                autoAssignShipperForOrder(orderId);
+            }
+            
+            // ===== XỬ LÝ STOCK KHI THAY ĐỔI TRẠNG THÁI =====
+            // Khi giao thành công: giải phóng reserved stock
+            if ("Delivered".equals(newStatus)) {
+                releaseReservedStockOnDelivered(orderId);
+            }
+            // Khi hủy hoặc hoàn: hoàn lại stock
+            if ("Cancelled".equals(newStatus) || "Returned".equals(newStatus)) {
+                restoreStockOnCancelled(orderId);
+            }
+            
             return true;
         } catch (SQLException e) {
             if (conn != null) {
@@ -729,7 +744,7 @@ public class OrderDAO extends DBContext {
     private List<OrderDetail> getOrderDetailsByOrderId(int orderId) {
         List<OrderDetail> details = new ArrayList<>();
         String sql = "SELECT od.*, " +
-                     "(SELECT TOP 1 pi.ImageURL FROM ProductImages pi WHERE pi.ProductID = p.ProductID AND pi.IsPrimary = 1) as ProductImage " +
+                     "(SELECT TOP 1 pi.ImageURL FROM ProductImages pi WHERE pi.ProductID = p.ProductID) as ProductImage " +
                      "FROM OrderDetails od " +
                      "LEFT JOIN ProductVariants pv ON od.VariantID = pv.VariantID " +
                      "LEFT JOIN Products p ON pv.ProductID = p.ProductID " +
@@ -805,7 +820,9 @@ public class OrderDAO extends DBContext {
     }
     
     private Shipping getShippingByOrderId(int orderId) {
-        String sql = "SELECT * FROM Shipping WHERE OrderID = ?";
+        String sql = "SELECT s.*, e.FullName as ShipperName, e.Phone as ShipperPhone " +
+                     "FROM Shipping s LEFT JOIN Employees e ON s.ShipperID = e.EmployeeID " +
+                     "WHERE s.OrderID = ?";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
@@ -830,6 +847,32 @@ public class OrderDAO extends DBContext {
                 shipping.setDeliveredDate(rs.getTimestamp("DeliveredDate"));
                 shipping.setGoshipOrderCode(rs.getString("GoshipOrderCode"));
                 shipping.setGoshipStatus(rs.getString("GoshipStatus"));
+                try {
+                    shipping.setGoshipCarrierId(rs.getString("GoshipCarrierId"));
+                } catch (SQLException ex) {
+                    // Column may not exist
+                }
+                try {
+                    shipping.setCarrierName(rs.getString("CarrierName"));
+                } catch (SQLException ex) {
+                    // Column may not exist
+                }
+                
+                // Load shipper info
+                try {
+                    int shipperId = rs.getInt("ShipperID");
+                    if (!rs.wasNull()) {
+                        shipping.setShipperID(shipperId);
+                        Employee shipper = new Employee();
+                        shipper.setEmployeeID(shipperId);
+                        shipper.setFullName(rs.getString("ShipperName"));
+                        shipper.setPhone(rs.getString("ShipperPhone"));
+                        shipping.setShipper(shipper);
+                    }
+                } catch (SQLException ex) {
+                    // Column may not exist
+                }
+                
                 return shipping;
             }
         } catch (SQLException e) {
@@ -950,21 +993,6 @@ public class OrderDAO extends DBContext {
                 ps.executeBatch();
             }
             
-            // Update Stock: trừ Stock và cộng ReservedStock
-            String updateStockSql = "UPDATE ProductVariants SET Stock = Stock - ?, ReservedStock = ISNULL(ReservedStock, 0) + ? WHERE VariantID = ?";
-            try (PreparedStatement ps = conn.prepareStatement(updateStockSql)) {
-                for (OrderDetail detail : orderDetails) {
-                    if (detail.getVariantID() > 0) {
-                        ps.setInt(1, detail.getQuantity());
-                        ps.setInt(2, detail.getQuantity());
-                        ps.setInt(3, detail.getVariantID());
-                        ps.addBatch();
-                    }
-                }
-                ps.executeBatch();
-                System.out.println("[OrderDAO] Stock updated for " + orderDetails.size() + " variants");
-            }
-            
             // Insert initial status history
             String historySql = "INSERT INTO OrderStatusHistory (OrderID, OldStatus, NewStatus, Notes, ChangedDate) " +
                                "VALUES (?, NULL, 'Pending', N'Đơn hàng mới được tạo', GETDATE())";
@@ -974,6 +1002,19 @@ public class OrderDAO extends DBContext {
             } catch (SQLException e) {
                 // Bảng có thể chưa tồn tại, bỏ qua
                 System.out.println("OrderStatusHistory insert skipped: " + e.getMessage());
+            }
+            
+            // ===== TRỪ STOCK VÀ ĐẶT RESERVED KHI TẠO ĐƠN =====
+            String stockSql = "UPDATE pv SET " +
+                             "pv.Stock = pv.Stock - od.Quantity, " +
+                             "pv.ReservedStock = pv.ReservedStock + od.Quantity " +
+                             "FROM ProductVariants pv " +
+                             "INNER JOIN OrderDetails od ON pv.VariantID = od.VariantID " +
+                             "WHERE od.OrderID = ?";
+            try (PreparedStatement ps = conn.prepareStatement(stockSql)) {
+                ps.setInt(1, orderID);
+                int updated = ps.executeUpdate();
+                System.out.println("[OrderDAO] Reserved stock for new order " + orderID + ", updated " + updated + " variants");
             }
             
             conn.commit();
@@ -1121,7 +1162,7 @@ public class OrderDAO extends DBContext {
         }
         return 0;
     }
-
+    
     /**
      * Lấy thống kê đơn hàng của một khách
      */
@@ -1200,5 +1241,259 @@ public class OrderDAO extends DBContext {
             e.printStackTrace();
         }
         return false;
+    }
+    
+    // ==================== SHIPPER MANAGEMENT ====================
+    
+    /**
+     * Lấy danh sách đơn hàng theo ShipperID
+     */
+    public List<Order> getOrdersByShipperId(int shipperId) {
+        List<Order> orders = new ArrayList<>();
+        String sql = "SELECT o.*, c.FullName as CustomerName, c.Email as CustomerEmail, c.Phone as CustomerPhone, " +
+                     "s.ShippingID, s.TrackingCode, s.ShippingFee, s.GoshipStatus, s.ShippedDate " +
+                     "FROM Orders o " +
+                     "INNER JOIN Shipping s ON o.OrderID = s.OrderID " +
+                     "LEFT JOIN Customers c ON o.CustomerID = c.CustomerID " +
+                     "WHERE s.ShipperID = ? " +
+                     "ORDER BY CASE o.OrderStatus WHEN 'Shipping' THEN 0 ELSE 1 END, o.OrderDate DESC";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, shipperId);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Order order = mapResultSetToOrder(rs);
+                
+                Customer customer = new Customer();
+                customer.setCustomerID(rs.getInt("CustomerID"));
+                customer.setFullName(rs.getString("CustomerName"));
+                customer.setEmail(rs.getString("CustomerEmail"));
+                customer.setPhone(rs.getString("CustomerPhone"));
+                order.setCustomer(customer);
+                
+                // Load address
+                if (order.getAddressID() != null) {
+                    order.setAddress(getAddressById(order.getAddressID()));
+                }
+                
+                // Load shipping
+                Shipping shipping = new Shipping();
+                shipping.setShippingID(rs.getInt("ShippingID"));
+                shipping.setOrderID(order.getOrderID());
+                shipping.setTrackingCode(rs.getString("TrackingCode"));
+                shipping.setShippingFee(rs.getBigDecimal("ShippingFee"));
+                shipping.setGoshipStatus(rs.getString("GoshipStatus"));
+                shipping.setShippedDate(rs.getTimestamp("ShippedDate"));
+                shipping.setShipperID(shipperId);
+                order.setShipping(shipping);
+                
+                orders.add(order);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orders;
+    }
+    
+    /**
+     * Lấy danh sách shipper với số đơn đang giao
+     */
+    public List<Object[]> getShippersWithActiveOrderCount() {
+        List<Object[]> result = new ArrayList<>();
+        String sql = "SELECT e.EmployeeID, e.FullName, e.Phone, " +
+                     "(SELECT COUNT(*) FROM Shipping s INNER JOIN Orders o ON s.OrderID = o.OrderID " +
+                     " WHERE s.ShipperID = e.EmployeeID AND o.OrderStatus = 'Shipping') as ActiveOrders " +
+                     "FROM Employees e WHERE e.Role = 'Shipper' AND e.IsActive = 1 " +
+                     "ORDER BY ActiveOrders ASC";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                Object[] row = new Object[4];
+                row[0] = rs.getInt("EmployeeID");
+                row[1] = rs.getString("FullName");
+                row[2] = rs.getString("Phone");
+                row[3] = rs.getInt("ActiveOrders");
+                result.add(row);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+    
+    /**
+     * Lấy shipper có ít đơn đang giao nhất
+     */
+    public Employee getShipperWithLeastActiveOrders() {
+        String sql = "SELECT TOP 1 e.EmployeeID, e.FullName, e.Email, e.Phone, e.Role " +
+                     "FROM Employees e " +
+                     "WHERE e.Role = 'Shipper' AND e.IsActive = 1 " +
+                     "ORDER BY (SELECT COUNT(*) FROM Shipping s INNER JOIN Orders o ON s.OrderID = o.OrderID " +
+                     "          WHERE s.ShipperID = e.EmployeeID AND o.OrderStatus = 'Shipping') ASC";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            if (rs.next()) {
+                Employee shipper = new Employee();
+                shipper.setEmployeeID(rs.getInt("EmployeeID"));
+                shipper.setFullName(rs.getString("FullName"));
+                shipper.setEmail(rs.getString("Email"));
+                shipper.setPhone(rs.getString("Phone"));
+                shipper.setRole(rs.getString("Role"));
+                return shipper;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    /**
+     * Tự động phân công shipper cho đơn hàng khi chuyển sang Shipping
+     */
+    public void autoAssignShipperForOrder(int orderId) {
+        try {
+            // Lấy shipper có ít đơn nhất
+            Employee shipper = getShipperWithLeastActiveOrders();
+            if (shipper == null) {
+                System.err.println("[OrderDAO] No shipper available for auto-assignment");
+                return;
+            }
+            
+            // Lấy shippingID của đơn hàng
+            int shippingId = 0;
+            String getSql = "SELECT ShippingID FROM Shipping WHERE OrderID = ?";
+            try (Connection conn = getConnection();
+                 PreparedStatement ps = conn.prepareStatement(getSql)) {
+                ps.setInt(1, orderId);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    shippingId = rs.getInt("ShippingID");
+                }
+            }
+            
+            if (shippingId == 0) {
+                System.err.println("[OrderDAO] No shipping record found for order " + orderId);
+                return;
+            }
+            
+            // Tạo tracking code
+            String trackingCode = "SIM" + System.currentTimeMillis() + orderId;
+            
+            // Phân công shipper
+            String updateSql = "UPDATE Shipping SET ShipperID = ?, TrackingCode = ?, GoshipStatus = 'picking' WHERE ShippingID = ?";
+            try (Connection conn = getConnection();
+                 PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                ps.setInt(1, shipper.getEmployeeID());
+                ps.setString(2, trackingCode);
+                ps.setInt(3, shippingId);
+                ps.executeUpdate();
+            }
+            
+            // Tạo tracking record đầu tiên
+            String trackingSql = "INSERT INTO ShippingTracking (ShippingID, StatusCode, StatusDescription, Location, UpdatedBy) " +
+                                "VALUES (?, 'picking', N'Đơn hàng đã được xác nhận, đang chờ lấy hàng', 'Pickleball Shop', ?)";
+            try (Connection conn = getConnection();
+                 PreparedStatement ps = conn.prepareStatement(trackingSql)) {
+                ps.setInt(1, shippingId);
+                ps.setInt(2, shipper.getEmployeeID());
+                ps.executeUpdate();
+            }
+            
+            System.out.println("[OrderDAO] Auto-assigned shipper " + shipper.getFullName() + " to order " + orderId);
+            
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] Auto-assign shipper failed: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    // ==================== STOCK MANAGEMENT ====================
+    
+    /**
+     * Khi tạo đơn hàng (Pending):
+     * - Stock -= Qty (trừ tồn kho)
+     * - ReservedStock += Qty (tăng hàng đặt trước)
+     */
+    public boolean reserveStockOnOrder(int orderId) {
+        String sql = "UPDATE pv SET " +
+                     "pv.Stock = pv.Stock - od.Quantity, " +
+                     "pv.ReservedStock = pv.ReservedStock + od.Quantity " +
+                     "FROM ProductVariants pv " +
+                     "INNER JOIN OrderDetails od ON pv.VariantID = od.VariantID " +
+                     "WHERE od.OrderID = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, orderId);
+            int updated = ps.executeUpdate();
+            System.out.println("[OrderDAO] Reserved stock for order " + orderId + ", updated " + updated + " variants");
+            return true;
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] Reserve stock failed: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Khi giao thành công (Delivered):
+     * - Stock: giữ nguyên
+     * - ReservedStock -= Qty (giảm hàng đặt trước)
+     */
+    public boolean releaseReservedStockOnDelivered(int orderId) {
+        String sql = "UPDATE pv SET pv.ReservedStock = pv.ReservedStock - od.Quantity " +
+                     "FROM ProductVariants pv " +
+                     "INNER JOIN OrderDetails od ON pv.VariantID = od.VariantID " +
+                     "WHERE od.OrderID = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, orderId);
+            int updated = ps.executeUpdate();
+            System.out.println("[OrderDAO] Released reserved stock for order " + orderId + ", updated " + updated + " variants");
+            return true;
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] Release reserved stock failed: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Khi hủy/hoàn (Cancelled/Returned):
+     * - Stock += Qty (hoàn lại tồn kho)
+     * - ReservedStock -= Qty (giảm hàng đặt trước)
+     */
+    public boolean restoreStockOnCancelled(int orderId) {
+        String sql = "UPDATE pv SET " +
+                     "pv.Stock = pv.Stock + od.Quantity, " +
+                     "pv.ReservedStock = pv.ReservedStock - od.Quantity " +
+                     "FROM ProductVariants pv " +
+                     "INNER JOIN OrderDetails od ON pv.VariantID = od.VariantID " +
+                     "WHERE od.OrderID = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, orderId);
+            int updated = ps.executeUpdate();
+            System.out.println("[OrderDAO] Restored stock for cancelled order " + orderId + ", updated " + updated + " variants");
+            return true;
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] Restore stock failed: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 }

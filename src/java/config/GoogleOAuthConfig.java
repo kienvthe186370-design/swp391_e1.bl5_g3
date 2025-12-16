@@ -11,8 +11,8 @@ public class GoogleOAuthConfig {
     
     // Google OAuth Credentials - Read from environment variables or use defaults
     // To set environment variables in Tomcat, add to catalina.properties or setenv.bat/sh
-    public static final String CLIENT_ID = getEnvOrDefault("GOOGLE_CLIENT_ID", "YOUR_GOOGLE_CLIENT_ID_HERE");
-    public static final String CLIENT_SECRET = getEnvOrDefault("GOOGLE_CLIENT_SECRET", "YOUR_GOOGLE_CLIENT_SECRET_HERE");
+    public static final String CLIENT_ID = getEnvOrDefault("GOOGLE_CLIENT_ID", "");
+    public static final String CLIENT_SECRET = getEnvOrDefault("GOOGLE_CLIENT_SECRET", "");
     
     private static String getEnvOrDefault(String envName, String defaultValue) {
         String value = System.getenv(envName);

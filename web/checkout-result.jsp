@@ -83,7 +83,7 @@
                             <a href="shop" class="btn btn-outline-primary">
                                 <i class="fa fa-shopping-bag"></i> Tiếp tục mua sắm
                             </a>
-                            <a href="customer/orders.jsp" class="btn btn-primary">
+                            <a href="${pageContext.request.contextPath}/customer/orders" class="btn btn-primary">
                                 <i class="fa fa-list"></i> Xem đơn hàng
                             </a>
                         </div>

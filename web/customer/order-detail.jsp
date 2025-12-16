@@ -264,17 +264,57 @@
                         </div>
                     </div>
                     
+                    <!-- Shipping Info -->
+                    <c:if test="${order.shipping != null && order.shipping.trackingCode != null}">
+                        <div class="info-card">
+                            <h5><i class="fa fa-truck"></i> Thông tin vận chuyển</h5>
+                            <div class="text-center mb-3 p-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; color: white;">
+                                <small style="opacity: 0.8;">Mã vận đơn</small><br>
+                                <span style="font-size: 20px; font-weight: bold; letter-spacing: 2px;">
+                                    ${order.shipping.trackingCode}
+                                </span>
+                            </div>
+                            <c:if test="${order.shipping.goshipStatus != null}">
+                                <p class="mb-2">
+                                    <i class="fa fa-info-circle text-info"></i>
+                                    <strong>Trạng thái:</strong> 
+                                    <c:choose>
+                                        <c:when test="${order.shipping.goshipStatus == 'picking'}">Đang lấy hàng</c:when>
+                                        <c:when test="${order.shipping.goshipStatus == 'picked'}">Đã lấy hàng</c:when>
+                                        <c:when test="${order.shipping.goshipStatus == 'delivering'}">Đang giao hàng</c:when>
+                                        <c:when test="${order.shipping.goshipStatus == 'delivered'}">Giao thành công</c:when>
+                                        <c:when test="${order.shipping.goshipStatus == 'delivery_failed'}">Giao thất bại</c:when>
+                                        <c:when test="${order.shipping.goshipStatus == 'returning'}">Đang hoàn hàng</c:when>
+                                        <c:when test="${order.shipping.goshipStatus == 'returned'}">Đã hoàn hàng</c:when>
+                                        <c:otherwise>${order.shipping.goshipStatus}</c:otherwise>
+                                    </c:choose>
+                                </p>
+                            </c:if>
+                            <c:if test="${order.shipping.shipper != null}">
+                                <p class="mb-2">
+                                    <i class="fa fa-motorcycle text-primary"></i>
+                                    <strong>Shipper:</strong> ${order.shipping.shipper.fullName}
+                                </p>
+                            </c:if>
+                            <c:if test="${order.shipping.shippedDate != null}">
+                                <p class="mb-2">
+                                    <i class="fa fa-calendar text-secondary"></i>
+                                    <strong>Ngày gửi:</strong> 
+                                    <fmt:formatDate value="${order.shipping.shippedDate}" pattern="dd/MM/yyyy HH:mm"/>
+                                </p>
+                            </c:if>
+                            <a href="${pageContext.request.contextPath}/tracking?code=${order.shipping.trackingCode}" 
+                               class="btn btn-info btn-block mt-3">
+                                <i class="fa fa-search"></i> Theo dõi vận chuyển chi tiết
+                            </a>
+                        </div>
+                    </c:if>
+                    
                     <!-- Actions -->
                     <c:if test="${order.orderStatus == 'Pending'}">
                         <button class="btn btn-danger btn-block" onclick="showCancelModal()">
                             <i class="fa fa-times"></i> Hủy đơn hàng
                         </button>
-                    </c:if>
-                    <c:if test="${order.shipping != null && order.shipping.trackingCode != null}">
-                        <a href="https://goship.io/tracking/${order.shipping.trackingCode}" 
-                           target="_blank" class="btn btn-info btn-block">
-                            <i class="fa fa-truck"></i> Theo dõi vận chuyển
-                        </a>
                     </c:if>
                     <a href="${pageContext.request.contextPath}/customer/orders" class="btn btn-secondary btn-block">
                         <i class="fa fa-arrow-left"></i> Quay lại

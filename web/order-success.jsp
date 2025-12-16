@@ -118,7 +118,7 @@
                 </c:if>
                 
                 <div class="mt-4">
-                    <a href="customer/orders.jsp" class="btn btn-primary mr-2">
+                    <a href="${pageContext.request.contextPath}/customer/orders" class="btn btn-primary mr-2">
                         <i class="fa fa-list"></i> Xem đơn hàng
                     </a>
                     <a href="shop" class="btn btn-outline-primary">

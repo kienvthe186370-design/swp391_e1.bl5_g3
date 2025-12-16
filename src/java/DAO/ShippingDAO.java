@@ -300,4 +300,257 @@ public class ShippingDAO extends DBContext {
         }
         return null;
     }
+
+    // ==================== SHIPPER MANAGEMENT ====================
+    
+    /**
+     * Phân công shipper cho đơn hàng
+     */
+    public boolean assignShipper(int shippingID, int shipperID, String trackingCode) {
+        String sql = "UPDATE Shipping SET ShipperID = ?, TrackingCode = ?, ShippedDate = GETDATE() WHERE ShippingID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, shipperID);
+            ps.setString(2, trackingCode);
+            ps.setInt(3, shippingID);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return false;
+    }
+    
+    /**
+     * Lấy danh sách đơn hàng theo ShipperID
+     */
+    public List<Shipping> getShippingsByShipperId(int shipperID) {
+        List<Shipping> list = new ArrayList<>();
+        String sql = "SELECT s.*, o.OrderCode, o.OrderStatus, o.TotalAmount, o.PaymentMethod, o.PaymentStatus, " +
+                     "ca.RecipientName, ca.Phone, ca.Street, ca.Ward, ca.District, ca.City " +
+                     "FROM Shipping s " +
+                     "INNER JOIN Orders o ON s.OrderID = o.OrderID " +
+                     "LEFT JOIN CustomerAddresses ca ON o.AddressID = ca.AddressID " +
+                     "WHERE s.ShipperID = ? AND o.OrderStatus = 'Shipping' " +
+                     "ORDER BY s.ShippedDate DESC";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, shipperID);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Shipping shipping = mapShippingWithOrder(rs);
+                list.add(shipping);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return list;
+    }
+    
+    /**
+     * Lấy danh sách đơn chưa phân shipper
+     */
+    public List<Shipping> getUnassignedShippings() {
+        List<Shipping> list = new ArrayList<>();
+        String sql = "SELECT s.*, o.OrderCode, o.OrderStatus, o.TotalAmount, o.PaymentMethod, o.PaymentStatus, " +
+                     "ca.RecipientName, ca.Phone, ca.Street, ca.Ward, ca.District, ca.City " +
+                     "FROM Shipping s " +
+                     "INNER JOIN Orders o ON s.OrderID = o.OrderID " +
+                     "LEFT JOIN CustomerAddresses ca ON o.AddressID = ca.AddressID " +
+                     "WHERE s.ShipperID IS NULL AND o.OrderStatus = 'Shipping' " +
+                     "ORDER BY o.OrderDate ASC";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                Shipping shipping = mapShippingWithOrder(rs);
+                list.add(shipping);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return list;
+    }
+    
+    /**
+     * Lấy danh sách đơn đã phân shipper (đang vận chuyển)
+     */
+    public List<Shipping> getAssignedShippings() {
+        List<Shipping> list = new ArrayList<>();
+        String sql = "SELECT s.*, o.OrderCode, o.OrderStatus, o.TotalAmount, o.PaymentMethod, o.PaymentStatus, " +
+                     "ca.RecipientName, ca.Phone, ca.Street, ca.Ward, ca.District, ca.City, " +
+                     "e.FullName as ShipperName " +
+                     "FROM Shipping s " +
+                     "INNER JOIN Orders o ON s.OrderID = o.OrderID " +
+                     "LEFT JOIN CustomerAddresses ca ON o.AddressID = ca.AddressID " +
+                     "LEFT JOIN Employees e ON s.ShipperID = e.EmployeeID " +
+                     "WHERE s.ShipperID IS NOT NULL AND o.OrderStatus = 'Shipping' " +
+                     "ORDER BY o.OrderDate DESC";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                Shipping shipping = mapShippingWithOrder(rs);
+                // Thêm tên shipper
+                shipping.setShipperName(rs.getString("ShipperName"));
+                list.add(shipping);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return list;
+    }
+    
+    /**
+     * Cập nhật shipper cho đơn hàng (thay đổi phân công)
+     */
+    public boolean updateShipperAssignment(int shippingId, int newShipperId) {
+        String sql = "UPDATE Shipping SET ShipperID = ? WHERE ShippingID = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, newShipperId);
+            ps.setInt(2, shippingId);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return false;
+    }
+    
+    /**
+     * Đếm số đơn đang giao của shipper
+     */
+    public int countActiveOrdersByShipper(int shipperID) {
+        String sql = "SELECT COUNT(*) FROM Shipping s " +
+                     "INNER JOIN Orders o ON s.OrderID = o.OrderID " +
+                     "WHERE s.ShipperID = ? AND o.OrderStatus = 'Shipping'";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, shipperID);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return 0;
+    }
+    
+    /**
+     * Đếm số đơn đã giao hôm nay của shipper
+     */
+    public int countDeliveredTodayByShipper(int shipperID) {
+        String sql = "SELECT COUNT(*) FROM Shipping s " +
+                     "INNER JOIN Orders o ON s.OrderID = o.OrderID " +
+                     "WHERE s.ShipperID = ? AND o.OrderStatus = 'Delivered' " +
+                     "AND CAST(s.DeliveredDate AS DATE) = CAST(GETDATE() AS DATE)";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, shipperID);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return 0;
+    }
+    
+    /**
+     * Lấy shipping với thông tin shipper
+     */
+    public Shipping getShippingWithShipper(int shippingID) {
+        String sql = "SELECT s.*, e.FullName as ShipperName, e.Phone as ShipperPhone " +
+                     "FROM Shipping s " +
+                     "LEFT JOIN Employees e ON s.ShipperID = e.EmployeeID " +
+                     "WHERE s.ShippingID = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, shippingID);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                Shipping shipping = new Shipping();
+                shipping.setShippingID(rs.getInt("ShippingID"));
+                shipping.setOrderID(rs.getInt("OrderID"));
+                shipping.setTrackingCode(rs.getString("TrackingCode"));
+                shipping.setShippingFee(rs.getBigDecimal("ShippingFee"));
+                shipping.setShippedDate(rs.getTimestamp("ShippedDate"));
+                shipping.setDeliveredDate(rs.getTimestamp("DeliveredDate"));
+                shipping.setGoshipStatus(rs.getString("GoshipStatus"));
+                
+                int shipperID = rs.getInt("ShipperID");
+                if (!rs.wasNull()) {
+                    shipping.setShipperID(shipperID);
+                    entity.Employee shipper = new entity.Employee();
+                    shipper.setEmployeeID(shipperID);
+                    shipper.setFullName(rs.getString("ShipperName"));
+                    shipper.setPhone(rs.getString("ShipperPhone"));
+                    shipping.setShipper(shipper);
+                }
+                
+                return shipping;
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return null;
+    }
+    
+    /**
+     * Helper: Map ResultSet to Shipping with Order info
+     */
+    private Shipping mapShippingWithOrder(ResultSet rs) throws SQLException {
+        Shipping shipping = new Shipping();
+        shipping.setShippingID(rs.getInt("ShippingID"));
+        shipping.setOrderID(rs.getInt("OrderID"));
+        shipping.setTrackingCode(rs.getString("TrackingCode"));
+        shipping.setShippingFee(rs.getBigDecimal("ShippingFee"));
+        shipping.setShippedDate(rs.getTimestamp("ShippedDate"));
+        shipping.setDeliveredDate(rs.getTimestamp("DeliveredDate"));
+        shipping.setGoshipStatus(rs.getString("GoshipStatus"));
+        shipping.setCarrierName(rs.getString("CarrierName"));
+        
+        int shipperID = rs.getInt("ShipperID");
+        if (!rs.wasNull()) {
+            shipping.setShipperID(shipperID);
+        }
+        
+        // Set order info directly on shipping for display
+        shipping.setOrderCode(rs.getString("OrderCode"));
+        shipping.setOrderStatus(rs.getString("OrderStatus"));
+        shipping.setTotalAmount(rs.getBigDecimal("TotalAmount"));
+        shipping.setPaymentMethod(rs.getString("PaymentMethod"));
+        shipping.setPaymentStatus(rs.getString("PaymentStatus"));
+        
+        // Address info
+        entity.CustomerAddress address = new entity.CustomerAddress();
+        address.setRecipientName(rs.getString("RecipientName"));
+        address.setPhone(rs.getString("Phone"));
+        address.setStreet(rs.getString("Street"));
+        address.setWard(rs.getString("Ward"));
+        address.setDistrict(rs.getString("District"));
+        address.setCity(rs.getString("City"));
+        shipping.setAddress(address);
+        
+        return shipping;
+    }
 }
