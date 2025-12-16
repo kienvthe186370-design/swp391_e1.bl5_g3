@@ -382,7 +382,7 @@
                     <div class="row">
                         <c:forEach var="product" items="${products}">
                             <div class="col-lg-4 col-md-6 col-sm-6">
-                                <div class="product__item">
+                                <div class="product__item" style="cursor: pointer;" onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
                                     <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}">
                                         <!-- Promotion Badge -->
                                         <c:if test="${product.hasPromotion}">

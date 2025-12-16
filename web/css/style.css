@@ -953,28 +953,7 @@ ol {
 	color: #b7b7b7;
 }
 
-.product__item:hover .product__item__pic .product__hover {
-	right: 20px;
-	opacity: 1;
-}
-
-.product__item:hover .product__item__text a.add-cart {
-	top: 22px;
-	opacity: 1;
-	visibility: visible;
-}
-
-.product__item:hover .product__item__text h6 {
-	opacity: 0;
-}
-
-.product__item:hover .product__item__text .product__brand {
-	opacity: 0;
-}
-
-.product__item:hover .product__item__text .product__color__select {
-	opacity: 1;
-}
+/* Hover effects removed */
 
 .product__item__pic {
 	height: 260px;

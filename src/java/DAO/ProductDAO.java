@@ -121,7 +121,7 @@ public class ProductDAO extends DBContext {
                 
                 int totalStock = rs.getInt("TotalStock");
                 int reservedStock = rs.getInt("ReservedStock");
-                product.put("availableStock", totalStock);
+                product.put("availableStock", totalStock - reservedStock);
                 
                 int variantCount = rs.getInt("VariantCount");
                 ProductStatus status = calculateProductStatus(variantCount, totalStock);
@@ -273,7 +273,7 @@ public class ProductDAO extends DBContext {
                 
                 int totalStock = rs.getInt("TotalStock");
                 int reservedStock = rs.getInt("ReservedStock");
-                product.put("availableStock", totalStock);
+                product.put("availableStock", totalStock - reservedStock);
                 
                 int variantCount = rs.getInt("VariantCount");
                 ProductStatus status = calculateProductStatus(variantCount, totalStock);
@@ -611,7 +611,7 @@ public class ProductDAO extends DBContext {
         
         try {
             conn = getConnection();
-            ps = conn.prepareStatement("SELECT VariantID, ProductID, SKU, CostPrice, SellingPrice, " +
+            ps = conn.prepareStatement("SELECT VariantID, ProductID, SKU, CostPrice, SellingPrice, CompareAtPrice, " +
                         "ProfitMargin, ProfitAmount, Stock, ReservedStock, ReorderLevel, IsActive, CreatedDate, UpdatedDate " +
                         "FROM ProductVariants WHERE ProductID = ? ORDER BY CreatedDate DESC");
             ps.setInt(1, productId);
@@ -624,6 +624,7 @@ public class ProductDAO extends DBContext {
                 v.put("sku", rs.getString("SKU"));
                 v.put("costPrice", rs.getBigDecimal("CostPrice"));
                 v.put("sellingPrice", rs.getBigDecimal("SellingPrice"));
+                v.put("compareAtPrice", rs.getBigDecimal("CompareAtPrice"));
                 v.put("profitMargin", rs.getBigDecimal("ProfitMargin"));
                 v.put("profitAmount", rs.getBigDecimal("ProfitAmount"));
                 v.put("stock", rs.getInt("Stock"));
@@ -632,6 +633,10 @@ public class ProductDAO extends DBContext {
                 v.put("isActive", rs.getBoolean("IsActive"));
                 v.put("createdDate", rs.getTimestamp("CreatedDate"));
                 v.put("updatedDate", rs.getTimestamp("UpdatedDate"));
+                
+                int stock = rs.getInt("Stock");
+                int reserved = rs.getInt("ReservedStock");
+                v.put("availableStock", stock - reserved);
                 
                 list.add(v);
             }
@@ -1103,8 +1108,6 @@ public class ProductDAO extends DBContext {
                 variant.put("sellingPrice", rs.getBigDecimal("SellingPrice"));
                 variant.put("compareAtPrice", rs.getBigDecimal("CompareAtPrice"));
                 variant.put("stock", rs.getInt("Stock"));
-                variant.put("reservedStock", rs.getInt("ReservedStock"));
-                variant.put("availableStock", rs.getInt("Stock") - rs.getInt("ReservedStock"));
                 return variant;
             }
             

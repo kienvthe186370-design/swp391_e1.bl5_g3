@@ -87,11 +87,6 @@
                                  onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
                                 
                                 <span class="label" style="background: #28a745;">Mới</span>
-                                
-                                <ul class="product__hover">
-                                    <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
-                                    <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" title="Xem chi tiết" onclick="event.stopPropagation();"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt=""></a></li>
-                                </ul>
                             </div>
                             <div class="product__item__text">
                                 <c:if test="${not empty product.brandName}">
@@ -148,11 +143,6 @@
                                  onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
                                 
                                 <span class="label" style="background: #28a745;">Mới</span>
-                                
-                                <ul class="product__hover">
-                                    <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
-                                    <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" title="Xem chi tiết" onclick="event.stopPropagation();"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt=""></a></li>
-                                </ul>
                             </div>
                             <div class="product__item__text">
                                 <c:if test="${not empty product.brandName}">
@@ -209,11 +199,6 @@
                                  onclick="window.location.href='${pageContext.request.contextPath}/product-detail?id=${product.productID}'">
                                 
                                 <span class="label" style="background: #28a745;">Mới</span>
-                                
-                                <ul class="product__hover">
-                                    <li><a href="#" title="Thêm vào yêu thích" onclick="event.stopPropagation(); return false;"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt=""></a></li>
-                                    <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" title="Xem chi tiết" onclick="event.stopPropagation();"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt=""></a></li>
-                                </ul>
                             </div>
                             <div class="product__item__text">
                                 <c:if test="${not empty product.brandName}">

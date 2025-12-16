@@ -86,7 +86,6 @@ public class VariantLookupServlet extends HttpServlet {
                 variantJson.put("compareAtPrice", compareAtPrice != null ? compareAtPrice.doubleValue() : 0);
                 
                 variantJson.put("stock", variant.get("stock"));
-                variantJson.put("availableStock", variant.get("availableStock"));
                 
                 result.put("variant", variantJson);
             } else {
