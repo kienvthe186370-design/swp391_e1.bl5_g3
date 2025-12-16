@@ -2,6 +2,7 @@ package controller;
 
 import DAO.EmployeeDAO;
 import entity.Employee;
+import utils.EmailUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -11,6 +12,7 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import utils.EmailUtil;
 
 @WebServlet(name = "AdminEmployeeServlet", urlPatterns = {"/admin/employees"})
 public class AdminEmployeeServlet extends HttpServlet {
@@ -253,6 +255,11 @@ public class AdminEmployeeServlet extends HttpServlet {
                     phoneValue, validatedRole);
             
             if (success) {
+                try {
+                    EmailUtil.sendEmployeeWelcome(emailTrimmed, fullNameTrimmed, password, validatedRole);
+                } catch (Exception ex) {
+                    System.err.println("Send employee welcome email failed: " + ex.getMessage());
+                }
                 session.setAttribute("message", "Tạo nhân viên mới thành công!");
                 session.setAttribute("messageType", "success");
                 response.sendRedirect(request.getContextPath() + "/admin/employees");
@@ -361,7 +368,11 @@ public class AdminEmployeeServlet extends HttpServlet {
             String phoneValue = (phone != null && !phone.trim().isEmpty()) ? phone.trim() : null;
             boolean success = employeeDAO.updateEmployee(employeeID, fullNameTrimmed, emailTrimmed,
                     phoneValue, validatedRole, isActive);
-            
+
+            boolean passwordChanged = false;
+            boolean emailChanged = !currentEmployee.getEmail().equalsIgnoreCase(emailTrimmed);
+            boolean roleChanged = !currentEmployee.getRole().equalsIgnoreCase(validatedRole);
+
             // Cập nhật mật khẩu nếu có
             if (password != null && !password.trim().isEmpty()) {
                 if (password.length() < 6) {
@@ -370,12 +381,29 @@ public class AdminEmployeeServlet extends HttpServlet {
                     response.sendRedirect(request.getContextPath() + "/admin/employees?action=edit&id=" + employeeID);
                     return;
                 }
-                employeeDAO.updatePassword(employeeID, password);
+                passwordChanged = employeeDAO.updatePassword(employeeID, password);
             }
             
             if (success) {
                 session.setAttribute("message", "Cập nhật thông tin nhân viên thành công!");
                 session.setAttribute("messageType", "success");
+
+                // Gửi email thông báo khi đổi email hoặc mật khẩu
+                String targetEmail = emailTrimmed; // gửi đến email mới nếu đã đổi
+                try {
+                    if (emailChanged) {
+                        EmailUtil.sendEmployeeEmailUpdated(targetEmail, fullNameTrimmed, emailTrimmed);
+                    }
+                    if (passwordChanged) {
+                        EmailUtil.sendEmployeePasswordUpdated(targetEmail, fullNameTrimmed, password);
+                    }
+                    if (roleChanged) {
+                        EmailUtil.sendEmployeeRoleUpdated(targetEmail, fullNameTrimmed, currentEmployee.getRole(), validatedRole);
+                    }
+                } catch (Exception ex) {
+                    System.err.println("Send employee update email failed: " + ex.getMessage());
+                }
+
                 response.sendRedirect(request.getContextPath() + "/admin/employees");
             } else {
                 session.setAttribute("message", "Có lỗi xảy ra khi cập nhật! Vui lòng kiểm tra lại thông tin.");

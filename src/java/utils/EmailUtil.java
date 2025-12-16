@@ -106,6 +106,80 @@ public class EmailUtil {
         return sendPasswordResetOTP(toEmail, resetToken);
     }
 
+    /**
+     * Gửi mail chào mừng khách hàng (kèm tài khoản, mật khẩu tạm và link xác thực)
+     */
+    public static boolean sendCustomerWelcome(String toEmail, String fullName, String rawPassword, String verifyUrl) {
+        String subject = "Chào mừng đến với Pickleball Shop";
+        String body = "<h2>Chào " + safe(fullName) + ",</h2>"
+                + "<p>Chào mừng bạn đã đến với Pickleball Shop.</p>"
+                + "<p>Tài khoản đăng nhập:</p>"
+                + "<ul>"
+                + "  <li>Email: <b>" + safe(toEmail) + "</b></li>"
+                + "  <li>Mật khẩu: <b>" + safe(rawPassword) + "</b></li>"
+                + "</ul>"
+                + "<p>Vui lòng đăng nhập bằng liên kết sau: "
+                + "<a href='" + safe(verifyUrl) + "'>" + safe(verifyUrl) + "</a>. "
+                + "Nếu tài khoản chưa xác thực, hệ thống sẽ gửi OTP để hoàn tất xác thực.</p>"
+                + "<p>Sau khi xác thực, hãy đổi mật khẩu ngay.</p>"
+                + "<p>Trân trọng!</p>";
+        return sendEmail(toEmail, subject, body, true);
+    }
+
+    /**
+     * Gửi mail chào mừng nhân viên (kèm tài khoản, mật khẩu tạm, vai trò)
+     */
+    public static boolean sendEmployeeWelcome(String toEmail, String fullName, String rawPassword, String role) {
+        String subject = "Chào mừng đến với Pickleball Shop";
+        String body = "<h2>Chào " + safe(fullName) + ",</h2>"
+                + "<p>Chào mừng bạn gia nhập công ty Pickleball Shop.</p>"
+                + "<p>Tài khoản đăng nhập:</p>"
+                + "<ul>"
+                + "  <li>Email: <b>" + safe(toEmail) + "</b></li>"
+                + "  <li>Mật khẩu: <b>" + safe(rawPassword) + "</b></li>"
+                + "  <li>Vai trò: <b>" + safe(role) + "</b></li>"
+                + "</ul>"
+                + "<p>Trân trọng!</p>";
+        return sendEmail(toEmail, subject, body, true);
+    }
+
+    /**
+     * Thông báo đổi mật khẩu cho nhân viên
+     */
+    public static boolean sendEmployeePasswordUpdated(String toEmail, String fullName, String newPassword) {
+        String subject = "Mật khẩu của bạn đã được cập nhật";
+        String body = "<h2>Chào " + safe(fullName) + ",</h2>"
+                + "<p>Mật khẩu mới của bạn là: <b>" + safe(newPassword) + "</b></p>"
+                + "<p>Vui lòng đăng nhập và giữ bí mật thông tin này.</p>"
+                + "<p>Trân trọng!</p>";
+        return sendEmail(toEmail, subject, body, true);
+    }
+
+    /**
+     * Thông báo đổi email đăng nhập cho nhân viên
+     */
+    public static boolean sendEmployeeEmailUpdated(String toEmail, String fullName, String newEmail) {
+        String subject = "Email đăng nhập của bạn đã được cập nhật";
+        String body = "<h2>Chào " + safe(fullName) + ",</h2>"
+                + "<p>Email đăng nhập mới của bạn là: <b>" + safe(newEmail) + "</b></p>"
+                + "<p>Mật khẩu của bạn không thay đổi.</p>"
+                + "<p>Vui lòng sử dụng email này để đăng nhập trong các lần tiếp theo.</p>"
+                + "<p>Trân trọng!</p>";
+        return sendEmail(toEmail, subject, body, true);
+    }
+
+    /**
+     * Thông báo đổi vai trò cho nhân viên
+     */
+    public static boolean sendEmployeeRoleUpdated(String toEmail, String fullName, String oldRole, String newRole) {
+        String subject = "Vai trò của bạn đã được cập nhật";
+        String body = "<h2>Chào " + safe(fullName) + ",</h2>"
+                + "<p>Chúng tôi đã đổi vai trò của bạn từ <b>" + safe(oldRole) + "</b> sang <b>" + safe(newRole) + "</b>.</p>"
+                + "<p>Vui lòng đăng nhập và tiếp tục làm việc với vai trò mới.</p>"
+                + "<p>Trân trọng!</p>";
+        return sendEmail(toEmail, subject, body, true);
+    }
+
     private static String buildOTPEmailTemplate(String title, String message, String otpCode, String expiry, String accentColor) {
         return "<!DOCTYPE html>"
                 + "<html>"
@@ -144,6 +218,10 @@ public class EmailUtil {
                 + "</table>"
                 + "</body>"
                 + "</html>";
+    }
+
+    private static String safe(String input) {
+        return input == null ? "" : input.replace("<", "&lt;").replace(">", "&gt;");
     }
 
     public static void main(String[] args) {

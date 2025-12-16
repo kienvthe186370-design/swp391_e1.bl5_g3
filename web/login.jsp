@@ -94,6 +94,10 @@
         .login-links a:hover {
             text-decoration: underline;
         }
+        .btn-google:hover {
+            background: #f5f5f5 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
         .alert {
             padding: 15px;
             margin-bottom: 20px;
@@ -170,6 +174,23 @@
                             
                             <button type="submit" class="site-btn">Đăng Nhập</button>
                         </form>
+                        
+                        <!-- Divider -->
+                        <div class="text-center my-4">
+                            <span style="color: #999; position: relative; display: inline-block; padding: 0 15px; background: #fff;">
+                                hoặc đăng nhập với
+                            </span>
+                            <hr style="margin-top: -10px; border-color: #e1e1e1;">
+                        </div>
+                        
+                        <!-- Google Login Button -->
+                        <a href="google-login<%= request.getParameter("redirect") != null ? "?redirect=" + request.getParameter("redirect") : "" %>" 
+                           class="btn btn-block" 
+                           style="background: #fff; border: 1px solid #ddd; padding: 12px; border-radius: 4px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #333; font-weight: 600; transition: all 0.3s;">
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                                 alt="Google" style="width: 20px; height: 20px; margin-right: 10px;">
+                            Đăng nhập với Google
+                        </a>
                         
                         <div class="login-links">
                             <p><a href="forgot-password">Quên mật khẩu?</a></p>

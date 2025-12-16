@@ -28,6 +28,13 @@ public class RolePermission {
         return SELLER_MANAGER.equalsIgnoreCase(role) || SELLER.equalsIgnoreCase(role);
     }
 
+    /**
+     * Quyền quản lý RFQ (chỉ SellerManager)
+     */
+    public static boolean canManageRFQ(String role) {
+        return SELLER_MANAGER.equalsIgnoreCase(role);
+    }
+
     public static boolean canViewSalesReports(String role) {
         return SELLER_MANAGER.equalsIgnoreCase(role);
     }
@@ -80,6 +87,12 @@ public class RolePermission {
             return false;
         }
 
+        // RFQ: chỉ SellerManager, Admin cũng không được thao tác
+        if (path.startsWith("/rfq")) {
+            return canManageRFQ(role);
+        }
+
+        // Admin: full quyền cho các phần còn lại
         if (ADMIN.equalsIgnoreCase(role)) {
             return true;
         }

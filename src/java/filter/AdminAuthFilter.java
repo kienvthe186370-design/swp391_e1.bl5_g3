@@ -35,8 +35,12 @@ public class AdminAuthFilter implements Filter {
             return;
         }
 
-        String path = httpRequest.getPathInfo();
-        if (path == null) {
+        // Chuẩn hóa path cho phân quyền: phần sau "/admin"
+        String uri = httpRequest.getRequestURI();
+        String contextPath = httpRequest.getContextPath();
+        String base = contextPath + "/admin";
+        String path = uri.startsWith(base) ? uri.substring(base.length()) : httpRequest.getPathInfo();
+        if (path == null || path.isEmpty()) {
             path = "/dashboard";
         }
 
