@@ -177,18 +177,6 @@ public class CustomerDAO extends DBContext {
         return null;
     }
     
-    private void updateLastLogin(int customerID) {
-        String sql = "UPDATE Customers SET LastLogin = GETDATE() WHERE CustomerID = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, customerID);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
-        }
-    }
-    
     private Customer mapResultSetToCustomer(ResultSet rs) throws SQLException {
         Customer customer = new Customer();
         customer.setCustomerID(rs.getInt("CustomerID"));
@@ -200,6 +188,26 @@ public class CustomerDAO extends DBContext {
         customer.setActive(rs.getBoolean("IsActive"));
         customer.setCreatedDate(rs.getTimestamp("CreatedDate"));
         customer.setLastLogin(rs.getTimestamp("LastLogin"));
+        
+        // New fields - handle if columns don't exist
+        try {
+            customer.setGender(rs.getString("Gender"));
+        } catch (SQLException e) { /* Column may not exist */ }
+        try {
+            customer.setDateOfBirth(rs.getDate("DateOfBirth"));
+        } catch (SQLException e) { /* Column may not exist */ }
+        try {
+            customer.setAvatar(rs.getString("Avatar"));
+        } catch (SQLException e) { /* Column may not exist */ }
+        
+        // Google OAuth fields
+        try {
+            customer.setGoogleId(rs.getString("GoogleID"));
+        } catch (SQLException e) { /* Column may not exist */ }
+        try {
+            customer.setLoginProvider(rs.getString("LoginProvider"));
+        } catch (SQLException e) { /* Column may not exist */ }
+        
         return customer;
     }
     
@@ -272,7 +280,7 @@ public class CustomerDAO extends DBContext {
     }
     
     /**
-     * Cập nhật thông tin khách hàng
+     * Cập nhật thông tin khách hàng (cho admin)
      */
     public boolean updateCustomer(int customerID, String fullName, String phone, boolean isEmailVerified) {
         String sql = "UPDATE Customers SET FullName = ?, Phone = ?, IsEmailVerified = ? WHERE CustomerID = ?";
@@ -287,6 +295,72 @@ public class CustomerDAO extends DBContext {
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
+            return false;
+        }
+    }
+    
+    /**
+     * Cập nhật thông tin profile khách hàng (cho customer tự cập nhật)
+     * Có fallback nếu columns Gender, DateOfBirth chưa tồn tại
+     */
+    public boolean updateProfile(int customerID, String fullName, String phone, String gender, java.sql.Date dateOfBirth) {
+        // Try full update first (with Gender, DateOfBirth)
+        String sql = "UPDATE Customers SET FullName = ?, Phone = ?, Gender = ?, DateOfBirth = ? WHERE CustomerID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, fullName);
+            ps.setString(2, phone);
+            ps.setString(3, gender);
+            if (dateOfBirth != null) {
+                ps.setDate(4, dateOfBirth);
+            } else {
+                ps.setNull(4, Types.DATE);
+            }
+            ps.setInt(5, customerID);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            // If columns don't exist, fallback to basic update
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.WARNING, "Full update failed, trying basic update: " + e.getMessage());
+            return updateProfileBasic(customerID, fullName, phone);
+        }
+    }
+    
+    /**
+     * Fallback: Cập nhật chỉ FullName và Phone (khi columns mới chưa tồn tại)
+     */
+    private boolean updateProfileBasic(int customerID, String fullName, String phone) {
+        String sql = "UPDATE Customers SET FullName = ?, Phone = ? WHERE CustomerID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, fullName);
+            ps.setString(2, phone);
+            ps.setInt(3, customerID);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
+            return false;
+        }
+    }
+    
+    /**
+     * Cập nhật avatar khách hàng
+     * Trả về false nếu column Avatar chưa tồn tại
+     */
+    public boolean updateAvatar(int customerID, String avatarPath) {
+        String sql = "UPDATE Customers SET Avatar = ? WHERE CustomerID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, avatarPath);
+            ps.setInt(2, customerID);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.WARNING, "Avatar column may not exist: " + e.getMessage());
             return false;
         }
     }
@@ -395,5 +469,138 @@ public class CustomerDAO extends DBContext {
             Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
         }
         return 0;
+    }
+    
+    // ==================== GOOGLE LOGIN METHODS ====================
+    
+    /**
+     * Tìm customer theo Google ID
+     * Trả về null nếu column GoogleID chưa tồn tại
+     */
+    public Customer findByGoogleId(String googleId) {
+        if (googleId == null || googleId.isEmpty()) return null;
+        
+        String sql = "SELECT * FROM Customers WHERE GoogleID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, googleId);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return mapResultSetToCustomer(rs);
+            }
+        } catch (SQLException e) {
+            // Column may not exist - this is OK, just return null
+            System.out.println("[CustomerDAO] findByGoogleId: Column may not exist - " + e.getMessage());
+        }
+        return null;
+    }
+    
+    /**
+     * Liên kết tài khoản Google với customer hiện có
+     * Trả về true nếu thành công, false nếu columns chưa tồn tại
+     */
+    public boolean linkGoogleAccount(int customerID, String googleId) {
+        String sql = "UPDATE Customers SET GoogleID = ?, LoginProvider = 'google' WHERE CustomerID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, googleId);
+            ps.setInt(2, customerID);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            // Columns may not exist - this is OK for existing accounts
+            System.out.println("[CustomerDAO] linkGoogleAccount: Columns may not exist - " + e.getMessage());
+            return true; // Return true so login can continue
+        }
+    }
+    
+    /**
+     * Tạo customer mới từ Google account
+     * Có fallback nếu columns GoogleID, LoginProvider, Avatar chưa tồn tại
+     */
+    public Customer createGoogleCustomer(String googleId, String email, String fullName, String avatar) {
+        // Generate a random password hash for Google users (they won't use it)
+        String randomPasswordHash = utils.PasswordUtil.hashPassword("GOOGLE_" + googleId + "_" + System.currentTimeMillis());
+        
+        // Try full insert first (with GoogleID, Avatar, LoginProvider)
+        String sql = "INSERT INTO Customers (FullName, Email, PasswordHash, GoogleID, Avatar, LoginProvider, IsEmailVerified, IsActive, CreatedDate) " +
+                     "VALUES (?, ?, ?, ?, ?, 'google', 1, 1, GETDATE())";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            
+            ps.setString(1, fullName);
+            ps.setString(2, email);
+            ps.setString(3, randomPasswordHash);
+            ps.setString(4, googleId);
+            ps.setString(5, avatar);
+            
+            int rowsAffected = ps.executeUpdate();
+            System.out.println("[CustomerDAO] createGoogleCustomer - rows affected: " + rowsAffected);
+            
+            if (rowsAffected > 0) {
+                ResultSet rs = ps.getGeneratedKeys();
+                if (rs.next()) {
+                    int customerID = rs.getInt(1);
+                    System.out.println("[CustomerDAO] Created Google customer with ID: " + customerID);
+                    return getCustomerById(customerID);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[CustomerDAO] Full insert failed: " + e.getMessage());
+            e.printStackTrace();
+            // Fallback: create basic customer without Google-specific columns
+            return createGoogleCustomerBasic(email, fullName, randomPasswordHash);
+        }
+        return null;
+    }
+    
+    /**
+     * Fallback: Tạo customer cơ bản khi columns Google chưa tồn tại
+     */
+    private Customer createGoogleCustomerBasic(String email, String fullName, String passwordHash) {
+        String sql = "INSERT INTO Customers (FullName, Email, PasswordHash, IsEmailVerified, IsActive, CreatedDate) " +
+                     "VALUES (?, ?, ?, 1, 1, GETDATE())";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            
+            ps.setString(1, fullName);
+            ps.setString(2, email);
+            ps.setString(3, passwordHash);
+            
+            int rowsAffected = ps.executeUpdate();
+            System.out.println("[CustomerDAO] createGoogleCustomerBasic - rows affected: " + rowsAffected);
+            
+            if (rowsAffected > 0) {
+                ResultSet rs = ps.getGeneratedKeys();
+                if (rs.next()) {
+                    int customerID = rs.getInt(1);
+                    System.out.println("[CustomerDAO] Created basic customer with ID: " + customerID);
+                    return getCustomerById(customerID);
+                }
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, "Failed to create basic customer", e);
+        }
+        return null;
+    }
+    
+    /**
+     * Cập nhật last login (public method for Google login)
+     */
+    public void updateLastLogin(int customerID) {
+        String sql = "UPDATE Customers SET LastLogin = GETDATE() WHERE CustomerID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, customerID);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
     }
 }

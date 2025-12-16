@@ -51,6 +51,9 @@
     // Order pages
     boolean isOrderPage = currentURI.contains("/admin/order");
     
+    // RFQ pages
+    boolean isRFQPage = currentURI.contains("/admin/rfq");
+    
     // Other pages
     boolean isReportsPage = currentURI.contains("/admin/reports");
     boolean isVoucherPage = currentURI.contains("/admin/voucher");
@@ -71,6 +74,7 @@
     boolean canViewCustomers = RolePermission.canViewCustomers(userRole);
     boolean canAccessOrders = RolePermission.canManageOrders(userRole);
     boolean canAccessReports = RolePermission.canViewSalesReports(userRole);
+    boolean canAccessRFQ = RolePermission.canManageRFQ(userRole);
     
     // Marketer permissions
     boolean canAccessProductManagement = RolePermission.canManageProducts(userRole);
@@ -81,6 +85,18 @@
     // Shipper permissions
     boolean isShipper = RolePermission.isShipper(userRole);
     boolean canViewShipperOrders = RolePermission.canViewShipperOrders(userRole);
+    
+    // Order assignment permissions (for SellerManager)
+    boolean canAssignOrders = RolePermission.canAssignOrders(userRole);
+    int unassignedOrderCount = 0;
+    if (canAssignOrders) {
+        try {
+            DAO.OrderDAO orderDAO = new DAO.OrderDAO();
+            unassignedOrderCount = orderDAO.countUnassignedOrders();
+        } catch (Exception e) {
+            // Ignore - OrderDAO may not have this method yet
+        }
+    }
     
     // Check for access denied message
     String accessDeniedMsg = (String) session.getAttribute("accessDeniedMessage");
@@ -272,19 +288,7 @@
         <% } %>
         
         <!-- Quản lý Đơn hàng - SellerManager và Seller -->
-        <% if (canAccessOrders) { 
-            // Lấy số đơn chưa phân công cho SellerManager
-            int unassignedOrderCount = 0;
-            boolean canAssignOrders = RolePermission.canAssignOrders(userRole);
-            if (canAssignOrders) {
-                try {
-                    DAO.OrderDAO orderDAO = new DAO.OrderDAO();
-                    unassignedOrderCount = orderDAO.countUnassignedOrders();
-                } catch (Exception e) {
-                    // Ignore
-                }
-            }
-        %>
+        <% if (canAccessOrders) { %>
         <li class="nav-item has-treeview <%= isOrderPage ? "menu-open" : "" %>">
           <a href="#" class="nav-link <%= isOrderPage ? "active" : "" %>">
             <i class="nav-icon fas fa-shopping-cart"></i>
@@ -322,6 +326,17 @@
             </li>
             <% } %>
           </ul>
+        </li>
+        <% } %>
+        
+        <!-- RFQ Management - Chỉ SellerManager -->
+        <% if (canAccessRFQ) { %>
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/rfq" 
+             class="nav-link <%= isRFQPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-file-invoice"></i>
+            <p>Yêu cầu báo giá (RFQ)</p>
+          </a>
         </li>
         <% } %>
         

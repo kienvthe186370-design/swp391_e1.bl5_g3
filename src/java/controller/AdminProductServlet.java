@@ -103,7 +103,7 @@ public class AdminProductServlet extends HttpServlet {
         Integer brandId = parseInteger(brandIdStr);
         Boolean isActive = parseStatus(statusStr);
         
-        if (sortBy == null || sortBy.isEmpty()) sortBy = "date";
+        if (sortBy == null || sortBy.isEmpty()) sortBy = "id";
         if (sortOrder == null || sortOrder.isEmpty()) sortOrder = "desc";
         
         int page = 1;

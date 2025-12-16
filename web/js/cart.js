@@ -34,16 +34,42 @@ function updateCartQuantity(cartItemId, quantity) {
         showLoading(false);
         
         if (data.success) {
-            // Update UI
+            // Update cart count in header
             updateCartUI(data);
-            showNotification('Đã cập nhật giỏ hàng', 'success');
             
-            // Reload page to update totals
-            setTimeout(() => {
-                location.reload();
-            }, 500);
+            // Update item total in the row
+            const row = document.querySelector(`input[data-cart-item-id="${cartItemId}"]`).closest('tr');
+            if (row) {
+                const totalCell = row.querySelector('.cart__price');
+                if (totalCell && data.itemTotal) {
+                    totalCell.textContent = formatCurrency(data.itemTotal);
+                }
+            }
+            
+            // Update subtotal and total
+            const subtotalElements = document.querySelectorAll('.cart-subtotal');
+            subtotalElements.forEach(el => {
+                el.textContent = formatCurrency(data.subtotal);
+            });
+            
+            // Update total (assuming no discount for now)
+            const totalElements = document.querySelectorAll('.cart__total ul li:last-child span');
+            totalElements.forEach(el => {
+                el.textContent = formatCurrency(data.subtotal);
+            });
+            
+            showNotification('Đã cập nhật giỏ hàng', 'success');
         } else {
             showNotification(data.message || 'Cập nhật thất bại', 'error');
+            
+            // If exceeded stock, reset to max stock
+            if (data.maxStock !== undefined) {
+                const input = document.querySelector(`input[data-cart-item-id="${cartItemId}"]`);
+                if (input) {
+                    input.value = data.maxStock;
+                    input.setAttribute('max', data.maxStock);
+                }
+            }
         }
     })
     .catch(error => {
@@ -280,23 +306,41 @@ function setupQuantityInputs() {
     const quantityInputs = document.querySelectorAll('.cart-quantity-input');
     
     quantityInputs.forEach(input => {
+        // Validate on input (real-time)
+        input.addEventListener('input', function() {
+            const maxStock = parseInt(this.getAttribute('max'));
+            const currentValue = parseInt(this.value);
+            
+            if (currentValue > maxStock) {
+                this.value = maxStock;
+                showNotification(`Chỉ còn ${maxStock} sản phẩm trong kho`, 'warning');
+            }
+            
+            if (currentValue < 1) {
+                this.value = 1;
+            }
+        });
+        
+        // Update cart on change
         input.addEventListener('change', function() {
             const cartItemId = this.getAttribute('data-cart-item-id');
             const quantity = parseInt(this.value);
             const maxStock = parseInt(this.getAttribute('max'));
             
-            if (quantity > maxStock) {
-                showNotification('Số lượng vượt quá tồn kho', 'error');
-                this.value = maxStock;
-                return;
-            }
-            
-            if (quantity < 1) {
+            // Validate quantity
+            if (isNaN(quantity) || quantity < 1) {
                 if (confirm('Xóa sản phẩm này khỏi giỏ hàng?')) {
                     removeCartItem(cartItemId);
                 } else {
                     this.value = 1;
                 }
+                return;
+            }
+            
+            if (quantity > maxStock) {
+                showNotification(`Chỉ còn ${maxStock} sản phẩm trong kho`, 'error');
+                this.value = maxStock;
+                updateCartQuantity(cartItemId, maxStock);
                 return;
             }
             

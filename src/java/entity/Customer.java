@@ -1,5 +1,6 @@
 package entity;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 
 public class Customer {
@@ -9,12 +10,19 @@ public class Customer {
     private String email;
     private String passwordHash;
     private String phone;
+    private String gender;
+    private Date dateOfBirth;
+    private String avatar;
     private boolean isEmailVerified;
     private String verificationToken;
     private Timestamp tokenExpiry;
     private boolean isActive;
     private Timestamp createdDate;
     private Timestamp lastLogin;
+    
+    // Google OAuth fields
+    private String googleId;
+    private String loginProvider; // 'local', 'google'
 
     public Customer() {
     }
@@ -117,5 +125,53 @@ public class Customer {
 
     public void setLastLogin(Timestamp lastLogin) {
         this.lastLogin = lastLogin;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public Date getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(Date dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+    
+    // Google OAuth getters/setters
+    public String getGoogleId() {
+        return googleId;
+    }
+
+    public void setGoogleId(String googleId) {
+        this.googleId = googleId;
+    }
+
+    public String getLoginProvider() {
+        return loginProvider;
+    }
+
+    public void setLoginProvider(String loginProvider) {
+        this.loginProvider = loginProvider;
+    }
+    
+    /**
+     * Check if this customer logged in via Google
+     */
+    public boolean isGoogleUser() {
+        return "google".equals(loginProvider) || (googleId != null && !googleId.isEmpty());
     }
 }

@@ -15,13 +15,29 @@
         .profile-sidebar { background: #f8f9fa; padding: 20px; border-radius: 8px; }
         .profile-sidebar .nav-link { color: #333; padding: 12px 15px; border-radius: 5px; margin-bottom: 5px; }
         .profile-sidebar .nav-link:hover, .profile-sidebar .nav-link.active { background: #e53637; color: white; }
+        .profile-sidebar .nav-link i { width: 20px; }
         .profile-content { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        
+        /* Avatar */
+        .avatar-wrapper { position: relative; width: 120px; height: 120px; margin: 0 auto 15px; }
+        .avatar-img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #e53637; }
+        .avatar-placeholder { width: 120px; height: 120px; border-radius: 50%; background: #e1e1e1; display: flex; align-items: center; justify-content: center; border: 3px solid #e53637; }
+        .avatar-placeholder i { font-size: 50px; color: #999; }
+        .avatar-upload-btn { position: absolute; bottom: 0; right: 0; width: 36px; height: 36px; background: #e53637; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white; }
+        .avatar-upload-btn i { color: white; font-size: 14px; }
+        .avatar-upload-btn:hover { background: #c42b2b; }
+        
+        /* Address Card */
         .address-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; position: relative; }
         .address-card.default { border-color: #e53637; background: #fff5f5; }
         .address-card .badge-default { position: absolute; top: 10px; right: 10px; background: #e53637; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px; }
         .address-card .actions { margin-top: 10px; }
         .btn-add-address { border: 2px dashed #ddd; padding: 30px; text-align: center; border-radius: 8px; cursor: pointer; color: #666; }
         .btn-add-address:hover { border-color: #e53637; color: #e53637; }
+        
+        /* Form */
+        .form-group label { font-weight: 600; color: #333; }
+        .form-control:focus { border-color: #e53637; box-shadow: 0 0 0 0.2rem rgba(229, 54, 55, 0.15); }
     </style>
 </head>
 <body>
@@ -34,7 +50,7 @@
                     <div class="breadcrumb__text">
                         <h4>Tài khoản của tôi</h4>
                         <div class="breadcrumb__links">
-                            <a href="${pageContext.request.contextPath}/Home">Trang chủ</a>
+                            <a href="${pageContext.request.contextPath}/home">Trang chủ</a>
                             <span>Tài khoản</span>
                         </div>
                     </div>
@@ -50,16 +66,34 @@
                 <div class="col-lg-3">
                     <div class="profile-sidebar">
                         <div class="text-center mb-4">
-                            <i class="fa fa-user-circle fa-4x text-muted"></i>
-                            <h5 class="mt-2">${customer.fullName}</h5>
+                            <!-- Avatar -->
+                            <div class="avatar-wrapper">
+                                <c:choose>
+                                    <c:when test="${not empty customer.avatar}">
+                                        <img src="${pageContext.request.contextPath}/${customer.avatar}" alt="Avatar" class="avatar-img" id="avatarPreview">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="avatar-placeholder" id="avatarPlaceholder">
+                                            <i class="fa fa-user"></i>
+                                        </div>
+                                    </c:otherwise>
+                                </c:choose>
+                                <label class="avatar-upload-btn" for="avatarInput" title="Đổi ảnh đại diện">
+                                    <i class="fa fa-camera"></i>
+                                </label>
+                            </div>
+                            <h5 class="mt-2 mb-1">${customer.fullName}</h5>
                             <small class="text-muted">${customer.email}</small>
                         </div>
                         <nav class="nav flex-column">
-                            <a class="nav-link ${activeTab == 'profile' ? 'active' : ''}" href="?tab=profile">
+                            <a class="nav-link ${activeTab == 'profile' || activeTab == null ? 'active' : ''}" href="?tab=profile">
                                 <i class="fa fa-user"></i> Thông tin cá nhân
                             </a>
                             <a class="nav-link ${activeTab == 'addresses' ? 'active' : ''}" href="?tab=addresses">
                                 <i class="fa fa-map-marker"></i> Địa chỉ giao hàng
+                            </a>
+                            <a class="nav-link ${activeTab == 'password' ? 'active' : ''}" href="?tab=password">
+                                <i class="fa fa-lock"></i> Đổi mật khẩu
                             </a>
                             <a class="nav-link" href="${pageContext.request.contextPath}/customer/orders">
                                 <i class="fa fa-list-alt"></i> Đơn hàng của tôi
@@ -89,8 +123,8 @@
 
                         <c:choose>
                             <c:when test="${activeTab == 'addresses'}">
-                                <!-- Addresses Tab -->
-                                <h4 class="mb-4"><i class="fa fa-map-marker"></i> Địa chỉ giao hàng</h4>
+                            <%-- ADDRESSES TAB --%>
+                                <h4 class="mb-4"><i class="fa fa-map-marker text-danger"></i> Địa chỉ giao hàng</h4>
                                 
                                 <div class="row">
                                     <c:forEach var="addr" items="${addresses}">
@@ -135,15 +169,41 @@
                                     </div>
                                 </div>
                             </c:when>
-                            
+                            <c:when test="${activeTab == 'password'}">
+                            <%-- PASSWORD TAB --%>
+                                <h4 class="mb-4"><i class="fa fa-lock text-danger"></i> Đổi mật khẩu</h4>
+                                <form action="${pageContext.request.contextPath}/update-profile" method="post">
+                                    <input type="hidden" name="action" value="changePassword">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Mật khẩu hiện tại <span class="text-danger">*</span></label>
+                                                <input type="password" name="currentPassword" class="form-control" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Mật khẩu mới <span class="text-danger">*</span></label>
+                                                <input type="password" name="newPassword" class="form-control" minlength="6" required>
+                                                <small class="text-muted">Tối thiểu 6 ký tự</small>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Xác nhận mật khẩu mới <span class="text-danger">*</span></label>
+                                                <input type="password" name="confirmPassword" class="form-control" minlength="6" required>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fa fa-save"></i> Đổi mật khẩu
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </c:when>
                             <c:otherwise>
-                                <!-- Profile Tab -->
-                                <h4 class="mb-4"><i class="fa fa-user"></i> Thông tin cá nhân</h4>
+                            <%-- PROFILE TAB (default) --%>
+                                <h4 class="mb-4"><i class="fa fa-user text-danger"></i> Thông tin cá nhân</h4>
                                 <form action="${pageContext.request.contextPath}/update-profile" method="post">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label>Họ và tên</label>
+                                                <label>Họ và tên <span class="text-danger">*</span></label>
                                                 <input type="text" name="fullName" class="form-control" value="${customer.fullName}" required>
                                             </div>
                                         </div>
@@ -151,12 +211,13 @@
                                             <div class="form-group">
                                                 <label>Email</label>
                                                 <input type="email" class="form-control" value="${customer.email}" disabled>
+                                                <small class="text-muted">Email không thể thay đổi</small>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label>Số điện thoại</label>
-                                                <input type="tel" name="phone" class="form-control" value="${customer.phone}">
+                                                <input type="tel" name="phone" class="form-control" value="${customer.phone}" placeholder="VD: 0912345678">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
@@ -168,6 +229,20 @@
                                                     <option value="Female" ${customer.gender == 'Female' ? 'selected' : ''}>Nữ</option>
                                                     <option value="Other" ${customer.gender == 'Other' ? 'selected' : ''}>Khác</option>
                                                 </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Ngày sinh</label>
+                                                <input type="date" name="dateOfBirth" class="form-control" 
+                                                       value="<fmt:formatDate value='${customer.dateOfBirth}' pattern='yyyy-MM-dd'/>">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label>Ngày tham gia</label>
+                                                <input type="text" class="form-control" 
+                                                       value="<fmt:formatDate value='${customer.createdDate}' pattern='dd/MM/yyyy'/>" disabled>
                                             </div>
                                         </div>
                                     </div>
@@ -182,6 +257,12 @@
             </div>
         </div>
     </section>
+
+    <!-- Hidden Avatar Upload Form -->
+    <form id="avatarForm" action="${pageContext.request.contextPath}/update-profile" method="post" enctype="multipart/form-data" style="display:none;">
+        <input type="hidden" name="action" value="updateAvatar">
+        <input type="file" name="avatar" id="avatarInput" accept="image/*">
+    </form>
 
     <!-- Add Address Modal -->
     <div class="modal fade" id="addAddressModal" tabindex="-1">
@@ -308,6 +389,7 @@
 
     <script src="${pageContext.request.contextPath}/js/jquery-3.3.1.min.js"></script>
     <script src="${pageContext.request.contextPath}/js/bootstrap.min.js"></script>
+
     <script>
         var contextPath = '${pageContext.request.contextPath}';
         var redirectUrl = '${redirect}';
@@ -322,6 +404,33 @@
             $(".loader").fadeOut();
             $("#preloder").fadeOut("slow");
         }, 2000);
+        
+        // Avatar upload
+        $('#avatarInput').on('change', function() {
+            if (this.files && this.files[0]) {
+                var file = this.files[0];
+                
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File ảnh không được vượt quá 5MB');
+                    return;
+                }
+                
+                // Preview
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    if ($('#avatarPreview').length) {
+                        $('#avatarPreview').attr('src', e.target.result);
+                    } else {
+                        $('#avatarPlaceholder').replaceWith('<img src="' + e.target.result + '" alt="Avatar" class="avatar-img" id="avatarPreview">');
+                    }
+                };
+                reader.readAsDataURL(file);
+                
+                // Submit form
+                $('#avatarForm').submit();
+            }
+        });
         
         // Load cities when page loads
         $(document).ready(function() {

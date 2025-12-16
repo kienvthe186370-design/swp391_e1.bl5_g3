@@ -23,18 +23,36 @@ public class VNPayConfig {
     public static final String VNP_ORDER_TYPE = "other";
     
     // Cloudflare Tunnel URL - Set this when using tunnel for VNPay callback
-    // Set to null or empty to use auto-detect from request
-    public static final String TUNNEL_BASE_URL = "http://localhost:8080";
-    public static final String APP_CONTEXT = "/swp391_e1.bl5_gr3";
+    // Set to null or empty to use auto-detect from request (RECOMMENDED)
+    // Example: "https://tunnel.yourdomain.com" for production with tunnel
+    public static final String TUNNEL_BASE_URL = ""; // Empty = auto-detect
     
-    // Helper method to get return URL
+    // Helper method to get return URL - Auto detects port from request
     public static String getReturnUrl(jakarta.servlet.http.HttpServletRequest request) {
+        // If tunnel URL is configured, use it (for production with Cloudflare tunnel)
         if (TUNNEL_BASE_URL != null && !TUNNEL_BASE_URL.isEmpty()) {
-            return TUNNEL_BASE_URL + APP_CONTEXT + "/vnpay-callback";
+            return TUNNEL_BASE_URL + request.getContextPath() + "/vnpay-callback";
         }
-        // Fallback to auto-detect
-        return request.getScheme() + "://" + request.getServerName() 
-            + ":" + request.getServerPort() + request.getContextPath() + "/vnpay-callback";
+        
+        // Auto-detect from request (works with any port: 8080, 9999, etc.)
+        String scheme = request.getScheme();
+        String serverName = request.getServerName();
+        int serverPort = request.getServerPort();
+        String contextPath = request.getContextPath();
+        
+        StringBuilder url = new StringBuilder();
+        url.append(scheme).append("://").append(serverName);
+        
+        // Only add port if not default (80 for http, 443 for https)
+        if ((scheme.equals("http") && serverPort != 80) || 
+            (scheme.equals("https") && serverPort != 443)) {
+            url.append(":").append(serverPort);
+        }
+        
+        url.append(contextPath).append("/vnpay-callback");
+        
+        System.out.println("[VNPayConfig] Auto-detected Return URL: " + url.toString());
+        return url.toString();
     }
 
     public static String hmacSHA512(String key, String data) {
