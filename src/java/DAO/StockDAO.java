@@ -298,7 +298,7 @@ public class StockDAO extends DBContext {
         List<Map<String, Object>> list = new ArrayList<>();
         
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT pv.VariantID, pv.SKU, pv.SellingPrice, pv.CostPrice, pv.Stock, ");
+        sql.append("SELECT pv.VariantID, pv.SKU, pv.SellingPrice, pv.CostPrice, pv.Stock, pv.ReservedStock, ");
         sql.append("p.ProductID, p.ProductName, c.CategoryName, b.BrandName, ");
         sql.append("(SELECT TOP 1 ImageURL FROM ProductImages WHERE ProductID = p.ProductID AND ImageType = 'main') AS ImageUrl, ");
         sql.append("(SELECT COUNT(*) FROM StockReceipts WHERE VariantID = pv.VariantID) AS ReceiptCount ");
@@ -390,6 +390,8 @@ public class StockDAO extends DBContext {
                 BigDecimal sellingPrice = rs.getBigDecimal("SellingPrice");
                 BigDecimal costPrice = rs.getBigDecimal("CostPrice");
                 
+                int reservedStock = rs.getInt("ReservedStock");
+                
                 item.put("variantId", variantId);
                 item.put("sku", rs.getString("SKU"));
                 item.put("productName", rs.getString("ProductName"));
@@ -397,6 +399,8 @@ public class StockDAO extends DBContext {
                 item.put("brandName", rs.getString("BrandName"));
                 item.put("imageUrl", rs.getString("ImageUrl"));
                 item.put("currentStock", currentStock);
+                item.put("reservedStock", reservedStock);
+                item.put("availableStock", currentStock - reservedStock);
                 item.put("sellingPrice", sellingPrice);
                 item.put("hasReceipt", receiptCount > 0);
                 

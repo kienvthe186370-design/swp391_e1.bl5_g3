@@ -273,10 +273,8 @@
                                         <th>SKU</th>
                                         <th class="text-right">Giá vốn</th>
                                         <th class="text-right">Giá bán</th>
-                                        <th class="text-right">Giá so sánh</th>
                                         <th class="text-center">Tồn kho</th>
                                         <th class="text-center">Đã giữ</th>
-                                        <th class="text-center">Khả dụng</th>
                                         <th class="text-right">Lợi nhuận</th>
                                         <th class="text-center">Trạng thái</th>
                                         <th class="text-center">Hành động</th>
@@ -292,16 +290,6 @@
                                             <td class="text-right">
                                                 <fmt:formatNumber value="${variant.sellingPrice}" type="number" groupingUsed="true"/>đ
                                             </td>
-                                            <td class="text-right">
-                                                <c:choose>
-                                                    <c:when test="${not empty variant.compareAtPrice}">
-                                                        <fmt:formatNumber value="${variant.compareAtPrice}" type="number" groupingUsed="true"/>đ
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <span class="text-muted">-</span>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </td>
                                             <td class="text-center">
                                                 <c:choose>
                                                     <c:when test="${variant.stock == 0}">
@@ -316,9 +304,6 @@
                                                 </c:choose>
                                             </td>
                                             <td class="text-center">${variant.reservedStock}</td>
-                                            <td class="text-center">
-                                                <strong>${variant.availableStock}</strong>
-                                            </td>
                                             <td class="text-right">
                                                 <c:choose>
                                                     <c:when test="${variant.profitMargin >= 0}">
