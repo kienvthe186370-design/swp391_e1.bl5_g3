@@ -342,6 +342,14 @@ public class CartController extends HttpServlet {
                 
                 // Redirect based on source
                 String source = request.getParameter("source");
+                String redirect = request.getParameter("redirect");
+                
+                // Handle "Buy Now" - redirect to checkout
+                if ("checkout".equals(redirect)) {
+                    response.sendRedirect(request.getContextPath() + "/checkout");
+                    return;
+                }
+                
                 if ("product-detail".equals(source)) {
                     response.sendRedirect(request.getContextPath() + "/product-detail?id=" + productID + "&success=added_to_cart");
                 } else if ("shop".equals(source)) {

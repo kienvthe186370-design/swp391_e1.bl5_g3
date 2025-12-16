@@ -1168,7 +1168,7 @@
             });
         }
         
-        // Buy now
+        // Buy now - Chuyển thẳng đến checkout với sản phẩm đã chọn
         function buyNow() {
             var productId = document.getElementById('productId').value;
             var variantId = document.getElementById('selectedVariantId').value;
@@ -1189,7 +1189,8 @@
                 return;
             }
             
-            window.location.href = '${pageContext.request.contextPath}/cart?action=add&productId=' + productId + '&variantId=' + variantId + '&quantity=' + quantity + '&redirect=checkout';
+            // Redirect đến trang buy-now để checkout trực tiếp
+            window.location.href = '${pageContext.request.contextPath}/buy-now?productId=' + productId + '&variantId=' + variantId + '&quantity=' + quantity;
         }
         
         // Keyboard support for zoom

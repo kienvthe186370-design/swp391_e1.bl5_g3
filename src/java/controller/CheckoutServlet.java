@@ -125,11 +125,43 @@ public class CheckoutServlet extends HttpServlet {
         }
         
         int customerID = customer.getCustomerID();
-        Cart cart = cartDAO.getOrCreateCart(customerID);
         
-        if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) {
-            response.sendRedirect("shopping-cart.jsp?error=empty");
-            return;
+        // Kiểm tra chế độ Mua ngay
+        String buyNowModeStr = request.getParameter("buyNowMode");
+        boolean isBuyNowMode = "true".equals(buyNowModeStr);
+        
+        Cart cart = null;
+        List<CartItem> cartItems = null;
+        
+        if (isBuyNowMode) {
+            // Chế độ Mua ngay - tạo cart items từ thông tin sản phẩm
+            BuyNowItem buyNowItem = (BuyNowItem) session.getAttribute("buyNowItem");
+            if (buyNowItem == null) {
+                response.sendRedirect("shop?error=buy_now_expired");
+                return;
+            }
+            
+            // Tạo CartItem từ BuyNowItem
+            CartItem item = new CartItem();
+            item.setProductID(buyNowItem.getProductId());
+            item.setVariantID(buyNowItem.getVariantId());
+            item.setProductName(buyNowItem.getProductName());
+            item.setVariantName(buyNowItem.getVariantName());
+            item.setVariantSKU(buyNowItem.getVariantName());
+            item.setQuantity(buyNowItem.getQuantity());
+            item.setPrice(buyNowItem.getPrice());
+            
+            cartItems = new ArrayList<>();
+            cartItems.add(item);
+        } else {
+            // Chế độ checkout từ giỏ hàng
+            cart = cartDAO.getOrCreateCart(customerID);
+            
+            if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) {
+                response.sendRedirect("shopping-cart.jsp?error=empty");
+                return;
+            }
+            cartItems = cart.getItems();
         }
         
         try {
@@ -166,7 +198,16 @@ public class CheckoutServlet extends HttpServlet {
 
             
             // Calculate totals
-            BigDecimal subtotal = cartDAO.getCartSubtotal(cart.getCartID());
+            BigDecimal subtotal = BigDecimal.ZERO;
+            if (isBuyNowMode) {
+                // Tính subtotal từ BuyNowItem
+                for (CartItem item : cartItems) {
+                    subtotal = subtotal.add(item.getPrice().multiply(new BigDecimal(item.getQuantity())));
+                }
+            } else {
+                subtotal = cartDAO.getCartSubtotal(cart.getCartID());
+            }
+            
             BigDecimal voucherDiscount = BigDecimal.ZERO;
             Integer voucherID = null;
             
@@ -183,7 +224,7 @@ public class CheckoutServlet extends HttpServlet {
             
             // Convert CartItems to OrderDetails
             List<OrderDetail> orderDetails = new ArrayList<>();
-            for (CartItem item : cart.getItems()) {
+            for (CartItem item : cartItems) {
                 OrderDetail detail = new OrderDetail();
                 detail.setVariantID(item.getVariantID() != null ? item.getVariantID() : 0);
                 detail.setProductName(item.getProductName());
@@ -245,8 +286,15 @@ public class CheckoutServlet extends HttpServlet {
                 System.err.println("[Checkout] Auto-assign seller failed: " + e.getMessage());
             }
             
-            // Clear cart after order created
-            cartDAO.clearCart(cart.getCartID());
+            // Clear cart after order created (chỉ khi không phải chế độ mua ngay)
+            if (!isBuyNowMode && cart != null) {
+                cartDAO.clearCart(cart.getCartID());
+            }
+            
+            // Xóa buyNowItem khỏi session nếu là chế độ mua ngay
+            if (isBuyNowMode) {
+                session.removeAttribute("buyNowItem");
+            }
 
             
             if ("VNPay".equals(paymentMethod)) {

@@ -1,6 +1,7 @@
 package controller;
 
 import DAO.ProductDAO;
+import DAO.CategoryDAO;
 import DAO.DiscountCampaignDAO;
 import entity.DiscountCampaign;
 import java.io.IOException;
@@ -16,13 +17,15 @@ import java.util.Map;
 @WebServlet(name = "ShopServlet", urlPatterns = {"/shop"})
 public class ShopServlet extends HttpServlet {
     
+    
     private ProductDAO productDAO;
     private DiscountCampaignDAO discountDAO;
-    
+    private CategoryDAO categoryDAO;
     @Override
     public void init() throws ServletException {
         productDAO = new ProductDAO();
         discountDAO = new DiscountCampaignDAO();
+        categoryDAO = new CategoryDAO();
     }
     
     @Override
