@@ -5,17 +5,18 @@
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.util.regex.*" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
-<html lang="zxx">
+<html lang="vi">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="description" content="Male_Fashion Template">
-    <meta name="keywords" content="Male_Fashion, unica, creative, html">
+    <meta name="description" content="Blog - Tin tức thời trang">
+    <meta name="keywords" content="blog, tin tức, thời trang">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Male-Fashion | Template</title>
+    <title>Blog - Tin tức</title>
 
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap"
@@ -50,98 +51,76 @@
     <!-- Blog Section Begin -->
     <section class="blog spad">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-4 col-md-6 col-sm-6">
-                    <div class="blog__item">
-                        <div class="blog__item__pic set-bg" data-setbg="img/blog/blog-1.jpg"></div>
-                        <div class="blog__item__text">
-                            <span><img src="img/icon/calendar.png" alt=""> 16 February 2020</span>
-                            <h5>What Curling Irons Are The Best Ones</h5>
-                            <a href="#">Read More</a>
+            <!-- Search Form -->
+            <div class="row mb-4">
+                <div class="col-lg-12">
+                    <form method="get" action="<%= request.getContextPath() %>/blog" class="d-flex justify-content-center">
+                        <div class="input-group" style="max-width: 500px;">
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="Tìm kiếm bài viết..." value="${search}">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fa fa-search"></i> Tìm
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 col-sm-6">
-                    <div class="blog__item">
-                        <div class="blog__item__pic set-bg" data-setbg="img/blog/blog-2.jpg"></div>
-                        <div class="blog__item__text">
-                            <span><img src="img/icon/calendar.png" alt=""> 21 February 2020</span>
-                            <h5>Eternity Bands Do Last Forever</h5>
-                            <a href="#">Read More</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 col-sm-6">
-                    <div class="blog__item">
-                        <div class="blog__item__pic set-bg" data-setbg="img/blog/blog-3.jpg"></div>
-                        <div class="blog__item__text">
-                            <span><img src="img/icon/calendar.png" alt=""> 28 February 2020</span>
-                            <h5>The Health Benefits Of Sunglasses</h5>
-                            <a href="#">Read More</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 col-sm-6">
-                    <div class="blog__item">
-                        <div class="blog__item__pic set-bg" data-setbg="img/blog/blog-4.jpg"></div>
-                        <div class="blog__item__text">
-                            <span><img src="img/icon/calendar.png" alt=""> 16 February 2020</span>
-                            <h5>Aiming For Higher The Mastopexy</h5>
-                            <a href="#">Read More</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 col-sm-6">
-                    <div class="blog__item">
-                        <div class="blog__item__pic set-bg" data-setbg="img/blog/blog-5.jpg"></div>
-                        <div class="blog__item__text">
-                            <span><img src="img/icon/calendar.png" alt=""> 21 February 2020</span>
-                            <h5>Wedding Rings A Gift For A Lifetime</h5>
-                            <a href="#">Read More</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 col-sm-6">
-                    <div class="blog__item">
-                        <div class="blog__item__pic set-bg" data-setbg="img/blog/blog-6.jpg"></div>
-                        <div class="blog__item__text">
-                            <span><img src="img/icon/calendar.png" alt=""> 28 February 2020</span>
-                            <h5>The Different Methods Of Hair Removal</h5>
-                            <a href="#">Read More</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 col-sm-6">
-                    <div class="blog__item">
-                        <div class="blog__item__pic set-bg" data-setbg="img/blog/blog-7.jpg"></div>
-                        <div class="blog__item__text">
-                            <span><img src="img/icon/calendar.png" alt=""> 16 February 2020</span>
-                            <h5>Hoop Earrings A Style From History</h5>
-                            <a href="#">Read More</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 col-sm-6">
-                    <div class="blog__item">
-                        <div class="blog__item__pic set-bg" data-setbg="img/blog/blog-8.jpg"></div>
-                        <div class="blog__item__text">
-                            <span><img src="img/icon/calendar.png" alt=""> 21 February 2020</span>
-                            <h5>Lasik Eye Surgery Are You Ready</h5>
-                            <a href="#">Read More</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 col-sm-6">
-                    <div class="blog__item">
-                        <div class="blog__item__pic set-bg" data-setbg="img/blog/blog-9.jpg"></div>
-                        <div class="blog__item__text">
-                            <span><img src="img/icon/calendar.png" alt=""> 28 February 2020</span>
-                            <h5>Lasik Eye Surgery Are You Ready</h5>
-                            <a href="#">Read More</a>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
+            
+            <div class="row">
+                <c:forEach var="blog" items="${blogs}">
+                    <div class="col-lg-4 col-md-6 col-sm-6">
+                        <div class="blog__item">
+                            <div class="blog__item__pic set-bg" 
+                                 data-setbg="${not empty blog.featuredImage ? pageContext.request.contextPath.concat('/').concat(blog.featuredImage) : pageContext.request.contextPath.concat('/img/blog/blog-1.jpg')}">
+                            </div>
+                            <div class="blog__item__text">
+                                <span>
+                                    <img src="img/icon/calendar.png" alt=""> 
+                                    ${blog.publishedDate != null ? blog.publishedDate.toString().substring(0, 10) : 'N/A'}
+                                </span>
+                                <h5>${blog.title}</h5>
+                                <c:if test="${not empty blog.summary}">
+                                    <p>
+                                        ${blog.summary.length() > 100 ? blog.summary.substring(0, 100).concat('...') : blog.summary}
+                                    </p>
+                                </c:if>
+                                <a href="${pageContext.request.contextPath}/blog-details?id=${blog.postId}">Đọc thêm</a>
+                            </div>
+                        </div>
+                    </div>
+                </c:forEach>
+                
+                <c:if test="${empty blogs}">
+                    <div class="col-12 text-center py-5">
+                        <i class="fa fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Không tìm thấy bài viết nào.</p>
+                        <a href="${pageContext.request.contextPath}/blog" class="btn btn-primary">Xem tất cả</a>
+                    </div>
+                </c:if>
+            </div>
+            
+            <!-- Pagination -->
+            <c:if test="${totalPages > 1}">
+                <div class="row mt-5">
+                    <div class="col-lg-12">
+                        <div class="product__pagination">
+                            <c:if test="${currentPage > 1}">
+                                <a href="?page=${currentPage - 1}&search=${search}"><i class="fa fa-angle-left"></i></a>
+                            </c:if>
+                            
+                            <c:forEach begin="1" end="${totalPages}" var="i">
+                                <a href="?page=${i}&search=${search}" class="${currentPage == i ? 'active' : ''}">${i}</a>
+                            </c:forEach>
+                            
+                            <c:if test="${currentPage < totalPages}">
+                                <a href="?page=${currentPage + 1}&search=${search}"><i class="fa fa-angle-right"></i></a>
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
+            </c:if>
         </div>
     </section>
     <!-- Blog Section End -->

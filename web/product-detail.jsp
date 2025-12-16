@@ -458,35 +458,63 @@
                     
                     <!-- Price -->
                     <div class="price-section">
+                        <!-- DEBUG: Show promotion status -->
+                        <!-- hasPromotion: ${product.hasPromotion} -->
+                        
+                        <!-- Promotion Badge -->
+                        <c:if test="${product.hasPromotion}">
+                            <div class="promotion-banner" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; padding: 12px 20px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                                <i class="fa fa-bolt" style="font-size: 20px;"></i>
+                                <div>
+                                    <strong style="font-size: 16px;">ĐANG GIẢM GIÁ ${product.discountPercent}%</strong>
+                                    <div style="font-size: 13px; opacity: 0.9;">${product.promotionCampaign.campaignName}</div>
+                                </div>
+                            </div>
+                        </c:if>
+                        
                         <c:choose>
                             <c:when test="${not empty variants && variants.size() > 0}">
-                                <c:set var="minPrice" value="${variants[0].sellingPrice}"/>
-                                <c:set var="maxPrice" value="${variants[0].sellingPrice}"/>
-                                <c:set var="hasComparePrice" value="false"/>
-                                <c:set var="comparePrice" value="0"/>
+                                <!-- Calculate min/max prices (with promotion if available) -->
+                                <c:set var="minPrice" value="${variants[0].hasPromotion ? variants[0].promotionPrice : variants[0].sellingPrice}"/>
+                                <c:set var="maxPrice" value="${variants[0].hasPromotion ? variants[0].promotionPrice : variants[0].sellingPrice}"/>
+                                <c:set var="minOriginalPrice" value="${variants[0].sellingPrice}"/>
+                                <c:set var="maxOriginalPrice" value="${variants[0].sellingPrice}"/>
                                 
                                 <c:forEach var="variant" items="${variants}">
-                                    <c:if test="${variant.sellingPrice < minPrice}">
-                                        <c:set var="minPrice" value="${variant.sellingPrice}"/>
+                                    <c:set var="currentPrice" value="${variant.hasPromotion ? variant.promotionPrice : variant.sellingPrice}"/>
+                                    <c:if test="${currentPrice < minPrice}">
+                                        <c:set var="minPrice" value="${currentPrice}"/>
                                     </c:if>
-                                    <c:if test="${variant.sellingPrice > maxPrice}">
-                                        <c:set var="maxPrice" value="${variant.sellingPrice}"/>
+                                    <c:if test="${currentPrice > maxPrice}">
+                                        <c:set var="maxPrice" value="${currentPrice}"/>
                                     </c:if>
-                                    <c:if test="${not empty variant.compareAtPrice && variant.compareAtPrice > variant.sellingPrice}">
-                                        <c:set var="hasComparePrice" value="true"/>
-                                        <c:set var="comparePrice" value="${variant.compareAtPrice}"/>
+                                    <c:if test="${variant.sellingPrice < minOriginalPrice}">
+                                        <c:set var="minOriginalPrice" value="${variant.sellingPrice}"/>
+                                    </c:if>
+                                    <c:if test="${variant.sellingPrice > maxOriginalPrice}">
+                                        <c:set var="maxOriginalPrice" value="${variant.sellingPrice}"/>
                                     </c:if>
                                 </c:forEach>
                                 
-                                <c:if test="${hasComparePrice}">
-                                    <span class="original-price">
-                                        <fmt:formatNumber value="${comparePrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                <!-- Show original price if has promotion -->
+                                <c:if test="${product.hasPromotion}">
+                                    <span class="original-price" style="text-decoration: line-through; color: #999; font-size: 18px; margin-right: 10px;">
+                                        <c:choose>
+                                            <c:when test="${minOriginalPrice == maxOriginalPrice}">
+                                                <fmt:formatNumber value="${minOriginalPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                            </c:when>
+                                            <c:otherwise>
+                                                <fmt:formatNumber value="${minOriginalPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫ - 
+                                                <fmt:formatNumber value="${maxOriginalPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                            </c:otherwise>
+                                        </c:choose>
                                     </span>
                                 </c:if>
                                 
+                                <!-- Current/Promotion Price -->
                                 <c:choose>
                                     <c:when test="${minPrice != null && minPrice > 0}">
-                                        <span class="current-price">
+                                        <span class="current-price" style="${product.hasPromotion ? 'color: #ca1515; font-weight: 700;' : ''}">
                                             <c:choose>
                                                 <c:when test="${minPrice == maxPrice}">
                                                     <fmt:formatNumber value="${minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
@@ -497,10 +525,6 @@
                                                 </c:otherwise>
                                             </c:choose>
                                         </span>
-                                        <c:if test="${hasComparePrice}">
-                                            <c:set var="discountPercent" value="${((comparePrice - minPrice) / comparePrice) * 100}"/>
-                                            <span class="discount-badge">-<fmt:formatNumber value="${discountPercent}" maxFractionDigits="0"/>%</span>
-                                        </c:if>
                                     </c:when>
                                     <c:otherwise>
                                         <span class="current-price">Liên hệ</span>
@@ -827,7 +851,22 @@
                                 <div class="product-card-price">
                                     <c:choose>
                                         <c:when test="${not empty rp.minPrice}">
-                                            <fmt:formatNumber value="${rp.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                            <c:choose>
+                                                <c:when test="${rp.hasPromotion}">
+                                                    <span style="text-decoration: line-through; color: #999; font-size: 14px; margin-right: 8px;">
+                                                        <fmt:formatNumber value="${rp.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                    </span>
+                                                    <span style="color: #ca1515; font-weight: 700;">
+                                                        <fmt:formatNumber value="${rp.finalPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                    </span>
+                                                    <span style="background: #ca1515; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-left: 5px;">
+                                                        -${rp.discountPercent}%
+                                                    </span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <fmt:formatNumber value="${rp.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                </c:otherwise>
+                                            </c:choose>
                                         </c:when>
                                         <c:otherwise>Liên hệ</c:otherwise>
                                     </c:choose>

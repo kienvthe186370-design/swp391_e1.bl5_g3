@@ -384,6 +384,14 @@
                             <div class="col-lg-4 col-md-6 col-sm-6">
                                 <div class="product__item">
                                     <div class="product__item__pic set-bg" data-setbg="${not empty product.mainImageUrl ? pageContext.request.contextPath.concat(product.mainImageUrl) : pageContext.request.contextPath.concat('/img/product/default.jpg')}">
+                                        <!-- Promotion Badge -->
+                                        <c:if test="${product.hasPromotion}">
+                                            <div class="product__discount__percent">
+                                                -${product.discountPercent}%
+                                            </div>
+                                        </c:if>
+                                        
+                                        <!-- Stock Status Label -->
                                         <c:choose>
                                             <c:when test="${product.variantCount == 0}">
                                                 <span class="label" style="background: #ffc107; color: #111;">Sắp ra mắt</span>
@@ -394,10 +402,11 @@
                                             <c:when test="${product.totalStock <= 10}">
                                                 <span class="label" style="background: #fd7e14; color: #fff;">Sắp hết</span>
                                             </c:when>
-                                            <c:otherwise>
+                                            <c:when test="${!product.hasPromotion}">
                                                 <span class="label">New</span>
-                                            </c:otherwise>
+                                            </c:when>
                                         </c:choose>
+                                        
                                         <ul class="product__hover">
                                             <li><a href="#"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt="Wishlist"></a></li>
                                             <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt="View"></a></li>
@@ -409,10 +418,24 @@
                                         </c:if>
                                         <h6><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}">${product.productName}</a></h6>
                                         <a href="${pageContext.request.contextPath}/cart/add?productId=${product.productID}&source=shop" class="add-cart">+ Add To Cart</a>
+                                        
+                                        <!-- Price with Promotion -->
                                         <h5>
                                             <c:choose>
                                                 <c:when test="${product.minPrice != null}">
-                                                    <fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                    <c:choose>
+                                                        <c:when test="${product.hasPromotion}">
+                                                            <span class="product__price__old">
+                                                                <fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                            </span>
+                                                            <span style="color: #ca1515; font-weight: 700;">
+                                                                <fmt:formatNumber value="${product.finalPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                            </span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <fmt:formatNumber value="${product.minPrice}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </c:when>
                                                 <c:otherwise>
                                                     Liên hệ

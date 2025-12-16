@@ -79,15 +79,13 @@ public class VoucherController extends HttpServlet {
     }
     
     /**
-     * Show voucher list with pagination, search, filter and sort
+     * Show voucher list with pagination, search, filter and sort by ID
      */
     private void showVoucherList(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
         String search = request.getParameter("search");
         String status = request.getParameter("status");
         String discountType = request.getParameter("discountType");
-        String sortBy = request.getParameter("sortBy");
-        String sortOrder = request.getParameter("sortOrder");
         String pageStr = request.getParameter("page");
         String pageSizeStr = request.getParameter("pageSize");
         
@@ -105,12 +103,16 @@ public class VoucherController extends HttpServlet {
         if (pageSizeStr != null) {
             try {
                 pageSize = Integer.parseInt(pageSizeStr);
+                // Validate pageSize to be one of: 5, 10, 20
+                if (pageSize != 5 && pageSize != 10 && pageSize != 20) {
+                    pageSize = 10;
+                }
             } catch (NumberFormatException e) {
                 pageSize = 10;
             }
         }
         
-        List<Voucher> vouchers = voucherDAO.getAllVouchers(search, status, discountType, sortBy, sortOrder, page, pageSize);
+        List<Voucher> vouchers = voucherDAO.getAllVouchers(search, status, discountType, page, pageSize);
         int totalVouchers = voucherDAO.getTotalVouchers(search, status, discountType);
         int totalPages = (int) Math.ceil((double) totalVouchers / pageSize);
         
@@ -122,8 +124,6 @@ public class VoucherController extends HttpServlet {
         request.setAttribute("search", search);
         request.setAttribute("status", status);
         request.setAttribute("discountType", discountType);
-        request.setAttribute("sortBy", sortBy);
-        request.setAttribute("sortOrder", sortOrder);
         
         request.getRequestDispatcher("/AdminLTE-3.2.0/admin-voucher-list.jsp").forward(request, response);
     }

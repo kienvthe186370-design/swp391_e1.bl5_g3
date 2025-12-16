@@ -77,10 +77,10 @@ public class VoucherDAO extends DBContext {
     }
     
     /**
-     * Get all vouchers with pagination, search, filter and sort
+     * Get all vouchers with pagination, search, filter and sort by ID
      */
     public List<Voucher> getAllVouchers(String search, String status, String discountType, 
-                                        String sortBy, String sortOrder, int page, int pageSize) {
+                                        int page, int pageSize) {
         List<Voucher> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT VoucherID, VoucherCode, VoucherName, Description, DiscountType, ");
@@ -107,17 +107,8 @@ public class VoucherDAO extends DBContext {
             sql.append("AND DiscountType = ? ");
         }
         
-        // Sort
-        if (sortBy != null && !sortBy.isEmpty()) {
-            sql.append("ORDER BY ").append(sortBy);
-            if (sortOrder != null && sortOrder.equalsIgnoreCase("DESC")) {
-                sql.append(" DESC ");
-            } else {
-                sql.append(" ASC ");
-            }
-        } else {
-            sql.append("ORDER BY CreatedDate DESC ");
-        }
+        // Sort by VoucherID
+        sql.append("ORDER BY VoucherID ");
         
         // Pagination
         sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");

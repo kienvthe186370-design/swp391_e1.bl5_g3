@@ -14,14 +14,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Quản lý Voucher - Admin</title>
+  <title>Quản lý Blog - Admin</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/fontawesome-free/css/all.min.css">
-  <!-- DataTables -->
-  <link rel="stylesheet" href="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/css/adminlte.min.css">
 </head>
@@ -41,12 +39,12 @@
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1><i class="fas fa-ticket-alt"></i> Quản lý Voucher</h1>
+            <h1><i class="fas fa-blog"></i> Quản lý Blog</h1>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="<%= request.getContextPath() %>/AdminLTE-3.2.0/index.jsp">Home</a></li>
-              <li class="breadcrumb-item active">Voucher</li>
+              <li class="breadcrumb-item active">Blog</li>
             </ol>
           </div>
         </div>
@@ -61,43 +59,31 @@
         <c:if test="${param.success == 'added'}">
           <div class="alert alert-success alert-dismissible fade show">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <i class="icon fas fa-check"></i> Thêm voucher thành công!
+            <i class="icon fas fa-check"></i> Thêm bài viết thành công!
           </div>
         </c:if>
         <c:if test="${param.success == 'updated'}">
           <div class="alert alert-success alert-dismissible fade show">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <i class="icon fas fa-check"></i> Cập nhật voucher thành công!
+            <i class="icon fas fa-check"></i> Cập nhật bài viết thành công!
           </div>
         </c:if>
         <c:if test="${param.success == 'deleted'}">
           <div class="alert alert-success alert-dismissible fade show">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <i class="icon fas fa-check"></i> Xóa voucher thành công!
+            <i class="icon fas fa-check"></i> Chuyển bài viết về nháp thành công!
           </div>
         </c:if>
         <c:if test="${param.success == 'toggled'}">
           <div class="alert alert-success alert-dismissible fade show">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <i class="icon fas fa-check"></i> Cập nhật trạng thái voucher thành công!
+            <i class="icon fas fa-check"></i> Cập nhật trạng thái bài viết thành công!
           </div>
         </c:if>
         <c:if test="${param.error == 'notfound'}">
           <div class="alert alert-danger alert-dismissible fade show">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <i class="icon fas fa-ban"></i> Không tìm thấy voucher!
-          </div>
-        </c:if>
-        <c:if test="${param.error == 'code_exists'}">
-          <div class="alert alert-danger alert-dismissible fade show">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <i class="icon fas fa-ban"></i> Mã voucher đã tồn tại!
-          </div>
-        </c:if>
-        <c:if test="${param.error == 'add_failed' || param.error == 'update_failed' || param.error == 'delete_failed'}">
-          <div class="alert alert-danger alert-dismissible fade show">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-            <i class="icon fas fa-ban"></i> Có lỗi xảy ra. Vui lòng thử lại!
+            <i class="icon fas fa-ban"></i> Không tìm thấy bài viết!
           </div>
         </c:if>
 
@@ -112,12 +98,12 @@
             </div>
           </div>
           <div class="card-body">
-            <form method="get" action="<%= request.getContextPath() %>/admin/voucher">
+            <form method="get" action="<%= request.getContextPath() %>/admin/blog">
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>Tìm kiếm</label>
-                    <input type="text" name="search" class="form-control" placeholder="Mã hoặc tên voucher..." value="${search}">
+                    <input type="text" name="search" class="form-control" placeholder="Tiêu đề bài viết..." value="${search}">
                   </div>
                 </div>
                 <div class="col-md-2">
@@ -125,24 +111,14 @@
                     <label>Trạng thái</label>
                     <select name="status" class="form-control">
                       <option value="">Tất cả</option>
-                      <option value="active" ${status == 'active' ? 'selected' : ''}>Hoạt động</option>
-                      <option value="inactive" ${status == 'inactive' ? 'selected' : ''}>Không hoạt động</option>
+                      <option value="published" ${status == 'published' ? 'selected' : ''}>Đã xuất bản</option>
+                      <option value="draft" ${status == 'draft' ? 'selected' : ''}>Nháp</option>
                     </select>
                   </div>
                 </div>
                 <div class="col-md-2">
                   <div class="form-group">
-                    <label>Loại giảm giá</label>
-                    <select name="discountType" class="form-control">
-                      <option value="">Tất cả</option>
-                      <option value="percentage" ${discountType == 'percentage' ? 'selected' : ''}>Phần trăm</option>
-                      <option value="fixed" ${discountType == 'fixed' ? 'selected' : ''}>Số tiền cố định</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-2">
-                  <div class="form-group">
-                    <label>Số voucher/trang</label>
+                    <label>Số bài/trang</label>
                     <select name="pageSize" class="form-control">
                       <option value="5" ${pageSize == 5 ? 'selected' : ''}>5</option>
                       <option value="10" ${pageSize == 10 ? 'selected' : ''}>10</option>
@@ -150,7 +126,7 @@
                     </select>
                   </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <div class="form-group">
                     <label>&nbsp;</label>
                     <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-search"></i> Tìm</button>
@@ -161,13 +137,13 @@
           </div>
         </div>
 
-        <!-- Voucher List Card -->
+        <!-- Blog List Card -->
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Danh sách Voucher (${totalVouchers} voucher)</h3>
+            <h3 class="card-title">Danh sách Blog (${totalBlogs} bài viết)</h3>
             <div class="card-tools">
-              <a href="<%= request.getContextPath() %>/admin/voucher?action=add" class="btn btn-success btn-sm">
-                <i class="fas fa-plus"></i> Thêm Voucher
+              <a href="<%= request.getContextPath() %>/admin/blog?action=add" class="btn btn-success btn-sm">
+                <i class="fas fa-plus"></i> Thêm Bài Viết
               </a>
             </div>
           </div>
@@ -176,88 +152,85 @@
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Mã Voucher</th>
-                  <th>Tên Voucher</th>
-                  <th>Loại</th>
-                  <th>Giá trị</th>
-                  <th>Đơn tối thiểu</th>
-                  <th>Đã dùng</th>
-                  <th>Thời gian</th>
+                  <th style="width: 100px;">Ảnh</th>
+                  <th>Tiêu đề</th>
+                  <th>Tác giả</th>
+                  <th>Lượt xem</th>
+                  <th>Ngày xuất bản</th>
                   <th>Trạng thái</th>
                   <th>Hành động</th>
                 </tr>
               </thead>
               <tbody>
-                <c:forEach var="voucher" items="${vouchers}">
+                <c:forEach var="blog" items="${blogs}">
                   <tr>
-                    <td>${voucher.voucherID}</td>
-                    <td><strong>${voucher.voucherCode}</strong></td>
-                    <td>${voucher.voucherName}</td>
+                    <td>${blog.postId}</td>
                     <td>
                       <c:choose>
-                        <c:when test="${voucher.discountType == 'percentage'}">
-                          <span class="badge badge-info">Phần trăm</span>
+                        <c:when test="${not empty blog.featuredImage}">
+                          <c:set var="blogImageUrl" value="${blog.featuredImage.startsWith('http://') || blog.featuredImage.startsWith('https://') || blog.featuredImage.startsWith('/') ? blog.featuredImage : pageContext.request.contextPath.concat('/').concat(blog.featuredImage)}" />
+                          <img src="${blogImageUrl}" 
+                               alt="${blog.title}" 
+                               class="img-thumbnail" 
+                               style="max-width: 80px; max-height: 60px; object-fit: cover; cursor: pointer;"
+                               onclick="showImageModal('${blogImageUrl}', '${blog.title}')">
                         </c:when>
                         <c:otherwise>
-                          <span class="badge badge-warning">Cố định</span>
+                          <div class="text-center text-muted">
+                            <i class="fas fa-image fa-2x"></i>
+                          </div>
                         </c:otherwise>
                       </c:choose>
                     </td>
                     <td>
-                      <c:choose>
-                        <c:when test="${voucher.discountType == 'percentage'}">
-                          <fmt:formatNumber value="${voucher.discountValue}" pattern="#,##0.##"/>%
-                        </c:when>
-                        <c:otherwise>
-                          <fmt:formatNumber value="${voucher.discountValue}" pattern="#,##0"/>₫
-                        </c:otherwise>
-                      </c:choose>
-                    </td>
-                    <td><fmt:formatNumber value="${voucher.minOrderValue}" pattern="#,##0"/>₫</td>
-                    <td>
-                      ${voucher.usedCount}
-                      <c:if test="${voucher.maxUsage != null}">
-                        / ${voucher.maxUsage}
+                      <strong>${blog.title}</strong>
+                      <c:if test="${not empty blog.summary}">
+                        <br><small class="text-muted">
+                          ${blog.summary.length() > 80 ? blog.summary.substring(0, 80).concat('...') : blog.summary}
+                        </small>
                       </c:if>
                     </td>
+                    <td>${blog.authorName}</td>
+                    <td><span class="badge badge-info">${blog.viewCount}</span></td>
                     <td>
-                      <small>
-                        <fmt:formatDate value="${voucher.startDate}" pattern="dd/MM/yyyy HH:mm"/> -<br>
-                        <fmt:formatDate value="${voucher.endDate}" pattern="dd/MM/yyyy HH:mm"/>
-                      </small>
+                      <c:choose>
+                        <c:when test="${blog.publishedDate != null}">
+                          <small>${blog.publishedDate.toString().substring(0, 16).replace('T', ' ')}</small>
+                        </c:when>
+                        <c:otherwise>
+                          <span class="text-muted">Chưa xuất bản</span>
+                        </c:otherwise>
+                      </c:choose>
                     </td>
                     <td>
                       <c:choose>
-                        <c:when test="${voucher.isActive}">
-                          <span class="badge badge-success">Hoạt động</span>
+                        <c:when test="${blog.status == 'published'}">
+                          <span class="badge badge-success">Đã xuất bản</span>
                         </c:when>
                         <c:otherwise>
-                          <span class="badge badge-secondary">Tắt</span>
+                          <span class="badge badge-secondary">Nháp</span>
                         </c:otherwise>
                       </c:choose>
-                      <c:if test="${voucher.isPrivate}">
-                        <br><span class="badge badge-dark mt-1">Riêng tư</span>
-                      </c:if>
                     </td>
                     <td>
                       <div class="btn-group">
-                        <a href="<%= request.getContextPath() %>/admin/voucher?action=edit&id=${voucher.voucherID}" 
+                        <a href="<%= request.getContextPath() %>/admin/blog?action=edit&id=${blog.postId}" 
                            class="btn btn-warning btn-sm" title="Chỉnh sửa">
                           <i class="fas fa-edit"></i>
                         </a>
                         <c:choose>
-                          <c:when test="${voucher.isActive}">
-                            <button type="button" class="btn btn-danger btn-sm" 
-                                    onclick="confirmToggleStatus(${voucher.voucherID}, '${voucher.voucherCode}', false)" 
-                                    title="Khóa voucher">
-                              <i class="fas fa-lock"></i>
+                          <c:when test="${blog.status == 'published'}">
+                            <button type="button" class="btn btn-secondary btn-sm" 
+                                    onclick="confirmToggleStatus(${blog.postId}, '${blog.title}', false)" 
+                                    title="Chuyển về nháp">
+                              <i class="fas fa-eye-slash"></i>
                             </button>
                           </c:when>
                           <c:otherwise>
                             <button type="button" class="btn btn-success btn-sm" 
-                                    onclick="confirmToggleStatus(${voucher.voucherID}, '${voucher.voucherCode}', true)" 
-                                    title="Mở khóa voucher">
-                              <i class="fas fa-unlock"></i>
+                                    onclick="confirmToggleStatus(${blog.postId}, '${blog.title}', true)" 
+                                    title="Xuất bản">
+                              <i class="fas fa-eye"></i>
                             </button>
                           </c:otherwise>
                         </c:choose>
@@ -265,9 +238,9 @@
                     </td>
                   </tr>
                 </c:forEach>
-                <c:if test="${empty vouchers}">
+                <c:if test="${empty blogs}">
                   <tr>
-                    <td colspan="10" class="text-center">Không có voucher nào.</td>
+                    <td colspan="8" class="text-center">Không có bài viết nào.</td>
                   </tr>
                 </c:if>
               </tbody>
@@ -279,19 +252,19 @@
             <ul class="pagination pagination-sm m-0 float-right">
               <c:if test="${currentPage > 1}">
                 <li class="page-item">
-                  <a class="page-link" href="?page=${currentPage - 1}&search=${search}&status=${status}&discountType=${discountType}&pageSize=${pageSize}">«</a>
+                  <a class="page-link" href="?page=${currentPage - 1}&search=${search}&status=${status}&pageSize=${pageSize}">«</a>
                 </li>
               </c:if>
               
               <c:forEach begin="1" end="${totalPages}" var="i">
                 <li class="page-item ${currentPage == i ? 'active' : ''}">
-                  <a class="page-link" href="?page=${i}&search=${search}&status=${status}&discountType=${discountType}&pageSize=${pageSize}">${i}</a>
+                  <a class="page-link" href="?page=${i}&search=${search}&status=${status}&pageSize=${pageSize}">${i}</a>
                 </li>
               </c:forEach>
               
               <c:if test="${currentPage < totalPages}">
                 <li class="page-item">
-                  <a class="page-link" href="?page=${currentPage + 1}&search=${search}&status=${status}&discountType=${discountType}&pageSize=${pageSize}">»</a>
+                  <a class="page-link" href="?page=${currentPage + 1}&search=${search}&status=${status}&pageSize=${pageSize}">»</a>
                 </li>
               </c:if>
             </ul>
@@ -326,6 +299,21 @@
   </div>
 </div>
 
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imageModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalTitle">Xem ảnh đại diện</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="imageModalImg" src="" alt="Blog Image" class="img-fluid" style="max-height: 500px;">
+      </div>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <!-- jQuery -->
@@ -336,24 +324,30 @@
 <script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
 
 <script>
-function confirmToggleStatus(id, voucherCode, isActivating) {
-    if (!isActivating) {
-        $('#modalHeader').removeClass('bg-success').addClass('bg-danger');
-        $('#modalTitle').text('Xác nhận khóa voucher');
-        $('#modalMessage').html('Bạn có chắc chắn muốn <strong>khóa</strong> voucher <strong>' + voucherCode + '</strong>?<br><small class="text-muted">Voucher sẽ không thể sử dụng.</small>');
-        $('#confirmToggleBtn').removeClass('btn-success').addClass('btn-danger');
-        $('#modalIcon').removeClass('fa-unlock').addClass('fa-lock');
-        $('#modalBtnText').text('Khóa');
+function confirmToggleStatus(id, title, isPublishing) {
+    if (isPublishing) {
+        $('#modalHeader').removeClass('bg-secondary').addClass('bg-success');
+        $('#modalTitle').text('Xác nhận xuất bản');
+        $('#modalMessage').html('Bạn có chắc chắn muốn <strong>xuất bản</strong> bài viết <strong>' + title + '</strong>?<br><small class="text-muted">Bài viết sẽ hiển thị công khai.</small>');
+        $('#confirmToggleBtn').removeClass('btn-secondary').addClass('btn-success');
+        $('#modalIcon').removeClass('fa-eye-slash').addClass('fa-eye');
+        $('#modalBtnText').text('Xuất bản');
     } else {
-        $('#modalHeader').removeClass('bg-danger').addClass('bg-success');
-        $('#modalTitle').text('Xác nhận mở khóa voucher');
-        $('#modalMessage').html('Bạn có chắc chắn muốn <strong>mở khóa</strong> voucher <strong>' + voucherCode + '</strong>?<br><small class="text-muted">Voucher sẽ có thể sử dụng trở lại.</small>');
-        $('#confirmToggleBtn').removeClass('btn-danger').addClass('btn-success');
-        $('#modalIcon').removeClass('fa-lock').addClass('fa-unlock');
-        $('#modalBtnText').text('Mở khóa');
+        $('#modalHeader').removeClass('bg-success').addClass('bg-secondary');
+        $('#modalTitle').text('Xác nhận chuyển về nháp');
+        $('#modalMessage').html('Bạn có chắc chắn muốn <strong>chuyển về nháp</strong> bài viết <strong>' + title + '</strong>?<br><small class="text-muted">Bài viết sẽ không hiển thị công khai.</small>');
+        $('#confirmToggleBtn').removeClass('btn-success').addClass('btn-secondary');
+        $('#modalIcon').removeClass('fa-eye').addClass('fa-eye-slash');
+        $('#modalBtnText').text('Chuyển về nháp');
     }
-    $('#confirmToggleBtn').attr('href', '<%= request.getContextPath() %>/admin/voucher?action=toggleStatus&id=' + id);
+    $('#confirmToggleBtn').attr('href', '<%= request.getContextPath() %>/admin/blog?action=toggleStatus&id=' + id);
     $('#toggleStatusModal').modal('show');
+}
+
+function showImageModal(imageSrc, title) {
+    $('#imageModalImg').attr('src', imageSrc);
+    $('#imageModalTitle').text(title);
+    $('#imageModal').modal('show');
 }
 
 // Auto hide alerts after 5 seconds
