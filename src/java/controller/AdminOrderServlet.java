@@ -299,11 +299,18 @@ public class AdminOrderServlet extends HttpServlet {
         String newStatus = request.getParameter("newStatus");
         String note = request.getParameter("note");
         
-        System.out.println("[AdminOrder] updateOrderStatus - orderId: " + orderIdParam + ", newStatus: " + newStatus);
+        System.out.println("[AdminOrder] updateOrderStatus - orderId: " + orderIdParam + ", newStatus: " + newStatus + ", note: " + note);
+        System.out.println("[AdminOrder] Employee: " + employee.getFullName() + " (ID: " + employee.getEmployeeID() + ", Role: " + employee.getRole() + ")");
         
-        if (orderIdParam == null || orderIdParam.isEmpty() || newStatus == null || newStatus.isEmpty()) {
-            request.getSession().setAttribute("error", "Thiếu thông tin đơn hàng hoặc trạng thái");
+        if (orderIdParam == null || orderIdParam.isEmpty()) {
+            request.getSession().setAttribute("error", "Thiếu ID đơn hàng");
             response.sendRedirect(request.getContextPath() + "/admin/orders");
+            return;
+        }
+        
+        if (newStatus == null || newStatus.isEmpty()) {
+            request.getSession().setAttribute("error", "Vui lòng chọn trạng thái mới");
+            response.sendRedirect(request.getContextPath() + "/admin/orders?action=detail&id=" + orderIdParam);
             return;
         }
         
@@ -324,6 +331,7 @@ public class AdminOrderServlet extends HttpServlet {
         
         try {
             Order order = orderDAO.getOrderById(orderId);
+            System.out.println("[AdminOrder] Order found: " + (order != null ? order.getOrderCode() + " - Status: " + order.getOrderStatus() : "NULL"));
             
             if (order == null) {
                 request.getSession().setAttribute("error", "Không tìm thấy đơn hàng ID: " + orderId);
@@ -333,18 +341,23 @@ public class AdminOrderServlet extends HttpServlet {
             
             // Validate transition
             String role = employee.getRole();
-            if (!OrderStatusValidator.canTransition(order.getOrderStatus(), newStatus, role, false)) {
+            boolean canTransition = OrderStatusValidator.canTransition(order.getOrderStatus(), newStatus, role, false);
+            System.out.println("[AdminOrder] canTransition from '" + order.getOrderStatus() + "' to '" + newStatus + "' for role '" + role + "': " + canTransition);
+            
+            if (!canTransition) {
                 request.getSession().setAttribute("error", "Không thể chuyển từ '" + order.getOrderStatus() + "' sang '" + newStatus + "'");
                 response.sendRedirect(request.getContextPath() + "/admin/orders?action=detail&id=" + orderId);
                 return;
             }
             
+            System.out.println("[AdminOrder] Calling orderDAO.updateOrderStatus...");
             boolean success = orderDAO.updateOrderStatus(orderId, newStatus, employee.getEmployeeID(), note);
+            System.out.println("[AdminOrder] updateOrderStatus result: " + success);
             
             if (success) {
                 request.getSession().setAttribute("success", "Cập nhật trạng thái thành công: " + newStatus);
             } else {
-                request.getSession().setAttribute("error", "Cập nhật trạng thái thất bại");
+                request.getSession().setAttribute("error", "Cập nhật trạng thái thất bại - Kiểm tra log server");
             }
             
             // Redirect về trang detail
@@ -354,7 +367,7 @@ public class AdminOrderServlet extends HttpServlet {
             System.err.println("[AdminOrder] Error updating status: " + e.getMessage());
             e.printStackTrace();
             request.getSession().setAttribute("error", "Lỗi hệ thống: " + e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/admin/orders");
+            response.sendRedirect(request.getContextPath() + "/admin/orders?action=detail&id=" + orderId);
         }
     }
     

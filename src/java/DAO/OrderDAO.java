@@ -303,8 +303,13 @@ public class OrderDAO extends DBContext {
      */
     public boolean updateOrderStatus(int orderId, String newStatus, Integer changedById, String note) {
         Connection conn = null;
+        System.out.println("[OrderDAO] updateOrderStatus - orderId: " + orderId + ", newStatus: " + newStatus + ", changedById: " + changedById);
         try {
             conn = getConnection();
+            if (conn == null) {
+                System.err.println("[OrderDAO] ERROR: Cannot get database connection!");
+                return false;
+            }
             conn.setAutoCommit(false);
             
             // Lấy status hiện tại
@@ -317,6 +322,7 @@ public class OrderDAO extends DBContext {
                     oldStatus = rs.getString("OrderStatus");
                 }
             }
+            System.out.println("[OrderDAO] Old status: " + oldStatus);
             
             // Cập nhật status
             String updateSql = "UPDATE Orders SET OrderStatus = ?, UpdatedDate = GETDATE()";
@@ -325,6 +331,7 @@ public class OrderDAO extends DBContext {
             }
             updateSql += " WHERE OrderID = ?";
             
+            System.out.println("[OrderDAO] Update SQL: " + updateSql);
             try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
                 int idx = 1;
                 ps.setString(idx++, newStatus);
@@ -332,10 +339,12 @@ public class OrderDAO extends DBContext {
                     ps.setString(idx++, note);
                 }
                 ps.setInt(idx, orderId);
-                ps.executeUpdate();
+                int rowsUpdated = ps.executeUpdate();
+                System.out.println("[OrderDAO] Rows updated: " + rowsUpdated);
             }
             
             // Log history
+            System.out.println("[OrderDAO] Inserting into OrderStatusHistory...");
             String historySql = "INSERT INTO OrderStatusHistory (OrderID, OldStatus, NewStatus, Notes, ChangedBy, ChangedDate) " +
                                "VALUES (?, ?, ?, ?, ?, GETDATE())";
             try (PreparedStatement ps = conn.prepareStatement(historySql)) {
@@ -348,10 +357,12 @@ public class OrderDAO extends DBContext {
                 } else {
                     ps.setNull(5, Types.INTEGER);
                 }
-                ps.executeUpdate();
+                int historyRows = ps.executeUpdate();
+                System.out.println("[OrderDAO] History rows inserted: " + historyRows);
             }
             
             conn.commit();
+            System.out.println("[OrderDAO] Transaction committed successfully");
             
             // ===== TỰ ĐỘNG PHÂN CÔNG SHIPPER KHI CHUYỂN SANG SHIPPING =====
             if ("Shipping".equals(newStatus)) {
