@@ -1157,4 +1157,29 @@ public class ProductDAO extends DBContext {
         
         return result;
     }
+    
+    /**
+     * Get all products (simple list for dropdown)
+     */
+    public List<Map<String, Object>> getAllProducts() {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT ProductID, ProductName FROM Products WHERE IsActive = 1 ORDER BY ProductName";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                Map<String, Object> product = new HashMap<>();
+                product.put("productID", rs.getInt("ProductID"));
+                product.put("productName", rs.getString("ProductName"));
+                list.add(product);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error in getAllProducts: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return list;
+    }
 }
