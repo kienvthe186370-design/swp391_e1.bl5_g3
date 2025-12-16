@@ -522,7 +522,9 @@ public class ProductDAO extends DBContext {
             String sql = "SELECT p.*, c.CategoryName, b.BrandName, e.FullName AS CreatedByName, " +
                         "(SELECT COUNT(*) FROM ProductImages WHERE ProductID = p.ProductID) AS ImageCount, " +
                         "(SELECT COUNT(*) FROM ProductVariants WHERE ProductID = p.ProductID) AS VariantCount, " +
-                        "(SELECT ISNULL(SUM(Stock), 0) FROM ProductVariants WHERE ProductID = p.ProductID) AS TotalStock " +
+                        "(SELECT ISNULL(SUM(Stock), 0) FROM ProductVariants WHERE ProductID = p.ProductID) AS TotalStock, " +
+                        "(SELECT MIN(SellingPrice) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS MinPrice, " +
+                        "(SELECT MAX(SellingPrice) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS MaxPrice " +
                         "FROM Products p " +
                         "LEFT JOIN Categories c ON p.CategoryID = c.CategoryID " +
                         "LEFT JOIN Brands b ON p.BrandID = b.BrandID " +
@@ -551,6 +553,8 @@ public class ProductDAO extends DBContext {
                 product.put("imageCount", rs.getInt("ImageCount"));
                 product.put("variantCount", rs.getInt("VariantCount"));
                 product.put("totalStock", rs.getInt("TotalStock"));
+                product.put("minPrice", rs.getBigDecimal("MinPrice"));
+                product.put("maxPrice", rs.getBigDecimal("MaxPrice"));
                 
                 int variantCount = rs.getInt("VariantCount");
                 int totalStock = rs.getInt("TotalStock");

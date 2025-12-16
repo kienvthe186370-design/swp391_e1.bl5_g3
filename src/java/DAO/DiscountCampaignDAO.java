@@ -298,6 +298,8 @@ public class DiscountCampaignDAO extends DBContext {
                      "     OR (AppliedToType = 'brand' AND AppliedToID = ?)) " +
                      "ORDER BY DiscountValue DESC";
         
+        System.out.println("🔎 Searching campaigns for: ProductID=" + productID + ", CategoryID=" + categoryID + ", BrandID=" + brandID);
+        
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
@@ -305,16 +307,66 @@ public class DiscountCampaignDAO extends DBContext {
             ps.setObject(2, categoryID);
             ps.setObject(3, brandID);
             
+            System.out.println("📝 SQL: " + sql);
+            System.out.println("   Params: productID=" + productID + ", categoryID=" + categoryID + ", brandID=" + brandID);
+            
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                list.add(mapResultSetToCampaign(rs));
+                DiscountCampaign campaign = mapResultSetToCampaign(rs);
+                list.add(campaign);
+                System.out.println("   ✅ Found: " + campaign.getCampaignName() + " (Type: " + campaign.getAppliedToType() + ", ID: " + campaign.getAppliedToID() + ")");
+            }
+            
+            if (list.isEmpty()) {
+                System.out.println("   ❌ No campaigns found!");
+            } else {
+                System.out.println("   📊 Total campaigns found: " + list.size());
             }
         } catch (SQLException e) {
-            System.err.println("Error in getActiveCampaignsForProduct: " + e.getMessage());
+            System.err.println("❌ Error in getActiveCampaignsForProduct: " + e.getMessage());
             e.printStackTrace();
         }
         
         return list;
+    }
+    
+    /**
+     * Get best discount campaign for a product (highest discount)
+     */
+    public DiscountCampaign getBestCampaignForProduct(int productID, Integer categoryID, Integer brandID, BigDecimal price) {
+        List<DiscountCampaign> campaigns = getActiveCampaignsForProduct(productID, categoryID, brandID);
+        
+        if (campaigns.isEmpty()) {
+            return null;
+        }
+        
+        // Find campaign with highest actual discount amount
+        DiscountCampaign bestCampaign = null;
+        BigDecimal maxDiscount = BigDecimal.ZERO;
+        
+        for (DiscountCampaign campaign : campaigns) {
+            BigDecimal discount = calculateDiscount(campaign, price);
+            if (discount.compareTo(maxDiscount) > 0) {
+                maxDiscount = discount;
+                bestCampaign = campaign;
+            }
+        }
+        
+        return bestCampaign;
+    }
+    
+    /**
+     * Calculate final price after discount
+     */
+    public BigDecimal calculateFinalPrice(DiscountCampaign campaign, BigDecimal originalPrice) {
+        if (campaign == null || originalPrice == null) {
+            return originalPrice;
+        }
+        
+        BigDecimal discount = calculateDiscount(campaign, originalPrice);
+        BigDecimal finalPrice = originalPrice.subtract(discount);
+        
+        return finalPrice.max(BigDecimal.ZERO);
     }
     
     /**

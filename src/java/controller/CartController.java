@@ -7,9 +7,11 @@ package controller;
 
 import DAO.CartDAO;
 import DAO.ProductDAO;
+import DAO.DiscountCampaignDAO;
 import entity.Cart;
 import entity.CartItem;
 import entity.Customer;
+import entity.DiscountCampaign;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
@@ -31,11 +33,13 @@ public class CartController extends HttpServlet {
     
     private CartDAO cartDAO;
     private ProductDAO productDAO;
+    private DiscountCampaignDAO discountDAO;
     
     @Override
     public void init() throws ServletException {
         cartDAO = new CartDAO();
         productDAO = new ProductDAO();
+        discountDAO = new DiscountCampaignDAO();
     }
     
     /**
@@ -282,6 +286,21 @@ public class CartController extends HttpServlet {
                 System.out.println("✅ Auto-selected variant: " + selectedVariantID + " with price: " + price);
             }
             
+            // Check for active promotion and apply discount
+            Integer categoryId = (Integer) product.get("categoryID");
+            Integer brandId = (Integer) product.get("brandID");
+            BigDecimal finalPrice = price;
+            
+            DiscountCampaign bestCampaign = discountDAO.getBestCampaignForProduct(
+                productID, categoryId, brandId, price
+            );
+            
+            if (bestCampaign != null) {
+                finalPrice = discountDAO.calculateFinalPrice(bestCampaign, price);
+                System.out.println("🎉 Promotion applied! Original: " + price + " → Final: " + finalPrice + 
+                                 " (Campaign: " + bestCampaign.getCampaignName() + ")");
+            }
+            
             // Get or create cart
             Cart cart = cartDAO.getOrCreateCart(customer.getCustomerID());
             
@@ -290,8 +309,8 @@ public class CartController extends HttpServlet {
                 return;
             }
             
-            // Add item to cart (use selectedVariantID instead of variantID)
-            boolean success = cartDAO.addItem(cart.getCartID(), productID, selectedVariantID, quantity, price);
+            // Add item to cart with promotion price (use selectedVariantID instead of variantID)
+            boolean success = cartDAO.addItem(cart.getCartID(), productID, selectedVariantID, quantity, finalPrice);
             
             if (success) {
                 // Update session cart count
