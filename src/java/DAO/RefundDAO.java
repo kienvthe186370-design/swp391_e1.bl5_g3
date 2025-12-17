@@ -356,7 +356,10 @@ public class RefundDAO extends DBContext {
     
     private List<RefundItem> getRefundItemsByRequestId(int refundRequestId) {
         List<RefundItem> items = new ArrayList<>();
-        String sql = "SELECT ri.*, od.ProductName, od.SKU, od.UnitPrice " +
+        String sql = "SELECT ri.*, od.ProductName, od.SKU, od.UnitPrice, " +
+                     "(SELECT TOP 1 pi.ImageURL FROM ProductImages pi " +
+                     " JOIN ProductVariants pv ON pi.ProductID = pv.ProductID " +
+                     " WHERE pv.VariantID = od.VariantID) as ProductImage " +
                      "FROM RefundItems ri " +
                      "LEFT JOIN OrderDetails od ON ri.OrderDetailID = od.OrderDetailID " +
                      "WHERE ri.RefundRequestID = ?";
@@ -381,6 +384,7 @@ public class RefundDAO extends DBContext {
                 od.setProductName(rs.getString("ProductName"));
                 od.setSku(rs.getString("SKU"));
                 od.setUnitPrice(rs.getBigDecimal("UnitPrice"));
+                od.setProductImage(rs.getString("ProductImage"));
                 item.setOrderDetail(od);
                 
                 items.add(item);

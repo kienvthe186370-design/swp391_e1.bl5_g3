@@ -21,8 +21,8 @@ import java.util.UUID;
 @WebServlet(name = "RefundServlet", urlPatterns = {"/customer/refund", "/customer/refund-request"})
 @MultipartConfig(
     fileSizeThreshold = 1024 * 1024,     // 1 MB
-    maxFileSize = 1024 * 1024 * 5,       // 5 MB
-    maxRequestSize = 1024 * 1024 * 25    // 25 MB
+    maxFileSize = 1024 * 1024 * 10,      // 10 MB
+    maxRequestSize = 1024 * 1024 * 60    // 60 MB (cho phép 5 file x 10MB + overhead)
 )
 public class RefundServlet extends HttpServlet {
 
@@ -244,6 +244,7 @@ public class RefundServlet extends HttpServlet {
 
     /**
      * Tính tổng tiền hoàn dựa trên items được chọn
+     * FinalPrice trong OrderDetail là đơn giá (unit price), không phải tổng
      */
     private BigDecimal calculateRefundAmount(Order order, String[] itemIds, String[] quantities) {
         if (itemIds == null || itemIds.length == 0) {
@@ -254,21 +255,29 @@ public class RefundServlet extends HttpServlet {
         BigDecimal total = BigDecimal.ZERO;
         List<OrderDetail> details = order.getOrderDetails();
         
+        System.out.println("[RefundServlet] calculateRefundAmount - itemIds: " + java.util.Arrays.toString(itemIds));
+        System.out.println("[RefundServlet] calculateRefundAmount - quantities: " + java.util.Arrays.toString(quantities));
+        
         for (int i = 0; i < itemIds.length; i++) {
             int detailId = Integer.parseInt(itemIds[i]);
             int qty = Integer.parseInt(quantities[i]);
             
             for (OrderDetail detail : details) {
                 if (detail.getOrderDetailID() == detailId) {
-                    BigDecimal itemTotal = detail.getFinalPrice()
-                        .divide(BigDecimal.valueOf(detail.getQuantity()), 2, BigDecimal.ROUND_HALF_UP)
-                        .multiply(BigDecimal.valueOf(qty));
+                    // FinalPrice là đơn giá, nhân với số lượng hoàn để ra tổng tiền hoàn cho item này
+                    BigDecimal unitPrice = detail.getFinalPrice();
+                    BigDecimal itemTotal = unitPrice.multiply(BigDecimal.valueOf(qty));
+                    
+                    System.out.println("[RefundServlet] Item " + detailId + ": unitPrice=" + unitPrice + 
+                                     ", qty=" + qty + ", itemTotal=" + itemTotal);
+                    
                     total = total.add(itemTotal);
                     break;
                 }
             }
         }
         
+        System.out.println("[RefundServlet] Total refund amount: " + total);
         return total;
     }
 
@@ -277,27 +286,74 @@ public class RefundServlet extends HttpServlet {
      */
     private void uploadRefundMedia(HttpServletRequest request, int refundRequestId) {
         try {
+            System.out.println("[RefundServlet] Starting uploadRefundMedia for refundRequestId: " + refundRequestId);
+            
             String uploadPath = getServletContext().getRealPath("/uploads/refunds");
+            System.out.println("[RefundServlet] Upload path: " + uploadPath);
+            
             File uploadDir = new File(uploadPath);
             if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
+                boolean created = uploadDir.mkdirs();
+                System.out.println("[RefundServlet] Created upload directory: " + created);
             }
             
+            long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+            int fileCount = 0;
+            int MAX_FILES = 5;
+            
+            System.out.println("[RefundServlet] Total parts in request: " + request.getParts().size());
+            
             for (Part part : request.getParts()) {
+                System.out.println("[RefundServlet] Part name: " + part.getName() + ", size: " + part.getSize() + ", contentType: " + part.getContentType());
+                
                 if (part.getName().equals("mediaFiles") && part.getSize() > 0) {
+                    // Validate số lượng file
+                    if (fileCount >= MAX_FILES) {
+                        System.out.println("[RefundServlet] Exceeded max files limit: " + MAX_FILES);
+                        break;
+                    }
+                    
+                    // Validate dung lượng file
+                    if (part.getSize() > MAX_FILE_SIZE) {
+                        System.out.println("[RefundServlet] File too large: " + part.getSize() + " bytes, max: " + MAX_FILE_SIZE);
+                        continue;
+                    }
+                    
                     String fileName = getFileName(part);
+                    System.out.println("[RefundServlet] Extracted filename: " + fileName);
+                    
                     if (fileName != null && !fileName.isEmpty()) {
+                        // Validate định dạng file
+                        String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+                        if (!extension.matches("\\.(jpg|jpeg|png|gif|mp4|mov|avi)")) {
+                            System.out.println("[RefundServlet] Invalid file type: " + extension);
+                            continue;
+                        }
+                        System.out.println("[RefundServlet] Processing file: " + fileName + ", size: " + part.getSize());
+                        
                         // Generate unique filename
-                        String extension = fileName.substring(fileName.lastIndexOf("."));
                         String newFileName = UUID.randomUUID().toString() + extension;
                         String filePath = uploadPath + File.separator + newFileName;
                         
-                        // Save file
-                        part.write(filePath);
+                        // Save file using InputStream instead of part.write()
+                        try (InputStream input = part.getInputStream();
+                             FileOutputStream output = new FileOutputStream(filePath)) {
+                            byte[] buffer = new byte[8192];
+                            int bytesRead;
+                            while ((bytesRead = input.read(buffer)) != -1) {
+                                output.write(buffer, 0, bytesRead);
+                            }
+                        }
+                        
+                        File savedFile = new File(filePath);
+                        System.out.println("[RefundServlet] File saved: " + savedFile.exists() + ", size: " + savedFile.length());
+                        
+                        fileCount++;
                         
                         // Determine media type
                         String mediaType = "image";
-                        if (extension.toLowerCase().matches("\\.(mp4|avi|mov|wmv)")) {
+                        String extLower = extension.toLowerCase();
+                        if (extLower.equals(".mp4") || extLower.equals(".avi") || extLower.equals(".mov") || extLower.equals(".wmv")) {
                             mediaType = "video";
                         }
                         
@@ -306,11 +362,14 @@ public class RefundServlet extends HttpServlet {
                         media.setRefundRequestID(refundRequestId);
                         media.setMediaURL("/uploads/refunds/" + newFileName);
                         media.setMediaType(mediaType);
-                        refundDAO.addRefundMedia(media);
+                        boolean saved = refundDAO.addRefundMedia(media);
+                        System.out.println("[RefundServlet] Media saved to DB: " + saved + ", URL: " + media.getMediaURL() + ", Type: " + mediaType);
                     }
                 }
             }
+            System.out.println("[RefundServlet] Total files uploaded: " + fileCount);
         } catch (Exception e) {
+            System.out.println("[RefundServlet] Error uploading media: " + e.getMessage());
             e.printStackTrace();
         }
     }
