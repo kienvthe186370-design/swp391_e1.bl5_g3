@@ -72,6 +72,9 @@ public class FeedbackServlet extends HttpServlet {
         int totalReviews = reviewDAO.countReviews(status, rating, productId, hasReply, dateFrom, dateTo);
         int totalPages = (int) Math.ceil((double) totalReviews / PAGE_SIZE);
         
+        // Populate images for reviews
+        reviewDAO.populateReviewImages(reviews);
+        
         // Lấy danh sách products để filter
         List<Map<String, Object>> products = reviewDAO.getProductsForFilter();
         

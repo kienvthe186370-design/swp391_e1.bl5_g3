@@ -2,20 +2,20 @@
     Document   : about
     Created on : Dec 4, 2025, 2:13:49 PM
     Author     : xuand
+    Modified   : Updated content for Pickleball Online Shop
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.util.regex.*" %>
 <!DOCTYPE html>
-<html lang="zxx">
+<html lang="vi">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="description" content="Male_Fashion Template">
-    <meta name="keywords" content="Male_Fashion, unica, creative, html">
+    <meta name="description" content="Pickleball Shop Vietnam - Cửa hàng vợt, bóng và phụ kiện Pickleball chính hãng">
+    <meta name="keywords" content="Pickleball, vợt pickleball, bóng pickleball, phụ kiện pickleball, Joola, Selkirk, Franklin">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Male-Fashion | Template</title>
+    <title>Giới Thiệu | Pickleball Shop Vietnam</title>
 
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap"
@@ -30,6 +30,34 @@
     <link rel="stylesheet" href="css/owl.carousel.min.css" type="text/css">
     <link rel="stylesheet" href="css/slicknav.min.css" type="text/css">
     <link rel="stylesheet" href="css/style.css" type="text/css">
+    
+    <!-- Custom CSS for Brand Text -->
+    <style>
+        .brand-text-item {
+            display: block;
+            text-decoration: none;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .brand-text-item:hover {
+            transform: translateY(-5px);
+        }
+        .brand-text-item h3 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        .brand-text-item p {
+            font-size: 14px;
+            color: #666;
+            margin: 0;
+        }
+        .brand-text-item:hover h3 {
+            color: #e53637;
+        }
+    </style>
 </head>
 
 <body>
@@ -41,10 +69,10 @@
             <div class="row">
                 <div class="col-lg-12">
                     <div class="breadcrumb__text">
-                        <h4>About Us</h4>
+                        <h4>Giới Thiệu</h4>
                         <div class="breadcrumb__links">
-                            <a href="./index.html">Home</a>
-                            <span>About Us</span>
+                            <a href="index.jsp">Trang Chủ</a>
+                            <span>Giới Thiệu</span>
                         </div>
                     </div>
                 </div>
@@ -59,30 +87,30 @@
             <div class="row">
                 <div class="col-lg-12">
                     <div class="about__pic">
-                        <img src="img/about/about-us.jpg" alt="">
+                        <img src="img/about/among-us.jpg" alt="Pickleball Shop Vietnam">
                     </div>
                 </div>
             </div>
             <div class="row">
                 <div class="col-lg-4 col-md-4 col-sm-6">
                     <div class="about__item">
-                        <h4>Who We Are ?</h4>
-                        <p>Contextual advertising programs sometimes have strict policies that need to be adhered too.
-                        Let’s take Google as an example.</p>
+                        <h4>Chúng Tôi Là Ai?</h4>
+                        <p>Pickleball Shop Vietnam là cửa hàng chuyên cung cấp vợt, bóng và phụ kiện Pickleball 
+                        chính hãng từ các thương hiệu hàng đầu thế giới như Joola, Selkirk, Franklin và Head.</p>
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-4 col-sm-6">
                     <div class="about__item">
-                        <h4>Who We Do ?</h4>
-                        <p>In this digital generation where information can be easily obtained within seconds, business
-                        cards still have retained their importance.</p>
+                        <h4>Sứ Mệnh</h4>
+                        <p>Mang đến cho người chơi Pickleball Việt Nam những sản phẩm chất lượng cao với giá cả 
+                        hợp lý, góp phần phát triển phong trào Pickleball tại Việt Nam.</p>
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-4 col-sm-6">
                     <div class="about__item">
-                        <h4>Why Choose Us</h4>
-                        <p>A two or three storey house is the ideal way to maximise the piece of earth on which our home
-                        sits, but for older or infirm people.</p>
+                        <h4>Tại Sao Chọn Chúng Tôi?</h4>
+                        <p>100% sản phẩm chính hãng, bảo hành uy tín, đội ngũ tư vấn chuyên nghiệp và chính sách 
+                        đổi trả linh hoạt. Hỗ trợ cả khách lẻ và đại lý bán buôn.</p>
                     </div>
                 </div>
             </div>
@@ -97,22 +125,20 @@
                 <div class="col-lg-6 p-0">
                     <div class="testimonial__text">
                         <span class="icon_quotations"></span>
-                        <p>“Going out after work? Take your butane curling iron with you to the office, heat it up,
-                            style your hair before you leave the office and you won’t have to make a trip back home.”
+                        <p>"Pickleball là sự kết hợp hoàn hảo giữa tennis, cầu lông và bóng bàn. 
+                            Dễ học, dễ chơi và phù hợp với mọi lứa tuổi. Hãy để chúng tôi đồng hành 
+                            cùng bạn trên hành trình khám phá môn thể thao tuyệt vời này!"
                         </p>
                         <div class="testimonial__author">
-                            <div class="testimonial__author__pic">
-                                <img src="img/about/testimonial-author.jpg" alt="">
-                            </div>
                             <div class="testimonial__author__text">
-                                <h5>Augusta Schultz</h5>
-                                <p>Fashion Design</p>
+                                <h5>Pickleball Shop Vietnam</h5>
+                                <p>Đam mê Pickleball</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-6 p-0">
-                    <div class="testimonial__pic set-bg" data-setbg="img/about/testimonial-pic.jpg"></div>
+                    <div class="testimonial__pic set-bg" data-setbg="img/about/among-us2.jpg"></div>
                 </div>
             </div>
         </div>
@@ -126,34 +152,35 @@
                 <div class="col-lg-3 col-md-6 col-sm-6">
                     <div class="counter__item">
                         <div class="counter__item__number">
-                            <h2 class="cn_num">102</h2>
+                            <h2 class="cn_num">500</h2>
+                            <strong>+</strong>
                         </div>
-                        <span>Our <br />Clients</span>
+                        <span>Khách Hàng <br />Hài Lòng</span>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-sm-6">
                     <div class="counter__item">
                         <div class="counter__item__number">
-                            <h2 class="cn_num">30</h2>
+                            <h2 class="cn_num">4</h2>
                         </div>
-                        <span>Total <br />Categories</span>
+                        <span>Danh Mục <br />Sản Phẩm</span>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-sm-6">
                     <div class="counter__item">
                         <div class="counter__item__number">
-                            <h2 class="cn_num">102</h2>
+                            <h2 class="cn_num">4</h2>
                         </div>
-                        <span>In <br />Country</span>
+                        <span>Thương Hiệu <br />Đối Tác</span>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-sm-6">
                     <div class="counter__item">
                         <div class="counter__item__number">
-                            <h2 class="cn_num">98</h2>
+                            <h2 class="cn_num">99</h2>
                             <strong>%</strong>
                         </div>
-                        <span>Happy <br />Customer</span>
+                        <span>Khách Hàng <br />Hài Lòng</span>
                     </div>
                 </div>
             </div>
@@ -161,93 +188,101 @@
     </section>
     <!-- Counter Section End -->
 
-    <!-- Team Section Begin -->
+    <!-- Services Section Begin -->
     <section class="team spad">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
                     <div class="section-title">
-                        <span>Our Team</span>
-                        <h2>Meet Our Team</h2>
+                        <span>Dịch Vụ</span>
+                        <h2>Cam Kết Của Chúng Tôi</h2>
                     </div>
                 </div>
             </div>
             <div class="row">
                 <div class="col-lg-3 col-md-6 col-sm-6">
-                    <div class="team__item">
-                        <img src="img/about/team-1.jpg" alt="">
-                        <h4>John Smith</h4>
-                        <span>Fashion Design</span>
+                    <div class="team__item text-center">
+                        <div class="mb-3">
+                            <i class="fa fa-check-circle fa-4x text-success"></i>
+                        </div>
+                        <h4>Chính Hãng 100%</h4>
+                        <span>Sản phẩm nhập khẩu trực tiếp</span>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-sm-6">
-                    <div class="team__item">
-                        <img src="img/about/team-2.jpg" alt="">
-                        <h4>Christine Wise</h4>
-                        <span>C.E.O</span>
+                    <div class="team__item text-center">
+                        <div class="mb-3">
+                            <i class="fa fa-truck fa-4x text-primary"></i>
+                        </div>
+                        <h4>Giao Hàng Nhanh</h4>
+                        <span>Toàn quốc 2-5 ngày</span>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-sm-6">
-                    <div class="team__item">
-                        <img src="img/about/team-3.jpg" alt="">
-                        <h4>Sean Robbins</h4>
-                        <span>Manager</span>
+                    <div class="team__item text-center">
+                        <div class="mb-3">
+                            <i class="fa fa-shield fa-4x text-warning"></i>
+                        </div>
+                        <h4>Bảo Hành Uy Tín</h4>
+                        <span>Bảo hành chính hãng</span>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-sm-6">
-                    <div class="team__item">
-                        <img src="img/about/team-4.jpg" alt="">
-                        <h4>Lucy Myers</h4>
-                        <span>Delivery</span>
+                    <div class="team__item text-center">
+                        <div class="mb-3">
+                            <i class="fa fa-headphones fa-4x text-info"></i>
+                        </div>
+                        <h4>Hỗ Trợ 24/7</h4>
+                        <span>Tư vấn chuyên nghiệp</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-    <!-- Team Section End -->
+    <!-- Services Section End -->
 
-    <!-- Client Section Begin -->
+    <!-- Brand Partners Section Begin -->
     <section class="clients spad">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
                     <div class="section-title">
-                        <span>Partner</span>
-                        <h2>Happy Clients</h2>
+                        <span>Đối Tác</span>
+                        <h2>Thương Hiệu Chính Hãng</h2>
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-1.png" alt=""></a>
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+                    <a href="shop.jsp?brandId=1" class="brand-text-item">
+                        <h3>JOOLA</h3>
+                        <p>Thương hiệu vợt Pickleball hàng đầu thế giới</p>
+                    </a>
                 </div>
-                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-2.png" alt=""></a>
+                <div class="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+                    <a href="shop.jsp?brandId=2" class="brand-text-item">
+                        <h3>SELKIRK</h3>
+                        <p>Vợt công nghệ cao từ Mỹ</p>
+                    </a>
                 </div>
-                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-3.png" alt=""></a>
+                <div class="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+                    <a href="shop.jsp?brandId=3" class="brand-text-item">
+                        <h3>FRANKLIN</h3>
+                        <p>Bóng và phụ kiện chuẩn thi đấu</p>
+                    </a>
                 </div>
-                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-4.png" alt=""></a>
-                </div>
-                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-5.png" alt=""></a>
-                </div>
-                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-6.png" alt=""></a>
-                </div>
-                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-7.png" alt=""></a>
-                </div>
-                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-8.png" alt=""></a>
+                <div class="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+                    <a href="shop.jsp?brandId=4" class="brand-text-item">
+                        <h3>HEAD</h3>
+                        <p>Thương hiệu thể thao huyền thoại</p>
+                    </a>
                 </div>
             </div>
         </div>
     </section>
-    <!-- Client Section End -->
+    <!-- Brand Partners Section End -->
 
-    <%@include  file="footer.jsp"%>
+    <%@include file="footer.jsp"%>
 
     <!-- Js Plugins -->
     <script src="js/jquery-3.3.1.min.js"></script>

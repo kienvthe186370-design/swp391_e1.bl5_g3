@@ -727,6 +727,170 @@ public class ProductDAO extends DBContext {
         }
     }
     
+    // ========== DUPLICATE CHECK METHODS ==========
+    
+    /**
+     * Kiểm tra sản phẩm trùng tên
+     * @param productName Tên sản phẩm cần kiểm tra
+     * @param excludeProductId ID sản phẩm cần loại trừ (dùng khi update), null nếu tạo mới
+     * @return Map chứa thông tin sản phẩm trùng nếu có, null nếu không trùng
+     */
+    public Map<String, Object> findDuplicateProductByName(String productName, Integer excludeProductId) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getConnection();
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT ProductID, ProductName, IsActive FROM Products ");
+            sql.append("WHERE LOWER(TRIM(ProductName)) = LOWER(TRIM(?)) ");
+            if (excludeProductId != null) {
+                sql.append("AND ProductID != ? ");
+            }
+            
+            ps = conn.prepareStatement(sql.toString());
+            ps.setString(1, productName);
+            if (excludeProductId != null) {
+                ps.setInt(2, excludeProductId);
+            }
+            
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                Map<String, Object> product = new HashMap<>();
+                product.put("productId", rs.getInt("ProductID"));
+                product.put("productName", rs.getString("ProductName"));
+                product.put("isActive", rs.getBoolean("IsActive"));
+                return product;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, ps, conn);
+        }
+        return null;
+    }
+    
+    /**
+     * Kiểm tra variant trùng lặp dựa trên tổ hợp attribute values
+     * @param productId ID sản phẩm
+     * @param valueIds Danh sách các ValueID của variant
+     * @param excludeVariantId ID variant cần loại trừ (dùng khi update), null nếu tạo mới
+     * @return Map chứa thông tin variant trùng nếu có, null nếu không trùng
+     */
+    public Map<String, Object> findDuplicateVariant(int productId, List<Integer> valueIds, Integer excludeVariantId) {
+        if (valueIds == null || valueIds.isEmpty()) {
+            return null;
+        }
+        
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getConnection();
+            
+            // Tìm variant có cùng số lượng attributes và cùng tất cả các valueIds
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT pv.VariantID, pv.SKU, pv.SellingPrice, pv.Stock, pv.IsActive ");
+            sql.append("FROM ProductVariants pv ");
+            sql.append("WHERE pv.ProductID = ? ");
+            if (excludeVariantId != null) {
+                sql.append("AND pv.VariantID != ? ");
+            }
+            sql.append("AND (SELECT COUNT(*) FROM VariantAttributes va WHERE va.VariantID = pv.VariantID) = ? ");
+            sql.append("AND ? = (SELECT COUNT(*) FROM VariantAttributes va WHERE va.VariantID = pv.VariantID AND va.ValueID IN (");
+            
+            for (int i = 0; i < valueIds.size(); i++) {
+                if (i > 0) sql.append(",");
+                sql.append("?");
+            }
+            sql.append("))");
+            
+            ps = conn.prepareStatement(sql.toString());
+            int paramIndex = 1;
+            ps.setInt(paramIndex++, productId);
+            if (excludeVariantId != null) {
+                ps.setInt(paramIndex++, excludeVariantId);
+            }
+            ps.setInt(paramIndex++, valueIds.size());
+            ps.setInt(paramIndex++, valueIds.size());
+            
+            for (Integer valueId : valueIds) {
+                ps.setInt(paramIndex++, valueId);
+            }
+            
+            rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                Map<String, Object> variant = new HashMap<>();
+                variant.put("variantId", rs.getInt("VariantID"));
+                variant.put("sku", rs.getString("SKU"));
+                variant.put("sellingPrice", rs.getBigDecimal("SellingPrice"));
+                variant.put("stock", rs.getInt("Stock"));
+                variant.put("isActive", rs.getBoolean("IsActive"));
+                
+                // Lấy thêm thông tin attribute values của variant trùng
+                List<Map<String, Object>> attrs = getVariantAttributeValues(rs.getInt("VariantID"));
+                variant.put("attributes", attrs);
+                
+                return variant;
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, ps, conn);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Kiểm tra SKU đã tồn tại chưa
+     * @param sku SKU cần kiểm tra
+     * @param excludeVariantId ID variant cần loại trừ (dùng khi update), null nếu tạo mới
+     * @return Map chứa thông tin variant có SKU trùng nếu có, null nếu không trùng
+     */
+    public Map<String, Object> findVariantBySku(String sku, Integer excludeVariantId) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getConnection();
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT pv.VariantID, pv.ProductID, pv.SKU, p.ProductName ");
+            sql.append("FROM ProductVariants pv ");
+            sql.append("JOIN Products p ON pv.ProductID = p.ProductID ");
+            sql.append("WHERE pv.SKU = ? ");
+            if (excludeVariantId != null) {
+                sql.append("AND pv.VariantID != ? ");
+            }
+            
+            ps = conn.prepareStatement(sql.toString());
+            ps.setString(1, sku);
+            if (excludeVariantId != null) {
+                ps.setInt(2, excludeVariantId);
+            }
+            
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                Map<String, Object> variant = new HashMap<>();
+                variant.put("variantId", rs.getInt("VariantID"));
+                variant.put("productId", rs.getInt("ProductID"));
+                variant.put("sku", rs.getString("SKU"));
+                variant.put("productName", rs.getString("ProductName"));
+                return variant;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, ps, conn);
+        }
+        return null;
+    }
+    
     // ========== VARIANT MANAGEMENT METHODS ==========
     
     /**

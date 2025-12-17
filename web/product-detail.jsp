@@ -961,7 +961,17 @@
                                     <div class="review-content-text">${review.reviewContent}</div>
                                 </c:if>
                                 
-
+                                <!-- Review Images -->
+                                <c:if test="${review.hasImages()}">
+                                    <div class="review-images" style="display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0;">
+                                        <c:forEach var="img" items="${review.images}">
+                                            <img src="${pageContext.request.contextPath}${img.mediaUrl}" 
+                                                 alt="Review image" 
+                                                 style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #e5e7eb;"
+                                                 onclick="openReviewImage('${pageContext.request.contextPath}${img.mediaUrl}')">
+                                        </c:forEach>
+                                    </div>
+                                </c:if>
                                 
                                 <c:if test="${review.hasReply()}">
                                     <div class="review-reply">
@@ -1105,6 +1115,18 @@
         
         function closeZoom() {
             document.getElementById('zoomModal').style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        
+        // Review Image Modal functions
+        function openReviewImage(src) {
+            document.getElementById('reviewModalImage').src = src;
+            document.getElementById('reviewImageModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeReviewImage() {
+            document.getElementById('reviewImageModal').style.display = 'none';
             document.body.style.overflow = '';
         }
         

@@ -17,10 +17,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.math.BigDecimal;
 
 @WebServlet(name = "AdminProductServlet", urlPatterns = {"/admin/products", "/admin/product-add"})
@@ -272,6 +274,18 @@ public class AdminProductServlet extends HttpServlet {
         int createdBy = employee.getEmployeeID();
         
         try {
+            // Kiểm tra sản phẩm trùng tên
+            Map<String, Object> duplicateProduct = productDAO.findDuplicateProductByName(productName, null);
+            if (duplicateProduct != null) {
+                int existingProductId = (Integer) duplicateProduct.get("productId");
+                String existingProductName = (String) duplicateProduct.get("productName");
+                
+                // Redirect đến trang chỉnh sửa sản phẩm đã tồn tại
+                response.sendRedirect(request.getContextPath() + "/admin/product-edit?id=" + existingProductId + 
+                                    "&duplicate=true&message=" + encodeURL("Sản phẩm \"" + existingProductName + "\" đã tồn tại. Bạn có muốn chỉnh sửa không?"));
+                return;
+            }
+            
             int productId = productDAO.insertProduct(productName, categoryId, brandId, 
                                                      description, specifications, createdBy);
             
@@ -310,6 +324,7 @@ public class AdminProductServlet extends HttpServlet {
             }
             
             // ===== XỬ LÝ VARIANTS =====
+            List<String> duplicateVariantMessages = new ArrayList<>();
             int variantIndex = 0;
             while (request.getParameter("variant_sku_" + variantIndex) != null) {
                 String sku = request.getParameter("variant_sku_" + variantIndex);
@@ -317,6 +332,29 @@ public class AdminProductServlet extends HttpServlet {
                 
                 if (sku != null && !sku.trim().isEmpty()) {
                     try {
+                        // Kiểm tra SKU trùng lặp
+                        Map<String, Object> duplicateSku = productDAO.findVariantBySku(sku.trim(), null);
+                        if (duplicateSku != null) {
+                            duplicateVariantMessages.add("SKU \"" + sku + "\" đã tồn tại trong sản phẩm \"" + duplicateSku.get("productName") + "\"");
+                            variantIndex++;
+                            continue;
+                        }
+                        
+                        // Kiểm tra variant trùng lặp (cùng tổ hợp attribute values)
+                        if (valueIds != null && !valueIds.isEmpty()) {
+                            List<Integer> valueIdList = Arrays.stream(valueIds.split(","))
+                                .map(String::trim)
+                                .map(Integer::parseInt)
+                                .collect(Collectors.toList());
+                            
+                            Map<String, Object> duplicateVariant = productDAO.findDuplicateVariant(productId, valueIdList, null);
+                            if (duplicateVariant != null) {
+                                duplicateVariantMessages.add("Biến thể với tổ hợp thuộc tính này đã tồn tại (SKU: " + duplicateVariant.get("sku") + ")");
+                                variantIndex++;
+                                continue;
+                            }
+                        }
+                        
                         // Giá bán và tồn kho sẽ được cập nhật qua chức năng nhập kho
                         BigDecimal price = BigDecimal.ZERO;
                         int stock = 0;
@@ -341,8 +379,14 @@ public class AdminProductServlet extends HttpServlet {
             }
             // ===== END XỬ LÝ VARIANTS =====
             
+            // Tạo message kết quả
+            String resultMessage = "Thêm sản phẩm thành công";
+            if (!duplicateVariantMessages.isEmpty()) {
+                resultMessage += ". Lưu ý: " + String.join("; ", duplicateVariantMessages);
+            }
+            
             response.sendRedirect(request.getContextPath() + "/admin/products?message=" + 
-                                encodeURL("Thêm sản phẩm thành công"));
+                                encodeURL(resultMessage));
             
         } catch (Exception e) {
             e.printStackTrace();
