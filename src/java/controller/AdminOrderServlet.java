@@ -47,8 +47,9 @@ public class AdminOrderServlet extends HttpServlet {
         
         String role = employee.getRole();
         
-        // SellerManager, Seller và Shipper được truy cập
-        if (!RolePermission.canManageOrders(role) && !RolePermission.isShipper(role)) {
+        // Admin có full quyền, SellerManager, Seller và Shipper được truy cập
+        if (!RolePermission.ADMIN.equalsIgnoreCase(role) && 
+            !RolePermission.canManageOrders(role) && !RolePermission.isShipper(role)) {
             response.sendRedirect(request.getContextPath() + "/access-denied.jsp");
             return;
         }
