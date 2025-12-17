@@ -1,6 +1,7 @@
 package controller;
 
 import DAO.OrderDAO;
+import DAO.RefundDAO;
 import entity.*;
 import utils.OrderStatusValidator;
 
@@ -17,10 +18,12 @@ import java.util.List;
 public class CustomerOrderServlet extends HttpServlet {
     
     private OrderDAO orderDAO;
+    private RefundDAO refundDAO;
     
     @Override
     public void init() throws ServletException {
         orderDAO = new OrderDAO();
+        refundDAO = new RefundDAO();
     }
 
     @Override
@@ -117,8 +120,12 @@ public class CustomerOrderServlet extends HttpServlet {
             // Check if can cancel
             boolean canCancel = "Pending".equals(order.getOrderStatus());
             
+            // Load refund request if exists
+            RefundRequest refundRequest = refundDAO.getRefundRequestByOrderId(orderId);
+            
             request.setAttribute("order", order);
             request.setAttribute("canCancel", canCancel);
+            request.setAttribute("refundRequest", refundRequest);
             
             request.getRequestDispatcher("/customer/order-detail.jsp")
                    .forward(request, response);
