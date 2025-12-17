@@ -263,6 +263,15 @@
           </a>
         </li>
         
+        <!-- Quản lý đánh giá - Admin -->
+        <li class="nav-item">
+          <a href="<%= contextPath %>/feedbacks" 
+             class="nav-link <%= currentURI.contains("/feedbacks") ? "active" : "" %>">
+            <i class="nav-icon fas fa-comments"></i>
+            <p>Quản lý đánh giá</p>
+          </a>
+        </li>
+        
         <!-- Settings - Admin -->
         <li class="nav-item">
           <a href="<%= contextPath %>/admin/settings" 
@@ -428,6 +437,17 @@
              class="nav-link <%= isVoucherPage ? "active" : "" %>">
             <i class="nav-icon fas fa-ticket-alt"></i>
             <p>Voucher</p>
+          </a>
+        </li>
+        <% } %>
+        
+        <!-- Quản lý đánh giá - Chỉ Marketer -->
+        <% if (canAccessMarketing) { %>
+        <li class="nav-item">
+          <a href="<%= contextPath %>/feedbacks" 
+             class="nav-link <%= currentURI.contains("/feedbacks") ? "active" : "" %>">
+            <i class="nav-icon fas fa-comments"></i>
+            <p>Quản lý đánh giá</p>
           </a>
         </li>
         <% } %>

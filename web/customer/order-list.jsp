@@ -196,9 +196,9 @@
                                             </button>
                                         </c:if>
                                         <c:if test="${order.orderStatus == 'Delivered'}">
-                                            <a href="${pageContext.request.contextPath}/customer/review?orderId=${order.orderID}" 
+                                            <a href="${pageContext.request.contextPath}/order-review?orderId=${order.orderID}" 
                                                class="btn btn-outline-warning btn-sm">
-                                                Đánh giá
+                                                <i class="fa fa-star"></i> Đánh giá
                                             </a>
                                         </c:if>
                                     </div>
