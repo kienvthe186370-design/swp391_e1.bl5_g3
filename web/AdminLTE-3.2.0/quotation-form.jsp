@@ -328,7 +328,7 @@
             
             // Show hint
             var minDateFormatted = ('0' + minValidDate.getDate()).slice(-2) + '/' + ('0' + (minValidDate.getMonth() + 1)).slice(-2) + '/' + minValidDate.getFullYear();
-            document.getElementById('minDateHint').innerHTML = 'Phải sau ngày giao hàng (' + baseDateStr + '). Tối thiểu: ' + minDateFormatted;
+            document.getElementById('minDateHint').innerHTML = 'Tối thiểu sau 1 ngày so với ngày giao hàng (' + baseDateStr + '). Tối thiểu: ' + minDateFormatted;
             
             // Init Bootstrap Datepicker
             $('#validUntil').datepicker({
@@ -433,7 +433,7 @@
                     if (validUntilDate <= minValidDate) {
                         hasError = true;
                         validUntilInput.classList.add('is-invalid');
-                        errorMessages.push('Ngày báo giá có hiệu lực phải sau ngày giao hàng (' + baseDateStr + ')');
+                        errorMessages.push('Ngày báo giá có hiệu lực phải sau ngày giao hàng (' + baseDateStr + ') tối thiểu 1 ngày');
                     } else {
                         validUntilInput.classList.remove('is-invalid');
                     }

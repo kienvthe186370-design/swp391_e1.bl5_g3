@@ -55,7 +55,7 @@
                                     <table class="table table-borderless mb-0">
                                         <tr>
                                             <td class="text-muted">Mã RFQ:</td>
-                                            <td class="text-end"><strong>${rfqCode}</strong></td>
+                                            <td class="text-end"><strong>${rfq.rfqCode != null ? rfq.rfqCode : (rfqCode.contains('_') ? rfqCode.substring(0, rfqCode.indexOf('_')) : rfqCode)}</strong></td>
                                         </tr>
                                         <c:if test="${not empty orderID}">
                                         <tr>

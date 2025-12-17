@@ -131,6 +131,11 @@ public class RolePermission {
         if (path.startsWith("/rfq")) {
             return canManageRFQ(role);
         }
+        
+        // Quotations (Đơn Báo Giá): chỉ SellerManager
+        if (path.startsWith("/quotations")) {
+            return canManageRFQ(role);
+        }
 
         // Admin: full quyền cho các phần còn lại
         if (ADMIN.equalsIgnoreCase(role)) {

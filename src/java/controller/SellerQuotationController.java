@@ -41,7 +41,7 @@ public class SellerQuotationController extends HttpServlet {
         String status = request.getParameter("status");
 
         int pendingCount = rfqDAO.countQuotations(keyword, RFQ.STATUS_QUOTED);
-        int paidCount = rfqDAO.countQuotations(keyword, RFQ.STATUS_QUOTE_ACCEPTED);
+        int paidCount = rfqDAO.countQuotations(keyword, RFQ.STATUS_COMPLETED);
         int rejectedCount = rfqDAO.countQuotations(keyword, RFQ.STATUS_QUOTE_REJECTED);
 
         List<RFQ> quotations = rfqDAO.getQuotations(keyword, status, page, pageSize);

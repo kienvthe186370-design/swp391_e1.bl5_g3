@@ -24,13 +24,15 @@
     .history-item { position: relative; padding: 10px 0 15px 30px; border-bottom: 1px solid #eee; }
     .history-item:last-child { border-bottom: none; }
     .history-item::before { content: ''; width: 12px; height: 12px; background: #007bff; border-radius: 50%; position: absolute; left: 0; top: 15px; }
+    .history-item.rejected::before { background: #dc3545; }
+    .history-item.completed::before { background: #28a745; }
     .status-badge { font-size: 0.9rem; padding: 6px 12px; border-radius: 4px; }
     .status-pending { background: #ffc107; color: #000; }
     .status-reviewing { background: #17a2b8; color: #fff; }
     .status-dateproposed { background: #fd7e14; color: #fff; }
     .status-dateaccepted { background: #20c997; color: #fff; }
     .status-daterejected { background: #dc3545; color: #fff; }
-    .status-quoted { background: #007bff; color: #fff; }
+    .status-quoted { background: #ffc107; color: #000; }
     .status-quoteaccepted { background: #6f42c1; color: #fff; }
     .status-quoterejected { background: #dc3545; color: #fff; }
     .status-completed { background: #28a745; color: #fff; }
@@ -63,10 +65,16 @@
     <section class="content">
       <div class="container-fluid">
         <c:if test="${param.success == 'date_proposed'}">
-          <div class="alert alert-success"><i class="fas fa-check"></i> Đã gửi đề xuất ngày giao hàng mới!</div>
+          <div class="alert alert-success alert-dismissible fade show auto-dismiss" role="alert">
+            <i class="fas fa-check"></i> Đã gửi đề xuất ngày giao hàng mới!
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          </div>
         </c:if>
         <c:if test="${param.success == 'quotation_sent'}">
-          <div class="alert alert-success"><i class="fas fa-check"></i> Đã gửi báo giá thành công!</div>
+          <div class="alert alert-success alert-dismissible fade show auto-dismiss" role="alert">
+            <i class="fas fa-check"></i> Đã gửi báo giá thành công!
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          </div>
         </c:if>
 
         <div class="row">
@@ -187,11 +195,12 @@
                     </c:forEach>
                   </tbody>
                   <c:if test="${rfq.totalAmount != null && rfq.totalAmount > 0}">
+                    <c:set var="colSpan" value="${(rfq.status == 'Quoted' || rfq.status == 'QuoteAccepted' || rfq.status == 'Completed') ? 4 : 1}" />
                     <tfoot class="table-light">
-                      <tr><td colspan="4"></td><td class="text-right"><strong>Tạm tính:</strong></td><td class="text-right"><fmt:formatNumber value="${rfq.subtotalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td></tr>
-                      <tr><td colspan="4"></td><td class="text-right">Phí vận chuyển:</td><td class="text-right"><fmt:formatNumber value="${rfq.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td></tr>
-                      <tr><td colspan="4"></td><td class="text-right">Thuế:</td><td class="text-right"><fmt:formatNumber value="${rfq.taxAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td></tr>
-                      <tr class="table-primary"><td colspan="4"></td><td class="text-right"><strong>TỔNG CỘNG:</strong></td><td class="text-right"><strong><fmt:formatNumber value="${rfq.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></strong></td></tr>
+                      <tr><td colspan="${colSpan}"></td><td class="text-right"><strong>Tạm tính:</strong></td><td class="text-right"><fmt:formatNumber value="${rfq.subtotalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td></tr>
+                      <tr><td colspan="${colSpan}"></td><td class="text-right">Phí vận chuyển:</td><td class="text-right"><fmt:formatNumber value="${rfq.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td></tr>
+                      <tr><td colspan="${colSpan}"></td><td class="text-right">Thuế:</td><td class="text-right"><fmt:formatNumber value="${rfq.taxAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td></tr>
+                      <tr class="table-primary"><td colspan="${colSpan}"></td><td class="text-right"><strong>TỔNG CỘNG:</strong></td><td class="text-right"><strong><fmt:formatNumber value="${rfq.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></strong></td></tr>
                     </tfoot>
                   </c:if>
                 </table>
@@ -207,8 +216,16 @@
                   <a href="<%= request.getContextPath() %>/admin/rfq/quotation-form?rfqId=${rfq.rfqID}" class="btn btn-success"><i class="fas fa-file-invoice-dollar"></i> Tạo Báo Giá</a>
                 </c:if>
                 <c:if test="${rfq.status == 'DateProposed'}"><div class="alert alert-info mt-3"><i class="fas fa-hourglass-half"></i> Đang chờ khách hàng phản hồi về ngày giao hàng mới.</div></c:if>
-                <c:if test="${rfq.status == 'Quoted'}"><div class="alert alert-info mt-3"><i class="fas fa-hourglass-half"></i> Đang chờ khách hàng phản hồi báo giá.</div></c:if>
-                <a href="<%= request.getContextPath() %>/admin/rfq" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Quay Lại</a>
+                <c:if test="${rfq.status == 'Quoted'}"><div class="alert alert-warning mt-3"><i class="fas fa-hourglass-half"></i> Chờ khách hàng chấp nhận báo giá.</div></c:if>
+                <c:if test="${rfq.status == 'Completed'}"><div class="alert alert-success mt-3"><i class="fas fa-check-circle"></i> Đơn hàng đã hoàn thành.</div></c:if>
+                <c:choose>
+                  <c:when test="${fromQuotation}">
+                    <a href="<%= request.getContextPath() %>/admin/quotations" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Quay Lại</a>
+                  </c:when>
+                  <c:otherwise>
+                    <a href="<%= request.getContextPath() %>/admin/rfq" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Quay Lại</a>
+                  </c:otherwise>
+                </c:choose>
               </div>
             </div>
           </div>
@@ -217,7 +234,12 @@
           <div class="col-lg-4">
             <div class="mb-3">
               <span class="badge status-badge status-${rfq.status.toLowerCase()}" style="font-size: 1rem; padding: 10px 20px;">
-                ${rfq.statusDisplayName}
+                <c:choose>
+                  <c:when test="${rfq.status == 'Quoted'}">Chờ chấp nhận</c:when>
+                  <c:when test="${rfq.status == 'Completed'}">Đã thanh toán</c:when>
+                  <c:when test="${rfq.status == 'QuoteRejected'}">Từ chối báo giá</c:when>
+                  <c:otherwise>${rfq.statusDisplayName}</c:otherwise>
+                </c:choose>
               </span>
             </div>
             <c:if test="${not empty rfq.customerNotes}">
@@ -231,7 +253,7 @@
               <div class="card-body">
                 <div class="history-list">
                   <c:forEach var="h" items="${rfq.history}">
-                    <div class="history-item">
+                    <div class="history-item ${h.newStatus == 'QuoteRejected' || h.newStatus == 'DateRejected' || h.newStatus == 'Cancelled' ? 'rejected' : ''} ${h.newStatus == 'Completed' ? 'completed' : ''}">
                       <strong>${h.action}</strong>
                       <p class="mb-1 small text-muted">${h.notes}</p>
                       <small class="text-muted"><fmt:formatDate value="${h.changedDate}" pattern="dd/MM/yyyy HH:mm"/></small>
@@ -291,6 +313,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.vi.min.js"></script>
 <script>
 $(document).ready(function() {
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+        $('.auto-dismiss').fadeOut('slow', function() {
+            $(this).remove();
+        });
+    }, 5000);
+    
     // Parse customer requested date (dd/MM/yyyy format)
     var customerDateStr = $('#customerRequestedDate').val();
     var parts = customerDateStr.split('/');

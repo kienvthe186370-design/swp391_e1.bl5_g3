@@ -33,6 +33,11 @@
         .sidebar-menu .list-group-item:hover:not(.active) { background: #f8f9fa; }
         .nav-tabs .nav-link { color: #666; border: none; padding: 10px 20px; }
         .nav-tabs .nav-link.active { color: #ca1515; border-bottom: 2px solid #ca1515; background: transparent; }
+        
+        /* Style cho đơn hàng Mua Buôn (RFQ) */
+        .order-card.rfq-order { border-left: 4px solid #ca1515; border-color: #ca1515; }
+        .order-card.rfq-order .card-header { background: #fff5f5; }
+        .badge-wholesale { background: #ca1515; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -118,10 +123,13 @@
 
                     <!-- Orders list -->
                     <c:forEach var="order" items="${orders}">
-                        <div class="order-card">
+                        <div class="order-card ${order.rfqID != null ? 'rfq-order' : ''}">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <div>
                                     <strong>Đơn hàng: ${order.orderCode}</strong>
+                                    <c:if test="${order.rfqID != null}">
+                                        <span class="badge-wholesale"><i class="fa fa-building"></i> Mua Buôn</span>
+                                    </c:if>
                                     <small class="text-muted ml-3">
                                         <fmt:formatDate value="${order.orderDate}" pattern="dd/MM/yyyy HH:mm"/>
                                     </small>
