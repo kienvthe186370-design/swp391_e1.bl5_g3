@@ -35,29 +35,76 @@ public class GoogleOAuthConfig {
     // Scopes
     public static final String SCOPE = "openid email profile";
     
+    // Cloudflare Tunnel domain - set this if auto-detect doesn't work
+    public static final String TUNNEL_DOMAIN = "tunnel.dquangminh2003.id.vn";
+    
     /**
      * Get redirect URI based on request
      * IMPORTANT: This URI must match exactly with the one registered in Google Cloud Console
+     * Supports reverse proxy/Cloudflare Tunnel
      */
     public static String getRedirectUri(jakarta.servlet.http.HttpServletRequest request) {
-        String scheme = request.getScheme();
-        String serverName = request.getServerName();
-        int serverPort = request.getServerPort();
-        String contextPath = request.getContextPath();
+        // Debug: Log all relevant headers
+        System.out.println("[GoogleOAuth] === Request Headers ===");
+        System.out.println("[GoogleOAuth] Host: " + request.getHeader("Host"));
+        System.out.println("[GoogleOAuth] X-Forwarded-Host: " + request.getHeader("X-Forwarded-Host"));
+        System.out.println("[GoogleOAuth] X-Forwarded-Proto: " + request.getHeader("X-Forwarded-Proto"));
+        System.out.println("[GoogleOAuth] CF-Connecting-IP: " + request.getHeader("CF-Connecting-IP"));
+        System.out.println("[GoogleOAuth] ServerName: " + request.getServerName());
+        System.out.println("[GoogleOAuth] Scheme: " + request.getScheme());
+        System.out.println("[GoogleOAuth] ========================");
         
-        StringBuilder url = new StringBuilder();
-        url.append(scheme).append("://").append(serverName);
+        String scheme;
+        String serverName;
         
-        if ((scheme.equals("http") && serverPort != 80) || 
-            (scheme.equals("https") && serverPort != 443)) {
-            url.append(":").append(serverPort);
+        // Check if request is from Cloudflare Tunnel
+        String host = request.getHeader("Host");
+        String cfConnectingIP = request.getHeader("CF-Connecting-IP");
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        
+        // Detect Cloudflare Tunnel by checking Host header or CF headers
+        boolean isCloudflare = (host != null && host.contains(TUNNEL_DOMAIN)) 
+                            || cfConnectingIP != null
+                            || (host != null && !host.contains("localhost"));
+        
+        if (isCloudflare && host != null && host.contains(TUNNEL_DOMAIN)) {
+            // Running through Cloudflare Tunnel
+            scheme = "https";
+            serverName = TUNNEL_DOMAIN;
+            System.out.println("[GoogleOAuth] Detected Cloudflare Tunnel");
+        } else if (forwardedProto != null) {
+            // Behind other reverse proxy
+            scheme = forwardedProto;
+            serverName = request.getHeader("X-Forwarded-Host");
+            if (serverName == null) {
+                serverName = host != null ? host.split(":")[0] : request.getServerName();
+            }
+            System.out.println("[GoogleOAuth] Detected reverse proxy");
+        } else {
+            // Direct access (localhost)
+            scheme = request.getScheme();
+            serverName = request.getServerName();
+            int serverPort = request.getServerPort();
+            
+            // Build URL with port for localhost
+            String contextPath = request.getContextPath();
+            StringBuilder url = new StringBuilder();
+            url.append(scheme).append("://").append(serverName);
+            if ((scheme.equals("http") && serverPort != 80) || 
+                (scheme.equals("https") && serverPort != 443)) {
+                url.append(":").append(serverPort);
+            }
+            url.append(contextPath).append("/google-callback");
+            System.out.println("[GoogleOAuth] Redirect URI (direct): " + url.toString());
+            return url.toString();
         }
         
-        url.append(contextPath).append("/google-callback");
+        // Build URL for tunnel/proxy (no port needed)
+        String contextPath = request.getContextPath();
+        String redirectUri = scheme + "://" + serverName + contextPath + "/google-callback";
         
-        System.out.println("[GoogleOAuth] Redirect URI: " + url.toString());
-        
-        return url.toString();
+        System.out.println("[GoogleOAuth] Redirect URI: " + redirectUri);
+        return redirectUri;
     }
     
     /**
