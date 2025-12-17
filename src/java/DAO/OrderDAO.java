@@ -1398,6 +1398,7 @@ public class OrderDAO extends DBContext {
             System.err.println("[OrderDAO] Auto-assign shipper failed: " + e.getMessage());
             e.printStackTrace();
         }
+        System.out.println("[OrderDAO] autoAssignShipperForOrder completed for order: " + orderId);
     }
     
     // ==================== STOCK MANAGEMENT ====================
