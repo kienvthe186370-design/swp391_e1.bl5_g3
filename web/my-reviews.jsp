@@ -20,6 +20,20 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/font-awesome.min.css" type="text/css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css" type="text/css">
     <style>
+        /* Sidebar styles */
+        .profile-sidebar { background: #f8f9fa; padding: 20px; border-radius: 8px; }
+        .profile-sidebar .nav-link { color: #333; padding: 12px 15px; border-radius: 5px; margin-bottom: 5px; }
+        .profile-sidebar .nav-link:hover, .profile-sidebar .nav-link.active { background: #e53637; color: white; }
+        .profile-sidebar .nav-link i { width: 20px; }
+        .profile-content { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        
+        /* Avatar */
+        .avatar-wrapper { position: relative; width: 120px; height: 120px; margin: 0 auto 15px; }
+        .avatar-img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #e53637; }
+        .avatar-placeholder { width: 120px; height: 120px; border-radius: 50%; background: #e1e1e1; display: flex; align-items: center; justify-content: center; border: 3px solid #e53637; }
+        .avatar-placeholder i { font-size: 50px; color: #999; }
+        
+        /* Review styles */
         .review-item { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 24px; margin-bottom: 20px; }
         .review-item.hidden-review { opacity: 0.6; border: 2px dashed #dc3545; }
         .review-product { display: flex; gap: 16px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
@@ -67,19 +81,67 @@
 
     <section class="spad">
         <div class="container">
-            <c:if test="${not empty sessionScope.success}">
-                <div class="alert alert-success alert-dismissible fade show">
-                    ${sessionScope.success}
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                </div>
-                <c:remove var="success" scope="session"/>
-            </c:if>
-
             <div class="row">
-                <div class="col-lg-12">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="mb-0">Tổng cộng: ${totalReviews} đánh giá</h5>
+                <!-- Sidebar -->
+                <div class="col-lg-3">
+                    <div class="profile-sidebar">
+                        <div class="text-center mb-4">
+                            <!-- Avatar -->
+                            <div class="avatar-wrapper">
+                                <c:choose>
+                                    <c:when test="${not empty sessionScope.customer.avatar}">
+                                        <img src="${pageContext.request.contextPath}/${sessionScope.customer.avatar}" alt="Avatar" class="avatar-img">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="avatar-placeholder">
+                                            <i class="fa fa-user"></i>
+                                        </div>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                            <h5 class="mt-2 mb-1">${sessionScope.customer.fullName}</h5>
+                            <small class="text-muted">${sessionScope.customer.email}</small>
+                        </div>
+                        <nav class="nav flex-column">
+                            <a class="nav-link" href="${pageContext.request.contextPath}/profile?tab=profile">
+                                <i class="fa fa-user"></i> Thông tin cá nhân
+                            </a>
+                            <a class="nav-link" href="${pageContext.request.contextPath}/profile?tab=addresses">
+                                <i class="fa fa-map-marker"></i> Địa chỉ giao hàng
+                            </a>
+                            <a class="nav-link" href="${pageContext.request.contextPath}/profile?tab=password">
+                                <i class="fa fa-lock"></i> Đổi mật khẩu
+                            </a>
+                            <a class="nav-link" href="${pageContext.request.contextPath}/profile?tab=orders">
+                                <i class="fa fa-list-alt"></i> Đơn hàng của tôi
+                            </a>
+                            <a class="nav-link active" href="${pageContext.request.contextPath}/my-reviews">
+                                <i class="fa fa-star"></i> Lịch sử đánh giá
+                            </a>
+                            <a class="nav-link" href="${pageContext.request.contextPath}/profile?tab=wishlist">
+                                <i class="fa fa-heart"></i> Yêu thích
+                            </a>
+                            <a class="nav-link" href="${pageContext.request.contextPath}/logout">
+                                <i class="fa fa-sign-out"></i> Đăng xuất
+                            </a>
+                        </nav>
                     </div>
+                </div>
+
+                <!-- Content -->
+                <div class="col-lg-9">
+                    <div class="profile-content">
+                        <c:if test="${not empty sessionScope.success}">
+                            <div class="alert alert-success alert-dismissible fade show">
+                                ${sessionScope.success}
+                                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                            </div>
+                            <c:remove var="success" scope="session"/>
+                        </c:if>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="mb-0"><i class="fa fa-star text-danger"></i> Lịch sử đánh giá (${totalReviews})</h4>
+                        </div>
 
                     <c:choose>
                         <c:when test="${empty reviews}">
@@ -194,6 +256,7 @@
                             </c:if>
                         </c:otherwise>
                     </c:choose>
+                    </div>
                 </div>
             </div>
         </div>

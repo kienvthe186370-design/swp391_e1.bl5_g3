@@ -9,6 +9,9 @@
         <span class="cart-mini-count">${cartCount != null ? cartCount : 0} sản phẩm</span>
     </div>
     
+    
+    
+    
     <div class="cart-mini-body">
         <c:choose>
             <c:when test="${empty cartItems}">

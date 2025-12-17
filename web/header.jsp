@@ -193,7 +193,7 @@
                                         <a href="<%= request.getContextPath() %>/profile">
                                             <i class="fa fa-user"></i> ${userName}
                                         </a>
-                                        <a href="<%= request.getContextPath() %>/customer/orders">
+                                        <a href="<%= request.getContextPath() %>/profile?tab=orders">
                                             <i class="fa fa-list-alt"></i> Đơn hàng
                                         </a>
                                         <a href="<%= request.getContextPath() %>/rfq/list" style="color: #ffc107;">

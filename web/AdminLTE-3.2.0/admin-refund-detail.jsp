@@ -162,7 +162,7 @@
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <img src="${pageContext.request.contextPath}${item.orderDetail.productImage}" 
+                                                    <img src="${pageContext.request.contextPath}/${item.orderDetail.productImage}" 
                                                          class="product-img mr-2" alt=""
                                                          onerror="this.src='${pageContext.request.contextPath}/img/no-image.png'">
                                                     <span>${item.orderDetail.productName}</span>
@@ -190,24 +190,43 @@
                     <c:if test="${not empty refundRequest.refundMedia}">
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Hình ảnh/Video minh chứng</h3>
+                                <h3 class="card-title"><i class="fas fa-images mr-2"></i>Hình ảnh/Video minh chứng (${refundRequest.refundMedia.size()} file)</h3>
                             </div>
                             <div class="card-body">
-                                <div class="media-gallery">
+                                <div class="media-gallery d-flex flex-wrap">
                                     <c:forEach var="media" items="${refundRequest.refundMedia}">
                                         <c:choose>
-                                            <c:when test="${media.mediaType == 'image'}">
-                                                <img src="${pageContext.request.contextPath}${media.mediaURL}" 
-                                                     alt="Minh chứng" onclick="openMedia('${pageContext.request.contextPath}${media.mediaURL}', 'image')">
+                                            <c:when test="${media.mediaType == 'video' || media.mediaURL.endsWith('.mp4') || media.mediaURL.endsWith('.mov') || media.mediaURL.endsWith('.avi')}">
+                                                <div class="position-relative m-1" style="width:120px;height:120px;">
+                                                    <video style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;" 
+                                                           onclick="openMedia('${pageContext.request.contextPath}${media.mediaURL}', 'video')">
+                                                        <source src="${pageContext.request.contextPath}${media.mediaURL}" type="video/mp4">
+                                                    </video>
+                                                    <span class="badge badge-dark position-absolute" style="bottom:5px;left:5px;">
+                                                        <i class="fas fa-video"></i> Video
+                                                    </span>
+                                                </div>
                                             </c:when>
                                             <c:otherwise>
-                                                <video onclick="openMedia('${pageContext.request.contextPath}${media.mediaURL}', 'video')">
-                                                    <source src="${pageContext.request.contextPath}${media.mediaURL}">
-                                                </video>
+                                                <img src="${pageContext.request.contextPath}${media.mediaURL}" 
+                                                     alt="Minh chứng" 
+                                                     onclick="openMedia('${pageContext.request.contextPath}${media.mediaURL}', 'image')"
+                                                     onerror="this.style.display='none'"
+                                                     class="m-1">
                                             </c:otherwise>
                                         </c:choose>
                                     </c:forEach>
                                 </div>
+                            </div>
+                        </div>
+                    </c:if>
+                    <c:if test="${empty refundRequest.refundMedia}">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-images mr-2"></i>Hình ảnh/Video minh chứng</h3>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-0"><i class="fas fa-info-circle"></i> Không có hình ảnh/video minh chứng</p>
                             </div>
                         </div>
                     </c:if>

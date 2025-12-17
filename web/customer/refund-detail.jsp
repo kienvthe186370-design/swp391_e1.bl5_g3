@@ -79,7 +79,7 @@
                             <div class="col-md-6">
                                 <small class="text-muted">Đơn hàng</small>
                                 <p class="mb-0 font-weight-bold">
-                                    <a href="${pageContext.request.contextPath}/customer/order-detail?id=${refundRequest.orderID}">
+                                    <a href="${pageContext.request.contextPath}/customer/orders?action=detail&id=${refundRequest.orderID}">
                                         ${refundRequest.order.orderCode}
                                     </a>
                                 </p>
@@ -106,7 +106,7 @@
                         <h5><i class="fa fa-shopping-bag"></i> Sản phẩm yêu cầu hoàn</h5>
                         <c:forEach var="item" items="${refundRequest.refundItems}">
                             <div class="refund-item">
-                                <img src="${pageContext.request.contextPath}${item.orderDetail.productImage}" 
+                                <img src="${pageContext.request.contextPath}/${item.orderDetail.productImage}" 
                                      onerror="this.src='${pageContext.request.contextPath}/img/product/product-placeholder.jpg'">
                                 <div class="flex-grow-1">
                                     <h6 class="mb-1">${item.orderDetail.productName}</h6>
@@ -127,12 +127,33 @@
                     
                     <c:if test="${not empty refundRequest.refundMedia}">
                         <div class="info-card">
-                            <h5><i class="fa fa-camera"></i> Hình ảnh minh chứng</h5>
+                            <h5><i class="fa fa-camera"></i> Hình ảnh/Video minh chứng (${refundRequest.refundMedia.size()} file)</h5>
                             <div class="media-gallery">
                                 <c:forEach var="media" items="${refundRequest.refundMedia}">
-                                    <img src="${pageContext.request.contextPath}${media.mediaURL}" onclick="window.open(this.src)">
+                                    <c:choose>
+                                        <c:when test="${media.mediaType == 'video' || media.mediaURL.endsWith('.mp4') || media.mediaURL.endsWith('.mov') || media.mediaURL.endsWith('.avi')}">
+                                            <div style="display:inline-block;position:relative;margin:5px;">
+                                                <video width="150" height="150" controls style="border-radius:8px;object-fit:cover;">
+                                                    <source src="${pageContext.request.contextPath}${media.mediaURL}" type="video/mp4">
+                                                    Trình duyệt không hỗ trợ video.
+                                                </video>
+                                            </div>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <img src="${pageContext.request.contextPath}${media.mediaURL}" 
+                                                 onclick="window.open(this.src)" 
+                                                 onerror="this.style.display='none'"
+                                                 style="cursor:pointer;">
+                                        </c:otherwise>
+                                    </c:choose>
                                 </c:forEach>
                             </div>
+                        </div>
+                    </c:if>
+                    <c:if test="${empty refundRequest.refundMedia}">
+                        <div class="info-card">
+                            <h5><i class="fa fa-camera"></i> Hình ảnh/Video minh chứng</h5>
+                            <p class="text-muted mb-0"><i class="fa fa-info-circle"></i> Không có hình ảnh/video minh chứng</p>
                         </div>
                     </c:if>
                 </div>
