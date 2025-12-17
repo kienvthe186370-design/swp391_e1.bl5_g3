@@ -350,8 +350,8 @@ public class RefundServlet extends HttpServlet {
                         
                         fileCount++;
                         
-                        // Determine media type
-                        String mediaType = "image";
+                        // Determine media type - DB constraint only allows 'photo' or 'video'
+                        String mediaType = "photo"; // Default for images
                         String extLower = extension.toLowerCase();
                         if (extLower.equals(".mp4") || extLower.equals(".avi") || extLower.equals(".mov") || extLower.equals(".wmv")) {
                             mediaType = "video";
