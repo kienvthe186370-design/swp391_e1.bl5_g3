@@ -59,11 +59,63 @@
                     <c:remove var="error" scope="session"/>
                 </c:if>
 
-                <!-- Thông báo tự động phân công -->
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> 
-                    <strong>Phân công tự động:</strong> Hệ thống tự động phân công shipper khi đơn hàng chuyển sang trạng thái "Đang giao". 
-                    Bạn có thể thay đổi phân công nếu cần.
+
+
+                <!-- Bộ lọc có thể ẩn/hiện -->
+                <div class="card card-outline card-primary mb-3 collapsed-card">
+                    <div class="card-header py-2">
+                        <h3 class="card-title">
+                            <i class="fas fa-filter"></i> Bộ lọc
+                        </h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="small text-muted">Tìm kiếm</label>
+                                <input type="text" id="searchOrder" class="form-control form-control-sm" placeholder="Mã đơn, tên KH, SĐT...">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="small text-muted">Shipper</label>
+                                <select id="filterShipper" class="form-control form-control-sm">
+                                    <option value="">-- Tất cả --</option>
+                                    <c:forEach var="shipper" items="${shippers}">
+                                        <option value="${shipper[1]}">${shipper[1]}</option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="small text-muted">Trạng thái</label>
+                                <select id="filterStatus" class="form-control form-control-sm">
+                                    <option value="">-- Tất cả --</option>
+                                    <option value="Đang lấy hàng">Đang lấy hàng</option>
+                                    <option value="Đã lấy hàng">Đã lấy hàng</option>
+                                    <option value="Đang giao">Đang giao</option>
+                                    <option value="Đã giao">Đã giao</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="small text-muted">Từ ngày</label>
+                                <input type="date" id="filterFromDate" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="small text-muted">Đến ngày</label>
+                                <input type="date" id="filterToDate" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" id="btnSearch" class="btn btn-primary btn-sm mr-1">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <button type="button" id="btnClearFilter" class="btn btn-outline-secondary btn-sm" title="Xóa lọc">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -235,5 +287,64 @@
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Hàm filter bảng đơn hàng
+    function filterTable() {
+        var searchText = $('#searchOrder').val().toLowerCase();
+        var shipperFilter = $('#filterShipper').val().toLowerCase();
+        var statusFilter = $('#filterStatus').val().toLowerCase();
+        
+        $('table tbody tr').each(function() {
+            var row = $(this);
+            var orderCode = row.find('td:eq(0)').text().toLowerCase();
+            var customer = row.find('td:eq(1)').text().toLowerCase();
+            var shipper = row.find('td:eq(2)').text().toLowerCase();
+            var status = row.find('td:eq(3)').text().toLowerCase().trim();
+            
+            var matchSearch = searchText === '' || 
+                              orderCode.indexOf(searchText) > -1 || 
+                              customer.indexOf(searchText) > -1;
+            var matchShipper = shipperFilter === '' || shipper.indexOf(shipperFilter) > -1;
+            var matchStatus = statusFilter === '' || status.indexOf(statusFilter) > -1;
+            
+            if (matchSearch && matchShipper && matchStatus) {
+                row.show();
+            } else {
+                row.hide();
+            }
+        });
+        
+        // Cập nhật số lượng hiển thị
+        var visibleCount = $('table tbody tr:visible').length;
+        var totalCount = $('table tbody tr').length;
+        if (totalCount > 0) {
+            $('.badge-light').first().text(visibleCount + '/' + totalCount);
+        }
+    }
+    
+    // Bind events
+    $('#searchOrder').on('keyup', filterTable);
+    $('#filterShipper, #filterStatus').on('change', filterTable);
+    $('#btnSearch').on('click', filterTable);
+    
+    // Xóa bộ lọc
+    $('#btnClearFilter').on('click', function() {
+        $('#searchOrder').val('');
+        $('#filterShipper').val('');
+        $('#filterStatus').val('');
+        $('#filterFromDate').val('');
+        $('#filterToDate').val('');
+        filterTable();
+    });
+    
+    // Enter để tìm kiếm
+    $('#searchOrder').on('keypress', function(e) {
+        if (e.which === 13) {
+            filterTable();
+        }
+    });
+});
+</script>
 </body>
 </html>

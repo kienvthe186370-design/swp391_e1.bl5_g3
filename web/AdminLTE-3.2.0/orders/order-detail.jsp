@@ -422,16 +422,6 @@
     <jsp:include page="../includes/admin-footer.jsp" />
 </div>
 
-<jsp:include page="../includes/admin-scripts.jsp" />
-
-<script>
-// Không cần chọn carrier nữa vì đã lưu từ checkout
-</script>
-</body>
-</html>
-
-</div>
-
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>

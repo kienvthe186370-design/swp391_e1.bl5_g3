@@ -298,8 +298,8 @@
         
         <!-- Quản lý Đơn hàng - SellerManager và Seller -->
         <% if (canAccessOrders) { %>
-        <li class="nav-item has-treeview <%= isOrderPage ? "menu-open" : "" %>">
-          <a href="#" class="nav-link <%= isOrderPage ? "active" : "" %>">
+        <li class="nav-item menu-is-opening menu-open">
+          <a href="#" class="nav-link">
             <i class="nav-icon fas fa-shopping-cart"></i>
             <p>
               Quản lý đơn hàng
@@ -309,7 +309,7 @@
               <% } %>
             </p>
           </a>
-          <ul class="nav nav-treeview">
+          <ul class="nav nav-treeview" style="display: block;">
             <li class="nav-item">
               <a href="<%= contextPath %>/admin/orders" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
@@ -330,7 +330,7 @@
             <li class="nav-item">
               <a href="<%= contextPath %>/admin/orders?action=shipperAssignment" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
-                <p><i class="fas fa-motorcycle text-info"></i> Giám sát Shipper</p>
+                <p>Giám sát Shipper</p>
               </a>
             </li>
             <% } %>
