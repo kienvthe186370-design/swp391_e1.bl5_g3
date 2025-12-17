@@ -22,7 +22,9 @@ public class RolePermission {
     }
 
     public static boolean canViewCustomers(String role) {
-        return SELLER_MANAGER.equalsIgnoreCase(role) || SELLER.equalsIgnoreCase(role);
+        // Chỉ SellerManager mới được xem danh sách khách hàng
+        // Seller không cần vì thông tin khách đã có trong đơn hàng được phân công
+        return SELLER_MANAGER.equalsIgnoreCase(role);
     }
 
     public static boolean canManageOrders(String role) {
