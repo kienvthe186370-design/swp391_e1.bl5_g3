@@ -339,8 +339,8 @@ public class OrderDAO extends DBContext {
             }
             
             // ===== XỬ LÝ STOCK KHI THAY ĐỔI TRẠNG THÁI =====
-            // Khi giao thành công: giải phóng reserved stock
-            if ("Delivered".equals(newStatus)) {
+            // Khi customer xác nhận đã nhận hàng (Completed): giải phóng reserved stock
+            if ("Completed".equals(newStatus)) {
                 releaseReservedStockOnDelivered(orderId);
             }
             // Khi hủy (chưa giao): hoàn lại stock và giảm reserved
@@ -1431,7 +1431,7 @@ public class OrderDAO extends DBContext {
     }
     
     /**
-     * Khi giao thành công (Delivered):
+     * Khi customer xác nhận đã nhận hàng (Completed):
      * - ReservedStock -= Qty
      */
     public boolean releaseReservedStockOnDelivered(int orderId) {
@@ -1699,6 +1699,8 @@ public class OrderDAO extends DBContext {
                 customer.setEmail(rs.getString("CustomerEmail"));
                 customer.setPhone(rs.getString("CustomerPhone"));
                 order.setCustomer(customer);
+                // Load order details
+                order.setOrderDetails(getOrderDetailsByOrderId(order.getOrderID()));
                 orders.add(order);
             }
         } catch (SQLException e) {
@@ -1733,6 +1735,8 @@ public class OrderDAO extends DBContext {
                 customer.setEmail(rs.getString("CustomerEmail"));
                 customer.setPhone(rs.getString("CustomerPhone"));
                 order.setCustomer(customer);
+                // Load order details
+                order.setOrderDetails(getOrderDetailsByOrderId(order.getOrderID()));
                 orders.add(order);
             }
         } catch (SQLException e) {
