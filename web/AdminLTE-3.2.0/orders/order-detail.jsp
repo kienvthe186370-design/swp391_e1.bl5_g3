@@ -335,9 +335,8 @@
                                 </div>
                                 <div class="card-body">
                                     <p><strong>Mã vận đơn:</strong> ${order.shipping.trackingCode}</p>
-                                    <c:if test="${order.shipping.estimatedDelivery != null}">
-                                        <p><strong>Dự kiến giao:</strong> 
-                                            <fmt:formatDate value="${order.shipping.estimatedDelivery}" pattern="dd/MM/yyyy"/>
+                                    <c:if test="${not empty order.shipping.estimatedDelivery}">
+                                        <p><strong>Dự kiến giao:</strong> ${order.shipping.estimatedDelivery}
                                         </p>
                                     </c:if>
                                     <c:if test="${order.shipping.goshipOrderCode != null}">

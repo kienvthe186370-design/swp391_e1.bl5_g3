@@ -836,9 +836,8 @@ public class OrderDAO extends DBContext {
     }
     
     private Shipping getShippingByOrderId(int orderId) {
-        String sql = "SELECT s.*, e.FullName as ShipperName, e.Phone as ShipperPhone " +
-                     "FROM Shipping s LEFT JOIN Employees e ON s.ShipperID = e.EmployeeID " +
-                     "WHERE s.OrderID = ?";
+        // Query đơn giản hơn để tránh lỗi nếu cột không tồn tại
+        String sql = "SELECT * FROM Shipping WHERE OrderID = ?";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
@@ -874,28 +873,44 @@ public class OrderDAO extends DBContext {
                     // Column may not exist
                 }
                 
-                // Load shipper info
+                // Load shipper info - query riêng để tránh lỗi
                 try {
                     int shipperId = rs.getInt("ShipperID");
-                    if (!rs.wasNull()) {
+                    if (!rs.wasNull() && shipperId > 0) {
                         shipping.setShipperID(shipperId);
-                        Employee shipper = new Employee();
-                        shipper.setEmployeeID(shipperId);
-                        shipper.setFullName(rs.getString("ShipperName"));
-                        shipper.setPhone(rs.getString("ShipperPhone"));
-                        shipping.setShipper(shipper);
+                        // Load shipper từ Employees
+                        loadShipperForShipping(shipping, shipperId);
                     }
                 } catch (SQLException ex) {
-                    // Column may not exist
+                    // Column ShipperID may not exist - ignore
+                    System.out.println("[OrderDAO] ShipperID column may not exist: " + ex.getMessage());
                 }
                 
                 return shipping;
             }
         } catch (SQLException e) {
             // Bảng có thể chưa tồn tại, trả về null
-            System.out.println("Shipping table may not exist: " + e.getMessage());
+            System.out.println("[OrderDAO] Shipping table error: " + e.getMessage());
         }
         return null;
+    }
+    
+    private void loadShipperForShipping(Shipping shipping, int shipperId) {
+        String sql = "SELECT EmployeeID, FullName, Phone FROM Employees WHERE EmployeeID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, shipperId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Employee shipper = new Employee();
+                shipper.setEmployeeID(rs.getInt("EmployeeID"));
+                shipper.setFullName(rs.getString("FullName"));
+                shipper.setPhone(rs.getString("Phone"));
+                shipping.setShipper(shipper);
+            }
+        } catch (SQLException e) {
+            System.out.println("[OrderDAO] Error loading shipper: " + e.getMessage());
+        }
     }
     
     // ==================== TẠO ĐƠN HÀNG (CHO CHECKOUT) ====================
@@ -1376,6 +1391,7 @@ public class OrderDAO extends DBContext {
      * Tự động phân công shipper cho đơn hàng khi chuyển sang Shipping
      */
     public void autoAssignShipperForOrder(int orderId) {
+        System.out.println("[OrderDAO] autoAssignShipperForOrder started for order: " + orderId);
         try {
             // Lấy shipper có ít đơn nhất
             Employee shipper = getShipperWithLeastActiveOrders();
@@ -1383,6 +1399,7 @@ public class OrderDAO extends DBContext {
                 System.err.println("[OrderDAO] No shipper available for auto-assignment");
                 return;
             }
+            System.out.println("[OrderDAO] Found shipper: " + shipper.getFullName());
             
             // Lấy shippingID của đơn hàng
             int shippingId = 0;
@@ -1395,6 +1412,7 @@ public class OrderDAO extends DBContext {
                     shippingId = rs.getInt("ShippingID");
                 }
             }
+            System.out.println("[OrderDAO] ShippingID: " + shippingId);
             
             if (shippingId == 0) {
                 System.err.println("[OrderDAO] No shipping record found for order " + orderId);
@@ -1411,17 +1429,24 @@ public class OrderDAO extends DBContext {
                 ps.setInt(1, shipper.getEmployeeID());
                 ps.setString(2, trackingCode);
                 ps.setInt(3, shippingId);
-                ps.executeUpdate();
+                int updated = ps.executeUpdate();
+                System.out.println("[OrderDAO] Shipping updated: " + updated + " rows");
             }
             
-            // Tạo tracking record đầu tiên
-            String trackingSql = "INSERT INTO ShippingTracking (ShippingID, StatusCode, StatusDescription, Location, UpdatedBy) " +
-                                "VALUES (?, 'picking', N'Đơn hàng đã được xác nhận, đang chờ lấy hàng', 'Pickleball Shop', ?)";
-            try (Connection conn = getConnection();
-                 PreparedStatement ps = conn.prepareStatement(trackingSql)) {
-                ps.setInt(1, shippingId);
-                ps.setInt(2, shipper.getEmployeeID());
-                ps.executeUpdate();
+            // Tạo tracking record đầu tiên (bỏ qua nếu bảng không tồn tại)
+            try {
+                String trackingSql = "INSERT INTO ShippingTracking (ShippingID, StatusCode, StatusDescription, Location, UpdatedBy) " +
+                                    "VALUES (?, 'picking', N'Đơn hàng đã được xác nhận, đang chờ lấy hàng', 'Pickleball Shop', ?)";
+                try (Connection conn = getConnection();
+                     PreparedStatement ps = conn.prepareStatement(trackingSql)) {
+                    ps.setInt(1, shippingId);
+                    ps.setInt(2, shipper.getEmployeeID());
+                    ps.executeUpdate();
+                    System.out.println("[OrderDAO] ShippingTracking record created");
+                }
+            } catch (SQLException trackingEx) {
+                // Bảng ShippingTracking có thể chưa tồn tại - bỏ qua
+                System.err.println("[OrderDAO] Warning: Could not create tracking record (table may not exist): " + trackingEx.getMessage());
             }
             
             System.out.println("[OrderDAO] Auto-assigned shipper " + shipper.getFullName() + " to order " + orderId);
@@ -1430,6 +1455,7 @@ public class OrderDAO extends DBContext {
             System.err.println("[OrderDAO] Auto-assign shipper failed: " + e.getMessage());
             e.printStackTrace();
         }
+        System.out.println("[OrderDAO] autoAssignShipperForOrder completed for order: " + orderId);
     }
     
     // ==================== STOCK MANAGEMENT ====================
