@@ -60,6 +60,13 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
         
+        // Check if cart has unavailable items (inactive products/variants)
+        if (cart.hasUnavailableItems()) {
+            System.out.println("[Checkout] Cart has unavailable items, cannot checkout");
+            response.sendRedirect("cart?error=unavailable_items");
+            return;
+        }
+        
         List<CartItem> cartItems = cart.getItems();
         BigDecimal subtotal = BigDecimal.ZERO;
         try {
@@ -161,6 +168,13 @@ public class CheckoutServlet extends HttpServlet {
                 response.sendRedirect("shopping-cart.jsp?error=empty");
                 return;
             }
+            
+            // Check if cart has unavailable items
+            if (cart.hasUnavailableItems()) {
+                response.sendRedirect("cart?error=unavailable_items");
+                return;
+            }
+            
             cartItems = cart.getItems();
         }
         

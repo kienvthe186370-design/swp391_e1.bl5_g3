@@ -151,11 +151,12 @@ public class CartDAO extends DBContext {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ci.CartItemID, ci.CartID, ci.ProductID, ci.VariantID, ");
         sql.append("ci.Quantity, ci.Price, ci.AddedDate, ");
-        sql.append("p.ProductName, ");
+        sql.append("p.ProductName, p.IsActive AS ProductIsActive, ");
         sql.append("c.CategoryName, ");
         sql.append("b.BrandName, ");
         sql.append("(SELECT TOP 1 ImageURL FROM ProductImages WHERE ProductID = p.ProductID AND ImageType = 'main') AS ProductImage, ");
         sql.append("CASE WHEN ci.VariantID IS NOT NULL THEN pv.SKU ELSE NULL END AS VariantSKU, ");
+        sql.append("CASE WHEN ci.VariantID IS NOT NULL THEN pv.IsActive ELSE 1 END AS VariantIsActive, ");
         sql.append("CASE WHEN ci.VariantID IS NOT NULL THEN pv.Stock ELSE (SELECT ISNULL(SUM(Stock), 0) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) END AS AvailableStock ");
         sql.append("FROM CartItems ci ");
         sql.append("INNER JOIN Products p ON ci.ProductID = p.ProductID ");
@@ -191,6 +192,8 @@ public class CartDAO extends DBContext {
                 item.setBrandName(rs.getString("BrandName"));
                 item.setVariantSKU(rs.getString("VariantSKU"));
                 item.setAvailableStock(rs.getInt("AvailableStock"));
+                item.setProductActive(rs.getBoolean("ProductIsActive"));
+                item.setVariantActive(rs.getBoolean("VariantIsActive"));
                 
                 items.add(item);
             }

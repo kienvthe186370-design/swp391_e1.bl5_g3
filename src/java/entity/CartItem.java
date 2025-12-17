@@ -30,6 +30,8 @@ public class CartItem {
     private int availableStock;
     private String categoryName;
     private String brandName;
+    private boolean isProductActive;    // Product active status
+    private boolean isVariantActive;    // Variant active status (if has variant)
     
     // Constructors
     public CartItem() {
@@ -159,6 +161,22 @@ public class CartItem {
         this.brandName = brandName;
     }
     
+    public boolean isProductActive() {
+        return isProductActive;
+    }
+    
+    public void setProductActive(boolean productActive) {
+        isProductActive = productActive;
+    }
+    
+    public boolean isVariantActive() {
+        return isVariantActive;
+    }
+    
+    public void setVariantActive(boolean variantActive) {
+        isVariantActive = variantActive;
+    }
+    
     // Helper Methods
     
     /**
@@ -186,6 +204,21 @@ public class CartItem {
      */
     public boolean isInStock() {
         return availableStock > 0;
+    }
+    
+    /**
+     * Check if product is available for purchase
+     * Product must be active and (if has variant, variant must be active)
+     * @return true if available
+     */
+    public boolean isAvailable() {
+        if (!isProductActive) {
+            return false;
+        }
+        if (hasVariant() && !isVariantActive) {
+            return false;
+        }
+        return true;
     }
     
     /**
