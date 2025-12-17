@@ -49,7 +49,7 @@
         <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
       </li>
       <li class="nav-item d-none d-sm-inline-block">
-        <a href="<%= request.getContextPath() %>/AdminLTE-3.2.0/index.jsp" class="nav-link">Home</a>
+        <a href="<%= request.getContextPath() %>/admin/dashboard" class="nav-link">Home</a>
       </li>
     </ul>
     <ul class="navbar-nav ml-auto">

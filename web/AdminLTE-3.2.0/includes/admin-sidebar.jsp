@@ -349,16 +349,7 @@
         </li>
         <% } %>
         
-        <!-- Báo cáo doanh số - Chỉ SellerManager -->
-        <% if (canAccessReports) { %>
-        <li class="nav-item">
-          <a href="<%= contextPath %>/admin/reports" 
-             class="nav-link <%= isReportsPage ? "active" : "" %>">
-            <i class="nav-icon fas fa-chart-bar"></i>
-            <p>Báo cáo doanh số</p>
-          </a>
-        </li>
-        <% } %>
+
         
         <!-- ===== MARKETER SECTION ===== -->
         <!-- Quản lý Sản phẩm - Chỉ Marketer -->
