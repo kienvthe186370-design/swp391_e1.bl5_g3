@@ -1496,4 +1496,210 @@ public class OrderDAO extends DBContext {
             return false;
         }
     }
+    
+    /**
+     * Tạo đơn hàng từ RFQ sau khi thanh toán thành công
+     * @param rfq RFQ đã được thanh toán
+     * @param addressID ID địa chỉ giao hàng (có thể null nếu tạo mới từ RFQ)
+     * @param transactionNo Mã giao dịch thanh toán
+     * @return OrderID nếu thành công, -1 nếu thất bại
+     */
+    public int createOrderFromRFQ(entity.RFQ rfq, Integer addressID, String transactionNo) {
+        Connection conn = null;
+        try {
+            System.out.println("[OrderDAO] createOrderFromRFQ started");
+            System.out.println("[OrderDAO] RFQ ID: " + rfq.getRfqID());
+            System.out.println("[OrderDAO] RFQ Code: " + rfq.getRfqCode());
+            System.out.println("[OrderDAO] Customer ID: " + rfq.getCustomerID());
+            System.out.println("[OrderDAO] Address ID: " + addressID);
+            System.out.println("[OrderDAO] Transaction No: " + transactionNo);
+            
+            conn = getConnection();
+            conn.setAutoCommit(false);
+            
+            String orderCode = generateOrderCode();
+            System.out.println("[OrderDAO] Generated Order Code: " + orderCode);
+            
+            String paymentMethod = rfq.getPaymentMethod();
+            String paymentStatus = "COD".equals(paymentMethod) ? "PartialPaid" : "Paid";
+            System.out.println("[OrderDAO] Payment Method: " + paymentMethod);
+            System.out.println("[OrderDAO] Payment Status: " + paymentStatus);
+            
+            // Calculate total cost from RFQ items
+            BigDecimal totalCost = BigDecimal.ZERO;
+            java.util.List<entity.RFQItem> items = rfq.getItems();
+            if (items != null) {
+                for (entity.RFQItem item : items) {
+                    if (item.getCostPrice() != null) {
+                        totalCost = totalCost.add(item.getCostPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+                    }
+                }
+            }
+            
+            BigDecimal subtotal = rfq.getSubtotalAmount() != null ? rfq.getSubtotalAmount() : BigDecimal.ZERO;
+            BigDecimal shippingFee = rfq.getShippingFee() != null ? rfq.getShippingFee() : BigDecimal.ZERO;
+            BigDecimal totalAmount = rfq.getTotalAmount() != null ? rfq.getTotalAmount() : subtotal.add(shippingFee);
+            BigDecimal totalProfit = subtotal.subtract(totalCost);
+            
+            // Insert Order with RFQID
+            String orderSql = "INSERT INTO Orders (OrderCode, CustomerID, AddressID, SubtotalAmount, DiscountAmount, " +
+                             "VoucherDiscount, ShippingFee, TotalAmount, TotalCost, TotalProfit, VoucherID, " +
+                             "PaymentMethod, PaymentStatus, PaymentToken, OrderStatus, Notes, RFQID, OrderDate, UpdatedDate) " +
+                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())";
+            
+            int orderID = -1;
+            try (PreparedStatement ps = conn.prepareStatement(orderSql, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, orderCode);
+                ps.setInt(2, rfq.getCustomerID());
+                if (addressID != null) {
+                    ps.setInt(3, addressID);
+                } else {
+                    ps.setNull(3, Types.INTEGER);
+                }
+                ps.setBigDecimal(4, subtotal);
+                ps.setBigDecimal(5, BigDecimal.ZERO);
+                ps.setBigDecimal(6, BigDecimal.ZERO);
+                ps.setBigDecimal(7, shippingFee);
+                ps.setBigDecimal(8, totalAmount);
+                ps.setBigDecimal(9, totalCost);
+                ps.setBigDecimal(10, totalProfit);
+                ps.setNull(11, Types.INTEGER);
+                ps.setString(12, paymentMethod != null ? paymentMethod : "BankTransfer");
+                ps.setString(13, paymentStatus);
+                ps.setString(14, transactionNo);
+                ps.setString(15, "Confirmed");
+                ps.setString(16, "Đơn hàng từ RFQ: " + rfq.getRfqCode());
+                ps.setInt(17, rfq.getRfqID());
+                
+                if (ps.executeUpdate() > 0) {
+                    ResultSet rs = ps.getGeneratedKeys();
+                    if (rs.next()) {
+                        orderID = rs.getInt(1);
+                    }
+                }
+            }
+            
+            System.out.println("[OrderDAO] Order ID after insert: " + orderID);
+            
+            if (orderID <= 0) {
+                System.err.println("[OrderDAO] Failed to insert order - orderID <= 0");
+                conn.rollback();
+                return -1;
+            }
+            
+            if (items == null || items.isEmpty()) {
+                System.err.println("[OrderDAO] No items in RFQ - items is null or empty");
+                conn.rollback();
+                return -1;
+            }
+            
+            System.out.println("[OrderDAO] RFQ has " + items.size() + " items");
+            
+            // Insert OrderDetails from RFQ Items
+            String detailSql = "INSERT INTO OrderDetails (OrderID, VariantID, ProductName, SKU, Quantity, " +
+                              "CostPrice, UnitPrice, DiscountAmount, FinalPrice, IsReviewed) " +
+                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)";
+            
+            int itemsInserted = 0;
+            try (PreparedStatement ps = conn.prepareStatement(detailSql)) {
+                for (entity.RFQItem item : items) {
+                    System.out.println("[OrderDAO] Processing item: " + item.getProductName());
+                    System.out.println("[OrderDAO]   ProductID: " + item.getProductID());
+                    System.out.println("[OrderDAO]   VariantID: " + item.getVariantID());
+                    System.out.println("[OrderDAO]   Quantity: " + item.getQuantity());
+                    System.out.println("[OrderDAO]   UnitPrice: " + item.getUnitPrice());
+                    System.out.println("[OrderDAO]   CostPrice: " + item.getCostPrice());
+                    
+                    Integer variantID = item.getVariantID();
+                    String sku = item.getSku();
+                    
+                    // Nếu không có VariantID, lấy variant mặc định từ ProductID
+                    if (variantID == null && item.getProductID() > 0) {
+                        System.out.println("[OrderDAO]   VariantID is null, looking up from ProductID: " + item.getProductID());
+                        String getVariantSql = "SELECT TOP 1 VariantID, SKU FROM ProductVariants WHERE ProductID = ? AND IsActive = 1 ORDER BY VariantID";
+                        try (PreparedStatement pvPs = conn.prepareStatement(getVariantSql)) {
+                            pvPs.setInt(1, item.getProductID());
+                            ResultSet pvRs = pvPs.executeQuery();
+                            if (pvRs.next()) {
+                                variantID = pvRs.getInt("VariantID");
+                                sku = pvRs.getString("SKU");
+                                System.out.println("[OrderDAO]   Found VariantID: " + variantID + ", SKU: " + sku);
+                            } else {
+                                System.out.println("[OrderDAO]   No active variant found for ProductID: " + item.getProductID());
+                            }
+                        }
+                    }
+                    
+                    if (variantID == null) {
+                        System.out.println("[OrderDAO]   Skipping item - no VariantID");
+                        continue;
+                    }
+                    
+                    BigDecimal costPrice = item.getCostPrice() != null ? item.getCostPrice() : BigDecimal.ZERO;
+                    BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO;
+                    BigDecimal subtotalItem = item.getSubtotal() != null ? item.getSubtotal() : 
+                                              unitPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
+                    
+                    ps.setInt(1, orderID);
+                    ps.setInt(2, variantID);
+                    ps.setString(3, item.getProductName());
+                    ps.setString(4, sku != null ? sku : "");
+                    ps.setInt(5, item.getQuantity());
+                    ps.setBigDecimal(6, costPrice);
+                    ps.setBigDecimal(7, unitPrice);
+                    ps.setBigDecimal(8, BigDecimal.ZERO);
+                    ps.setBigDecimal(9, subtotalItem);
+                    ps.addBatch();
+                    itemsInserted++;
+                }
+                
+                System.out.println("[OrderDAO] Total items to insert: " + itemsInserted);
+                
+                if (itemsInserted > 0) {
+                    int[] results = ps.executeBatch();
+                    System.out.println("[OrderDAO] Batch executed, results: " + results.length);
+                } else {
+                    System.err.println("[OrderDAO] No items inserted - all items skipped (no VariantID)");
+                    conn.rollback();
+                    return -1;
+                }
+            }
+            
+            // Insert status history
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO OrderStatusHistory (OrderID, OldStatus, NewStatus, Notes, ChangedDate) " +
+                    "VALUES (?, NULL, 'Confirmed', N'Đơn hàng từ RFQ đã thanh toán', GETDATE())")) {
+                ps.setInt(1, orderID);
+                ps.executeUpdate();
+            } catch (SQLException e) { /* ignore */ }
+            
+            // Trừ Stock và đặt Reserved
+            String stockSql = "UPDATE pv SET pv.Stock = pv.Stock - od.Quantity, " +
+                             "pv.ReservedStock = pv.ReservedStock + od.Quantity " +
+                             "FROM ProductVariants pv INNER JOIN OrderDetails od ON pv.VariantID = od.VariantID " +
+                             "WHERE od.OrderID = ?";
+            try (PreparedStatement ps = conn.prepareStatement(stockSql)) {
+                ps.setInt(1, orderID);
+                ps.executeUpdate();
+            }
+            
+            conn.commit();
+            System.out.println("[OrderDAO] Order created successfully! OrderID: " + orderID);
+            return orderID;
+            
+        } catch (SQLException | RuntimeException e) {
+            System.err.println("[OrderDAO] createOrderFromRFQ failed: " + e.getMessage());
+            System.err.println("[OrderDAO] SQL State: " + (e instanceof SQLException ? ((SQLException)e).getSQLState() : "N/A"));
+            System.err.println("[OrderDAO] Error Code: " + (e instanceof SQLException ? ((SQLException)e).getErrorCode() : "N/A"));
+            e.printStackTrace();
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { /* ignore */ }
+            }
+            return -1;
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { /* ignore */ }
+            }
+        }
+    }
 }

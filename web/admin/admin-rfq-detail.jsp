@@ -87,11 +87,7 @@
                             </div>
                             <div class="col-md-6">
                                 <p><span class="info-label">Hình thức thanh toán:</span> 
-                                    <c:choose>
-                                        <c:when test="${rfq.paymentMethod == 'BankTransfer'}"><span class="badge bg-info">Chuyển khoản ngân hàng</span></c:when>
-                                        <c:when test="${rfq.paymentMethod == 'COD'}"><span class="badge bg-warning text-dark">COD + Cọc 50%</span></c:when>
-                                        <c:otherwise><span class="badge bg-secondary">${rfq.paymentMethod != null ? rfq.paymentMethod : 'Chưa chọn'}</span></c:otherwise>
-                                    </c:choose>
+                                    <span class="badge bg-info">Chuyển khoản ngân hàng (VNPay)</span>
                                 </p>
                                 <c:if test="${not empty rfq.deliveryInstructions}">
                                     <p><span class="info-label">Yêu cầu đặc biệt:</span> ${rfq.deliveryInstructions}</p>

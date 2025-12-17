@@ -199,11 +199,9 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <label class="form-label">Phương Thức Thanh Toán (Khách Hàng Yêu Cầu)</label>
-                                    <input type="text" class="form-control calculated-field" 
-                                           value="<c:choose><c:when test="${rfq.paymentMethod == 'BankTransfer'}">Chuyển khoản ngân hàng</c:when><c:when test="${rfq.paymentMethod == 'COD'}">Thanh toán khi nhận hàng (COD) + Cọc 50%</c:when><c:otherwise>${rfq.paymentMethod}</c:otherwise></c:choose>" 
-                                           readonly>
-                                    <input type="hidden" name="paymentMethod" value="${rfq.paymentMethod}">
+                                    <label class="form-label">Phương Thức Thanh Toán</label>
+                                    <input type="text" class="form-control calculated-field" value="Chuyển khoản ngân hàng (VNPay)" readonly>
+                                    <input type="hidden" name="paymentMethod" value="BankTransfer">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Báo Giá Có Hiệu Lực Đến <span class="text-danger">*</span></label>

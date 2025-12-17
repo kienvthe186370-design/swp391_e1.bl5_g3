@@ -111,11 +111,7 @@
                   </div>
                   <div class="col-md-6">
                     <p><span class="info-label">Hình thức thanh toán:</span> 
-                      <c:choose>
-                        <c:when test="${rfq.paymentMethod == 'BankTransfer'}"><span class="badge bg-info">Chuyển khoản ngân hàng</span></c:when>
-                        <c:when test="${rfq.paymentMethod == 'COD'}"><span class="badge bg-warning text-dark">COD + Cọc 50%</span></c:when>
-                        <c:otherwise><span class="badge bg-secondary">${rfq.paymentMethod != null ? rfq.paymentMethod : 'Chưa chọn'}</span></c:otherwise>
-                      </c:choose>
+                      <span class="badge bg-info">Chuyển khoản ngân hàng (VNPay)</span>
                     </p>
                     <c:if test="${not empty rfq.deliveryInstructions}">
                       <p><span class="info-label">Yêu cầu đặc biệt:</span> ${rfq.deliveryInstructions}</p>
@@ -124,6 +120,29 @@
                 </div>
               </div>
             </div>
+
+            <!-- Shipping Carrier Info -->
+            <c:if test="${not empty rfq.shippingCarrierName}">
+            <div class="card mb-4">
+              <div class="card-header bg-light"><h5 class="mb-0"><i class="fas fa-shipping-fast"></i> Đơn Vị Vận Chuyển</h5></div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <p><span class="info-label">Đơn vị vận chuyển:</span> <strong>${rfq.shippingCarrierName}</strong></p>
+                    <p><span class="info-label">Dịch vụ:</span> ${rfq.shippingServiceName}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <p><span class="info-label">Phí vận chuyển (dự kiến):</span> 
+                      <span class="text-primary font-weight-bold"><fmt:formatNumber value="${rfq.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></span>
+                    </p>
+                    <p><span class="info-label">Thời gian giao hàng:</span> 
+                      <span class="badge bg-success">${rfq.estimatedDeliveryDays} ngày</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </c:if>
 
             <!-- Products -->
             <div class="card mb-4">
@@ -145,7 +164,18 @@
                   <tbody>
                     <c:forEach var="item" items="${rfq.items}">
                       <tr>
-                        <td><strong>${item.productName}</strong><c:if test="${not empty item.sku}"><br><small class="text-muted">SKU: ${item.sku}</small></c:if></td>
+                        <td>
+                          <div class="d-flex align-items-center">
+                            <c:if test="${not empty item.productImage}">
+                              <img src="${pageContext.request.contextPath}/${item.productImage}" alt="${item.productName}" 
+                                   style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px; border-radius: 4px;">
+                            </c:if>
+                            <div>
+                              <strong>${item.productName}</strong>
+                              <c:if test="${not empty item.sku}"><br><small class="text-muted">SKU: ${item.sku}</small></c:if>
+                            </div>
+                          </div>
+                        </td>
                         <td class="text-center">${item.quantity}</td>
                         <td class="text-right"><c:if test="${item.costPrice != null}"><fmt:formatNumber value="${item.costPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></c:if></td>
                         <c:if test="${rfq.status == 'Quoted' || rfq.status == 'QuoteAccepted' || rfq.status == 'Completed'}">
@@ -220,7 +250,7 @@
   <div class="modal fade" id="proposeDateModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <form action="<%= request.getContextPath() %>/admin/rfq/propose-date" method="POST">
+        <form action="<%= request.getContextPath() %>/admin/rfq/propose-date" method="POST" id="proposeDateForm">
           <input type="hidden" name="rfqId" value="${rfq.rfqID}">
           <div class="modal-header">
             <h5 class="modal-title">Đề Xuất Ngày Giao Hàng Mới</h5>
@@ -229,11 +259,12 @@
           <div class="modal-body">
             <div class="mb-3">
               <label class="form-label">Ngày khách yêu cầu</label>
-              <input type="text" class="form-control" value="<fmt:formatDate value="${rfq.requestedDeliveryDate}" pattern="dd/MM/yyyy"/>" disabled>
+              <input type="text" class="form-control" id="customerRequestedDate" value="<fmt:formatDate value="${rfq.requestedDeliveryDate}" pattern="dd/MM/yyyy"/>" disabled>
             </div>
             <div class="mb-3">
               <label class="form-label">Ngày đề xuất mới <span class="text-danger">*</span></label>
-              <input type="date" class="form-control" name="proposedDate" required>
+              <input type="text" class="form-control" name="proposedDate" id="proposedDateInput" placeholder="dd/mm/yyyy" required autocomplete="off">
+              <small class="text-muted">Ngày đề xuất phải sau ngày khách yêu cầu</small>
             </div>
             <div class="mb-3">
               <label class="form-label">Lý do <span class="text-danger">*</span></label>
@@ -252,8 +283,32 @@
   <jsp:include page="includes/admin-footer.jsp" />
 </div>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
 <script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>
 <script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.vi.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Parse customer requested date (dd/MM/yyyy format)
+    var customerDateStr = $('#customerRequestedDate').val();
+    var parts = customerDateStr.split('/');
+    var customerDate = new Date(parts[2], parts[1] - 1, parts[0]);
+    
+    // Min date is the day after customer requested date
+    var minDate = new Date(customerDate);
+    minDate.setDate(minDate.getDate() + 1);
+    
+    // Initialize datepicker
+    $('#proposedDateInput').datepicker({
+        format: 'dd/mm/yyyy',
+        language: 'vi',
+        startDate: minDate,
+        autoclose: true,
+        todayHighlight: true
+    });
+});
+</script>
 </body>
 </html>

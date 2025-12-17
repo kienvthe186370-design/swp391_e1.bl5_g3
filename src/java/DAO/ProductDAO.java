@@ -520,6 +520,7 @@ public class ProductDAO extends DBContext {
         try {
             conn = getConnection();
             String sql = "SELECT p.*, c.CategoryName, b.BrandName, e.FullName AS CreatedByName, " +
+                        "(SELECT TOP 1 ImageURL FROM ProductImages WHERE ProductID = p.ProductID AND ImageType = 'main' ORDER BY SortOrder) AS MainImage, " +
                         "(SELECT COUNT(*) FROM ProductImages WHERE ProductID = p.ProductID) AS ImageCount, " +
                         "(SELECT COUNT(*) FROM ProductVariants WHERE ProductID = p.ProductID) AS VariantCount, " +
                         "(SELECT ISNULL(SUM(Stock), 0) FROM ProductVariants WHERE ProductID = p.ProductID) AS TotalStock, " +
@@ -555,6 +556,7 @@ public class ProductDAO extends DBContext {
                 product.put("totalStock", rs.getInt("TotalStock"));
                 product.put("minPrice", rs.getBigDecimal("MinPrice"));
                 product.put("maxPrice", rs.getBigDecimal("MaxPrice"));
+                product.put("mainImageUrl", rs.getString("MainImage"));
                 
                 int variantCount = rs.getInt("VariantCount");
                 int totalStock = rs.getInt("TotalStock");
@@ -601,6 +603,38 @@ public class ProductDAO extends DBContext {
         }
         
         return list;
+    }
+    
+    public Map<String, Object> getVariantById(int variantId) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = getConnection();
+            ps = conn.prepareStatement("SELECT VariantID, ProductID, SKU, CostPrice, SellingPrice, Stock, ReservedStock, IsActive " +
+                        "FROM ProductVariants WHERE VariantID = ?");
+            ps.setInt(1, variantId);
+            rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                Map<String, Object> v = new HashMap<>();
+                v.put("variantId", rs.getInt("VariantID"));
+                v.put("productId", rs.getInt("ProductID"));
+                v.put("sku", rs.getString("SKU"));
+                v.put("costPrice", rs.getBigDecimal("CostPrice"));
+                v.put("sellingPrice", rs.getBigDecimal("SellingPrice"));
+                v.put("stock", rs.getInt("Stock"));
+                v.put("reservedStock", rs.getInt("ReservedStock"));
+                v.put("isActive", rs.getBoolean("IsActive"));
+                return v;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, ps, conn);
+        }
+        return null;
     }
     
     public List<Map<String, Object>> getProductVariants(int productId) {

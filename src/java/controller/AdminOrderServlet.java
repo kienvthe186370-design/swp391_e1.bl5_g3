@@ -1,6 +1,7 @@
 package controller;
 
 import DAO.OrderDAO;
+import DAO.RFQDAO;
 import DAO.ShippingDAO;
 import DAO.ShippingTrackingDAO;
 import entity.*;
@@ -207,6 +208,13 @@ public class AdminOrderServlet extends HttpServlet {
             if (RolePermission.canAssignOrders(role)) {
                 List<Object[]> sellers = orderDAO.getSellersWithActiveOrderCount();
                 request.setAttribute("sellers", sellers);
+            }
+            
+            // Load RFQ info nếu đơn hàng từ RFQ
+            if (order.getRfqID() != null && order.getRfqID() > 0) {
+                RFQDAO rfqDAO = new RFQDAO();
+                RFQ rfq = rfqDAO.getRFQById(order.getRfqID());
+                order.setRfq(rfq);
             }
             
             request.setAttribute("order", order);
