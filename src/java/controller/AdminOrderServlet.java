@@ -120,24 +120,72 @@ public class AdminOrderServlet extends HttpServlet {
         OrderFilter filter = buildFilterFromRequest(request);
         
         // Seller chỉ thấy đơn được phân công cho mình
+        Integer assignedToFilter = null;
         if ("Seller".equalsIgnoreCase(role)) {
-            filter.setAssignedTo(employee.getEmployeeID());
+            assignedToFilter = employee.getEmployeeID();
+            filter.setAssignedTo(assignedToFilter);
         }
         
-        // SellerManager thấy tất cả
-        // Tab: all, unassigned, assigned
+        // Tab filter theo trạng thái
         String tab = request.getParameter("tab");
-        if ("unassigned".equals(tab)) {
+        if (tab == null || tab.isEmpty()) {
+            tab = "all";
+        }
+        
+        // Áp dụng tab filter
+        if ("pending".equals(tab)) {
+            filter.setOrderStatus("Pending");
+        } else if ("confirmed".equals(tab)) {
+            filter.setOrderStatus("Confirmed");
+        } else if ("processing".equals(tab)) {
+            filter.setOrderStatus("Processing");
+        } else if ("shipping".equals(tab)) {
+            filter.setOrderStatus("Shipping");
+        } else if ("delivered".equals(tab)) {
+            filter.setOrderStatus("Delivered");
+        } else if ("cancelled".equals(tab)) {
+            filter.setOrderStatus("Cancelled");
+        } else if ("unassigned".equals(tab)) {
             filter.setUnassignedOnly(true);
         }
+        // "all" không filter status
         
         int page = getPageParam(request);
-        int pageSize = getPageSizeParam(request);
+        int pageSize = 5; // Giảm xuống 5 đơn/trang
         
         List<Order> orders = orderDAO.getOrders(filter, page, pageSize);
         int totalOrders = orderDAO.countOrders(filter);
-        int unassignedCount = orderDAO.countUnassignedOrders();
         int totalPages = (int) Math.ceil((double) totalOrders / pageSize);
+        
+        // Thống kê động theo filter (search, date) nhưng không theo tab
+        OrderFilter statsFilter = buildFilterFromRequest(request);
+        if (assignedToFilter != null) {
+            statsFilter.setAssignedTo(assignedToFilter);
+        }
+        
+        // Đếm theo từng trạng thái
+        statsFilter.setOrderStatus("Pending");
+        int pendingCount = orderDAO.countOrders(statsFilter);
+        
+        statsFilter.setOrderStatus("Confirmed");
+        int confirmedCount = orderDAO.countOrders(statsFilter);
+        
+        statsFilter.setOrderStatus("Processing");
+        int processingCount = orderDAO.countOrders(statsFilter);
+        
+        statsFilter.setOrderStatus("Shipping");
+        int shippingCount = orderDAO.countOrders(statsFilter);
+        
+        statsFilter.setOrderStatus("Delivered");
+        int deliveredCount = orderDAO.countOrders(statsFilter);
+        
+        statsFilter.setOrderStatus("Cancelled");
+        int cancelledCount = orderDAO.countOrders(statsFilter);
+        
+        statsFilter.setOrderStatus(null);
+        int allCount = orderDAO.countOrders(statsFilter);
+        
+        int unassignedCount = orderDAO.countUnassignedOrders();
         
         // Lấy danh sách seller cho modal phân công
         if (RolePermission.canAssignOrders(role)) {
@@ -147,6 +195,14 @@ public class AdminOrderServlet extends HttpServlet {
         
         request.setAttribute("orders", orders);
         request.setAttribute("totalOrders", totalOrders);
+        request.setAttribute("currentTab", tab);
+        request.setAttribute("pendingCount", pendingCount);
+        request.setAttribute("confirmedCount", confirmedCount);
+        request.setAttribute("processingCount", processingCount);
+        request.setAttribute("shippingCount", shippingCount);
+        request.setAttribute("deliveredCount", deliveredCount);
+        request.setAttribute("cancelledCount", cancelledCount);
+        request.setAttribute("allCount", allCount);
         request.setAttribute("unassignedCount", unassignedCount);
         request.setAttribute("currentPage", page);
         request.setAttribute("pageSize", pageSize);

@@ -298,44 +298,54 @@
         
         <!-- Quản lý Đơn hàng - SellerManager và Seller -->
         <% if (canAccessOrders) { %>
-        <li class="nav-item menu-is-opening menu-open">
-          <a href="#" class="nav-link">
-            <i class="nav-icon fas fa-shopping-cart"></i>
-            <p>
-              Quản lý đơn hàng
-              <i class="right fas fa-angle-left"></i>
-              <% if (unassignedOrderCount > 0 && canAssignOrders) { %>
-                <span class="badge badge-warning right"><%= unassignedOrderCount %></span>
-              <% } %>
-            </p>
-          </a>
-          <ul class="nav nav-treeview" style="display: block;">
-            <li class="nav-item">
-              <a href="<%= contextPath %>/admin/orders" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Danh sách đơn hàng</p>
-              </a>
-            </li>
-            <% if (canAssignOrders) { %>
-            <li class="nav-item">
-              <a href="<%= contextPath %>/admin/orders?action=assignment" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Giám sát Seller
-                  <% if (unassignedOrderCount > 0) { %>
-                    <span class="badge badge-warning right"><%= unassignedOrderCount %></span>
-                  <% } %>
-                </p>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="<%= contextPath %>/admin/orders?action=shipperAssignment" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Giám sát Shipper</p>
-              </a>
-            </li>
-            <% } %>
-          </ul>
-        </li>
+          <% if (canAssignOrders) { %>
+          <!-- SellerManager: Menu dropdown với nhiều trang -->
+          <li class="nav-item <%= isOrderPage ? "menu-is-opening menu-open" : "" %>">
+            <a href="#" class="nav-link <%= isOrderPage ? "active" : "" %>">
+              <i class="nav-icon fas fa-shopping-cart"></i>
+              <p>
+                Quản lý đơn hàng
+                <i class="right fas fa-angle-left"></i>
+                <% if (unassignedOrderCount > 0) { %>
+                  <span class="badge badge-warning right"><%= unassignedOrderCount %></span>
+                <% } %>
+              </p>
+            </a>
+            <ul class="nav nav-treeview" <%= isOrderPage ? "style=\"display: block;\"" : "" %>>
+              <li class="nav-item">
+                <a href="<%= contextPath %>/admin/orders" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Danh sách đơn hàng</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="<%= contextPath %>/admin/orders?action=assignment" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Giám sát Seller
+                    <% if (unassignedOrderCount > 0) { %>
+                      <span class="badge badge-warning right"><%= unassignedOrderCount %></span>
+                    <% } %>
+                  </p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="<%= contextPath %>/admin/orders?action=shipperAssignment" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Giám sát Shipper</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <% } else { %>
+          <!-- Seller: Link trực tiếp, không cần dropdown -->
+          <li class="nav-item">
+            <a href="<%= contextPath %>/admin/orders" 
+               class="nav-link <%= isOrderPage ? "active" : "" %>">
+              <i class="nav-icon fas fa-shopping-cart"></i>
+              <p>Đơn hàng của tôi</p>
+            </a>
+          </li>
+          <% } %>
         <% } %>
         
         <!-- RFQ Management - Chỉ SellerManager -->
