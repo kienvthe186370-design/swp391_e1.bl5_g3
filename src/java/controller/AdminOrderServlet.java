@@ -828,22 +828,66 @@ public class AdminOrderServlet extends HttpServlet {
     private void listShipperOrders(HttpServletRequest request, HttpServletResponse response,
                                    Employee shipper) throws ServletException, IOException {
         
-        // Lấy đơn hàng được phân công cho shipper này
-        List<Order> orders = orderDAO.getOrdersByShipperId(shipper.getEmployeeID());
+        // Lấy filter parameters
+        String tab = request.getParameter("tab"); // pending, delivered, all
+        String search = request.getParameter("search");
+        String fromDateStr = request.getParameter("fromDate");
+        String toDateStr = request.getParameter("toDate");
+        int page = getPageParam(request);
+        int pageSize = 5;
         
-        // Thống kê
-        int pendingCount = 0;
-        int deliveredToday = shippingDAO.countDeliveredTodayByShipper(shipper.getEmployeeID());
-        
-        for (Order order : orders) {
-            if ("Shipping".equals(order.getOrderStatus())) {
-                pendingCount++;
-            }
+        // Default tab là "pending" (cần giao)
+        if (tab == null || tab.isEmpty()) {
+            tab = "pending";
         }
+        
+        // Parse dates
+        java.util.Date fromDate = null;
+        java.util.Date toDate = null;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            if (fromDateStr != null && !fromDateStr.isEmpty()) {
+                fromDate = sdf.parse(fromDateStr);
+            }
+            if (toDateStr != null && !toDateStr.isEmpty()) {
+                toDate = sdf.parse(toDateStr);
+            }
+        } catch (ParseException e) {
+            // Ignore
+        }
+        
+        // Lấy đơn hàng theo filter
+        List<Order> orders = orderDAO.getShipperOrdersFiltered(
+            shipper.getEmployeeID(), tab, search, fromDate, toDate, page, pageSize);
+        
+        // Đếm tổng để phân trang
+        int totalOrders = orderDAO.countShipperOrdersFiltered(
+            shipper.getEmployeeID(), tab, search, fromDate, toDate);
+        int totalPages = (int) Math.ceil((double) totalOrders / pageSize);
+        
+        // Thống kê động theo filter
+        int pendingCount = orderDAO.countShipperOrdersFiltered(
+            shipper.getEmployeeID(), "pending", search, fromDate, toDate);
+        int deliveredCount = orderDAO.countShipperOrdersFiltered(
+            shipper.getEmployeeID(), "delivered", search, fromDate, toDate);
+        int allCount = orderDAO.countShipperOrdersFiltered(
+            shipper.getEmployeeID(), "all", search, fromDate, toDate);
+        
+        // Đếm giao hôm nay (không theo filter)
+        int deliveredToday = shippingDAO.countDeliveredTodayByShipper(shipper.getEmployeeID());
         
         request.setAttribute("orders", orders);
         request.setAttribute("pendingCount", pendingCount);
+        request.setAttribute("deliveredCount", deliveredCount);
+        request.setAttribute("allCount", allCount);
         request.setAttribute("deliveredToday", deliveredToday);
+        request.setAttribute("currentTab", tab);
+        request.setAttribute("search", search);
+        request.setAttribute("fromDate", fromDateStr);
+        request.setAttribute("toDate", toDateStr);
+        request.setAttribute("currentPage", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalOrders", totalOrders);
         request.setAttribute("shipper", shipper);
         request.setAttribute("pageTitle", "Đơn hàng giao");
         

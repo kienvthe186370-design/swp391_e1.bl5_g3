@@ -1538,4 +1538,158 @@ public class OrderDAO extends DBContext {
             return false;
         }
     }
+    
+    // ==================== SHIPPER FILTER METHODS ====================
+    
+    /**
+     * Lấy đơn hàng của shipper với filter
+     */
+    public List<Order> getShipperOrdersFiltered(int shipperId, String tab, String search, 
+            java.util.Date fromDate, java.util.Date toDate, int page, int pageSize) {
+        List<Order> orders = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT o.*, c.FullName as CustomerName, c.Email as CustomerEmail, c.Phone as CustomerPhone, ");
+        sql.append("s.ShippingID, s.TrackingCode, s.ShippingFee, s.GoshipStatus, s.ShippedDate ");
+        sql.append("FROM Orders o ");
+        sql.append("INNER JOIN Shipping s ON o.OrderID = s.OrderID ");
+        sql.append("LEFT JOIN Customers c ON o.CustomerID = c.CustomerID ");
+        sql.append("WHERE s.ShipperID = ? ");
+        
+        // Tab filter
+        if ("pending".equals(tab)) {
+            sql.append("AND o.OrderStatus = 'Shipping' ");
+        } else if ("delivered".equals(tab)) {
+            sql.append("AND o.OrderStatus = 'Delivered' ");
+        }
+        // "all" không cần filter thêm
+        
+        // Search filter
+        if (search != null && !search.trim().isEmpty()) {
+            sql.append("AND (o.OrderCode LIKE ? OR c.FullName LIKE ? OR c.Phone LIKE ?) ");
+        }
+        
+        // Date filter
+        if (fromDate != null) {
+            sql.append("AND CAST(o.OrderDate AS DATE) >= ? ");
+        }
+        if (toDate != null) {
+            sql.append("AND CAST(o.OrderDate AS DATE) <= ? ");
+        }
+        
+        sql.append("ORDER BY CASE o.OrderStatus WHEN 'Shipping' THEN 0 ELSE 1 END, o.OrderDate DESC ");
+        sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            
+            int paramIndex = 1;
+            ps.setInt(paramIndex++, shipperId);
+            
+            if (search != null && !search.trim().isEmpty()) {
+                String searchPattern = "%" + search.trim() + "%";
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
+            }
+            
+            if (fromDate != null) {
+                ps.setDate(paramIndex++, new java.sql.Date(fromDate.getTime()));
+            }
+            if (toDate != null) {
+                ps.setDate(paramIndex++, new java.sql.Date(toDate.getTime()));
+            }
+            
+            ps.setInt(paramIndex++, (page - 1) * pageSize);
+            ps.setInt(paramIndex++, pageSize);
+            
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Order order = mapResultSetToOrder(rs);
+                
+                Customer customer = new Customer();
+                customer.setCustomerID(rs.getInt("CustomerID"));
+                customer.setFullName(rs.getString("CustomerName"));
+                customer.setEmail(rs.getString("CustomerEmail"));
+                customer.setPhone(rs.getString("CustomerPhone"));
+                order.setCustomer(customer);
+                
+                if (order.getAddressID() != null) {
+                    order.setAddress(getAddressById(order.getAddressID()));
+                }
+                
+                Shipping shipping = new Shipping();
+                shipping.setShippingID(rs.getInt("ShippingID"));
+                shipping.setOrderID(order.getOrderID());
+                shipping.setTrackingCode(rs.getString("TrackingCode"));
+                shipping.setShippingFee(rs.getBigDecimal("ShippingFee"));
+                shipping.setGoshipStatus(rs.getString("GoshipStatus"));
+                shipping.setShippedDate(rs.getTimestamp("ShippedDate"));
+                shipping.setShipperID(shipperId);
+                order.setShipping(shipping);
+                
+                orders.add(order);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orders;
+    }
+    
+    /**
+     * Đếm đơn hàng của shipper với filter
+     */
+    public int countShipperOrdersFiltered(int shipperId, String tab, String search, 
+            java.util.Date fromDate, java.util.Date toDate) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM Orders o ");
+        sql.append("INNER JOIN Shipping s ON o.OrderID = s.OrderID ");
+        sql.append("LEFT JOIN Customers c ON o.CustomerID = c.CustomerID ");
+        sql.append("WHERE s.ShipperID = ? ");
+        
+        if ("pending".equals(tab)) {
+            sql.append("AND o.OrderStatus = 'Shipping' ");
+        } else if ("delivered".equals(tab)) {
+            sql.append("AND o.OrderStatus = 'Delivered' ");
+        }
+        
+        if (search != null && !search.trim().isEmpty()) {
+            sql.append("AND (o.OrderCode LIKE ? OR c.FullName LIKE ? OR c.Phone LIKE ?) ");
+        }
+        
+        if (fromDate != null) {
+            sql.append("AND CAST(o.OrderDate AS DATE) >= ? ");
+        }
+        if (toDate != null) {
+            sql.append("AND CAST(o.OrderDate AS DATE) <= ? ");
+        }
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            
+            int paramIndex = 1;
+            ps.setInt(paramIndex++, shipperId);
+            
+            if (search != null && !search.trim().isEmpty()) {
+                String searchPattern = "%" + search.trim() + "%";
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
+            }
+            
+            if (fromDate != null) {
+                ps.setDate(paramIndex++, new java.sql.Date(fromDate.getTime()));
+            }
+            if (toDate != null) {
+                ps.setDate(paramIndex++, new java.sql.Date(toDate.getTime()));
+            }
+            
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 }

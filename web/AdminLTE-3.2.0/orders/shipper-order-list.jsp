@@ -18,6 +18,8 @@
         .status-delivered { background: #d4edda; color: #155724; }
         .status-failed { background: #f8d7da; color: #721c24; }
         .cod-badge { background: #dc3545; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; }
+        .nav-tabs .nav-link.active { font-weight: bold; }
+        .filter-form { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px; }
     </style>
 </head>
 <body class="hold-transition sidebar-mini">
@@ -54,7 +56,7 @@
                     <c:remove var="error" scope="session"/>
                 </c:if>
 
-                <!-- Stats -->
+                <!-- Stats - Thống kê động -->
                 <div class="row">
                     <div class="col-lg-4 col-6">
                         <div class="small-box bg-warning">
@@ -63,6 +65,9 @@
                                 <p>Đơn cần giao</p>
                             </div>
                             <div class="icon"><i class="fas fa-box"></i></div>
+                            <a href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders&tab=pending" class="small-box-footer">
+                                Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+                            </a>
                         </div>
                     </div>
                     <div class="col-lg-4 col-6">
@@ -72,101 +77,225 @@
                                 <p>Đã giao hôm nay</p>
                             </div>
                             <div class="icon"><i class="fas fa-check-circle"></i></div>
+                            <a href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders&tab=delivered" class="small-box-footer">
+                                Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+                            </a>
                         </div>
                     </div>
                     <div class="col-lg-4 col-6">
                         <div class="small-box bg-info">
                             <div class="inner">
-                                <h3>${orders.size()}</h3>
+                                <h3>${allCount}</h3>
                                 <p>Tổng đơn được phân</p>
                             </div>
                             <div class="icon"><i class="fas fa-list"></i></div>
+                            <a href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders&tab=all" class="small-box-footer">
+                                Xem tất cả <i class="fas fa-arrow-circle-right"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
 
-                <!-- Order List -->
+                <!-- Order List Card -->
                 <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-clipboard-list"></i> Danh sách đơn hàng</h3>
+                    <div class="card-header p-0">
+                        <!-- Tabs -->
+                        <ul class="nav nav-tabs" id="orderTabs">
+                            <li class="nav-item">
+                                <a class="nav-link ${currentTab == 'pending' ? 'active' : ''}" 
+                                   href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders&tab=pending${not empty search ? '&search='.concat(search) : ''}${not empty fromDate ? '&fromDate='.concat(fromDate) : ''}${not empty toDate ? '&toDate='.concat(toDate) : ''}">
+                                    <i class="fas fa-clock"></i> Cần giao <span class="badge badge-warning">${pendingCount}</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link ${currentTab == 'delivered' ? 'active' : ''}" 
+                                   href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders&tab=delivered${not empty search ? '&search='.concat(search) : ''}${not empty fromDate ? '&fromDate='.concat(fromDate) : ''}${not empty toDate ? '&toDate='.concat(toDate) : ''}">
+                                    <i class="fas fa-check"></i> Đã giao <span class="badge badge-success">${deliveredCount}</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link ${currentTab == 'all' ? 'active' : ''}" 
+                                   href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders&tab=all${not empty search ? '&search='.concat(search) : ''}${not empty fromDate ? '&fromDate='.concat(fromDate) : ''}${not empty toDate ? '&toDate='.concat(toDate) : ''}">
+                                    <i class="fas fa-list"></i> Tất cả <span class="badge badge-info">${allCount}</span>
+                                </a>
+                            </li>
+                        </ul>
                     </div>
-                    <div class="card-body p-0">
+                    
+                    <div class="card-body">
+                        <!-- Toggle Filter Button -->
+                        <div class="mb-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="toggleFilterBtn">
+                                <i class="fas fa-filter"></i> <span id="filterBtnText">Hiện bộ lọc</span>
+                            </button>
+                            <c:if test="${not empty search || not empty fromDate || not empty toDate}">
+                                <span class="badge badge-info ml-2">Đang lọc</span>
+                            </c:if>
+                        </div>
+                        
+                        <!-- Filter Form (Hidden by default) -->
+                        <form method="get" action="${pageContext.request.contextPath}/admin/orders" 
+                              class="filter-form" id="filterForm" style="display: ${not empty search || not empty fromDate || not empty toDate ? 'block' : 'none'};">
+                            <input type="hidden" name="action" value="shipperOrders">
+                            <input type="hidden" name="tab" value="${currentTab}">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group mb-0">
+                                        <label><i class="fas fa-search"></i> Tìm kiếm</label>
+                                        <input type="text" name="search" class="form-control" 
+                                               placeholder="Mã đơn, tên KH, SĐT..." value="${search}">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group mb-0">
+                                        <label><i class="fas fa-calendar"></i> Từ ngày</label>
+                                        <input type="date" name="fromDate" class="form-control" value="${fromDate}">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group mb-0">
+                                        <label><i class="fas fa-calendar"></i> Đến ngày</label>
+                                        <input type="date" name="toDate" class="form-control" value="${toDate}">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group mb-0">
+                                        <label>&nbsp;</label>
+                                        <div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-filter"></i> Lọc
+                                            </button>
+                                            <a href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders&tab=${currentTab}" 
+                                               class="btn btn-secondary">
+                                                <i class="fas fa-redo"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Results info -->
+                        <div class="mb-2 text-muted">
+                            <small>Hiển thị ${orders.size()} / ${totalOrders} đơn hàng</small>
+                        </div>
+                        
+                        <!-- Order Table -->
                         <c:choose>
                             <c:when test="${empty orders}">
                                 <div class="p-4 text-center text-muted">
                                     <i class="fas fa-inbox fa-3x mb-3"></i>
-                                    <p>Chưa có đơn hàng nào được phân công cho bạn.</p>
+                                    <p>Không có đơn hàng nào.</p>
                                 </div>
                             </c:when>
                             <c:otherwise>
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Mã đơn</th>
-                                            <th>Khách hàng</th>
-                                            <th>Địa chỉ</th>
-                                            <th>Tổng tiền</th>
-                                            <th>Trạng thái</th>
-                                            <th>Thao tác</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:forEach var="order" items="${orders}">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
                                             <tr>
-                                                <td>
-                                                    <strong>${order.orderCode}</strong><br>
-                                                    <small class="text-muted">
-                                                        <fmt:formatDate value="${order.orderDate}" pattern="dd/MM/yyyy HH:mm"/>
-                                                    </small>
-                                                </td>
-                                                <td>
-                                                    <strong>${order.customer.fullName}</strong><br>
-                                                    <small><i class="fas fa-phone"></i> ${order.address.phone}</small>
-                                                </td>
-                                                <td>
-                                                    <small>${order.address.street}, ${order.address.ward}<br>
-                                                    ${order.address.district}, ${order.address.city}</small>
-                                                </td>
-                                                <td>
-                                                    <c:if test="${order.paymentMethod == 'COD' && order.paymentStatus != 'Paid'}">
-                                                        <span class="cod-badge">COD</span><br>
-                                                    </c:if>
-                                                    <strong class="text-danger">
-                                                        <fmt:formatNumber value="${order.totalAmount}" type="number"/>đ
-                                                    </strong>
-                                                </td>
-                                                <td>
-                                                    <span class="status-badge 
-                                                        <c:choose>
-                                                            <c:when test="${order.shipping.goshipStatus == 'picking'}">status-picking</c:when>
-                                                            <c:when test="${order.shipping.goshipStatus == 'picked'}">status-picked</c:when>
-                                                            <c:when test="${order.shipping.goshipStatus == 'delivering'}">status-delivering</c:when>
-                                                            <c:when test="${order.shipping.goshipStatus == 'delivered'}">status-delivered</c:when>
-                                                            <c:otherwise>status-picking</c:otherwise>
-                                                        </c:choose>
-                                                    ">
-                                                        <c:choose>
-                                                            <c:when test="${order.shipping.goshipStatus == 'picking'}">Đang lấy hàng</c:when>
-                                                            <c:when test="${order.shipping.goshipStatus == 'picked'}">Đã lấy hàng</c:when>
-                                                            <c:when test="${order.shipping.goshipStatus == 'delivering'}">Đang giao</c:when>
-                                                            <c:when test="${order.shipping.goshipStatus == 'delivered'}">Đã giao</c:when>
-                                                            <c:otherwise>Chờ lấy hàng</c:otherwise>
-                                                        </c:choose>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <a href="${pageContext.request.contextPath}/admin/orders?action=shipperDetail&id=${order.orderID}" 
-                                                       class="btn btn-primary btn-sm">
-                                                        <i class="fas fa-eye"></i> Chi tiết
-                                                    </a>
-                                                </td>
+                                                <th>Mã đơn</th>
+                                                <th>Khách hàng</th>
+                                                <th>Địa chỉ</th>
+                                                <th>Tổng tiền</th>
+                                                <th>Trạng thái</th>
+                                                <th>Thao tác</th>
                                             </tr>
-                                        </c:forEach>
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            <c:forEach var="order" items="${orders}">
+                                                <tr>
+                                                    <td>
+                                                        <strong>${order.orderCode}</strong><br>
+                                                        <small class="text-muted">
+                                                            <fmt:formatDate value="${order.orderDate}" pattern="dd/MM/yyyy HH:mm"/>
+                                                        </small>
+                                                    </td>
+                                                    <td>
+                                                        <strong>${order.customer.fullName}</strong><br>
+                                                        <small><i class="fas fa-phone"></i> ${order.address.phone}</small>
+                                                    </td>
+                                                    <td>
+                                                        <small>${order.address.street}, ${order.address.ward}<br>
+                                                        ${order.address.district}, ${order.address.city}</small>
+                                                    </td>
+                                                    <td>
+                                                        <c:if test="${order.paymentMethod == 'COD' && order.paymentStatus != 'Paid'}">
+                                                            <span class="cod-badge">COD</span><br>
+                                                        </c:if>
+                                                        <strong class="text-danger">
+                                                            <fmt:formatNumber value="${order.totalAmount}" type="number"/>đ
+                                                        </strong>
+                                                    </td>
+                                                    <td>
+                                                        <span class="status-badge 
+                                                            <c:choose>
+                                                                <c:when test="${order.shipping.goshipStatus == 'picking'}">status-picking</c:when>
+                                                                <c:when test="${order.shipping.goshipStatus == 'picked'}">status-picked</c:when>
+                                                                <c:when test="${order.shipping.goshipStatus == 'delivering'}">status-delivering</c:when>
+                                                                <c:when test="${order.shipping.goshipStatus == 'delivered'}">status-delivered</c:when>
+                                                                <c:otherwise>status-picking</c:otherwise>
+                                                            </c:choose>
+                                                        ">
+                                                            <c:choose>
+                                                                <c:when test="${order.shipping.goshipStatus == 'picking'}">Đang lấy hàng</c:when>
+                                                                <c:when test="${order.shipping.goshipStatus == 'picked'}">Đã lấy hàng</c:when>
+                                                                <c:when test="${order.shipping.goshipStatus == 'delivering'}">Đang giao</c:when>
+                                                                <c:when test="${order.shipping.goshipStatus == 'delivered'}">Đã giao</c:when>
+                                                                <c:otherwise>Chờ lấy hàng</c:otherwise>
+                                                            </c:choose>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <a href="${pageContext.request.contextPath}/admin/orders?action=shipperDetail&id=${order.orderID}" 
+                                                           class="btn btn-primary btn-sm">
+                                                            <i class="fas fa-eye"></i> Chi tiết
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            </c:forEach>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </c:otherwise>
                         </c:choose>
                     </div>
+
+                    <!-- Pagination -->
+                    <c:if test="${totalPages > 1}">
+                        <div class="card-footer clearfix">
+                            <ul class="pagination pagination-sm m-0 float-right">
+                                <c:if test="${currentPage > 1}">
+                                    <li class="page-item">
+                                        <a class="page-link" href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders&tab=${currentTab}&page=${currentPage - 1}${not empty search ? '&search='.concat(search) : ''}${not empty fromDate ? '&fromDate='.concat(fromDate) : ''}${not empty toDate ? '&toDate='.concat(toDate) : ''}">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                </c:if>
+                                
+                                <c:forEach begin="1" end="${totalPages}" var="i">
+                                    <c:if test="${i == 1 || i == totalPages || (i >= currentPage - 2 && i <= currentPage + 2)}">
+                                        <li class="page-item ${i == currentPage ? 'active' : ''}">
+                                            <a class="page-link" href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders&tab=${currentTab}&page=${i}${not empty search ? '&search='.concat(search) : ''}${not empty fromDate ? '&fromDate='.concat(fromDate) : ''}${not empty toDate ? '&toDate='.concat(toDate) : ''}">${i}</a>
+                                        </li>
+                                    </c:if>
+                                    <c:if test="${(i == 2 && currentPage > 4) || (i == totalPages - 1 && currentPage < totalPages - 3)}">
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    </c:if>
+                                </c:forEach>
+                                
+                                <c:if test="${currentPage < totalPages}">
+                                    <li class="page-item">
+                                        <a class="page-link" href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders&tab=${currentTab}&page=${currentPage + 1}${not empty search ? '&search='.concat(search) : ''}${not empty fromDate ? '&fromDate='.concat(fromDate) : ''}${not empty toDate ? '&toDate='.concat(toDate) : ''}">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                </c:if>
+                            </ul>
+                            <div class="float-left text-muted">
+                                Trang ${currentPage} / ${totalPages}
+                            </div>
+                        </div>
+                    </c:if>
                 </div>
             </div>
         </section>
@@ -178,5 +307,20 @@
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Toggle filter form
+    $('#toggleFilterBtn').click(function() {
+        $('#filterForm').slideToggle(200);
+        var isVisible = $('#filterForm').is(':visible');
+        $('#filterBtnText').text(isVisible ? 'Ẩn bộ lọc' : 'Hiện bộ lọc');
+    });
+    
+    // Update button text on page load if filter is visible
+    if ($('#filterForm').is(':visible')) {
+        $('#filterBtnText').text('Ẩn bộ lọc');
+    }
+});
+</script>
 </body>
 </html>
