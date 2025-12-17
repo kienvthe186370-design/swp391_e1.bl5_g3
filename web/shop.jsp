@@ -408,8 +408,8 @@
                                         </c:choose>
                                         
                                         <ul class="product__hover">
-                                            <li><a href="#"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt="Wishlist"></a></li>
-                                            <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt="View"></a></li>
+                                            <li><a href="javascript:void(0)" onclick="event.stopPropagation(); toggleWishlist(${product.productID}, this)" class="wishlist-btn" data-product-id="${product.productID}"><img src="${pageContext.request.contextPath}/img/icon/heart.png" alt="Wishlist"></a></li>
+                                            <li><a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" onclick="event.stopPropagation()"><img src="${pageContext.request.contextPath}/img/icon/search.png" alt="View"></a></li>
                                         </ul>
                                     </div>
                                     <div class="product__item__text">
@@ -606,6 +606,54 @@
                 window.updateCartHeader();
             }
         </c:if>
+        
+        // Wishlist toggle function
+        function toggleWishlist(productId, element) {
+            $.ajax({
+                url: '${pageContext.request.contextPath}/wishlist',
+                type: 'POST',
+                data: { action: 'toggle', productId: productId },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.login) {
+                        window.location.href = '${pageContext.request.contextPath}/login?redirect=shop';
+                        return;
+                    }
+                    if (res.success) {
+                        if (res.added) {
+                            $(element).addClass('wishlisted');
+                            showToast('Đã thêm vào yêu thích', 'success');
+                        } else {
+                            $(element).removeClass('wishlisted');
+                            showToast('Đã xóa khỏi yêu thích', 'info');
+                        }
+                    } else {
+                        showToast(res.message || 'Có lỗi xảy ra', 'error');
+                    }
+                },
+                error: function() {
+                    showToast('Có lỗi xảy ra, vui lòng thử lại', 'error');
+                }
+            });
+        }
+        
+        function showToast(message, type) {
+            var toast = $('<div class="toast-notification"></div>');
+            toast.css({
+                'position': 'fixed', 'top': '20px', 'right': '20px',
+                'padding': '15px 25px', 'border-radius': '8px', 'color': '#fff',
+                'font-weight': '500', 'z-index': '9999', 'animation': 'slideIn 0.3s ease'
+            });
+            toast.css('background', type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8');
+            toast.text(message);
+            $('body').append(toast);
+            setTimeout(function() { toast.fadeOut(function() { $(this).remove(); }); }, 3000);
+        }
     </script>
+    <style>
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .wishlist-btn.wishlisted { background: #ca1515 !important; border-radius: 50%; }
+        .wishlist-btn.wishlisted img { filter: brightness(0) invert(1); }
+    </style>
 </body>
 </html>
