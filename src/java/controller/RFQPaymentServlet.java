@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 /**
  * Servlet xử lý thanh toán RFQ qua VNPay
  * - BankTransfer: Thanh toán 100% qua VNPay
- * - COD: Thanh toán 50% cọc qua VNPay, phần còn lại COD
+ * - Status chỉ đổi SAU KHI thanh toán thành công (trong RFQPaymentCallbackServlet)
  */
 @WebServlet(name = "RFQPaymentServlet", urlPatterns = {"/rfq/payment"})
 public class RFQPaymentServlet extends HttpServlet {
@@ -60,28 +60,17 @@ public class RFQPaymentServlet extends HttpServlet {
                 return;
             }
             
-            // Calculate payment amount based on payment method
-            String paymentMethod = rfq.getPaymentMethod();
-            BigDecimal paymentAmount;
-            String orderInfo;
-            
-            if ("COD".equals(paymentMethod)) {
-                // COD + 50% deposit: Pay 50% now
-                paymentAmount = totalAmount.divide(BigDecimal.valueOf(2), 0, BigDecimal.ROUND_UP);
-                orderInfo = "Coc 50% don hang " + rfq.getRfqCode();
-            } else {
-                // BankTransfer: Pay 100%
-                paymentAmount = totalAmount;
-                orderInfo = "Thanh toan don hang " + rfq.getRfqCode();
-            }
+            // BankTransfer: Pay 100% via VNPay
+            BigDecimal paymentAmount = totalAmount;
+            String orderInfo = "Thanh toan don hang " + rfq.getRfqCode();
             
             // Store RFQ info in session for callback
+            // Status will only change AFTER successful payment in RFQPaymentCallbackServlet
             session.setAttribute("pendingRFQID", rfqID);
-            session.setAttribute("rfqPaymentMethod", paymentMethod);
+            session.setAttribute("rfqPaymentMethod", "BankTransfer");
             session.setAttribute("rfqPaymentAmount", paymentAmount);
             
-            // Update RFQ status to QuoteAccepted
-            rfqDAO.acceptQuotation(rfqID, customer.getCustomerID());
+            // DO NOT update status here - status will be updated in callback after successful payment
             
             // Create VNPay payment URL
             String returnUrl = VNPayConfig.getReturnUrl(request).replace("/vnpay-callback", "/rfq/payment-callback");
@@ -94,9 +83,10 @@ public class RFQPaymentServlet extends HttpServlet {
             );
             
             System.out.println("[RFQ Payment] RFQ: " + rfq.getRfqCode());
-            System.out.println("[RFQ Payment] Payment Method: " + paymentMethod);
+            System.out.println("[RFQ Payment] Payment Method: BankTransfer (VNPay)");
             System.out.println("[RFQ Payment] Total Amount: " + totalAmount);
             System.out.println("[RFQ Payment] Payment Amount: " + paymentAmount);
+            System.out.println("[RFQ Payment] Status will change AFTER successful payment");
             System.out.println("[RFQ Payment] Redirecting to VNPay...");
             
             response.sendRedirect(paymentUrl);

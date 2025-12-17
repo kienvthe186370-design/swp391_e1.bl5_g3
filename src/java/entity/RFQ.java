@@ -21,6 +21,8 @@ public class RFQ {
     public static final String STATUS_QUOTED = "Quoted";
     public static final String STATUS_QUOTE_ACCEPTED = "QuoteAccepted";
     public static final String STATUS_QUOTE_REJECTED = "QuoteRejected";
+    public static final String STATUS_QUOTE_EXPIRED = "QuoteExpired";
+    public static final String STATUS_DRAFT = "Draft";
     public static final String STATUS_COMPLETED = "Completed";
     public static final String STATUS_CANCELLED = "Cancelled";
 
@@ -41,12 +43,22 @@ public class RFQ {
     
     // Delivery Info
     private String deliveryAddress;
+    private String deliveryStreet;
+    private String deliveryCity;
     private String deliveryCityId;
+    private String deliveryDistrict;
     private String deliveryDistrictId;
+    private String deliveryWard;
     private String deliveryWardId;
     private Timestamp requestedDeliveryDate;
     private Timestamp proposedDeliveryDate;
     private String deliveryInstructions;
+    
+    // Shipping Method Info
+    private String shippingCarrierId;
+    private String shippingCarrierName;
+    private String shippingServiceName;
+    private int estimatedDeliveryDays;
     
     // Pricing
     private BigDecimal subtotalAmount;
@@ -117,11 +129,23 @@ public class RFQ {
     public String getDeliveryAddress() { return deliveryAddress; }
     public void setDeliveryAddress(String deliveryAddress) { this.deliveryAddress = deliveryAddress; }
 
+    public String getDeliveryStreet() { return deliveryStreet; }
+    public void setDeliveryStreet(String deliveryStreet) { this.deliveryStreet = deliveryStreet; }
+
+    public String getDeliveryCity() { return deliveryCity; }
+    public void setDeliveryCity(String deliveryCity) { this.deliveryCity = deliveryCity; }
+
     public String getDeliveryCityId() { return deliveryCityId; }
     public void setDeliveryCityId(String deliveryCityId) { this.deliveryCityId = deliveryCityId; }
 
+    public String getDeliveryDistrict() { return deliveryDistrict; }
+    public void setDeliveryDistrict(String deliveryDistrict) { this.deliveryDistrict = deliveryDistrict; }
+
     public String getDeliveryDistrictId() { return deliveryDistrictId; }
     public void setDeliveryDistrictId(String deliveryDistrictId) { this.deliveryDistrictId = deliveryDistrictId; }
+
+    public String getDeliveryWard() { return deliveryWard; }
+    public void setDeliveryWard(String deliveryWard) { this.deliveryWard = deliveryWard; }
 
     public String getDeliveryWardId() { return deliveryWardId; }
     public void setDeliveryWardId(String deliveryWardId) { this.deliveryWardId = deliveryWardId; }
@@ -134,6 +158,18 @@ public class RFQ {
 
     public String getDeliveryInstructions() { return deliveryInstructions; }
     public void setDeliveryInstructions(String deliveryInstructions) { this.deliveryInstructions = deliveryInstructions; }
+
+    public String getShippingCarrierId() { return shippingCarrierId; }
+    public void setShippingCarrierId(String shippingCarrierId) { this.shippingCarrierId = shippingCarrierId; }
+
+    public String getShippingCarrierName() { return shippingCarrierName; }
+    public void setShippingCarrierName(String shippingCarrierName) { this.shippingCarrierName = shippingCarrierName; }
+
+    public String getShippingServiceName() { return shippingServiceName; }
+    public void setShippingServiceName(String shippingServiceName) { this.shippingServiceName = shippingServiceName; }
+
+    public int getEstimatedDeliveryDays() { return estimatedDeliveryDays; }
+    public void setEstimatedDeliveryDays(int estimatedDeliveryDays) { this.estimatedDeliveryDays = estimatedDeliveryDays; }
 
     public BigDecimal getSubtotalAmount() { return subtotalAmount; }
     public void setSubtotalAmount(BigDecimal subtotalAmount) { this.subtotalAmount = subtotalAmount; }
@@ -210,11 +246,28 @@ public class RFQ {
     }
     
     public boolean canAcceptQuote() {
-        return STATUS_QUOTED.equals(status);
+        if (!STATUS_QUOTED.equals(status)) {
+            return false;
+        }
+        // Check if quote is expired
+        if (quotationValidUntil != null) {
+            java.util.Date now = new java.util.Date();
+            return now.before(quotationValidUntil) || now.equals(quotationValidUntil);
+        }
+        return true;
+    }
+    
+    public boolean isQuoteExpired() {
+        if (quotationValidUntil == null) {
+            return false;
+        }
+        java.util.Date now = new java.util.Date();
+        return now.after(quotationValidUntil);
     }
     
     public String getStatusDisplayName() {
         switch (status) {
+            case STATUS_DRAFT: return "Chờ xác nhận";
             case STATUS_PENDING: return "Chờ xử lý";
             case STATUS_REVIEWING: return "Đang xem xét";
             case STATUS_DATE_PROPOSED: return "Đề xuất ngày mới";
@@ -223,6 +276,7 @@ public class RFQ {
             case STATUS_QUOTED: return "Đã báo giá";
             case STATUS_QUOTE_ACCEPTED: return "Đã thanh toán";
             case STATUS_QUOTE_REJECTED: return "Từ chối báo giá";
+            case STATUS_QUOTE_EXPIRED: return "Báo giá hết hạn";
             case STATUS_COMPLETED: return "Hoàn thành";
             case STATUS_CANCELLED: return "Đã hủy";
             default: return status;

@@ -14,6 +14,7 @@ public class RFQItem {
     // Product Snapshot
     private String productName;
     private String sku;
+    private String productImage;
     
     // Quantity
     private int quantity;
@@ -55,6 +56,9 @@ public class RFQItem {
 
     public String getSku() { return sku; }
     public void setSku(String sku) { this.sku = sku; }
+
+    public String getProductImage() { return productImage; }
+    public void setProductImage(String productImage) { this.productImage = productImage; }
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }

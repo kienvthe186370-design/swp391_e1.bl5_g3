@@ -23,6 +23,8 @@
         .bg-quoterejected { background: #dc3545 !important; color: #fff !important; }
         .bg-completed { background: #28a745 !important; color: #fff !important; }
         .bg-cancelled { background: #6c757d !important; color: #fff !important; }
+        .bg-draft { background: #adb5bd !important; color: #fff !important; }
+        .bg-quoteexpired { background: #fd7e14 !important; color: #fff !important; }
         .history-list { padding-left: 0; margin-left: 0; list-style: none; }
         .history-item { position: relative; padding: 10px 0 15px 30px; border-bottom: 1px solid #eee; }
         .history-item:last-child { border-bottom: none; }
@@ -63,10 +65,22 @@
                     <!-- RFQ Info -->
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fa fa-file-text"></i> ${rfq.rfqCode}</h5>
-                            <span class="badge status-badge bg-${rfq.status.toLowerCase()}">
-                                ${rfq.statusDisplayName}
-                            </span>
+                            <h5 class="mb-0"><i class="fa fa-file-text"></i>
+                                <c:choose>
+                                    <c:when test="${not empty rfq.rfqCode}">${rfq.rfqCode}</c:when>
+                                    <c:otherwise>Bản nháp yêu cầu báo giá</c:otherwise>
+                                </c:choose>
+                            </h5>
+                            <c:choose>
+                                <c:when test="${not empty rfq.status}">
+                                    <span class="badge status-badge bg-${rfq.status.toLowerCase()}">
+                                        ${rfq.statusDisplayName}
+                                    </span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="badge badge-secondary">Chưa gửi</span>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                         <div class="card-body">
                             <div class="row">
@@ -83,6 +97,10 @@
                                     </p>
                                     <p><span class="info-label">Người liên hệ:</span> ${rfq.contactPerson}</p>
                                     <p><span class="info-label">Điện thoại:</span> ${rfq.contactPhone}</p>
+                                    <p><span class="info-label">Email:</span> ${not empty rfq.contactEmail ? rfq.contactEmail : 'N/A'}</p>
+                                    <c:if test="${not empty rfq.alternativeContact}">
+                                        <p><span class="info-label">Liên hệ dự phòng:</span> ${rfq.alternativeContact}</p>
+                                    </c:if>
                                 </div>
                                 <div class="col-md-6">
                                     <p><span class="info-label">Ngày tạo:</span> <fmt:formatDate value="${rfq.createdDate}" pattern="dd/MM/yyyy HH:mm"/></p>
@@ -91,13 +109,12 @@
                                         <p><span class="info-label">Ngày đề xuất:</span> <fmt:formatDate value="${rfq.proposedDeliveryDate}" pattern="dd/MM/yyyy"/></p>
                                     </c:if>
                                     <p><span class="info-label">Địa chỉ giao:</span> ${rfq.deliveryAddress}</p>
-                                    <p><span class="info-label">Hình thức thanh toán:</span> 
-                                        <c:choose>
-                                            <c:when test="${rfq.paymentMethod == 'BankTransfer'}">Chuyển khoản ngân hàng</c:when>
-                                            <c:when test="${rfq.paymentMethod == 'COD'}">Thanh toán khi nhận hàng (COD) + Cọc 50%</c:when>
-                                            <c:otherwise>${rfq.paymentMethod != null ? rfq.paymentMethod : 'Chưa chọn'}</c:otherwise>
-                                        </c:choose>
-                                    </p>
+                                    <c:if test="${not empty rfq.shippingCarrierName}">
+                                        <p><span class="info-label">Đơn vị vận chuyển:</span> ${rfq.shippingCarrierName} - ${rfq.shippingServiceName}</p>
+                                        <p><span class="info-label">Phí vận chuyển (dự kiến):</span> <fmt:formatNumber value="${rfq.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></p>
+                                        <p><span class="info-label">Thời gian giao:</span> ${rfq.estimatedDeliveryDays} ngày</p>
+                                    </c:if>
+                                    <p><span class="info-label">Hình thức thanh toán:</span> Chuyển khoản ngân hàng (VNPay)</p>
                                 </div>
                             </div>
                         </div>
@@ -135,13 +152,7 @@
                             </div>
                             <div class="card-body">
                                 <p>Báo giá có hiệu lực đến: <strong><fmt:formatDate value="${rfq.quotationValidUntil}" pattern="dd/MM/yyyy"/></strong></p>
-                                <p>Phương thức thanh toán: <strong>
-                                    <c:choose>
-                                        <c:when test="${rfq.paymentMethod == 'BankTransfer'}">Chuyển khoản ngân hàng</c:when>
-                                        <c:when test="${rfq.paymentMethod == 'COD'}">Thanh toán khi nhận hàng (COD) + Cọc 50%</c:when>
-                                        <c:otherwise>${rfq.paymentMethod}</c:otherwise>
-                                    </c:choose>
-                                </strong></p>
+                                <p>Phương thức thanh toán: <strong>Chuyển khoản ngân hàng (VNPay)</strong></p>
                                 <c:if test="${not empty rfq.warrantyTerms}">
                                     <p>Bảo hành: ${rfq.warrantyTerms}</p>
                                 </c:if>
@@ -150,15 +161,27 @@
                                         <input type="hidden" name="rfqId" value="${rfq.rfqID}">
                                         <button type="submit" class="btn btn-success btn-lg">
                                             <i class="fa fa-check"></i> Chấp Nhận & Thanh Toán
-                                            <c:if test="${rfq.paymentMethod == 'COD'}">
-                                                <small>(Cọc 50%)</small>
-                                            </c:if>
                                         </button>
                                     </form>
                                     <button type="button" class="btn btn-outline-danger" data-toggle="modal" data-target="#rejectQuoteModal">
                                         <i class="fa fa-times"></i> Từ Chối
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </c:if>
+
+                    <c:if test="${rfq.status == 'QuoteExpired'}">
+                        <div class="card mb-4 border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <i class="fa fa-clock-o"></i> Báo Giá Đã Hết Hạn
+                            </div>
+                            <div class="card-body">
+                                <p class="text-danger mb-2"><i class="fa fa-exclamation-circle"></i> Báo giá này đã hết hạn vào ngày <strong><fmt:formatDate value="${rfq.quotationValidUntil}" pattern="dd/MM/yyyy"/></strong></p>
+                                <p class="text-muted">Bạn không thể thanh toán cho báo giá này nữa. Vui lòng liên hệ với chúng tôi để được hỗ trợ hoặc tạo yêu cầu báo giá mới.</p>
+                                <a href="${pageContext.request.contextPath}/rfq/form" class="btn btn-primary">
+                                    <i class="fa fa-plus"></i> Tạo Yêu Cầu Báo Giá Mới
+                                </a>
                             </div>
                         </div>
                     </c:if>
@@ -182,9 +205,17 @@
                                     <c:forEach var="item" items="${rfq.items}">
                                         <tr>
                                             <td>
-                                                <strong>${item.productName}</strong>
-                                                <c:if test="${not empty item.sku}"><br><small class="text-muted">SKU: ${item.sku}</small></c:if>
-                                                <c:if test="${not empty item.specialRequirements}"><br><small class="text-info">${item.specialRequirements}</small></c:if>
+                                                <div class="d-flex align-items-center">
+                                                    <c:if test="${not empty item.productImage}">
+                                                        <img src="${pageContext.request.contextPath}/${item.productImage}" alt="${item.productName}" 
+                                                             style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px; border-radius: 4px;">
+                                                    </c:if>
+                                                    <div>
+                                                        <strong>${item.productName}</strong>
+                                                        <c:if test="${not empty item.sku}"><br><small class="text-muted">SKU: ${item.sku}</small></c:if>
+                                                        <c:if test="${not empty item.specialRequirements}"><br><small class="text-info">${item.specialRequirements}</small></c:if>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td class="text-center">${item.quantity}</td>
                                             <c:if test="${rfq.status == 'Quoted' || rfq.status == 'QuoteAccepted' || rfq.status == 'Completed'}">
@@ -222,20 +253,130 @@
                 <!-- Sidebar -->
                 <div class="col-lg-4">
                     <!-- Timeline -->
-                    <div class="card">
-                        <div class="card-header"><h5 class="mb-0"><i class="fa fa-history"></i> Lịch Sử</h5></div>
-                        <div class="card-body">
-                            <div class="history-list">
-                                <c:forEach var="h" items="${rfq.history}">
-                                    <div class="history-item ${h.newStatus == 'Completed' ? 'completed' : ''}">
-                                        <strong>${h.action}</strong>
-                                        <p class="mb-1 small">${h.notes}</p>
-                                        <small class="text-muted"><fmt:formatDate value="${h.changedDate}" pattern="dd/MM/yyyy HH:mm"/></small>
-                                    </div>
-                                </c:forEach>
+                    <c:if test="${not empty rfq.history}">
+                        <div class="card">
+                            <div class="card-header"><h5 class="mb-0"><i class="fa fa-history"></i> Lịch Sử</h5></div>
+                            <div class="card-body">
+                                <div class="history-list">
+                                    <c:forEach var="h" items="${rfq.history}">
+                                        <div class="history-item ${h.newStatus == 'Completed' ? 'completed' : ''}">
+                                            <strong>${h.action}</strong>
+                                            <p class="mb-1 small">${h.notes}</p>
+                                            <small class="text-muted"><fmt:formatDate value="${h.changedDate}" pattern="dd/MM/yyyy HH:mm"/></small>
+                                        </div>
+                                    </c:forEach>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </c:if>
+
+                    <!-- Draft action: gửi đơn yêu cầu báo giá -->
+                    <c:if test="${isDraft}">
+                        <div class="card mt-3">
+                            <div class="card-body">
+                                <h5 class="mb-3"><i class="fa fa-paper-plane"></i> Gửi yêu cầu báo giá</h5>
+                                
+                                <!-- Form chỉnh sửa - quay lại rfq-form với dữ liệu cũ -->
+                                <form action="${pageContext.request.contextPath}/rfq/edit-draft" method="POST" id="editDraftForm" class="mb-2">
+                                    <input type="hidden" name="companyName" value="${rfq.companyName}"/>
+                                    <input type="hidden" name="taxID" value="${rfq.taxID}"/>
+                                    <input type="hidden" name="businessType" value="${rfq.businessType}"/>
+                                    <input type="hidden" name="contactPerson" value="${rfq.contactPerson}"/>
+                                    <input type="hidden" name="contactPhone" value="${rfq.contactPhone}"/>
+                                    <input type="hidden" name="contactEmail" value="${rfq.contactEmail}"/>
+                                    <input type="hidden" name="alternativeContact" value="${rfq.alternativeContact}"/>
+                                    <input type="hidden" name="deliveryAddress" value="${rfq.deliveryAddress}"/>
+                                    <input type="hidden" name="deliveryCity" value="${rfq.deliveryCity}"/>
+                                    <input type="hidden" name="deliveryCityId" value="${rfq.deliveryCityId}"/>
+                                    <input type="hidden" name="deliveryDistrict" value="${rfq.deliveryDistrict}"/>
+                                    <input type="hidden" name="deliveryDistrictId" value="${rfq.deliveryDistrictId}"/>
+                                    <input type="hidden" name="deliveryWard" value="${rfq.deliveryWard}"/>
+                                    <input type="hidden" name="deliveryWardId" value="${rfq.deliveryWardId}"/>
+                                    <input type="hidden" name="deliveryStreet" value="${rfq.deliveryStreet}"/>
+                                    <input type="hidden" name="deliveryInstructions" value="${rfq.deliveryInstructions}"/>
+                                    <input type="hidden" name="customerNotes" value="${rfq.customerNotes}"/>
+                                    <input type="hidden" name="preferredPaymentMethod" value="${rfq.paymentMethod}"/>
+                                    <input type="hidden" name="requestedDeliveryDate"
+                                           value="<fmt:formatDate value='${rfq.requestedDeliveryDate}' pattern='yyyy-MM-dd'/>"/>
+                                    <input type="hidden" name="shippingCarrierId" value="${rfq.shippingCarrierId}"/>
+                                    <input type="hidden" name="shippingCarrierName" value="${rfq.shippingCarrierName}"/>
+                                    <input type="hidden" name="shippingServiceName" value="${rfq.shippingServiceName}"/>
+                                    <input type="hidden" name="shippingFee" value="${rfq.shippingFee}"/>
+                                    <input type="hidden" name="estimatedDeliveryDays" value="${rfq.estimatedDeliveryDays}"/>
+                                    <c:forEach var="item" items="${rfq.items}">
+                                        <input type="hidden" name="productId" value="${item.productID}"/>
+                                        <input type="hidden" name="variantId" value="${item.variantID}"/>
+                                        <input type="hidden" name="quantity" value="${item.quantity}"/>
+                                        <input type="hidden" name="specialRequirements" value="${item.specialRequirements}"/>
+                                    </c:forEach>
+                                    <c:if test="${not empty rfq.rfqID}">
+                                        <input type="hidden" name="draftRfqId" value="${rfq.rfqID}"/>
+                                    </c:if>
+                                    <button type="submit" class="btn btn-outline-secondary btn-block">
+                                        <i class="fa fa-edit"></i> Chỉnh sửa
+                                    </button>
+                                </form>
+                                
+                                <!-- Form gửi đơn -->
+                                <form action="${pageContext.request.contextPath}/rfq/submit" method="POST" id="submitRfqForm">
+                                    <input type="hidden" name="companyName" value="${rfq.companyName}"/>
+                                    <input type="hidden" name="taxID" value="${rfq.taxID}"/>
+                                    <input type="hidden" name="businessType" value="${rfq.businessType}"/>
+                                    <input type="hidden" name="contactPerson" value="${rfq.contactPerson}"/>
+                                    <input type="hidden" name="contactPhone" value="${rfq.contactPhone}"/>
+                                    <input type="hidden" name="contactEmail" value="${rfq.contactEmail}"/>
+                                    <input type="hidden" name="alternativeContact" value="${rfq.alternativeContact}"/>
+                                    <input type="hidden" name="deliveryAddress" value="${rfq.deliveryAddress}"/>
+                                    <input type="hidden" name="deliveryCityId" value="${rfq.deliveryCityId}"/>
+                                    <input type="hidden" name="deliveryDistrictId" value="${rfq.deliveryDistrictId}"/>
+                                    <input type="hidden" name="deliveryWardId" value="${rfq.deliveryWardId}"/>
+                                    <input type="hidden" name="deliveryInstructions" value="${rfq.deliveryInstructions}"/>
+                                    <input type="hidden" name="customerNotes" value="${rfq.customerNotes}"/>
+                                    <input type="hidden" name="preferredPaymentMethod" value="${rfq.paymentMethod}"/>
+                                    <input type="hidden" name="requestedDeliveryDate"
+                                           value="<fmt:formatDate value='${rfq.requestedDeliveryDate}' pattern='yyyy-MM-dd'/>"/>
+                                    <input type="hidden" name="shippingCarrierId" value="${rfq.shippingCarrierId}"/>
+                                    <input type="hidden" name="shippingCarrierName" value="${rfq.shippingCarrierName}"/>
+                                    <input type="hidden" name="shippingServiceName" value="${rfq.shippingServiceName}"/>
+                                    <input type="hidden" name="shippingFee" value="${rfq.shippingFee}"/>
+                                    <input type="hidden" name="estimatedDeliveryDays" value="${rfq.estimatedDeliveryDays}"/>
+                                    <c:forEach var="item" items="${rfq.items}">
+                                        <input type="hidden" name="productId" value="${item.productID}"/>
+                                        <input type="hidden" name="variantId" value="${item.variantID}"/>
+                                        <input type="hidden" name="quantity" value="${item.quantity}"/>
+                                        <input type="hidden" name="specialRequirements" value="${item.specialRequirements}"/>
+                                    </c:forEach>
+                                    <c:if test="${not empty rfq.rfqID}">
+                                        <input type="hidden" name="draftRfqId" value="${rfq.rfqID}"/>
+                                    </c:if>
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fa fa-paper-plane"></i> Gửi đơn yêu cầu báo giá
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </c:if>
+                    
+                    <!-- Draft status: hiển thị cho đơn đã lưu với status Draft -->
+                    <c:if test="${rfq.status == 'Draft' && not isDraft}">
+                        <div class="card mt-3">
+                            <div class="card-body">
+                                <h5 class="mb-3"><i class="fa fa-file-o"></i> Đơn chờ xác nhận</h5>
+                                <p class="text-muted small">Đơn này đang ở trạng thái nháp. Bạn có thể chỉnh sửa hoặc gửi đơn.</p>
+                                
+                                <a href="${pageContext.request.contextPath}/rfq/edit?id=${rfq.rfqID}" class="btn btn-outline-secondary btn-block mb-2">
+                                    <i class="fa fa-edit"></i> Chỉnh sửa
+                                </a>
+                                
+                                <form action="${pageContext.request.contextPath}/rfq/submit-draft" method="POST">
+                                    <input type="hidden" name="rfqId" value="${rfq.rfqID}"/>
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fa fa-paper-plane"></i> Gửi đơn yêu cầu báo giá
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </c:if>
                 </div>
             </div>
         </div>
@@ -295,5 +436,111 @@
     <%@include file="../footer.jsp"%>
     <script src="${pageContext.request.contextPath}/js/jquery-3.3.1.min.js"></script>
     <script src="${pageContext.request.contextPath}/js/bootstrap.min.js"></script>
+    
+    <c:if test="${isDraft}">
+    <script>
+        var contextPath = '${pageContext.request.contextPath}';
+        var draftSaved = false;
+        var isSubmitting = false;
+        var savedRfqId = null;
+        
+        // Auto-save draft immediately when page loads (if not already saved)
+        $(document).ready(function() {
+            <c:if test="${empty rfq.rfqID || rfq.rfqID == 0}">
+            // Save draft immediately for new RFQ
+            saveDraftAsync();
+            </c:if>
+            
+            // Intercept all link clicks to show confirmation
+            $('a').not('[data-no-confirm]').on('click', function(e) {
+                if (!isSubmitting) {
+                    var href = $(this).attr('href');
+                    // Skip if it's a hash link, javascript, or modal trigger
+                    if (!href || href === '#' || href.startsWith('javascript:') || $(this).data('toggle') === 'modal') {
+                        return true;
+                    }
+                    
+                    e.preventDefault();
+                    if (confirm('Bạn có chắc muốn rời khỏi trang?\n\nThông tin đơn hàng sẽ được lưu dưới dạng nháp trong danh sách yêu cầu báo giá của bạn.')) {
+                        isSubmitting = true; // Prevent beforeunload from showing again
+                        if (!draftSaved) {
+                            saveDraftSync();
+                        }
+                        window.location.href = href;
+                    }
+                }
+            });
+        });
+        
+        // Mark as submitting when form is submitted
+        $('#submitRfqForm').on('submit', function() {
+            isSubmitting = true;
+        });
+        $('#editDraftForm').on('submit', function() {
+            isSubmitting = true;
+        });
+        
+        // Warning when leaving page and auto-save draft
+        $(window).on('beforeunload', function(e) {
+            if (!isSubmitting) {
+                // Save draft before leaving
+                if (!draftSaved) {
+                    saveDraftSync();
+                }
+                // Show confirmation dialog
+                var message = 'Bạn có chắc muốn rời khỏi trang? Thông tin đơn hàng sẽ được lưu dưới dạng nháp.';
+                e.returnValue = message;
+                return message;
+            }
+        });
+        
+        // Also save when visibility changes (tab switch)
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden' && !isSubmitting && !draftSaved) {
+                saveDraftSync();
+            }
+        });
+        
+        function saveDraftAsync() {
+            var formData = $('#submitRfqForm').serialize();
+            $.ajax({
+                url: contextPath + '/rfq/save-draft',
+                type: 'POST',
+                data: formData,
+                async: true,
+                success: function(response) {
+                    draftSaved = true;
+                    if (response.rfqId) {
+                        savedRfqId = response.rfqId;
+                        // Update hidden field with new rfqId
+                        if ($('input[name="draftRfqId"]').length === 0) {
+                            $('#submitRfqForm').append('<input type="hidden" name="draftRfqId" value="' + response.rfqId + '"/>');
+                            $('#editDraftForm').append('<input type="hidden" name="draftRfqId" value="' + response.rfqId + '"/>');
+                        }
+                    }
+                }
+            });
+        }
+        
+        function saveDraftSync() {
+            var formData = $('#submitRfqForm').serialize();
+            // Use sendBeacon for reliable delivery when page is closing
+            if (navigator.sendBeacon) {
+                var blob = new Blob([formData], {type: 'application/x-www-form-urlencoded'});
+                navigator.sendBeacon(contextPath + '/rfq/save-draft', blob);
+                draftSaved = true;
+            } else {
+                // Fallback to sync ajax
+                $.ajax({
+                    url: contextPath + '/rfq/save-draft',
+                    type: 'POST',
+                    data: formData,
+                    async: false
+                });
+                draftSaved = true;
+            }
+        }
+    </script>
+    </c:if>
 </body>
 </html>

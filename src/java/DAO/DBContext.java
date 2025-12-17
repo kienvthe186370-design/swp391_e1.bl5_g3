@@ -11,7 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DBContext {
-    private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=PickleballShop2";
+    private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=dbquocanh2";
     private static final String USER = "sa";
     private static final String PASSWORD = "123";
     public Connection getConnection() {
