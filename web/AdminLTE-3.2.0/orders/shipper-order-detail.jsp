@@ -162,15 +162,17 @@
                                             <!-- Checkbox thu tiền COD - chỉ hiện khi đơn COD chưa thanh toán -->
                                             <c:if test="${order.paymentMethod == 'COD' && order.paymentStatus != 'Paid'}">
                                             <div class="form-group" id="codSection" style="display:none;">
-                                                <div class="alert alert-warning">
-                                                    <div class="custom-control custom-checkbox">
-                                                        <input type="checkbox" class="custom-control-input" id="codCollected" name="codCollected" value="true">
-                                                        <label class="custom-control-label" for="codCollected">
-                                                            <strong><i class="fas fa-money-bill-wave"></i> Đã thu tiền COD: 
-                                                            <fmt:formatNumber value="${order.totalAmount}" type="number"/>đ</strong>
-                                                        </label>
+                                                <div class="card card-outline card-success mb-0">
+                                                    <div class="card-body py-2">
+                                                        <div class="custom-control custom-checkbox">
+                                                            <input type="checkbox" class="custom-control-input" id="codCollected" name="codCollected" value="true">
+                                                            <label class="custom-control-label" for="codCollected">
+                                                                <strong><i class="fas fa-money-bill-wave text-success"></i> Đã thu tiền COD: 
+                                                                <span class="text-success"><fmt:formatNumber value="${order.totalAmount}" type="number"/>đ</span></strong>
+                                                            </label>
+                                                        </div>
+                                                        <small class="text-muted d-block mt-1">Bắt buộc xác nhận đã thu tiền khi giao thành công đơn COD</small>
                                                     </div>
-                                                    <small class="text-muted d-block mt-1">Bắt buộc xác nhận đã thu tiền khi giao thành công đơn COD</small>
                                                 </div>
                                             </div>
                                             </c:if>
