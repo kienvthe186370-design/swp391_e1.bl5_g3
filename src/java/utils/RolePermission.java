@@ -120,14 +120,14 @@ public class RolePermission {
             return false;
         }
 
-        // RFQ: chỉ SellerManager, Admin cũng không được thao tác
-        if (path.startsWith("/rfq")) {
-            return canManageRFQ(role);
-        }
-
-        // Admin: full quyền cho các phần còn lại
+        // Admin: full quyền cho TẤT CẢ chức năng
         if (ADMIN.equalsIgnoreCase(role)) {
             return true;
+        }
+
+        // RFQ: chỉ SellerManager
+        if (path.startsWith("/rfq")) {
+            return canManageRFQ(role);
         }
 
         if (path.equals("/dashboard") || path.isEmpty() || path.equals("/")) {
