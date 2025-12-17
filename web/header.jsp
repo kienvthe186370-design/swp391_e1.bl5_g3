@@ -114,6 +114,26 @@
         background: #fff;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
+    
+    /* Header top links - prevent text wrapping */
+    .header__top__links {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: nowrap;
+        gap: 15px;
+    }
+    .header__top__links a {
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+    }
+    .header__top__links a i {
+        margin-right: 5px;
+    }
+    .header__top__left p {
+        white-space: nowrap;
+    }
 </style>
 <script>
     // Auto-hide preloader after 3 seconds as fallback
