@@ -632,14 +632,94 @@ public class AdminOrderServlet extends HttpServlet {
     private void showShipperAssignmentPage(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // Lấy đơn đã phân shipper (đang vận chuyển)
-        List<Shipping> assignedShippings = shippingDAO.getAssignedShippings();
+        // Lấy params
+        String shipperTab = request.getParameter("shipperTab"); // active, all
+        String orderTab = request.getParameter("orderTab"); // active, delivered, all
+        String shipperIdParam = request.getParameter("shipperId");
+        int page = getPageParam(request);
+        int pageSize = 5;
         
-        // Lấy danh sách shipper với số đơn đang giao
-        List<Object[]> shippers = orderDAO.getShippersWithActiveOrderCount();
+        // Default tabs
+        if (shipperTab == null || shipperTab.isEmpty()) shipperTab = "active";
+        if (orderTab == null || orderTab.isEmpty()) orderTab = "active";
         
-        request.setAttribute("assignedShippings", assignedShippings);
+        // Lấy danh sách shipper với thống kê
+        List<Object[]> allShippers = shippingDAO.getShippersWithStats();
+        
+        // Filter shipper theo tab
+        List<Object[]> shippers = new java.util.ArrayList<>();
+        for (Object[] s : allShippers) {
+            int activeOrders = (Integer) s[3];
+            if ("active".equals(shipperTab)) {
+                if (activeOrders > 0) shippers.add(s);
+            } else {
+                shippers.add(s);
+            }
+        }
+        
+        // Shipper được chọn (mặc định là shipper đầu tiên)
+        Integer selectedShipperId = null;
+        if (shipperIdParam != null && !shipperIdParam.isEmpty()) {
+            try {
+                selectedShipperId = Integer.parseInt(shipperIdParam);
+            } catch (NumberFormatException e) {}
+        }
+        if (selectedShipperId == null && !shippers.isEmpty()) {
+            selectedShipperId = (Integer) shippers.get(0)[0];
+        }
+        
+        // Lấy đơn hàng của shipper được chọn
+        List<Shipping> shipperOrders = new java.util.ArrayList<>();
+        int totalOrders = 0;
+        int activeCount = 0;
+        int deliveredCount = 0;
+        int allOrderCount = 0;
+        
+        if (selectedShipperId != null) {
+            shipperOrders = shippingDAO.getShipperOrdersFiltered(selectedShipperId, orderTab, page, pageSize);
+            totalOrders = shippingDAO.countShipperOrdersFiltered(selectedShipperId, orderTab);
+            activeCount = shippingDAO.countShipperOrdersFiltered(selectedShipperId, "active");
+            deliveredCount = shippingDAO.countShipperOrdersFiltered(selectedShipperId, "delivered");
+            allOrderCount = shippingDAO.countShipperOrdersFiltered(selectedShipperId, "all");
+        }
+        
+        int totalPages = (int) Math.ceil((double) totalOrders / pageSize);
+        
+        // Stats tổng quan
+        int totalShippers = shippingDAO.countTotalShippers();
+        int activeShippers = shippingDAO.countActiveShippers();
+        int idleShippers = totalShippers - activeShippers;
+        int totalShippingOrders = shippingDAO.countTotalShippingOrders();
+        
+        // Đếm shipper theo tab
+        int activeShipperCount = 0;
+        int allShipperCount = allShippers.size();
+        for (Object[] s : allShippers) {
+            if ((Integer) s[3] > 0) activeShipperCount++;
+        }
+        
+        // Set attributes
         request.setAttribute("shippers", shippers);
+        request.setAttribute("allShippers", allShippers); // Cho modal reassign
+        request.setAttribute("selectedShipperId", selectedShipperId);
+        request.setAttribute("shipperOrders", shipperOrders);
+        request.setAttribute("shipperTab", shipperTab);
+        request.setAttribute("orderTab", orderTab);
+        request.setAttribute("currentPage", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalOrders", totalOrders);
+        request.setAttribute("activeCount", activeCount);
+        request.setAttribute("deliveredCount", deliveredCount);
+        request.setAttribute("allOrderCount", allOrderCount);
+        
+        // Stats
+        request.setAttribute("totalShippers", totalShippers);
+        request.setAttribute("activeShippers", activeShippers);
+        request.setAttribute("idleShippers", idleShippers);
+        request.setAttribute("totalShippingOrders", totalShippingOrders);
+        request.setAttribute("activeShipperCount", activeShipperCount);
+        request.setAttribute("allShipperCount", allShipperCount);
+        
         request.setAttribute("pageTitle", "Giám sát Shipper");
         
         request.getRequestDispatcher("/AdminLTE-3.2.0/orders/shipper-assignment.jsp")

@@ -553,4 +553,164 @@ public class ShippingDAO extends DBContext {
         
         return shipping;
     }
+    
+    // ==================== SHIPPER MONITORING ====================
+    
+    /**
+     * Lấy danh sách shipper với thống kê chi tiết
+     * Returns: [EmployeeID, FullName, Phone, ActiveOrders, DeliveredTotal]
+     */
+    public List<Object[]> getShippersWithStats() {
+        List<Object[]> result = new ArrayList<>();
+        String sql = "SELECT e.EmployeeID, e.FullName, e.Phone, " +
+                     "ISNULL((SELECT COUNT(*) FROM Shipping s INNER JOIN Orders o ON s.OrderID = o.OrderID " +
+                     "        WHERE s.ShipperID = e.EmployeeID AND o.OrderStatus = 'Shipping'), 0) as ActiveOrders, " +
+                     "ISNULL((SELECT COUNT(*) FROM Shipping s INNER JOIN Orders o ON s.OrderID = o.OrderID " +
+                     "        WHERE s.ShipperID = e.EmployeeID AND o.OrderStatus = 'Delivered'), 0) as DeliveredTotal " +
+                     "FROM Employees e WHERE e.Role = 'Shipper' AND e.IsActive = 1 " +
+                     "ORDER BY ActiveOrders DESC, DeliveredTotal DESC";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Object[] row = new Object[5];
+                row[0] = rs.getInt("EmployeeID");
+                row[1] = rs.getString("FullName");
+                row[2] = rs.getString("Phone");
+                row[3] = rs.getInt("ActiveOrders");
+                row[4] = rs.getInt("DeliveredTotal");
+                result.add(row);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return result;
+    }
+    
+    /**
+     * Lấy đơn hàng của shipper với filter
+     */
+    public List<Shipping> getShipperOrdersFiltered(int shipperId, String tab, int page, int pageSize) {
+        List<Shipping> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT s.*, o.OrderCode, o.OrderStatus, o.TotalAmount, o.PaymentMethod, o.PaymentStatus, ");
+        sql.append("ca.RecipientName, ca.Phone, ca.Street, ca.Ward, ca.District, ca.City ");
+        sql.append("FROM Shipping s ");
+        sql.append("INNER JOIN Orders o ON s.OrderID = o.OrderID ");
+        sql.append("LEFT JOIN CustomerAddresses ca ON o.AddressID = ca.AddressID ");
+        sql.append("WHERE s.ShipperID = ? ");
+        
+        // Tab filter
+        if ("active".equals(tab)) {
+            sql.append("AND o.OrderStatus = 'Shipping' ");
+        } else if ("delivered".equals(tab)) {
+            sql.append("AND o.OrderStatus = 'Delivered' ");
+        }
+        // "all" không filter
+        
+        sql.append("ORDER BY o.OrderDate DESC ");
+        sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            
+            ps.setInt(1, shipperId);
+            ps.setInt(2, (page - 1) * pageSize);
+            ps.setInt(3, pageSize);
+            
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapShippingWithOrder(rs));
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return list;
+    }
+    
+    /**
+     * Đếm đơn hàng của shipper theo tab
+     */
+    public int countShipperOrdersFiltered(int shipperId, String tab) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM Shipping s ");
+        sql.append("INNER JOIN Orders o ON s.OrderID = o.OrderID ");
+        sql.append("WHERE s.ShipperID = ? ");
+        
+        if ("active".equals(tab)) {
+            sql.append("AND o.OrderStatus = 'Shipping' ");
+        } else if ("delivered".equals(tab)) {
+            sql.append("AND o.OrderStatus = 'Delivered' ");
+        }
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            
+            ps.setInt(1, shipperId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return 0;
+    }
+    
+    /**
+     * Đếm tổng số shipper
+     */
+    public int countTotalShippers() {
+        String sql = "SELECT COUNT(*) FROM Employees WHERE Role = 'Shipper' AND IsActive = 1";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return 0;
+    }
+    
+    /**
+     * Đếm shipper đang có đơn giao
+     */
+    public int countActiveShippers() {
+        String sql = "SELECT COUNT(DISTINCT s.ShipperID) FROM Shipping s " +
+                     "INNER JOIN Orders o ON s.OrderID = o.OrderID " +
+                     "WHERE o.OrderStatus = 'Shipping'";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return 0;
+    }
+    
+    /**
+     * Đếm tổng đơn đang vận chuyển
+     */
+    public int countTotalShippingOrders() {
+        String sql = "SELECT COUNT(*) FROM Shipping s " +
+                     "INNER JOIN Orders o ON s.OrderID = o.OrderID " +
+                     "WHERE o.OrderStatus = 'Shipping'";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(ShippingDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return 0;
+    }
 }
