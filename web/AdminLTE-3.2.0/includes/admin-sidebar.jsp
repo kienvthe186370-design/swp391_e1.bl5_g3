@@ -236,7 +236,7 @@
           </ul>
         </li>
         
-        <!-- Orders - Admin -->
+        <!-- Orders - Admin (chỉ xem, không xử lý) -->
         <li class="nav-item">
           <a href="<%= contextPath %>/admin/orders" 
              class="nav-link <%= isOrderPage ? "active" : "" %>">
@@ -244,6 +244,8 @@
             <p>Đơn hàng</p>
           </a>
         </li>
+        
+        <!-- Admin không xử lý Refund - Refund do Seller/SellerManager xử lý -->
         
         <!-- Vouchers - Admin -->
         <li class="nav-item">
@@ -260,6 +262,15 @@
              class="nav-link <%= isReportsPage ? "active" : "" %>">
             <i class="nav-icon fas fa-chart-bar"></i>
             <p>Báo cáo</p>
+          </a>
+        </li>
+        
+        <!-- Quản lý đánh giá - Admin -->
+        <li class="nav-item">
+          <a href="<%= contextPath %>/feedbacks" 
+             class="nav-link <%= currentURI.contains("/feedbacks") ? "active" : "" %>">
+            <i class="nav-icon fas fa-comments"></i>
+            <p>Quản lý đánh giá</p>
           </a>
         </li>
         
@@ -289,8 +300,8 @@
         
         <!-- Quản lý Đơn hàng - SellerManager và Seller -->
         <% if (canAccessOrders) { %>
-        <li class="nav-item has-treeview <%= isOrderPage ? "menu-open" : "" %>">
-          <a href="#" class="nav-link <%= isOrderPage ? "active" : "" %>">
+        <li class="nav-item menu-is-opening menu-open">
+          <a href="#" class="nav-link">
             <i class="nav-icon fas fa-shopping-cart"></i>
             <p>
               Quản lý đơn hàng
@@ -300,7 +311,7 @@
               <% } %>
             </p>
           </a>
-          <ul class="nav nav-treeview">
+          <ul class="nav nav-treeview" style="display: block;">
             <li class="nav-item">
               <a href="<%= contextPath %>/admin/orders" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
@@ -321,10 +332,17 @@
             <li class="nav-item">
               <a href="<%= contextPath %>/admin/orders?action=shipperAssignment" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
-                <p><i class="fas fa-motorcycle text-info"></i> Giám sát Shipper</p>
+                <p>Giám sát Shipper</p>
               </a>
             </li>
             <% } %>
+            <!-- Hoàn tiền - Hiển thị cho cả Seller và SellerManager -->
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/refunds" class="nav-link <%= currentURI.contains("/admin/refund") ? "active" : "" %>">
+                <i class="far fa-circle nav-icon"></i>
+                <p><i class="fas fa-undo-alt text-warning"></i> Hoàn tiền</p>
+              </a>
+            </li>
           </ul>
         </li>
         <% } %>
@@ -428,6 +446,17 @@
              class="nav-link <%= isVoucherPage ? "active" : "" %>">
             <i class="nav-icon fas fa-ticket-alt"></i>
             <p>Voucher</p>
+          </a>
+        </li>
+        <% } %>
+        
+        <!-- Quản lý đánh giá - Chỉ Marketer -->
+        <% if (canAccessMarketing) { %>
+        <li class="nav-item">
+          <a href="<%= contextPath %>/feedbacks" 
+             class="nav-link <%= currentURI.contains("/feedbacks") ? "active" : "" %>">
+            <i class="nav-icon fas fa-comments"></i>
+            <p>Quản lý đánh giá</p>
           </a>
         </li>
         <% } %>

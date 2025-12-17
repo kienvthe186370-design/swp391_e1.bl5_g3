@@ -74,6 +74,8 @@
                                         <p><strong>Họ tên:</strong> ${order.customer.fullName}</p>
                                         <p><strong>Email:</strong> ${order.customer.email}</p>
                                         <p><strong>SĐT:</strong> ${order.customer.phone}</p>
+                                        
+                                        <!-- Thông tin RFQ nếu có -->
                                         <c:if test="${order.rfq != null}">
                                             <hr>
                                             <p class="text-info"><i class="fas fa-building"></i> <strong>Thông tin công ty (RFQ)</strong></p>
@@ -359,7 +361,7 @@
                                 </div>
                                 <div class="card-body">
                                     <p><strong>Mã vận đơn:</strong> ${order.shipping.trackingCode}</p>
-                                    <c:if test="${order.shipping.estimatedDelivery != null}">
+                                    <c:if test="${not empty order.shipping.estimatedDelivery}">
                                         <p><strong>Dự kiến giao:</strong> ${order.shipping.estimatedDelivery}</p>
                                     </c:if>
                                     <c:if test="${order.shipping.goshipOrderCode != null}">
@@ -445,9 +447,5 @@
 </div>
 
 <jsp:include page="../includes/admin-scripts.jsp" />
-
-<script>
-// Không cần chọn carrier nữa vì đã lưu từ checkout
-</script>
 </body>
 </html>

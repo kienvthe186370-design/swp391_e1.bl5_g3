@@ -1,6 +1,7 @@
 package controller;
 
 import DAO.OrderDAO;
+import DAO.RefundDAO;
 import entity.*;
 import utils.OrderStatusValidator;
 
@@ -17,10 +18,12 @@ import java.util.List;
 public class CustomerOrderServlet extends HttpServlet {
     
     private OrderDAO orderDAO;
+    private RefundDAO refundDAO;
     
     @Override
     public void init() throws ServletException {
         orderDAO = new OrderDAO();
+        refundDAO = new RefundDAO();
     }
 
     @Override
@@ -117,8 +120,12 @@ public class CustomerOrderServlet extends HttpServlet {
             // Check if can cancel
             boolean canCancel = "Pending".equals(order.getOrderStatus());
             
+            // Load refund request if exists
+            RefundRequest refundRequest = refundDAO.getRefundRequestByOrderId(orderId);
+            
             request.setAttribute("order", order);
             request.setAttribute("canCancel", canCancel);
+            request.setAttribute("refundRequest", refundRequest);
             
             request.getRequestDispatcher("/customer/order-detail.jsp")
                    .forward(request, response);
@@ -174,7 +181,59 @@ public class CustomerOrderServlet extends HttpServlet {
         
         if ("cancel".equals(action)) {
             cancelOrder(request, response, customer);
+        } else if ("confirm".equals(action)) {
+            confirmReceived(request, response, customer);
         } else {
+            response.sendRedirect(request.getContextPath() + "/customer/orders");
+        }
+    }
+    
+    private void confirmReceived(HttpServletRequest request, HttpServletResponse response,
+                                Customer customer) throws IOException {
+        String orderIdParam = request.getParameter("orderId");
+        
+        if (orderIdParam == null) {
+            response.sendRedirect(request.getContextPath() + "/customer/orders");
+            return;
+        }
+        
+        try {
+            int orderId = Integer.parseInt(orderIdParam);
+            Order order = orderDAO.getOrderById(orderId);
+            
+            // Validate: đơn phải thuộc customer này và status = Delivered
+            if (order == null || order.getCustomerID() != customer.getCustomerID()) {
+                request.getSession().setAttribute("error", "Bạn không có quyền xác nhận đơn này");
+                response.sendRedirect(request.getContextPath() + "/customer/orders");
+                return;
+            }
+            
+            if (!"Delivered".equals(order.getOrderStatus())) {
+                request.getSession().setAttribute("error", "Chỉ có thể xác nhận đơn hàng đã giao");
+                response.sendRedirect(request.getContextPath() + "/customer/orders?action=detail&id=" + orderId);
+                return;
+            }
+            
+            // Kiểm tra đã có refund request chưa
+            if (refundDAO.hasRefundRequest(orderId)) {
+                request.getSession().setAttribute("error", "Đơn hàng đã có yêu cầu hoàn tiền, không thể xác nhận nhận hàng");
+                response.sendRedirect(request.getContextPath() + "/customer/orders?action=detail&id=" + orderId);
+                return;
+            }
+            
+            // Cập nhật trạng thái sang Completed
+            String note = "Khách hàng xác nhận đã nhận được hàng";
+            boolean success = orderDAO.updateOrderStatus(orderId, "Completed", null, note);
+            
+            if (success) {
+                request.getSession().setAttribute("success", "Cảm ơn bạn đã xác nhận nhận hàng! Bạn có thể đánh giá sản phẩm.");
+            } else {
+                request.getSession().setAttribute("error", "Xác nhận thất bại, vui lòng thử lại");
+            }
+            
+            response.sendRedirect(request.getContextPath() + "/customer/orders?action=detail&id=" + orderId);
+            
+        } catch (NumberFormatException e) {
             response.sendRedirect(request.getContextPath() + "/customer/orders");
         }
     }

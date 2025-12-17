@@ -631,6 +631,14 @@
                     
                     <button class="buy-now-btn" onclick="buyNow()">MUA NGAY</button>
                     
+                    <!-- Wishlist Button -->
+                    <div class="wishlist-action" style="margin-bottom: 20px;">
+                        <button class="btn-wishlist" id="wishlistBtn" onclick="toggleWishlist(${product.productID})" style="background: transparent; border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; transition: all 0.2s; width: 100%;">
+                            <i class="fa fa-heart-o" id="wishlistIcon" style="font-size: 18px; color: #ca1515;"></i>
+                            <span id="wishlistText">Thêm vào yêu thích</span>
+                        </button>
+                    </div>
+                    
                     <!-- Features List -->
                     <div class="features-list">
                         <div class="feature-item">
@@ -821,8 +829,185 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Reviews Section -->
+            <div class="reviews-section" style="margin-top: 60px;">
+                <style>
+                    .reviews-section { background: var(--bg-white); }
+                    .reviews-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 20px; }
+                    .reviews-title { font-size: 24px; font-weight: 800; color: var(--text-dark); margin: 0; }
+                    .reviews-summary { display: flex; gap: 40px; padding: 24px; background: var(--bg-light); border-radius: var(--radius-md); margin-bottom: 24px; flex-wrap: wrap; }
+                    .reviews-avg { text-align: center; min-width: 140px; }
+                    .reviews-avg-score { font-size: 48px; font-weight: 800; color: var(--primary); line-height: 1; }
+                    .reviews-avg-stars { color: #FBBF24; font-size: 20px; margin: 8px 0; }
+                    .reviews-avg-count { color: var(--text-muted); font-size: 14px; }
+                    .reviews-bars { flex: 1; min-width: 200px; }
+                    .review-bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+                    .review-bar-label { font-size: 14px; color: var(--text-dark); min-width: 50px; }
+                    .review-bar-track { flex: 1; height: 8px; background: #E5E7EB; border-radius: 4px; overflow: hidden; }
+                    .review-bar-fill { height: 100%; background: #FBBF24; border-radius: 4px; transition: width 0.3s; }
+                    .review-bar-count { font-size: 13px; color: var(--text-muted); min-width: 30px; text-align: right; }
+                    .reviews-filter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+                    .filter-btn { padding: 8px 16px; border: 2px solid var(--border); border-radius: 20px; background: var(--bg-white); color: var(--text-muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+                    .filter-btn:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
+                    .filter-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+                    .review-item { padding: 24px 0; border-bottom: 1px solid var(--border); }
+                    .review-item:last-child { border-bottom: none; }
+                    .review-item.hidden-review { opacity: 0.5; background: #fff5f5; padding: 24px; margin: 0 -24px; border-radius: var(--radius-sm); }
+                    .review-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+                    .review-author { display: flex; align-items: center; gap: 12px; }
+                    .review-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
+                    .review-author-info h4 { font-size: 15px; font-weight: 700; color: var(--text-dark); margin: 0 0 4px; }
+                    .review-stars { color: #FBBF24; font-size: 14px; }
+                    .review-stars .empty { color: #D1D5DB; }
+                    .review-date { font-size: 13px; color: var(--text-muted); }
+                    .review-title-text { font-size: 16px; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; }
+                    .review-content-text { color: #555; line-height: 1.7; margin-bottom: 12px; }
+                    .review-reply { background: #f0f7f0; border-left: 4px solid var(--primary); padding: 16px; margin-top: 16px; border-radius: 0 8px 8px 0; }
+                    .review-reply-header { font-weight: 700; color: var(--primary); margin-bottom: 8px; font-size: 14px; }
+                    .review-reply-content { color: #555; font-size: 14px; line-height: 1.6; }
+                    .hidden-badge { background: #dc3545; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+                    .reviews-empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+                    .reviews-empty i { font-size: 48px; margin-bottom: 16px; color: #ddd; }
+                    .reviews-pagination { display: flex; justify-content: center; gap: 8px; margin-top: 24px; }
+                    .reviews-pagination a, .reviews-pagination span { padding: 8px 14px; border: 1px solid var(--border); border-radius: 6px; color: var(--text-dark); text-decoration: none; font-size: 14px; }
+                    .reviews-pagination a:hover { border-color: var(--primary); color: var(--primary); }
+                    .reviews-pagination .active { background: var(--primary); border-color: var(--primary); color: white; }
+                </style>
+                
+                <div class="reviews-header">
+                    <h2 class="reviews-title"><i class="fa fa-star" style="color: #FBBF24; margin-right: 10px;"></i>Đánh giá sản phẩm</h2>
+                </div>
+                
+                <!-- Reviews Summary -->
+                <div class="reviews-summary">
+                    <div class="reviews-avg">
+                        <div class="reviews-avg-score">${reviewStats.avgRating}</div>
+                        <div class="reviews-avg-stars">
+                            <c:forEach begin="1" end="5" var="i">
+                                <i class="fa fa-star ${i <= reviewStats.avgRating ? '' : (i - 1 < reviewStats.avgRating ? 'fa-star-half-o' : 'empty')}" style="${i > reviewStats.avgRating ? 'color: #D1D5DB;' : ''}"></i>
+                            </c:forEach>
+                        </div>
+                        <div class="reviews-avg-count">${reviewStats.totalReviews} đánh giá</div>
+                    </div>
+                    <div class="reviews-bars">
+                        <c:set var="total" value="${reviewStats.totalReviews > 0 ? reviewStats.totalReviews : 1}"/>
+                        <c:forEach begin="1" end="5" var="i">
+                            <c:set var="starCount" value="${reviewStats['count'.concat(6-i).concat('Star')]}"/>
+                            <c:set var="percent" value="${(starCount / total) * 100}"/>
+                            <div class="review-bar-row">
+                                <span class="review-bar-label">${6-i} <i class="fa fa-star" style="color: #FBBF24;"></i></span>
+                                <div class="review-bar-track">
+                                    <div class="review-bar-fill" style="width: ${percent}%;"></div>
+                                </div>
+                                <span class="review-bar-count">${starCount}</span>
+                            </div>
+                        </c:forEach>
+                    </div>
+                </div>
+                
+                <!-- Filter Tabs -->
+                <div class="reviews-filter">
+                    <a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}" class="filter-btn ${empty filterRating ? 'active' : ''}">Tất cả</a>
+                    <c:forEach begin="1" end="5" var="i">
+                        <a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}&filterRating=${6-i}" class="filter-btn ${filterRating == (6-i) ? 'active' : ''}">${6-i} <i class="fa fa-star" style="color: #FBBF24;"></i></a>
+                    </c:forEach>
+                </div>
+                
+                <!-- Reviews List -->
+                <c:choose>
+                    <c:when test="${empty reviews}">
+                        <div class="reviews-empty">
+                            <i class="fa fa-comment-o"></i>
+                            <h4>Chưa có đánh giá nào</h4>
+                            <p>Hãy là người đầu tiên đánh giá sản phẩm này!</p>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <c:forEach var="review" items="${reviews}">
+                            <div class="review-item ${review.hidden && review.customerId == currentCustomerId ? 'hidden-review' : ''}">
+                                <c:if test="${review.hidden && review.customerId == currentCustomerId}">
+                                    <div style="margin-bottom: 12px;">
+                                        <span class="hidden-badge"><i class="fa fa-eye-slash"></i> Đánh giá của bạn đã bị ẩn</span>
+                                    </div>
+                                </c:if>
+                                <div class="review-header-row">
+                                    <div class="review-author">
+                                        <div class="review-avatar">${review.customerName.substring(0,1).toUpperCase()}</div>
+                                        <div class="review-author-info">
+                                            <h4>${review.customerName}</h4>
+                                            <div class="review-stars">
+                                                <c:forEach begin="1" end="5" var="i">
+                                                    <i class="fa fa-star ${i <= review.rating ? '' : 'empty'}"></i>
+                                                </c:forEach>
+                                            </div>
+                                            <c:if test="${not empty review.variantSku}">
+                                                <div style="font-size: 12px; color: #888; margin-top: 4px;">
+                                                    <i class="fa fa-tag"></i> Phân loại: ${review.variantSku}
+                                                </div>
+                                            </c:if>
+                                        </div>
+                                    </div>
+                                    <div class="review-date">
+                                        <i class="fa fa-clock-o"></i> ${review.reviewDate.toLocalDate()}
+                                    </div>
+                                </div>
+                                
+                                <c:if test="${not empty review.reviewTitle}">
+                                    <div class="review-title-text">${review.reviewTitle}</div>
+                                </c:if>
+                                
+                                <c:if test="${not empty review.reviewContent}">
+                                    <div class="review-content-text">${review.reviewContent}</div>
+                                </c:if>
+                                
+
+                                
+                                <c:if test="${review.hasReply()}">
+                                    <div class="review-reply">
+                                        <div class="review-reply-header">
+                                            <i class="fa fa-reply"></i> Phản hồi từ Pickleball Shop
+                                        </div>
+                                        <div class="review-reply-content">${review.replyContent}</div>
+                                    </div>
+                                </c:if>
+                            </div>
+                        </c:forEach>
+                        
+                        <!-- Pagination -->
+                        <c:if test="${totalReviewPages > 1}">
+                            <div class="reviews-pagination">
+                                <c:if test="${reviewPage > 1}">
+                                    <a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}${not empty filterRating ? '&filterRating='.concat(filterRating) : ''}&reviewPage=${reviewPage - 1}">«</a>
+                                </c:if>
+                                <c:forEach begin="1" end="${totalReviewPages}" var="i">
+                                    <c:if test="${i >= reviewPage - 2 && i <= reviewPage + 2}">
+                                        <c:choose>
+                                            <c:when test="${i == reviewPage}">
+                                                <span class="active">${i}</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}${not empty filterRating ? '&filterRating='.concat(filterRating) : ''}&reviewPage=${i}">${i}</a>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </c:if>
+                                </c:forEach>
+                                <c:if test="${reviewPage < totalReviewPages}">
+                                    <a href="${pageContext.request.contextPath}/product-detail?id=${product.productID}${not empty filterRating ? '&filterRating='.concat(filterRating) : ''}&reviewPage=${reviewPage + 1}">»</a>
+                                </c:if>
+                            </div>
+                        </c:if>
+                    </c:otherwise>
+                </c:choose>
+            </div>
         </div>
     </section>
+    
+    <!-- Review Image Modal -->
+    <div id="reviewImageModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9999; cursor:zoom-out;" onclick="closeReviewImage()">
+        <button style="position:absolute; top:20px; right:20px; background:white; border:none; width:40px; height:40px; border-radius:50%; font-size:20px; cursor:pointer;">&times;</button>
+        <img id="reviewModalImage" src="" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); max-width:90%; max-height:90%; object-fit:contain; border-radius: 8px;">
+    </div>
 
     <!-- Related Products Section -->
     <c:if test="${not empty relatedProducts && relatedProducts.size() > 0}">
@@ -1195,9 +1380,85 @@
         
         // Keyboard support for zoom
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeZoom();
+            if (e.key === 'Escape') {
+                closeZoom();
+                closeReviewImage();
+            }
+        });
+        
+        // Wishlist functions
+        function toggleWishlist(productId) {
+            $.ajax({
+                url: '${pageContext.request.contextPath}/wishlist',
+                type: 'POST',
+                data: { action: 'toggle', productId: productId },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.login) {
+                        window.location.href = '${pageContext.request.contextPath}/login?redirect=product-detail?id=' + productId;
+                        return;
+                    }
+                    if (res.success) {
+                        updateWishlistButton(res.added);
+                        showToast(res.message, res.added ? 'success' : 'info');
+                    } else {
+                        showToast(res.message || 'Có lỗi xảy ra', 'error');
+                    }
+                },
+                error: function() {
+                    showToast('Có lỗi xảy ra, vui lòng thử lại', 'error');
+                }
+            });
+        }
+        
+        function updateWishlistButton(isInWishlist) {
+            var icon = document.getElementById('wishlistIcon');
+            var text = document.getElementById('wishlistText');
+            var btn = document.getElementById('wishlistBtn');
+            if (isInWishlist) {
+                icon.className = 'fa fa-heart';
+                icon.style.color = '#ca1515';
+                text.textContent = 'Đã thêm vào yêu thích';
+                btn.style.borderColor = '#ca1515';
+                btn.style.background = 'rgba(202, 21, 21, 0.05)';
+            } else {
+                icon.className = 'fa fa-heart-o';
+                icon.style.color = '#ca1515';
+                text.textContent = 'Thêm vào yêu thích';
+                btn.style.borderColor = 'var(--border)';
+                btn.style.background = 'transparent';
+            }
+        }
+        
+        function showToast(message, type) {
+            var toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.style.cssText = 'position:fixed;top:20px;right:20px;padding:15px 25px;border-radius:8px;color:#fff;font-weight:500;z-index:9999;animation:slideIn 0.3s ease;';
+            toast.style.background = type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function() { toast.remove(); }, 3000);
+        }
+        
+        // Check wishlist status on page load
+        $(document).ready(function() {
+            var productId = '${product.productID}';
+            $.ajax({
+                url: '${pageContext.request.contextPath}/wishlist?action=check&productId=' + productId,
+                type: 'GET',
+                dataType: 'json',
+                success: function(res) {
+                    if (res.inWishlist) {
+                        updateWishlistButton(true);
+                    }
+                }
+            });
         });
     </script>
+    <style>
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .btn-wishlist:hover { border-color: #ca1515 !important; background: rgba(202, 21, 21, 0.05) !important; }
+    </style>
 </body>
 </html>
            

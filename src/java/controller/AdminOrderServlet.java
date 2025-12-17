@@ -166,7 +166,6 @@ public class AdminOrderServlet extends HttpServlet {
                                 Employee employee) throws ServletException, IOException {
         
         String idParam = request.getParameter("id");
-        System.out.println("[AdminOrder] viewOrderDetail - id param: " + idParam);
         
         if (idParam == null || idParam.isEmpty()) {
             request.getSession().setAttribute("error", "Thiếu ID đơn hàng");
@@ -306,8 +305,6 @@ public class AdminOrderServlet extends HttpServlet {
         String orderIdParam = request.getParameter("orderId");
         String newStatus = request.getParameter("newStatus");
         String note = request.getParameter("note");
-        
-        System.out.println("[AdminOrder] updateOrderStatus - orderId: " + orderIdParam + ", newStatus: " + newStatus);
         
         if (orderIdParam == null || orderIdParam.isEmpty() || newStatus == null || newStatus.isEmpty()) {
             request.getSession().setAttribute("error", "Thiếu thông tin đơn hàng hoặc trạng thái");
@@ -980,10 +977,9 @@ public class AdminOrderServlet extends HttpServlet {
                         "Shipper xác nhận đã giao hàng thành công");
                     shippingDAO.updateDeliveredDate(shipping.getShippingID());
                     
-                    // Xử lý thu tiền COD (codCollected đã được lấy ở trên)
+                    // Xử lý thu tiền COD
                     if ("true".equals(codCollected) && "COD".equals(order.getPaymentMethod())) {
                         orderDAO.updatePaymentStatus(orderId, "Paid");
-                        System.out.println("[AdminOrder] COD collected for order " + orderId);
                     }
                 } else if (ShippingTracking.STATUS_RETURNED.equals(newStatus)) {
                     orderDAO.updateOrderStatus(orderId, "Cancelled", shipper.getEmployeeID(), 

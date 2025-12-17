@@ -55,7 +55,7 @@
             </div>
         </div>
     </section>
-    
+
     <section class="spad">
         <div class="container">
             <c:if test="${not empty sessionScope.success}">
@@ -99,6 +99,12 @@
                             <c:when test="${order.orderStatus == 'Delivered'}">
                                 <span class="badge badge-success" style="font-size: 14px; padding: 8px 16px;">Đã giao</span>
                             </c:when>
+                            <c:when test="${order.orderStatus == 'Completed'}">
+                                <span class="badge badge-success" style="font-size: 14px; padding: 8px 16px;">Hoàn thành</span>
+                            </c:when>
+                            <c:when test="${order.orderStatus == 'Returned'}">
+                                <span class="badge badge-info" style="font-size: 14px; padding: 8px 16px;">Đã hoàn tiền</span>
+                            </c:when>
                             <c:when test="${order.orderStatus == 'Cancelled'}">
                                 <span class="badge badge-danger" style="font-size: 14px; padding: 8px 16px;">Đã hủy</span>
                             </c:when>
@@ -108,29 +114,102 @@
 
                 <!-- Order Status Timeline -->
                 <c:if test="${order.orderStatus != 'Cancelled'}">
-                    <div class="order-status-timeline">
-                        <div class="status-step ${order.orderStatus == 'Pending' ? 'current' : 'active'}">
-                            <div class="step-icon"><i class="fa fa-clock-o"></i></div>
-                            <div class="step-label">Chờ xử lý</div>
-                        </div>
-                        <div class="status-step ${order.orderStatus == 'Confirmed' ? 'current' : (order.orderStatus == 'Processing' || order.orderStatus == 'Shipping' || order.orderStatus == 'Delivered' ? 'active' : '')}">
-                            <div class="step-icon"><i class="fa fa-check"></i></div>
-                            <div class="step-label">Đã xác nhận</div>
-                        </div>
-                        <div class="status-step ${order.orderStatus == 'Processing' ? 'current' : (order.orderStatus == 'Shipping' || order.orderStatus == 'Delivered' ? 'active' : '')}">
-                            <div class="step-icon"><i class="fa fa-cog"></i></div>
-                            <div class="step-label">Đang xử lý</div>
-                        </div>
-                        <div class="status-step ${order.orderStatus == 'Shipping' ? 'current' : (order.orderStatus == 'Delivered' ? 'active' : '')}">
-                            <div class="step-icon"><i class="fa fa-truck"></i></div>
-                            <div class="step-label">Đang giao</div>
-                        </div>
-                        <div class="status-step ${order.orderStatus == 'Delivered' ? 'active' : ''}">
-                            <div class="step-icon"><i class="fa fa-home"></i></div>
-                            <div class="step-label">Đã giao</div>
-                        </div>
-                    </div>
+                    <c:choose>
+                        <!-- Timeline cho trường hợp có yêu cầu hoàn tiền -->
+                        <c:when test="${not empty refundRequest || order.orderStatus == 'Returned'}">
+                            <div class="order-status-timeline">
+                                <div class="status-step active">
+                                    <div class="step-icon"><i class="fa fa-clock-o"></i></div>
+                                    <div class="step-label">Chờ xử lý</div>
+                                </div>
+                                <div class="status-step active">
+                                    <div class="step-icon"><i class="fa fa-check"></i></div>
+                                    <div class="step-label">Đã xác nhận</div>
+                                </div>
+                                <div class="status-step active">
+                                    <div class="step-icon"><i class="fa fa-cog"></i></div>
+                                    <div class="step-label">Đang xử lý</div>
+                                </div>
+                                <div class="status-step active">
+                                    <div class="step-icon"><i class="fa fa-truck"></i></div>
+                                    <div class="step-label">Đang giao</div>
+                                </div>
+                                <div class="status-step active">
+                                    <div class="step-icon"><i class="fa fa-home"></i></div>
+                                    <div class="step-label">Đã giao</div>
+                                </div>
+                                <c:choose>
+                                    <c:when test="${refundRequest.refundStatus == 'Pending'}">
+                                        <div class="status-step current">
+                                            <div class="step-icon"><i class="fa fa-hourglass-half"></i></div>
+                                            <div class="step-label">Chờ duyệt hoàn tiền</div>
+                                        </div>
+                                        <div class="status-step">
+                                            <div class="step-icon"><i class="fa fa-money"></i></div>
+                                            <div class="step-label">Đã hoàn tiền</div>
+                                        </div>
+                                    </c:when>
+                                    <c:when test="${refundRequest.refundStatus == 'Approved'}">
+                                        <div class="status-step active">
+                                            <div class="step-icon"><i class="fa fa-hourglass-half"></i></div>
+                                            <div class="step-label">Đã duyệt hoàn tiền</div>
+                                        </div>
+                                        <div class="status-step current">
+                                            <div class="step-icon"><i class="fa fa-money"></i></div>
+                                            <div class="step-label">Đang hoàn tiền</div>
+                                        </div>
+                                    </c:when>
+                                    <c:when test="${refundRequest.refundStatus == 'Completed' || order.orderStatus == 'Returned'}">
+                                        <div class="status-step active">
+                                            <div class="step-icon"><i class="fa fa-hourglass-half"></i></div>
+                                            <div class="step-label">Đã duyệt hoàn tiền</div>
+                                        </div>
+                                        <div class="status-step active">
+                                            <div class="step-icon"><i class="fa fa-money"></i></div>
+                                            <div class="step-label">Đã hoàn tiền</div>
+                                        </div>
+                                    </c:when>
+                                    <c:when test="${refundRequest.refundStatus == 'Rejected'}">
+                                        <div class="status-step cancelled">
+                                            <div class="step-icon"><i class="fa fa-times"></i></div>
+                                            <div class="step-label">Từ chối hoàn tiền</div>
+                                        </div>
+                                    </c:when>
+                                </c:choose>
+                            </div>
+                        </c:when>
+                        <!-- Timeline bình thường -->
+                        <c:otherwise>
+                            <div class="order-status-timeline">
+                                <div class="status-step ${order.orderStatus == 'Pending' ? 'current' : 'active'}">
+                                    <div class="step-icon"><i class="fa fa-clock-o"></i></div>
+                                    <div class="step-label">Chờ xử lý</div>
+                                </div>
+                                <div class="status-step ${order.orderStatus == 'Confirmed' ? 'current' : (order.orderStatus == 'Processing' || order.orderStatus == 'Shipping' || order.orderStatus == 'Delivered' || order.orderStatus == 'Completed' ? 'active' : '')}">
+                                    <div class="step-icon"><i class="fa fa-check"></i></div>
+                                    <div class="step-label">Đã xác nhận</div>
+                                </div>
+                                <div class="status-step ${order.orderStatus == 'Processing' ? 'current' : (order.orderStatus == 'Shipping' || order.orderStatus == 'Delivered' || order.orderStatus == 'Completed' ? 'active' : '')}">
+                                    <div class="step-icon"><i class="fa fa-cog"></i></div>
+                                    <div class="step-label">Đang xử lý</div>
+                                </div>
+                                <div class="status-step ${order.orderStatus == 'Shipping' ? 'current' : (order.orderStatus == 'Delivered' || order.orderStatus == 'Completed' ? 'active' : '')}">
+                                    <div class="step-icon"><i class="fa fa-truck"></i></div>
+                                    <div class="step-label">Đang giao</div>
+                                </div>
+                                <div class="status-step ${order.orderStatus == 'Delivered' ? 'current' : (order.orderStatus == 'Completed' ? 'active' : '')}">
+                                    <div class="step-icon"><i class="fa fa-home"></i></div>
+                                    <div class="step-label">Đã giao</div>
+                                </div>
+                                <div class="status-step ${order.orderStatus == 'Completed' ? 'active' : ''}">
+                                    <div class="step-icon"><i class="fa fa-check-circle"></i></div>
+                                    <div class="step-label">Hoàn thành</div>
+                                </div>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
                 </c:if>
+                
                 <c:if test="${order.orderStatus == 'Cancelled'}">
                     <div class="alert alert-danger mt-3">
                         <strong>Đơn hàng đã bị hủy</strong>
@@ -140,7 +219,7 @@
                     </div>
                 </c:if>
             </div>
-            
+
             <div class="row">
                 <div class="col-lg-8">
                     <!-- Products -->
@@ -148,12 +227,14 @@
                         <h5><i class="fa fa-shopping-bag"></i> Sản phẩm</h5>
                         <c:forEach var="detail" items="${order.orderDetails}">
                             <div class="product-item">
-                                <c:if test="${not empty detail.productImage}">
-                                    <img src="${pageContext.request.contextPath}/${detail.productImage}" alt="${detail.productName}">
-                                </c:if>
-                                <c:if test="${empty detail.productImage}">
-                                    <img src="${pageContext.request.contextPath}/img/product/product-placeholder.jpg" alt="${detail.productName}">
-                                </c:if>
+                                <c:choose>
+                                    <c:when test="${not empty detail.productImage}">
+                                        <img src="${pageContext.request.contextPath}/${detail.productImage}" alt="${detail.productName}">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <img src="${pageContext.request.contextPath}/img/product/product-placeholder.jpg" alt="${detail.productName}">
+                                    </c:otherwise>
+                                </c:choose>
                                 <div class="flex-grow-1">
                                     <strong>${detail.productName}</strong>
                                     <br><small class="text-muted">SKU: ${detail.sku}</small>
@@ -204,7 +285,7 @@
                         </c:if>
                     </div>
                 </div>
-                
+
                 <div class="col-lg-4">
                     <!-- Delivery Info -->
                     <div class="info-card">
@@ -213,7 +294,7 @@
                             <p class="mb-1"><strong>${order.address.recipientName}</strong></p>
                             <p class="mb-1">${order.address.phone}</p>
                             <p class="mb-0 text-muted">
-                                ${order.address.street}, ${order.address.ward}, ${order.address.district}, ${order.address.city}
+                                ${order.address.street}<c:if test="${not empty order.address.ward}">, ${order.address.ward}</c:if><c:if test="${not empty order.address.district}">, ${order.address.district}</c:if><c:if test="${not empty order.address.city}">, ${order.address.city}</c:if>
                             </p>
                         </c:if>
                     </div>
@@ -263,7 +344,7 @@
                             </strong>
                         </div>
                     </div>
-                    
+
                     <!-- Shipping Info -->
                     <c:if test="${order.shipping != null && order.shipping.trackingCode != null}">
                         <div class="info-card">
@@ -310,12 +391,89 @@
                         </div>
                     </c:if>
                     
+                    <!-- Thông tin hoàn tiền nếu có -->
+                    <c:if test="${not empty refundRequest}">
+                        <div class="info-card">
+                            <h5><i class="fa fa-undo"></i> Yêu cầu hoàn tiền</h5>
+                            <p class="mb-2">
+                                <strong>Trạng thái:</strong>
+                                <c:choose>
+                                    <c:when test="${refundRequest.refundStatus == 'Pending'}">
+                                        <span class="badge badge-warning">Chờ duyệt</span>
+                                    </c:when>
+                                    <c:when test="${refundRequest.refundStatus == 'Approved'}">
+                                        <span class="badge badge-info">Đã duyệt - Đang hoàn tiền</span>
+                                    </c:when>
+                                    <c:when test="${refundRequest.refundStatus == 'Completed'}">
+                                        <span class="badge badge-success">Đã hoàn tiền thành công</span>
+                                    </c:when>
+                                    <c:when test="${refundRequest.refundStatus == 'Rejected'}">
+                                        <span class="badge badge-danger">Đã từ chối</span>
+                                    </c:when>
+                                </c:choose>
+                            </p>
+                            <p class="mb-2">
+                                <strong>Số tiền hoàn:</strong> 
+                                <span class="text-danger">
+                                    <fmt:formatNumber value="${refundRequest.refundAmount}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                </span>
+                            </p>
+                            <p class="mb-2"><strong>Lý do:</strong> ${refundRequest.refundReason}</p>
+                            <c:if test="${not empty refundRequest.adminNotes}">
+                                <p class="mb-2"><strong>Ghi chú từ shop:</strong> ${refundRequest.adminNotes}</p>
+                            </c:if>
+                            <a href="${pageContext.request.contextPath}/customer/refund?action=detail&id=${refundRequest.refundRequestID}" 
+                               class="btn btn-outline-info btn-block btn-sm">
+                                <i class="fa fa-eye"></i> Xem chi tiết
+                            </a>
+                        </div>
+                    </c:if>
+
                     <!-- Actions -->
+                    
+                    <!-- Hủy đơn khi Pending -->
                     <c:if test="${order.orderStatus == 'Pending'}">
                         <button class="btn btn-danger btn-block" onclick="showCancelModal()">
                             <i class="fa fa-times"></i> Hủy đơn hàng
                         </button>
                     </c:if>
+                    
+                    <!-- Khi đơn hàng Delivered và chưa có refund request: hiện 2 nút -->
+                    <c:if test="${order.orderStatus == 'Delivered' && empty refundRequest}">
+                        <div class="info-card">
+                            <h5><i class="fa fa-check-circle"></i> Xác nhận đơn hàng</h5>
+                            <p class="text-muted small">Vui lòng xác nhận bạn đã nhận được hàng hoặc yêu cầu trả hàng/hoàn tiền.</p>
+                            <form method="post" action="${pageContext.request.contextPath}/customer/orders" class="mb-2">
+                                <input type="hidden" name="action" value="confirm">
+                                <input type="hidden" name="orderId" value="${order.orderID}">
+                                <button type="submit" class="btn btn-success btn-block" 
+                                        onclick="return confirm('Xác nhận bạn đã nhận được hàng?')">
+                                    <i class="fa fa-check"></i> Đã nhận được hàng
+                                </button>
+                            </form>
+                            <a href="${pageContext.request.contextPath}/customer/refund?action=create&orderId=${order.orderID}" 
+                               class="btn btn-warning btn-block">
+                                <i class="fa fa-undo"></i> Trả hàng/Hoàn tiền
+                            </a>
+                        </div>
+                    </c:if>
+                    
+                    <!-- Khi đơn hàng Completed: chỉ hiện nút đánh giá -->
+                    <c:if test="${order.orderStatus == 'Completed'}">
+                        <a href="${pageContext.request.contextPath}/order-review?orderId=${order.orderID}" 
+                           class="btn btn-success btn-block">
+                            <i class="fa fa-star"></i> Đánh giá sản phẩm
+                        </a>
+                    </c:if>
+                    
+                    <!-- Khi đang Shipping và chưa có refund: cho phép yêu cầu hoàn tiền -->
+                    <c:if test="${order.orderStatus == 'Shipping' && empty refundRequest}">
+                        <a href="${pageContext.request.contextPath}/customer/refund?action=create&orderId=${order.orderID}" 
+                           class="btn btn-warning btn-block">
+                            <i class="fa fa-undo"></i> Yêu cầu hoàn tiền
+                        </a>
+                    </c:if>
+                    
                     <a href="${pageContext.request.contextPath}/customer/orders" class="btn btn-secondary btn-block">
                         <i class="fa fa-arrow-left"></i> Quay lại
                     </a>
