@@ -53,6 +53,9 @@ public class FeedbackDetailServlet extends HttpServlet {
                 return;
             }
             
+            // Populate images for review
+            review.setImages(reviewDAO.getReviewImages(reviewId));
+            
             request.setAttribute("review", review);
             request.getRequestDispatcher("/feedback-detail.jsp").forward(request, response);
             

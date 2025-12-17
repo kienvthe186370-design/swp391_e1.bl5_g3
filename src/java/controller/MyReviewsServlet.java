@@ -50,6 +50,9 @@ public class MyReviewsServlet extends HttpServlet {
         int totalReviews = reviewDAO.countReviewsByCustomer(customer.getCustomerID());
         int totalPages = (int) Math.ceil((double) totalReviews / PAGE_SIZE);
         
+        // Populate images for reviews
+        reviewDAO.populateReviewImages(reviews);
+        
         request.setAttribute("reviews", reviews);
         request.setAttribute("totalReviews", totalReviews);
         request.setAttribute("currentPage", page);

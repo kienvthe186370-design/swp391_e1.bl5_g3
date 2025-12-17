@@ -177,6 +177,9 @@
                                             <strong>${review.reviewTitle}</strong><br>
                                         </c:if>
                                         <div class="review-content-preview">${review.reviewContent}</div>
+                                        <c:if test="${review.hasImages()}">
+                                            <span class="badge badge-info mt-1"><i class="fas fa-image"></i> ${review.images.size()} ảnh</span>
+                                        </c:if>
                                     </td>
                                     <td>
                                         <c:choose>

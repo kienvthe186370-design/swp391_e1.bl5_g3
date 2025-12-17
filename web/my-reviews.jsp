@@ -41,6 +41,9 @@
         .empty-state h3 { color: #666; margin-bottom: 10px; }
         .empty-state p { color: #999; }
         .pagination-wrapper { display: flex; justify-content: center; margin-top: 30px; }
+        .review-images { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+        .review-images img { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #e5e7eb; transition: transform 0.2s, box-shadow 0.2s; }
+        .review-images img:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
     </style>
 </head>
 <body>
@@ -133,7 +136,16 @@
                                         <div class="review-content">${review.reviewContent}</div>
                                     </c:if>
 
-
+                                    <!-- Review Images -->
+                                    <c:if test="${review.hasImages()}">
+                                        <div class="review-images">
+                                            <c:forEach var="img" items="${review.images}">
+                                                <img src="${pageContext.request.contextPath}${img.mediaUrl}" 
+                                                     alt="Review image" 
+                                                     onclick="openImageModal('${pageContext.request.contextPath}${img.mediaUrl}')">
+                                            </c:forEach>
+                                        </div>
+                                    </c:if>
 
                                     <div class="review-date">
                                         <i class="fa fa-clock-o"></i>

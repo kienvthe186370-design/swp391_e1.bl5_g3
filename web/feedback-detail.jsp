@@ -131,6 +131,22 @@
                                 </c:choose>
                             </div>
 
+                            <!-- Review Images Gallery -->
+                            <c:if test="${review.hasImages()}">
+                                <div class="mt-4">
+                                    <h6><i class="fas fa-images"></i> Hình ảnh đánh giá (${review.images.size()})</h6>
+                                    <div class="d-flex flex-wrap gap-2 mt-2" style="gap: 10px;">
+                                        <c:forEach var="img" items="${review.images}">
+                                            <img src="${pageContext.request.contextPath}${img.mediaUrl}" 
+                                                 alt="Review image" 
+                                                 style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 1px solid #dee2e6;"
+                                                 onclick="openImageModal('${pageContext.request.contextPath}${img.mediaUrl}')"
+                                                 data-toggle="tooltip" title="Click để xem ảnh lớn">
+                                        </c:forEach>
+                                    </div>
+                                </div>
+                            </c:if>
+
                             <!-- Reply Section -->
                             <c:choose>
                                 <c:when test="${review.hasReply()}">
@@ -284,8 +300,29 @@
 </footer>
 </div>
 
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="background: transparent; border: none;">
+            <div class="modal-body text-center p-0">
+                <img id="modalImage" src="" style="max-width: 100%; max-height: 80vh; border-radius: 8px;">
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
+<script>
+    function openImageModal(src) {
+        document.getElementById('modalImage').src = src;
+        $('#imageModal').modal('show');
+    }
+    
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
 </body>
 </html>

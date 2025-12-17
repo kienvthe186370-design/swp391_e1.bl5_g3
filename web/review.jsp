@@ -146,7 +146,7 @@
                     </div>
                 </div>
 
-                <form class="review-form" method="post" action="${pageContext.request.contextPath}/review">
+                <form class="review-form" method="post" action="${pageContext.request.contextPath}/review" enctype="multipart/form-data">
                     <input type="hidden" name="orderDetailId" value="${orderDetail.orderDetailId}">
                     <input type="hidden" name="productId" value="${orderDetail.productId}">
 
@@ -191,6 +191,24 @@
                         </label>
                         <textarea name="reviewContent" class="form-input" placeholder="Chia sẻ chi tiết trải nghiệm của bạn về sản phẩm: chất lượng, độ bền, cảm giác khi sử dụng..." maxlength="1000" id="contentInput"></textarea>
                         <div class="char-count"><span id="contentCount">0</span>/1000 ký tự</div>
+                    </div>
+
+                    <!-- Images Upload -->
+                    <div class="form-section">
+                        <label class="form-label">
+                            Hình ảnh sản phẩm
+                            <span class="optional">(Tối đa 5 ảnh, mỗi ảnh không quá 2MB)</span>
+                        </label>
+                        <div class="upload-container" id="uploadContainer">
+                            <div class="upload-box" id="uploadBox" onclick="document.getElementById('imageInput').click()">
+                                <i class="fa fa-camera"></i>
+                                <span>Thêm ảnh</span>
+                            </div>
+                        </div>
+                        <input type="file" id="imageInput" name="reviewImages" multiple accept="image/jpeg,image/png,image/gif" style="display: none;">
+                        <div class="upload-hint">
+                            <i class="fa fa-info-circle"></i> Chấp nhận định dạng: JPG, PNG, GIF. Tối đa 5 ảnh.
+                        </div>
                     </div>
 
                     <!-- Guidelines -->
@@ -251,6 +269,79 @@
         document.getElementById('contentInput').addEventListener('input', function() {
             document.getElementById('contentCount').textContent = this.value.length;
         });
+
+        // Image upload preview
+        const imageInput = document.getElementById('imageInput');
+        const uploadContainer = document.getElementById('uploadContainer');
+        const uploadBox = document.getElementById('uploadBox');
+        const MAX_IMAGES = 5;
+        const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+        let selectedFiles = [];
+
+        imageInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            
+            files.forEach(file => {
+                if (selectedFiles.length >= MAX_IMAGES) {
+                    alert('Chỉ được upload tối đa ' + MAX_IMAGES + ' ảnh');
+                    return;
+                }
+                if (file.size > MAX_SIZE) {
+                    alert('File ' + file.name + ' vượt quá 2MB');
+                    return;
+                }
+                if (!file.type.match(/image\/(jpeg|png|gif)/)) {
+                    alert('File ' + file.name + ' không đúng định dạng');
+                    return;
+                }
+                selectedFiles.push(file);
+                addPreview(file, selectedFiles.length - 1);
+            });
+            
+            updateUploadBox();
+            updateFileInput();
+        });
+
+        function addPreview(file, index) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.createElement('div');
+                preview.className = 'preview-item';
+                preview.style.display = 'block';
+                preview.dataset.index = index;
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview">
+                    <button type="button" class="remove-btn" onclick="removeImage(${index})">
+                        <i class="fa fa-times"></i>
+                    </button>
+                `;
+                uploadContainer.insertBefore(preview, uploadBox);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage(index) {
+            selectedFiles.splice(index, 1);
+            refreshPreviews();
+            updateUploadBox();
+            updateFileInput();
+        }
+
+        function refreshPreviews() {
+            const previews = uploadContainer.querySelectorAll('.preview-item');
+            previews.forEach(p => p.remove());
+            selectedFiles.forEach((file, idx) => addPreview(file, idx));
+        }
+
+        function updateUploadBox() {
+            uploadBox.style.display = selectedFiles.length >= MAX_IMAGES ? 'none' : 'flex';
+        }
+
+        function updateFileInput() {
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            imageInput.files = dt.files;
+        }
     </script>
 </body>
 </html>
