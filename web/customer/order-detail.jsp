@@ -115,8 +115,8 @@
                 <!-- Order Status Timeline -->
                 <c:if test="${order.orderStatus != 'Cancelled'}">
                     <c:choose>
-                        <!-- Timeline cho trường hợp có yêu cầu hoàn tiền -->
                         <c:when test="${not empty refundRequest || order.orderStatus == 'Returned'}">
+                            <%-- Timeline cho trường hợp có yêu cầu hoàn tiền --%>
                             <div class="order-status-timeline">
                                 <div class="status-step active">
                                     <div class="step-icon"><i class="fa fa-clock-o"></i></div>
@@ -178,7 +178,7 @@
                                 </c:choose>
                             </div>
                         </c:when>
-                        <!-- Timeline bình thường -->
+                        <%-- Timeline bình thường --%>
                         <c:otherwise>
                             <div class="order-status-timeline">
                                 <div class="status-step ${order.orderStatus == 'Pending' ? 'current' : 'active'}">
