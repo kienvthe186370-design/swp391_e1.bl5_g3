@@ -23,6 +23,7 @@ public class Voucher {
     private BigDecimal maxDiscountAmount;
     private Integer maxUsage;
     private int usedCount;
+    private Integer maxUsagePerCustomer;
     private Timestamp startDate;
     private Timestamp endDate;
     private boolean isActive;
@@ -33,7 +34,7 @@ public class Voucher {
     public Voucher() {
     }
 
-    public Voucher(int voucherID, String voucherCode, String voucherName, String description, String discountType, BigDecimal discountValue, BigDecimal minOrderValue, BigDecimal maxDiscountAmount, Integer maxUsage, int usedCount, Timestamp startDate, Timestamp endDate, boolean isActive, boolean isPrivate, Integer createdBy, Timestamp createdDate) {
+    public Voucher(int voucherID, String voucherCode, String voucherName, String description, String discountType, BigDecimal discountValue, BigDecimal minOrderValue, BigDecimal maxDiscountAmount, Integer maxUsage, int usedCount, Integer maxUsagePerCustomer, Timestamp startDate, Timestamp endDate, boolean isActive, boolean isPrivate, Integer createdBy, Timestamp createdDate) {
         this.voucherID = voucherID;
         this.voucherCode = voucherCode;
         this.voucherName = voucherName;
@@ -44,6 +45,7 @@ public class Voucher {
         this.maxDiscountAmount = maxDiscountAmount;
         this.maxUsage = maxUsage;
         this.usedCount = usedCount;
+        this.maxUsagePerCustomer = maxUsagePerCustomer;
         this.startDate = startDate;
         this.endDate = endDate;
         this.isActive = isActive;
@@ -132,6 +134,14 @@ public class Voucher {
         this.usedCount = usedCount;
     }
 
+    public Integer getMaxUsagePerCustomer() {
+        return maxUsagePerCustomer;
+    }
+
+    public void setMaxUsagePerCustomer(Integer maxUsagePerCustomer) {
+        this.maxUsagePerCustomer = maxUsagePerCustomer;
+    }
+
     public Timestamp getStartDate() {
         return startDate;
     }
@@ -182,7 +192,7 @@ public class Voucher {
 
     @Override
     public String toString() {
-        return "Voucher{" + "voucherID=" + voucherID + ", voucherCode=" + voucherCode + ", voucherName=" + voucherName + ", description=" + description + ", discountType=" + discountType + ", discountValue=" + discountValue + ", minOrderValue=" + minOrderValue + ", maxDiscountAmount=" + maxDiscountAmount + ", maxUsage=" + maxUsage + ", usedCount=" + usedCount + ", startDate=" + startDate + ", endDate=" + endDate + ", isActive=" + isActive + ", isPrivate=" + isPrivate + ", createdBy=" + createdBy + ", createdDate=" + createdDate + '}';
+        return "Voucher{" + "voucherID=" + voucherID + ", voucherCode=" + voucherCode + ", voucherName=" + voucherName + ", description=" + description + ", discountType=" + discountType + ", discountValue=" + discountValue + ", minOrderValue=" + minOrderValue + ", maxDiscountAmount=" + maxDiscountAmount + ", maxUsage=" + maxUsage + ", usedCount=" + usedCount + ", maxUsagePerCustomer=" + maxUsagePerCustomer + ", startDate=" + startDate + ", endDate=" + endDate + ", isActive=" + isActive + ", isPrivate=" + isPrivate + ", createdBy=" + createdBy + ", createdDate=" + createdDate + '}';
     }
 
     /**

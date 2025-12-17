@@ -172,16 +172,36 @@
                 <div class="card-body">
                   
                   <div class="form-group">
-                    <label for="maxUsage">Số lần sử dụng tối đa</label>
+                    <label for="maxUsage">Số lần sử dụng tối đa (tổng)</label>
                     <input type="number" class="form-control" id="maxUsage" name="maxUsage" 
                            value="${voucher.maxUsage}" min="1" step="1"
                            placeholder="VD: 100">
-                    <small class="form-text text-muted">Để trống nếu không giới hạn</small>
+                    <small class="form-text text-muted">Tổng số lần voucher có thể được sử dụng bởi tất cả khách hàng. Để trống nếu không giới hạn</small>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="maxUsagePerCustomer">
+                      Số lần sử dụng tối đa / khách hàng 
+                      <span class="text-danger">*</span>
+                    </label>
+                    <input type="number" class="form-control" id="maxUsagePerCustomer" name="maxUsagePerCustomer" 
+                           value="${voucher.maxUsagePerCustomer != null ? voucher.maxUsagePerCustomer : 1}" 
+                           min="1" step="1" required
+                           placeholder="VD: 1">
+                    <small class="form-text text-muted">
+                      <i class="fas fa-info-circle text-info"></i> 
+                      Mỗi khách hàng chỉ được sử dụng voucher này tối đa bao nhiêu lần. 
+                      <strong>Mặc định: 1 lần</strong>
+                    </small>
+                    <small class="form-text text-warning">
+                      <i class="fas fa-exclamation-triangle"></i> 
+                      <strong>Lưu ý:</strong> Giá trị này phải ≤ "Số lần sử dụng tối đa (tổng)" nếu có giới hạn tổng.
+                    </small>
                   </div>
                   
                   <c:if test="${voucher != null}">
                     <div class="form-group">
-                      <label>Đã sử dụng</label>
+                      <label>Đã sử dụng (tổng)</label>
                       <input type="text" class="form-control" value="${voucher.usedCount}" readonly>
                     </div>
                   </c:if>
@@ -299,6 +319,19 @@
         alert('Giá trị giảm phần trăm không được vượt quá 100%!');
         e.preventDefault();
         return false;
+      }
+      
+      // Validate MaxUsagePerCustomer <= MaxUsage
+      var maxUsage = $('#maxUsage').val();
+      var maxUsagePerCustomer = parseInt($('#maxUsagePerCustomer').val());
+      
+      if (maxUsage && maxUsage.trim() !== '') {
+        var maxUsageInt = parseInt(maxUsage);
+        if (maxUsagePerCustomer > maxUsageInt) {
+          alert('Số lần sử dụng tối đa / khách hàng (' + maxUsagePerCustomer + ') không được lớn hơn tổng số lần sử dụng (' + maxUsageInt + ')!');
+          e.preventDefault();
+          return false;
+        }
       }
       
       return true;
