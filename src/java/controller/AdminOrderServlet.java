@@ -182,7 +182,9 @@ public class AdminOrderServlet extends HttpServlet {
                 return;
             }
             
+            System.out.println("[AdminOrder] Loading order ID: " + orderId);
             Order order = orderDAO.getOrderById(orderId);
+            System.out.println("[AdminOrder] Order loaded: " + (order != null ? order.getOrderCode() : "NULL"));
             
             if (order == null) {
                 request.getSession().setAttribute("error", "Không tìm thấy đơn hàng");
@@ -217,10 +219,17 @@ public class AdminOrderServlet extends HttpServlet {
             
             request.setAttribute("pageTitle", "Chi tiết đơn hàng " + order.getOrderCode());
             
+            System.out.println("[AdminOrder] Forwarding to order-detail.jsp");
             request.getRequestDispatcher("/AdminLTE-3.2.0/orders/order-detail.jsp")
                    .forward(request, response);
                    
         } catch (NumberFormatException e) {
+            System.err.println("[AdminOrder] NumberFormatException: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/admin/orders");
+        } catch (Exception e) {
+            System.err.println("[AdminOrder] Exception in viewOrderDetail: " + e.getMessage());
+            e.printStackTrace();
+            request.getSession().setAttribute("error", "Lỗi khi tải chi tiết đơn hàng: " + e.getMessage());
             response.sendRedirect(request.getContextPath() + "/admin/orders");
         }
     }

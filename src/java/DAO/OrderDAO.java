@@ -366,7 +366,12 @@ public class OrderDAO extends DBContext {
             
             // ===== TỰ ĐỘNG PHÂN CÔNG SHIPPER KHI CHUYỂN SANG SHIPPING =====
             if ("Shipping".equals(newStatus)) {
-                autoAssignShipperForOrder(orderId);
+                try {
+                    autoAssignShipperForOrder(orderId);
+                } catch (Exception ex) {
+                    System.err.println("[OrderDAO] Warning: Auto-assign shipper failed but order status updated: " + ex.getMessage());
+                    // Không throw exception - đơn hàng đã được cập nhật thành công
+                }
             }
             
             // ===== XỬ LÝ STOCK KHI THAY ĐỔI TRẠNG THÁI =====
