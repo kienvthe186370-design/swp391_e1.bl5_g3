@@ -250,8 +250,8 @@
                             </div>
                         </div>
 
-                        <!-- Cập nhật trạng thái -->
-                        <c:if test="${canUpdateStatus && order.orderStatus != 'Delivered' && order.orderStatus != 'Cancelled'}">
+                        <!-- Cập nhật trạng thái - chỉ hiển thị khi có trạng thái available -->
+                        <c:if test="${canUpdateStatus && order.orderStatus != 'Delivered' && order.orderStatus != 'Cancelled' && not empty availableStatuses}">
                             <div class="card">
                                 <div class="card-header">
                                     <h3 class="card-title">Cập nhật trạng thái</h3>
@@ -285,6 +285,21 @@
                                             <i class="fas fa-save"></i> Cập nhật
                                         </button>
                                     </form>
+                                </div>
+                            </div>
+                        </c:if>
+                        
+                        <!-- Thông báo khi đơn đang được shipper xử lý -->
+                        <c:if test="${canUpdateStatus && order.orderStatus == 'Shipping' && empty availableStatuses}">
+                            <div class="card">
+                                <div class="card-header bg-info">
+                                    <h3 class="card-title"><i class="fas fa-truck"></i> Đang vận chuyển</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info mb-0">
+                                        <i class="fas fa-info-circle"></i> Đơn hàng đang được shipper xử lý.
+                                        <br><small>Shipper sẽ cập nhật trạng thái khi giao hàng thành công.</small>
+                                    </div>
                                 </div>
                             </div>
                         </c:if>
