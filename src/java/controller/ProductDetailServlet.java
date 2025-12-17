@@ -2,9 +2,13 @@ package controller;
 
 import DAO.ProductDAO;
 import DAO.DiscountCampaignDAO;
+import DAO.ReviewDAO;
+import entity.Customer;
 import entity.DiscountCampaign;
+import entity.Review;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -18,11 +22,13 @@ public class ProductDetailServlet extends HttpServlet {
     
     private ProductDAO productDAO;
     private DiscountCampaignDAO discountDAO;
+    private ReviewDAO reviewDAO;
     
     @Override
     public void init() throws ServletException {
         productDAO = new ProductDAO();
         discountDAO = new DiscountCampaignDAO();
+        reviewDAO = new ReviewDAO();
     }
     
     @Override
@@ -161,6 +167,52 @@ public class ProductDetailServlet extends HttpServlet {
                     }
                 }
             }
+            
+            // ========== REVIEWS SECTION ==========
+            // Get current customer ID for showing hidden reviews
+            Integer currentCustomerId = null;
+            Customer customer = (Customer) request.getSession().getAttribute("customer");
+            if (customer != null) {
+                currentCustomerId = customer.getCustomerID();
+            }
+            
+            // Get review filter rating
+            Integer filterRating = null;
+            String filterRatingStr = request.getParameter("filterRating");
+            if (filterRatingStr != null && !filterRatingStr.isEmpty()) {
+                try {
+                    filterRating = Integer.parseInt(filterRatingStr);
+                    if (filterRating < 1 || filterRating > 5) filterRating = null;
+                } catch (NumberFormatException ignored) {}
+            }
+            
+            // Get review page
+            int reviewPage = 1;
+            String reviewPageStr = request.getParameter("reviewPage");
+            if (reviewPageStr != null) {
+                try {
+                    reviewPage = Integer.parseInt(reviewPageStr);
+                    if (reviewPage < 1) reviewPage = 1;
+                } catch (NumberFormatException ignored) {}
+            }
+            int reviewPageSize = 7;
+            
+            // Get review stats
+            Map<String, Object> reviewStats = reviewDAO.getProductReviewStats(productId);
+            
+            // Get reviews
+            List<Review> reviews = reviewDAO.getProductReviews(productId, currentCustomerId, filterRating, reviewPage, reviewPageSize);
+            int totalReviews = reviewDAO.countProductReviews(productId, currentCustomerId, filterRating);
+            int totalReviewPages = (int) Math.ceil((double) totalReviews / reviewPageSize);
+            
+            request.setAttribute("reviewStats", reviewStats);
+            request.setAttribute("reviews", reviews);
+            request.setAttribute("totalReviewCount", totalReviews);
+            request.setAttribute("reviewPage", reviewPage);
+            request.setAttribute("totalReviewPages", totalReviewPages);
+            request.setAttribute("filterRating", filterRating);
+            request.setAttribute("currentCustomerId", currentCustomerId);
+            // ========== END REVIEWS SECTION ==========
             
             // Set attributes
             request.setAttribute("product", product);

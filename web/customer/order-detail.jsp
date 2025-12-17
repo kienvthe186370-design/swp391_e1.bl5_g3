@@ -158,6 +158,23 @@
                                     <strong>${detail.productName}</strong>
                                     <br><small class="text-muted">SKU: ${detail.sku}</small>
                                     <br><small>Số lượng: ${detail.quantity}</small>
+                                    
+                                    <!-- Review Button for Delivered orders -->
+                                    <c:if test="${order.orderStatus == 'Delivered'}">
+                                        <div style="margin-top: 8px;">
+                                            <c:choose>
+                                                <c:when test="${detail.reviewed}">
+                                                    <span class="badge badge-success"><i class="fa fa-check"></i> Đã đánh giá</span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <a href="${pageContext.request.contextPath}/review?orderDetailId=${detail.orderDetailID}" 
+                                                       class="btn btn-sm btn-outline-warning" style="padding: 4px 12px; font-size: 12px;">
+                                                        <i class="fa fa-star"></i> Đánh giá
+                                                    </a>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                    </c:if>
                                 </div>
                                 <div class="text-right">
                                     <c:if test="${detail.discountAmount != null && detail.discountAmount > 0}">
