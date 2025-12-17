@@ -236,7 +236,7 @@
           </ul>
         </li>
         
-        <!-- Orders - Admin -->
+        <!-- Orders - Admin (chỉ xem, không xử lý) -->
         <li class="nav-item">
           <a href="<%= contextPath %>/admin/orders" 
              class="nav-link <%= isOrderPage ? "active" : "" %>">
@@ -244,6 +244,8 @@
             <p>Đơn hàng</p>
           </a>
         </li>
+        
+        <!-- Admin không xử lý Refund - Refund do Seller/SellerManager xử lý -->
         
         <!-- Vouchers - Admin -->
         <li class="nav-item">
@@ -334,6 +336,13 @@
               </a>
             </li>
             <% } %>
+            <!-- Hoàn tiền - Hiển thị cho cả Seller và SellerManager -->
+            <li class="nav-item">
+              <a href="<%= contextPath %>/admin/refunds" class="nav-link <%= currentURI.contains("/admin/refund") ? "active" : "" %>">
+                <i class="far fa-circle nav-icon"></i>
+                <p><i class="fas fa-undo-alt text-warning"></i> Hoàn tiền</p>
+              </a>
+            </li>
           </ul>
         </li>
         <% } %>

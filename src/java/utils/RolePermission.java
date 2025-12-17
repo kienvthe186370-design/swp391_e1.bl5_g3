@@ -30,6 +30,15 @@ public class RolePermission {
     }
 
     /**
+     * Quyền quản lý hoàn tiền
+     * - SellerManager: Giám sát tất cả, xác nhận hoàn tiền
+     * - Seller: Xử lý yêu cầu hoàn tiền của đơn hàng được assign
+     */
+    public static boolean canManageRefunds(String role) {
+        return SELLER_MANAGER.equalsIgnoreCase(role) || SELLER.equalsIgnoreCase(role);
+    }
+
+    /**
      * Quyền quản lý RFQ (chỉ SellerManager)
      */
     public static boolean canManageRFQ(String role) {
@@ -143,6 +152,11 @@ public class RolePermission {
         if (path.startsWith("/orders")) {
             // Shipper có thể xem đơn hàng của mình
             return canManageOrders(role) || isShipper(role);
+        }
+
+        // Refund: SellerManager giám sát, Seller xử lý đơn của mình
+        if (path.startsWith("/refund")) {
+            return canManageRefunds(role);
         }
 
         if (path.startsWith("/products")) {
