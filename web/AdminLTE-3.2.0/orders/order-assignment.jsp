@@ -70,12 +70,7 @@
                     <c:remove var="error" scope="session"/>
                 </c:if>
                 
-                <!-- Thông báo tự động phân công -->
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> 
-                    <strong>Phân công tự động:</strong> Hệ thống tự động phân công Seller khi có đơn hàng mới. 
-                    Bạn có thể thay đổi phân công nếu cần.
-                </div>
+
                 
                 <div class="row">
                     <!-- Danh sách Seller -->

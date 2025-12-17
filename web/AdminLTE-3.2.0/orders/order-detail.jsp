@@ -335,9 +335,8 @@
                                 </div>
                                 <div class="card-body">
                                     <p><strong>Mã vận đơn:</strong> ${order.shipping.trackingCode}</p>
-                                    <c:if test="${order.shipping.estimatedDelivery != null}">
-                                        <p><strong>Dự kiến giao:</strong> 
-                                            <fmt:formatDate value="${order.shipping.estimatedDelivery}" pattern="dd/MM/yyyy"/>
+                                    <c:if test="${not empty order.shipping.estimatedDelivery}">
+                                        <p><strong>Dự kiến giao:</strong> ${order.shipping.estimatedDelivery}
                                         </p>
                                     </c:if>
                                     <c:if test="${order.shipping.goshipOrderCode != null}">
@@ -420,16 +419,6 @@
     </c:if>
 
     <jsp:include page="../includes/admin-footer.jsp" />
-</div>
-
-<jsp:include page="../includes/admin-scripts.jsp" />
-
-<script>
-// Không cần chọn carrier nữa vì đã lưu từ checkout
-</script>
-</body>
-</html>
-
 </div>
 
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>

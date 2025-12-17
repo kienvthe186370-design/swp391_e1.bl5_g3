@@ -631,6 +631,14 @@
                     
                     <button class="buy-now-btn" onclick="buyNow()">MUA NGAY</button>
                     
+                    <!-- Wishlist Button -->
+                    <div class="wishlist-action" style="margin-bottom: 20px;">
+                        <button class="btn-wishlist" id="wishlistBtn" onclick="toggleWishlist(${product.productID})" style="background: transparent; border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; transition: all 0.2s; width: 100%;">
+                            <i class="fa fa-heart-o" id="wishlistIcon" style="font-size: 18px; color: #ca1515;"></i>
+                            <span id="wishlistText">Thêm vào yêu thích</span>
+                        </button>
+                    </div>
+                    
                     <!-- Features List -->
                     <div class="features-list">
                         <div class="feature-item">
@@ -1378,18 +1386,79 @@
             }
         });
         
-        // Review image modal
-        function openReviewImage(src) {
-            document.getElementById('reviewModalImage').src = src;
-            document.getElementById('reviewImageModal').style.display = 'block';
-            document.body.style.overflow = 'hidden';
+        // Wishlist functions
+        function toggleWishlist(productId) {
+            $.ajax({
+                url: '${pageContext.request.contextPath}/wishlist',
+                type: 'POST',
+                data: { action: 'toggle', productId: productId },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.login) {
+                        window.location.href = '${pageContext.request.contextPath}/login?redirect=product-detail?id=' + productId;
+                        return;
+                    }
+                    if (res.success) {
+                        updateWishlistButton(res.added);
+                        showToast(res.message, res.added ? 'success' : 'info');
+                    } else {
+                        showToast(res.message || 'Có lỗi xảy ra', 'error');
+                    }
+                },
+                error: function() {
+                    showToast('Có lỗi xảy ra, vui lòng thử lại', 'error');
+                }
+            });
         }
         
-        function closeReviewImage() {
-            document.getElementById('reviewImageModal').style.display = 'none';
-            document.body.style.overflow = '';
+        function updateWishlistButton(isInWishlist) {
+            var icon = document.getElementById('wishlistIcon');
+            var text = document.getElementById('wishlistText');
+            var btn = document.getElementById('wishlistBtn');
+            if (isInWishlist) {
+                icon.className = 'fa fa-heart';
+                icon.style.color = '#ca1515';
+                text.textContent = 'Đã thêm vào yêu thích';
+                btn.style.borderColor = '#ca1515';
+                btn.style.background = 'rgba(202, 21, 21, 0.05)';
+            } else {
+                icon.className = 'fa fa-heart-o';
+                icon.style.color = '#ca1515';
+                text.textContent = 'Thêm vào yêu thích';
+                btn.style.borderColor = 'var(--border)';
+                btn.style.background = 'transparent';
+            }
         }
+        
+        function showToast(message, type) {
+            var toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.style.cssText = 'position:fixed;top:20px;right:20px;padding:15px 25px;border-radius:8px;color:#fff;font-weight:500;z-index:9999;animation:slideIn 0.3s ease;';
+            toast.style.background = type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function() { toast.remove(); }, 3000);
+        }
+        
+        // Check wishlist status on page load
+        $(document).ready(function() {
+            var productId = '${product.productID}';
+            $.ajax({
+                url: '${pageContext.request.contextPath}/wishlist?action=check&productId=' + productId,
+                type: 'GET',
+                dataType: 'json',
+                success: function(res) {
+                    if (res.inWishlist) {
+                        updateWishlistButton(true);
+                    }
+                }
+            });
+        });
     </script>
+    <style>
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .btn-wishlist:hover { border-color: #ca1515 !important; background: rgba(202, 21, 21, 0.05) !important; }
+    </style>
 </body>
 </html>
            
