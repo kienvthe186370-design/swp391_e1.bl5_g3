@@ -1,6 +1,7 @@
 package entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Entity ánh xạ bảng Reviews cho chức năng F_32, F_33.
@@ -30,6 +31,9 @@ public class Review {
     private String sku;
     private String variantSku;
     private String brandName;
+    
+    // Review images (JOIN field - not stored in Reviews table)
+    private List<ReviewMedia> images;
 
     // Constructors
     public Review() {}
@@ -194,5 +198,17 @@ public class Review {
 
     public void setVariantSku(String variantSku) {
         this.variantSku = variantSku;
+    }
+
+    public List<ReviewMedia> getImages() {
+        return images;
+    }
+
+    public void setImages(List<ReviewMedia> images) {
+        this.images = images;
+    }
+
+    public boolean hasImages() {
+        return images != null && !images.isEmpty();
     }
 }

@@ -103,18 +103,8 @@ public class SellerRFQController extends HttpServlet {
         
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
-        String assignedToStr = request.getParameter("assignedTo");
+        // Bỏ filter phân công
         Integer assignedTo = null;
-        
-        if ("me".equals(assignedToStr)) {
-            assignedTo = employee.getEmployeeID();
-        } else if ("unassigned".equals(assignedToStr)) {
-            assignedTo = 0; // Special case for unassigned
-        } else if (assignedToStr != null && !assignedToStr.isEmpty()) {
-            try {
-                assignedTo = Integer.parseInt(assignedToStr);
-            } catch (Exception e) {}
-        }
         
         int page = 1;
         try {
@@ -128,6 +118,7 @@ public class SellerRFQController extends HttpServlet {
         
         // Statistics
         int[] stats = rfqDAO.getRFQStatistics();
+        int cancelledCount = rfqDAO.countRFQs(null, RFQ.STATUS_CANCELLED, null, null);
         
         request.setAttribute("rfqs", rfqs);
         request.setAttribute("currentPage", page);
@@ -135,11 +126,12 @@ public class SellerRFQController extends HttpServlet {
         request.setAttribute("totalCount", totalCount);
         request.setAttribute("keyword", keyword);
         request.setAttribute("status", status);
-        request.setAttribute("assignedTo", assignedToStr);
+        request.setAttribute("assignedTo", null);
         request.setAttribute("pendingCount", stats[0]);
         request.setAttribute("processingCount", stats[1]);
         request.setAttribute("quotedCount", stats[2]);
         request.setAttribute("completedCount", stats[3]);
+        request.setAttribute("cancelledCount", cancelledCount);
         
         request.getRequestDispatcher("/AdminLTE-3.2.0/admin-rfq-list.jsp").forward(request, response);
     }
@@ -230,7 +222,13 @@ public class SellerRFQController extends HttpServlet {
             String proposedDateStr = request.getParameter("proposedDate");
             String reason = request.getParameter("reason");
             
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            // Support both dd/MM/yyyy and yyyy-MM-dd formats
+            SimpleDateFormat sdf;
+            if (proposedDateStr.contains("/")) {
+                sdf = new SimpleDateFormat("dd/MM/yyyy");
+            } else {
+                sdf = new SimpleDateFormat("yyyy-MM-dd");
+            }
             Timestamp proposedDate = new Timestamp(sdf.parse(proposedDateStr).getTime());
             
             rfqDAO.proposeDeliveryDate(rfqID, proposedDate, reason, employee.getEmployeeID());
@@ -262,7 +260,13 @@ public class SellerRFQController extends HttpServlet {
             String quotationTerms = request.getParameter("additionalTerms");
             String warrantyTerms = request.getParameter("warrantyTerms");
             
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            // Support both dd/MM/yyyy and yyyy-MM-dd formats
+            SimpleDateFormat sdf;
+            if (validUntilStr.contains("/")) {
+                sdf = new SimpleDateFormat("dd/MM/yyyy");
+            } else {
+                sdf = new SimpleDateFormat("yyyy-MM-dd");
+            }
             Timestamp validUntil = new Timestamp(sdf.parse(validUntilStr).getTime());
             
             // Parse item pricing

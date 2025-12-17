@@ -36,6 +36,9 @@ public class Order {
     private String notes;
     private String cancelReason;
     
+    // RFQ Reference
+    private Integer rfqID;
+    
     // Timestamps
     private Timestamp orderDate;
     private Timestamp updatedDate;
@@ -48,6 +51,7 @@ public class Order {
     private List<OrderDetail> orderDetails;
     private List<OrderStatusHistory> statusHistory;
     private Shipping shipping;
+    private RFQ rfq; // Thông tin RFQ nếu đơn hàng từ RFQ
 
     public Order() {
     }
@@ -229,6 +233,14 @@ public class Order {
         this.cancelReason = cancelReason;
     }
 
+    public Integer getRfqID() {
+        return rfqID;
+    }
+
+    public void setRfqID(Integer rfqID) {
+        this.rfqID = rfqID;
+    }
+
     public Timestamp getOrderDate() {
         return orderDate;
     }
@@ -299,5 +311,13 @@ public class Order {
 
     public void setShipping(Shipping shipping) {
         this.shipping = shipping;
+    }
+
+    public RFQ getRfq() {
+        return rfq;
+    }
+
+    public void setRfq(RFQ rfq) {
+        this.rfq = rfq;
     }
 }

@@ -205,6 +205,9 @@ public class ProductDetailServlet extends HttpServlet {
             int totalReviews = reviewDAO.countProductReviews(productId, currentCustomerId, filterRating);
             int totalReviewPages = (int) Math.ceil((double) totalReviews / reviewPageSize);
             
+            // Populate review images
+            reviewDAO.populateReviewImages(reviews);
+            
             request.setAttribute("reviewStats", reviewStats);
             request.setAttribute("reviews", reviews);
             request.setAttribute("totalReviewCount", totalReviews);

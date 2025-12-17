@@ -1,6 +1,7 @@
 package DAO;
 
 import entity.Review;
+import entity.ReviewMedia;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -515,6 +516,126 @@ public class ReviewDAO extends DBContext {
             e.printStackTrace();
         }
         return list;
+    }
+
+    // ==================== REVIEW MEDIA METHODS ====================
+
+    /**
+     * Insert a review media record
+     */
+    public boolean insertReviewMedia(int reviewId, String mediaUrl, String mediaType) {
+        return insertReviewMediaWithError(reviewId, mediaUrl, mediaType) == null;
+    }
+    
+    /**
+     * Insert a review media record, return error message if failed
+     * @return null if success, error message if failed
+     */
+    public String insertReviewMediaWithError(int reviewId, String mediaUrl, String mediaType) {
+        String sql = "INSERT INTO ReviewMedia (ReviewID, MediaURL, MediaType) VALUES (?, ?, ?)";
+        System.out.println("[ReviewDAO] insertReviewMedia - reviewId: " + reviewId + ", mediaUrl: " + mediaUrl + ", mediaType: " + mediaType);
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, reviewId);
+            ps.setString(2, mediaUrl);
+            ps.setString(3, mediaType);
+            int rows = ps.executeUpdate();
+            System.out.println("[ReviewDAO] insertReviewMedia - rows affected: " + rows);
+            if (rows > 0) {
+                return null; // success
+            } else {
+                return "No rows inserted";
+            }
+        } catch (SQLException e) {
+            System.out.println("[ReviewDAO] insertReviewMedia - SQL Error: " + e.getMessage());
+            e.printStackTrace();
+            return e.getMessage();
+        }
+    }
+
+    /**
+     * Get all images for a single review
+     */
+    public List<ReviewMedia> getReviewImages(int reviewId) {
+        List<ReviewMedia> list = new ArrayList<>();
+        String sql = "SELECT MediaID, ReviewID, MediaURL, MediaType FROM ReviewMedia WHERE ReviewID = ?";
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, reviewId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapReviewMedia(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /**
+     * Get images for multiple reviews (batch query for efficiency)
+     */
+    public Map<Integer, List<ReviewMedia>> getReviewImagesForReviews(List<Integer> reviewIds) {
+        Map<Integer, List<ReviewMedia>> result = new HashMap<>();
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            return result;
+        }
+        
+        // Initialize empty lists for all review IDs
+        for (Integer id : reviewIds) {
+            result.put(id, new ArrayList<>());
+        }
+        
+        // Build IN clause
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < reviewIds.size(); i++) {
+            if (i > 0) placeholders.append(",");
+            placeholders.append("?");
+        }
+        
+        String sql = "SELECT MediaID, ReviewID, MediaURL, MediaType FROM ReviewMedia WHERE ReviewID IN (" + placeholders + ")";
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            for (int i = 0; i < reviewIds.size(); i++) {
+                ps.setInt(i + 1, reviewIds.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ReviewMedia media = mapReviewMedia(rs);
+                    result.get(media.getReviewId()).add(media);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    /**
+     * Populate images for a list of reviews
+     */
+    public void populateReviewImages(List<Review> reviews) {
+        if (reviews == null || reviews.isEmpty()) {
+            return;
+        }
+        List<Integer> reviewIds = new ArrayList<>();
+        for (Review r : reviews) {
+            reviewIds.add(r.getReviewId());
+        }
+        Map<Integer, List<ReviewMedia>> imagesMap = getReviewImagesForReviews(reviewIds);
+        for (Review r : reviews) {
+            r.setImages(imagesMap.get(r.getReviewId()));
+        }
+    }
+
+    private ReviewMedia mapReviewMedia(ResultSet rs) throws SQLException {
+        ReviewMedia media = new ReviewMedia();
+        media.setMediaId(rs.getInt("MediaID"));
+        media.setReviewId(rs.getInt("ReviewID"));
+        media.setMediaUrl(rs.getString("MediaURL"));
+        media.setMediaType(rs.getString("MediaType"));
+        return media;
     }
 
     // ==================== HELPER METHODS ====================

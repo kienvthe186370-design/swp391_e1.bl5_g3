@@ -336,6 +336,8 @@
 
 <!-- Include ImageValidator -->
 <script src="${pageContext.request.contextPath}/js/image-validator.js"></script>
+<!-- Include Product Duplicate Check -->
+<script src="${pageContext.request.contextPath}/js/product-duplicate-check.js"></script>
 
 <script>
 // Update custom file input label with selected filename and show preview
@@ -347,6 +349,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize ImageValidator for thumbnail images (multiple)
     ImageValidator.attach('#thumbnailImages');
+    
+    // Initialize Product Duplicate Check
+    ProductDuplicateCheck.init('${pageContext.request.contextPath}');
+    ProductDuplicateCheck.attachProductNameValidation('#productName', null);
     
     // Handle main image file input with preview
     var mainImageInput = document.getElementById('mainImage');
@@ -822,13 +828,40 @@ function renderVariantTable(combinations) {
         html += '<td><strong class="text-primary">' + comboName + '</strong>';
         html += '<input type="hidden" name="variant_values_' + index + '" value="' + valueIds + '">';
         html += '</td>';
-        html += '<td><input type="text" class="form-control form-control-sm" name="variant_sku_' + index + '" placeholder="VD: SKU-' + (index + 1) + '" required></td>';
+        html += '<td><div class="sku-input-wrapper">';
+        html += '<input type="text" class="form-control form-control-sm variant-sku-input" name="variant_sku_' + index + '" placeholder="VD: SKU-' + (index + 1) + '" required data-index="' + index + '">';
+        html += '</div></td>';
         html += '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariantRow(this)">';
         html += '<i class="fas fa-trash"></i></button></td>';
         html += '</tr>';
     });
     
     tbody.innerHTML = html;
+    
+    // Attach SKU validation to new inputs
+    attachSkuValidationToVariants();
+}
+
+// Attach SKU validation to variant inputs
+function attachSkuValidationToVariants() {
+    var skuInputs = document.querySelectorAll('.variant-sku-input');
+    skuInputs.forEach(function(input) {
+        input.addEventListener('blur', function() {
+            var sku = this.value.trim();
+            var inputEl = this;
+            if (sku) {
+                ProductDuplicateCheck.checkSku(sku, null, function(result) {
+                    ProductDuplicateCheck.showSkuDuplicateWarning(inputEl, result);
+                });
+            }
+        });
+        
+        input.addEventListener('input', function() {
+            var warning = this.parentElement.querySelector('.duplicate-warning');
+            if (warning) warning.remove();
+            this.classList.remove('is-invalid');
+        });
+    });
 }
 
 // Xóa một row variant

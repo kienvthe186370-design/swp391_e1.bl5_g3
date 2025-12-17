@@ -54,9 +54,19 @@
                                 <div class="bg-light p-4 rounded mb-4">
                                     <table class="table table-borderless mb-0">
                                         <tr>
-                                            <td class="text-muted">Mã đơn hàng:</td>
+                                            <td class="text-muted">Mã RFQ:</td>
                                             <td class="text-end"><strong>${rfqCode}</strong></td>
                                         </tr>
+                                        <c:if test="${not empty orderID}">
+                                        <tr>
+                                            <td class="text-muted">Mã đơn hàng:</td>
+                                            <td class="text-end">
+                                                <a href="${pageContext.request.contextPath}/customer/orders?id=${orderID}" class="text-primary">
+                                                    <strong>#${orderID}</strong> <i class="fa fa-external-link"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        </c:if>
                                         <tr>
                                             <td class="text-muted">Số tiền đã thanh toán:</td>
                                             <td class="text-end"><strong class="text-success"><fmt:formatNumber value="${paymentAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></strong></td>
@@ -67,26 +77,17 @@
                                         </tr>
                                         <tr>
                                             <td class="text-muted">Phương thức:</td>
-                                            <td class="text-end">
-                                                <c:choose>
-                                                    <c:when test="${paymentMethod == 'BankTransfer'}">Chuyển khoản ngân hàng</c:when>
-                                                    <c:when test="${paymentMethod == 'COD'}">COD + Cọc 50%</c:when>
-                                                    <c:otherwise>${paymentMethod}</c:otherwise>
-                                                </c:choose>
-                                            </td>
+                                            <td class="text-end">Chuyển khoản ngân hàng (VNPay)</td>
                                         </tr>
                                     </table>
                                 </div>
                                 
-                                <c:if test="${paymentMethod == 'COD' && remainingAmount != null}">
-                                    <div class="alert alert-info">
-                                        <i class="fa fa-info-circle"></i> 
-                                        <strong>Số tiền còn lại: <fmt:formatNumber value="${remainingAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></strong>
-                                        <br>${codMessage}
-                                    </div>
-                                </c:if>
-                                
                                 <div class="d-flex justify-content-center gap-3 mt-4">
+                                    <c:if test="${not empty orderID}">
+                                    <a href="${pageContext.request.contextPath}/customer/orders?id=${orderID}" class="btn btn-success">
+                                        <i class="fa fa-shopping-bag"></i> Xem đơn hàng
+                                    </a>
+                                    </c:if>
                                     <a href="${pageContext.request.contextPath}/rfq/list" class="btn btn-outline-primary">
                                         <i class="fa fa-list"></i> Danh sách RFQ
                                     </a>

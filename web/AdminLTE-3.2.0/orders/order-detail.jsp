@@ -74,12 +74,38 @@
                                         <p><strong>Họ tên:</strong> ${order.customer.fullName}</p>
                                         <p><strong>Email:</strong> ${order.customer.email}</p>
                                         <p><strong>SĐT:</strong> ${order.customer.phone}</p>
+                                        
+                                        <!-- Thông tin RFQ nếu có -->
+                                        <c:if test="${order.rfq != null}">
+                                            <hr>
+                                            <p class="text-info"><i class="fas fa-building"></i> <strong>Thông tin công ty (RFQ)</strong></p>
+                                            <p><strong>Công ty:</strong> ${order.rfq.companyName}</p>
+                                            <c:if test="${not empty order.rfq.taxID}">
+                                                <p><strong>Mã số thuế:</strong> ${order.rfq.taxID}</p>
+                                            </c:if>
+                                            <c:if test="${not empty order.rfq.businessType}">
+                                                <p><strong>Loại hình:</strong> 
+                                                    <c:choose>
+                                                        <c:when test="${order.rfq.businessType == 'Retailer'}">Bán lẻ</c:when>
+                                                        <c:when test="${order.rfq.businessType == 'Distributor'}">Nhà phân phối</c:when>
+                                                        <c:otherwise>${order.rfq.businessType}</c:otherwise>
+                                                    </c:choose>
+                                                </p>
+                                            </c:if>
+                                            <p><strong>Người liên hệ:</strong> ${order.rfq.contactPerson} - ${order.rfq.contactPhone}</p>
+                                            <c:if test="${not empty order.rfq.contactEmail}">
+                                                <p><strong>Email liên hệ:</strong> ${order.rfq.contactEmail}</p>
+                                            </c:if>
+                                            <p><small class="text-muted">Mã RFQ: <a href="${pageContext.request.contextPath}/admin/rfq/detail?id=${order.rfqID}">${order.rfq.rfqCode}</a></small></p>
+                                        </c:if>
                                     </div>
                                     <div class="col-md-6">
                                         <c:if test="${order.address != null}">
                                             <p><strong>Người nhận:</strong> ${order.address.recipientName}</p>
                                             <p><strong>SĐT nhận:</strong> ${order.address.phone}</p>
-                                            <p><strong>Địa chỉ:</strong> ${order.address.street}, ${order.address.ward}, ${order.address.district}, ${order.address.city}</p>
+                                            <p><strong>Địa chỉ:</strong> 
+                                                ${order.address.street}<c:if test="${not empty order.address.ward}">, ${order.address.ward}</c:if><c:if test="${not empty order.address.district}">, ${order.address.district}</c:if><c:if test="${not empty order.address.city}">, ${order.address.city}</c:if>
+                                            </p>
                                         </c:if>
                                     </div>
                                 </div>
@@ -336,8 +362,7 @@
                                 <div class="card-body">
                                     <p><strong>Mã vận đơn:</strong> ${order.shipping.trackingCode}</p>
                                     <c:if test="${not empty order.shipping.estimatedDelivery}">
-                                        <p><strong>Dự kiến giao:</strong> ${order.shipping.estimatedDelivery}
-                                        </p>
+                                        <p><strong>Dự kiến giao:</strong> ${order.shipping.estimatedDelivery}</p>
                                     </c:if>
                                     <c:if test="${order.shipping.goshipOrderCode != null}">
                                         <a href="https://goship.io/tracking/${order.shipping.trackingCode}" 
@@ -421,8 +446,6 @@
     <jsp:include page="../includes/admin-footer.jsp" />
 </div>
 
-<script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>
-<script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
+<jsp:include page="../includes/admin-scripts.jsp" />
 </body>
 </html>

@@ -81,6 +81,19 @@
 <section class="content">
     <div class="container-fluid">
         
+        <!-- Duplicate Product Warning -->
+        <c:if test="${param.duplicate == 'true'}">
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle"></i> 
+                <strong>Sản phẩm đã tồn tại!</strong> ${param.message}
+                <hr>
+                <p class="mb-0">Bạn có thể chỉnh sửa sản phẩm này hoặc <a href="${pageContext.request.contextPath}/admin/product-add" class="alert-link">quay lại tạo sản phẩm mới</a> với tên khác.</p>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        </c:if>
+        
         <!-- Error Messages -->
         <c:if test="${not empty errors.general}">
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -488,6 +501,8 @@
 
 <!-- Include ImageValidator -->
 <script src="${pageContext.request.contextPath}/js/image-validator.js"></script>
+<!-- Include Product Duplicate Check -->
+<script src="${pageContext.request.contextPath}/js/product-duplicate-check.js"></script>
 
 <script>
 // Remove existing image
@@ -523,6 +538,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize ImageValidator for thumbnail images (multiple)
     ImageValidator.attach('#thumbnailImages');
+    
+    // Initialize Product Duplicate Check with current product ID excluded
+    var productId = document.querySelector('input[name="productId"]').value;
+    ProductDuplicateCheck.init('${pageContext.request.contextPath}');
+    ProductDuplicateCheck.attachProductNameValidation('#productName', productId);
     
     // Handle main image file input with preview
     var mainImageInput = document.getElementById('mainImage');

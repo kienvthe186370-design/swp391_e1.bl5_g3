@@ -15,6 +15,7 @@
         .rfq-card { transition: transform 0.2s; margin-bottom: 15px; }
         .rfq-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .status-badge { font-size: 0.85rem; padding: 5px 12px; }
+        .status-draft { background: #adb5bd; color: #fff; }
         .status-pending { background: #ffc107; color: #000; }
         .status-reviewing { background: #17a2b8; color: #fff; }
         .status-dateproposed { background: #fd7e14; color: #fff; }
@@ -23,6 +24,7 @@
         .status-quoted { background: #007bff; color: #fff; }
         .status-quoteaccepted { background: #6f42c1; color: #fff; }
         .status-quoterejected { background: #dc3545; color: #fff; }
+        .status-quoteexpired { background: #fd7e14; color: #fff; }
         .status-completed { background: #28a745; color: #fff; }
         .status-cancelled { background: #6c757d; color: #fff; }
         .payment-method { font-size: 0.8rem; padding: 3px 8px; border-radius: 4px; }
@@ -68,19 +70,18 @@
                         <div class="col-md-3">
                             <select class="form-control" name="status">
                                 <option value="">Tất cả trạng thái</option>
+                                <option value="Draft" ${status == 'Draft' ? 'selected' : ''}>Chờ xác nhận</option>
                                 <option value="Pending" ${status == 'Pending' ? 'selected' : ''}>Chờ xử lý</option>
                                 <option value="Reviewing" ${status == 'Reviewing' ? 'selected' : ''}>Đang xem xét</option>
                                 <option value="DateProposed" ${status == 'DateProposed' ? 'selected' : ''}>Đề xuất ngày mới</option>
                                 <option value="Quoted" ${status == 'Quoted' ? 'selected' : ''}>Đã báo giá</option>
+                                <option value="QuoteExpired" ${status == 'QuoteExpired' ? 'selected' : ''}>Báo giá hết hạn</option>
                                 <option value="Completed" ${status == 'Completed' ? 'selected' : ''}>Hoàn thành</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <select class="form-control" name="paymentMethod">
-                                <option value="">Tất cả thanh toán</option>
-                                <option value="BankTransfer" ${paymentMethod == 'BankTransfer' ? 'selected' : ''}>Chuyển khoản</option>
-                                <option value="COD" ${paymentMethod == 'COD' ? 'selected' : ''}>COD + Cọc 50%</option>
-                            </select>
+                            <input type="text" class="form-control" value="Chuyển khoản ngân hàng" readonly>
+                            <input type="hidden" name="paymentMethod" value="BankTransfer">
                         </div>
                         <div class="col-md-2">
                             <button type="submit" class="btn btn-primary w-100"><i class="fa fa-search"></i> Tìm</button>
@@ -137,13 +138,7 @@
                                 <c:if test="${not empty rfq.paymentMethod}">
                                     <div class="mt-2">
                                         <i class="fa fa-credit-card"></i> Thanh toán: 
-                                        <span class="payment-method ${rfq.paymentMethod == 'BankTransfer' ? 'payment-bank' : 'payment-cod'}">
-                                            <c:choose>
-                                                <c:when test="${rfq.paymentMethod == 'BankTransfer'}">Chuyển khoản ngân hàng</c:when>
-                                                <c:when test="${rfq.paymentMethod == 'COD'}">COD + Cọc 50%</c:when>
-                                                <c:otherwise>${rfq.paymentMethod}</c:otherwise>
-                                            </c:choose>
-                                        </span>
+                                        <span class="payment-method payment-bank">Chuyển khoản ngân hàng (VNPay)</span>
                                     </div>
                                 </c:if>
                             </div>
