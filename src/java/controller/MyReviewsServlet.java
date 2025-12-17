@@ -28,36 +28,12 @@ public class MyReviewsServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        HttpSession session = request.getSession();
-        Customer customer = (Customer) session.getAttribute("customer");
-        
-        if (customer == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
+        // Redirect to profile page with reviews tab
+        String page = request.getParameter("page");
+        String redirectUrl = request.getContextPath() + "/profile?tab=reviews";
+        if (page != null && !page.isEmpty()) {
+            redirectUrl += "&page=" + page;
         }
-        
-        int page = 1;
-        String pageStr = request.getParameter("page");
-        if (pageStr != null) {
-            try {
-                page = Integer.parseInt(pageStr);
-                if (page < 1) page = 1;
-            } catch (NumberFormatException ignored) {}
-        }
-        
-        // Lấy danh sách reviews
-        List<Review> reviews = reviewDAO.getReviewsByCustomer(customer.getCustomerID(), page, PAGE_SIZE);
-        int totalReviews = reviewDAO.countReviewsByCustomer(customer.getCustomerID());
-        int totalPages = (int) Math.ceil((double) totalReviews / PAGE_SIZE);
-        
-        // Populate images for reviews
-        reviewDAO.populateReviewImages(reviews);
-        
-        request.setAttribute("reviews", reviews);
-        request.setAttribute("totalReviews", totalReviews);
-        request.setAttribute("currentPage", page);
-        request.setAttribute("totalPages", totalPages);
-        
-        request.getRequestDispatcher("/my-reviews.jsp").forward(request, response);
+        response.sendRedirect(redirectUrl);
     }
 }

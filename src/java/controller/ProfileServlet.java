@@ -3,9 +3,11 @@ package controller;
 import entity.Customer;
 import entity.CustomerAddress;
 import entity.Order;
+import entity.Review;
 import entity.Wishlist;
 import DAO.CustomerAddressDAO;
 import DAO.OrderDAO;
+import DAO.ReviewDAO;
 import DAO.WishlistDAO;
 import java.io.IOException;
 import java.util.List;
@@ -22,6 +24,7 @@ public class ProfileServlet extends HttpServlet {
     private CustomerAddressDAO addressDAO = new CustomerAddressDAO();
     private OrderDAO orderDAO = new OrderDAO();
     private WishlistDAO wishlistDAO = new WishlistDAO();
+    private ReviewDAO reviewDAO = new ReviewDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -64,6 +67,22 @@ public class ProfileServlet extends HttpServlet {
             case "wishlist":
                 List<Wishlist> wishlists = wishlistDAO.getWishlistByCustomer(customer.getCustomerID());
                 request.setAttribute("wishlists", wishlists);
+                break;
+                
+            case "reviews":
+                int page = 1;
+                try {
+                    String pageParam = request.getParameter("page");
+                    if (pageParam != null) page = Integer.parseInt(pageParam);
+                } catch (NumberFormatException e) { }
+                int pageSize = 10;
+                List<Review> reviews = reviewDAO.getReviewsByCustomer(customer.getCustomerID(), page, pageSize);
+                int totalReviews = reviewDAO.countReviewsByCustomer(customer.getCustomerID());
+                int totalPages = (int) Math.ceil((double) totalReviews / pageSize);
+                request.setAttribute("reviews", reviews);
+                request.setAttribute("totalReviews", totalReviews);
+                request.setAttribute("currentPage", page);
+                request.setAttribute("totalPages", totalPages);
                 break;
                 
             default:

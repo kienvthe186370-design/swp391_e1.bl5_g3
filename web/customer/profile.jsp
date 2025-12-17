@@ -129,6 +129,9 @@
                             <a class="nav-link ${activeTab == 'orders' ? 'active' : ''}" href="?tab=orders">
                                 <i class="fa fa-list-alt"></i> Đơn hàng của tôi
                             </a>
+                            <a class="nav-link ${activeTab == 'reviews' ? 'active' : ''}" href="?tab=reviews">
+                                <i class="fa fa-star"></i> Lịch sử đánh giá
+                            </a>
                             <a class="nav-link ${activeTab == 'wishlist' ? 'active' : ''}" href="?tab=wishlist">
                                 <i class="fa fa-heart"></i> Yêu thích
                             </a>
@@ -452,6 +455,110 @@
                                     </div>
                                 </c:if>
                             </c:when>
+                            
+                            <c:when test="${activeTab == 'reviews'}">
+                            <%-- REVIEWS TAB --%>
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h4 class="mb-0"><i class="fa fa-star text-danger"></i> Lịch sử đánh giá (${totalReviews})</h4>
+                                </div>
+                                
+                                <c:choose>
+                                    <c:when test="${empty reviews}">
+                                        <div class="text-center py-5">
+                                            <i class="fa fa-star-o" style="font-size: 64px; color: #ddd;"></i>
+                                            <h5 class="mt-3 text-muted">Bạn chưa có đánh giá nào</h5>
+                                            <p class="text-muted">Hãy mua sắm và đánh giá sản phẩm để chia sẻ trải nghiệm của bạn!</p>
+                                            <a href="${pageContext.request.contextPath}/shop" class="btn btn-primary mt-3">Mua sắm ngay</a>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:forEach var="review" items="${reviews}">
+                                            <div class="review-item" style="background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 24px; margin-bottom: 20px;">
+                                                
+                                                <div class="d-flex mb-3 pb-3" style="border-bottom: 1px solid #eee;">
+                                                    <c:choose>
+                                                        <c:when test="${not empty review.productImage}">
+                                                            <img src="${pageContext.request.contextPath}${review.productImage}" alt="${review.productName}" style="width: 80px; height: 80px; object-fit: contain; border-radius: 8px; background: #f9f9f9;">
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <img src="${pageContext.request.contextPath}/img/product/product-placeholder.jpg" alt="Product" style="width: 80px; height: 80px; object-fit: contain; border-radius: 8px; background: #f9f9f9;">
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                    <div style="flex: 1; padding-left: 15px;">
+                                                        <c:if test="${not empty review.brandName}">
+                                                            <div style="font-size: 12px; color: #2D5A27; text-transform: uppercase;">${review.brandName}</div>
+                                                        </c:if>
+                                                        <div style="font-weight: 700; color: #333; margin-bottom: 4px;">${review.productName}</div>
+                                                        <a href="${pageContext.request.contextPath}/product-detail?id=${review.productId}" class="text-primary" style="font-size: 13px;">Xem sản phẩm →</a>
+                                                    </div>
+                                                </div>
+
+                                                <div style="color: #FBBF24; font-size: 18px; margin-bottom: 8px;">
+                                                    <c:forEach begin="1" end="5" var="i">
+                                                        <c:choose>
+                                                            <c:when test="${i <= review.rating}">
+                                                                <i class="fa fa-star"></i>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <i class="fa fa-star" style="color: #D1D5DB;"></i>
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                    </c:forEach>
+                                                </div>
+
+                                                <c:if test="${not empty review.reviewTitle}">
+                                                    <div style="font-weight: 700; font-size: 16px; margin-bottom: 8px;">${review.reviewTitle}</div>
+                                                </c:if>
+
+                                                <c:if test="${not empty review.reviewContent}">
+                                                    <div style="color: #555; line-height: 1.6; margin-bottom: 12px;">${review.reviewContent}</div>
+                                                </c:if>
+
+                                                <div style="font-size: 13px; color: #999;">
+                                                    <i class="fa fa-clock-o"></i> Đăng ngày: ${review.reviewDate}
+                                                </div>
+
+                                                <c:if test="${not empty review.replyContent}">
+                                                    <div style="background: #f0f7f0; border-left: 4px solid #2D5A27; padding: 16px; margin-top: 16px; border-radius: 0 8px 8px 0;">
+                                                        <div style="font-weight: 700; color: #2D5A27; margin-bottom: 8px; font-size: 14px;">
+                                                            <i class="fa fa-reply"></i> Phản hồi từ Shop
+                                                        </div>
+                                                        <div style="color: #555; font-size: 14px;">${review.replyContent}</div>
+                                                    </div>
+                                                </c:if>
+                                            </div>
+                                        </c:forEach>
+
+                                        <!-- Pagination -->
+                                        <c:if test="${totalPages > 1}">
+                                            <div class="d-flex justify-content-center mt-4">
+                                                <nav>
+                                                    <ul class="pagination">
+                                                        <c:if test="${currentPage > 1}">
+                                                            <li class="page-item">
+                                                                <a class="page-link" href="?tab=reviews&page=${currentPage - 1}">«</a>
+                                                            </li>
+                                                        </c:if>
+                                                        
+                                                        <c:forEach begin="1" end="${totalPages}" var="i">
+                                                            <li class="page-item ${i == currentPage ? 'active' : ''}">
+                                                                <a class="page-link" href="?tab=reviews&page=${i}">${i}</a>
+                                                            </li>
+                                                        </c:forEach>
+                                                        
+                                                        <c:if test="${currentPage < totalPages}">
+                                                            <li class="page-item">
+                                                                <a class="page-link" href="?tab=reviews&page=${currentPage + 1}">»</a>
+                                                            </li>
+                                                        </c:if>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </c:if>
+                                    </c:otherwise>
+                                </c:choose>
+                            </c:when>
+                            
                             <c:otherwise>
                             <%-- PROFILE TAB (default) --%>
                                 <h4 class="mb-4"><i class="fa fa-user text-danger"></i> Thông tin cá nhân</h4>

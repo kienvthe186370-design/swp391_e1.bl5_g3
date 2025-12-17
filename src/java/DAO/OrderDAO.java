@@ -1671,4 +1671,73 @@ public class OrderDAO extends DBContext {
             }
         }
     }
+    
+    // ==================== PROFILE PAGE METHODS ====================
+    
+    /**
+     * Lấy tất cả đơn hàng của customer (không paging) - dùng cho ProfileServlet
+     */
+    public List<Order> getOrdersByCustomerId(int customerId) {
+        List<Order> orders = new ArrayList<>();
+        String sql = "SELECT o.*, c.FullName as CustomerName, c.Email as CustomerEmail, c.Phone as CustomerPhone " +
+                     "FROM Orders o " +
+                     "LEFT JOIN Customers c ON o.CustomerID = c.CustomerID " +
+                     "WHERE o.CustomerID = ? " +
+                     "ORDER BY o.OrderDate DESC";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, customerId);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Order order = mapResultSetToOrder(rs);
+                Customer customer = new Customer();
+                customer.setCustomerID(rs.getInt("CustomerID"));
+                customer.setFullName(rs.getString("CustomerName"));
+                customer.setEmail(rs.getString("CustomerEmail"));
+                customer.setPhone(rs.getString("CustomerPhone"));
+                order.setCustomer(customer);
+                orders.add(order);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orders;
+    }
+    
+    /**
+     * Lấy đơn hàng của customer theo status - dùng cho ProfileServlet
+     */
+    public List<Order> getOrdersByCustomerAndStatus(int customerId, String status) {
+        List<Order> orders = new ArrayList<>();
+        String sql = "SELECT o.*, c.FullName as CustomerName, c.Email as CustomerEmail, c.Phone as CustomerPhone " +
+                     "FROM Orders o " +
+                     "LEFT JOIN Customers c ON o.CustomerID = c.CustomerID " +
+                     "WHERE o.CustomerID = ? AND o.OrderStatus = ? " +
+                     "ORDER BY o.OrderDate DESC";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, customerId);
+            ps.setString(2, status);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Order order = mapResultSetToOrder(rs);
+                Customer customer = new Customer();
+                customer.setCustomerID(rs.getInt("CustomerID"));
+                customer.setFullName(rs.getString("CustomerName"));
+                customer.setEmail(rs.getString("CustomerEmail"));
+                customer.setPhone(rs.getString("CustomerPhone"));
+                order.setCustomer(customer);
+                orders.add(order);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orders;
+    }
 }
