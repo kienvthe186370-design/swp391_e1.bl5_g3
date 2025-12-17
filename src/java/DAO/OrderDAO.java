@@ -379,9 +379,13 @@ public class OrderDAO extends DBContext {
             if ("Delivered".equals(newStatus)) {
                 releaseReservedStockOnDelivered(orderId);
             }
-            // Khi hủy hoặc hoàn: hoàn lại stock
-            if ("Cancelled".equals(newStatus) || "Returned".equals(newStatus)) {
+            // Khi hủy (chưa giao): hoàn lại stock và giảm reserved
+            if ("Cancelled".equals(newStatus)) {
                 restoreStockOnCancelled(orderId);
+            }
+            // Khi hoàn tiền (đã giao): chỉ tăng stock, không giảm reserved (vì đã release rồi)
+            if ("Returned".equals(newStatus)) {
+                restoreStockOnReturned(orderId);
             }
             
             return true;
@@ -1513,14 +1517,14 @@ public class OrderDAO extends DBContext {
     }
     
     /**
-     * Khi hủy/hoàn (Cancelled/Returned):
+     * Khi hủy (Cancelled) - đơn chưa giao:
      * - Stock += Qty (hoàn lại tồn kho)
      * - ReservedStock -= Qty (giảm hàng đặt trước)
      */
     public boolean restoreStockOnCancelled(int orderId) {
         String sql = "UPDATE pv SET " +
                      "pv.Stock = pv.Stock + od.Quantity, " +
-                     "pv.ReservedStock = pv.ReservedStock - od.Quantity " +
+                     "pv.ReservedStock = CASE WHEN pv.ReservedStock >= od.Quantity THEN pv.ReservedStock - od.Quantity ELSE 0 END " +
                      "FROM ProductVariants pv " +
                      "INNER JOIN OrderDetails od ON pv.VariantID = od.VariantID " +
                      "WHERE od.OrderID = ?";
@@ -1534,6 +1538,32 @@ public class OrderDAO extends DBContext {
             return true;
         } catch (SQLException e) {
             System.err.println("[OrderDAO] Restore stock failed: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Khi hoàn tiền (Returned) - đơn đã giao xong:
+     * - Stock += Qty (hoàn lại tồn kho)
+     * - ReservedStock không thay đổi (vì đã release khi Delivered)
+     */
+    public boolean restoreStockOnReturned(int orderId) {
+        String sql = "UPDATE pv SET " +
+                     "pv.Stock = pv.Stock + od.Quantity " +
+                     "FROM ProductVariants pv " +
+                     "INNER JOIN OrderDetails od ON pv.VariantID = od.VariantID " +
+                     "WHERE od.OrderID = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, orderId);
+            int updated = ps.executeUpdate();
+            System.out.println("[OrderDAO] Restored stock for returned order " + orderId + ", updated " + updated + " variants");
+            return true;
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] Restore stock on returned failed: " + e.getMessage());
             e.printStackTrace();
             return false;
         }

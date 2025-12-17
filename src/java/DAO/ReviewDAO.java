@@ -14,7 +14,7 @@ public class ReviewDAO extends DBContext {
 
     /**
      * Kiểm tra customer có thể review orderDetail này không
-     * Điều kiện: OrderStatus='Delivered' AND IsReviewed=0
+     * Điều kiện: OrderStatus IN ('Delivered', 'Completed') AND IsReviewed=0
      */
     public boolean canReview(int orderDetailId, int customerId) {
         String sql = """
@@ -22,7 +22,7 @@ public class ReviewDAO extends DBContext {
             JOIN Orders o ON od.OrderID = o.OrderID
             WHERE od.OrderDetailID = ?
               AND o.CustomerID = ?
-              AND o.OrderStatus = 'Delivered'
+              AND o.OrderStatus IN ('Delivered', 'Completed')
               AND od.IsReviewed = 0
             """;
         try (Connection con = getConnection();
@@ -55,7 +55,7 @@ public class ReviewDAO extends DBContext {
             LEFT JOIN Brands b ON p.BrandID = b.BrandID
             WHERE od.OrderDetailID = ?
               AND o.CustomerID = ?
-              AND o.OrderStatus = 'Delivered'
+              AND o.OrderStatus IN ('Delivered', 'Completed')
               AND od.IsReviewed = 0
             """;
         try (Connection con = getConnection();

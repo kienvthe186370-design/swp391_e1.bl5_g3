@@ -62,9 +62,9 @@ public class OrderReviewServlet extends HttpServlet {
                 return;
             }
             
-            // Kiểm tra đơn hàng đã giao chưa
-            if (!"Delivered".equals(order.getOrderStatus())) {
-                session.setAttribute("error", "Chỉ có thể đánh giá đơn hàng đã giao");
+            // Kiểm tra đơn hàng đã giao hoặc hoàn thành chưa
+            if (!"Delivered".equals(order.getOrderStatus()) && !"Completed".equals(order.getOrderStatus())) {
+                session.setAttribute("error", "Chỉ có thể đánh giá đơn hàng đã giao hoặc hoàn thành");
                 response.sendRedirect(request.getContextPath() + "/customer/orders");
                 return;
             }

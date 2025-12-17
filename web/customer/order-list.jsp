@@ -143,6 +143,9 @@
                                         <c:when test="${order.orderStatus == 'Delivered'}">
                                             <span class="badge badge-success badge-status">Đã giao</span>
                                         </c:when>
+                                        <c:when test="${order.orderStatus == 'Completed'}">
+                                            <span class="badge badge-success badge-status">Hoàn thành</span>
+                                        </c:when>
                                         <c:when test="${order.orderStatus == 'Cancelled'}">
                                             <span class="badge badge-danger badge-status">Đã hủy</span>
                                         </c:when>
@@ -196,6 +199,19 @@
                                             </button>
                                         </c:if>
                                         <c:if test="${order.orderStatus == 'Delivered'}">
+                                            <form method="post" action="${pageContext.request.contextPath}/customer/orders" style="display:inline;">
+                                                <input type="hidden" name="action" value="confirm">
+                                                <input type="hidden" name="orderId" value="${order.orderID}">
+                                                <button type="submit" class="btn btn-outline-success btn-sm" onclick="return confirm('Xác nhận bạn đã nhận được hàng?')">
+                                                    <i class="fa fa-check"></i> Đã nhận hàng
+                                                </button>
+                                            </form>
+                                            <a href="${pageContext.request.contextPath}/customer/refund?action=create&orderId=${order.orderID}" 
+                                               class="btn btn-outline-warning btn-sm">
+                                                <i class="fa fa-undo"></i> Trả hàng
+                                            </a>
+                                        </c:if>
+                                        <c:if test="${order.orderStatus == 'Completed'}">
                                             <a href="${pageContext.request.contextPath}/order-review?orderId=${order.orderID}" 
                                                class="btn btn-outline-warning btn-sm">
                                                 <i class="fa fa-star"></i> Đánh giá
