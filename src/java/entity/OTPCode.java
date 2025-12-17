@@ -17,8 +17,8 @@ public class OTPCode {
     public static final String TYPE_RESET_PASSWORD = "RESET_PASSWORD";
 
     public static final int MAX_ATTEMPTS = 5;
-    public static final int VERIFY_EMAIL_EXPIRY_MINUTES = 10;
-    public static final int RESET_PASSWORD_EXPIRY_MINUTES = 5;
+    public static final int VERIFY_EMAIL_EXPIRY_MINUTES = 2;  // 2 phút (120 giây)
+    public static final int RESET_PASSWORD_EXPIRY_MINUTES = 2; // 2 phút (120 giây)
     public static final int COOLDOWN_SECONDS = 60;
 
     public OTPCode() {
