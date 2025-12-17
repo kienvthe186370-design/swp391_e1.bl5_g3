@@ -23,8 +23,6 @@
   <!-- Theme style -->
   <link rel="stylesheet" href="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/css/adminlte.min.css">
   <style>
-    .priority-high { border-left: 4px solid #dc3545; }
-    .priority-normal { border-left: 4px solid #007bff; }
     .status-badge { font-size: 0.8rem; padding: 4px 10px; border-radius: 4px; }
     .status-pending { background: #ffc107; color: #000; }
     .status-reviewing { background: #17a2b8; color: #fff; }
@@ -35,7 +33,7 @@
     .status-quoteaccepted { background: #6f42c1; color: #fff; }
     .status-quoterejected { background: #dc3545; color: #fff; }
     .status-completed { background: #28a745; color: #fff; }
-    .status-cancelled { background: #6c757d; color: #fff; }
+    .status-cancelled { background: #dc3545; color: #fff; }
   </style>
 </head>
 <body class="hold-transition sidebar-mini">
@@ -106,13 +104,13 @@
             </div>
           </div>
           <div class="col-lg-3 col-6">
-            <div class="small-box bg-success">
+            <div class="small-box bg-danger">
               <div class="inner">
-                <h3>${completedCount}</h3>
-                <p>Hoàn Thành</p>
+                <h3>${cancelledCount}</h3>
+                <p>Đã Hủy</p>
               </div>
               <div class="icon">
-                <i class="fas fa-check-circle"></i>
+                <i class="fas fa-times-circle"></i>
               </div>
             </div>
           </div>
@@ -127,26 +125,20 @@
           <!-- Filter inside card -->
           <div class="card-body border-bottom">
             <form class="row g-3 align-items-end" method="GET" action="<%= request.getContextPath() %>/admin/rfq">
-              <div class="col-md-4">
+              <div class="col-md-5">
                 <input type="text" class="form-control" name="keyword" placeholder="Tìm theo mã RFQ, công ty, khách hàng..." value="${keyword}">
               </div>
-              <div class="col-md-3">
+              <div class="col-md-5">
                 <select class="form-control" name="status">
                   <option value="">Tất cả trạng thái</option>
                   <option value="Pending" ${status == 'Pending' ? 'selected' : ''}>Chờ xử lý</option>
                   <option value="DateProposed" ${status == 'DateProposed' ? 'selected' : ''}>Đề xuất ngày</option>
-                  <option value="Quoted" ${status == 'Quoted' ? 'selected' : ''}>Đã báo giá</option>
-                  <option value="QuoteAccepted" ${status == 'QuoteAccepted' ? 'selected' : ''}>Đã thanh toán</option>
-                  <option value="Completed" ${status == 'Completed' ? 'selected' : ''}>Hoàn thành</option>
+                  <option value="DateAccepted" ${status == 'DateAccepted' ? 'selected' : ''}>Đã chấp nhận ngày</option>
+                  <option value="Cancelled" ${status == 'Cancelled' ? 'selected' : ''}>Đã hủy</option>
+                  <option value="Quoted" ${status == 'Quoted' ? 'selected' : ''}>Đã tạo báo giá</option>
                 </select>
               </div>
-              <div class="col-md-3">
-                <select class="form-control" name="assignedTo">
-                  <option value="">Tất cả phân công</option>
-                  <option value="me" ${assignedTo == 'me' ? 'selected' : ''}>Của tôi</option>
-                  <option value="unassigned" ${assignedTo == 'unassigned' ? 'selected' : ''}>Chưa phân công</option>
-                </select>
-              </div>
+
               <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Tìm kiếm</button>
               </div>
@@ -169,7 +161,7 @@
                 </thead>
                 <tbody>
                   <c:forEach var="rfq" items="${rfqs}">
-                    <tr class="${rfq.status == 'Pending' ? 'priority-high' : 'priority-normal'}">
+                    <tr>
                       <td>
                         <a href="<%= request.getContextPath() %>/admin/rfq/detail?id=${rfq.rfqID}">
                           <strong>${rfq.rfqCode}</strong>
@@ -226,15 +218,15 @@
               <nav>
                 <ul class="pagination pagination-sm mb-0">
                   <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="?page=${currentPage - 1}&keyword=${keyword}&status=${status}&assignedTo=${assignedTo}">«</a>
+                    <a class="page-link" href="?page=${currentPage - 1}&keyword=${keyword}&status=${status}">«</a>
                   </li>
                   <c:forEach begin="1" end="${totalPages}" var="i">
                     <li class="page-item ${currentPage == i ? 'active' : ''}">
-                      <a class="page-link" href="?page=${i}&keyword=${keyword}&status=${status}&assignedTo=${assignedTo}">${i}</a>
+                      <a class="page-link" href="?page=${i}&keyword=${keyword}&status=${status}">${i}</a>
                     </li>
                   </c:forEach>
                   <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
-                    <a class="page-link" href="?page=${currentPage + 1}&keyword=${keyword}&status=${status}&assignedTo=${assignedTo}">»</a>
+                    <a class="page-link" href="?page=${currentPage + 1}&keyword=${keyword}&status=${status}">»</a>
                   </li>
                 </ul>
               </nav>

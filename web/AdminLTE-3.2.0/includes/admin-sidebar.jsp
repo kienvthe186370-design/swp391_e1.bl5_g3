@@ -98,6 +98,21 @@
         }
     }
     
+    // RFQ pending count (for SellerManager) - đếm các đơn cần xử lý
+    int pendingRFQCount = 0;
+    int dateAcceptedRFQCount = 0;
+    int totalRFQNeedAction = 0;
+    if (canAccessRFQ) {
+        try {
+            DAO.RFQDAO rfqDAO = new DAO.RFQDAO();
+            pendingRFQCount = rfqDAO.countRFQsByStatus("Pending"); // Đơn mới
+            dateAcceptedRFQCount = rfqDAO.countRFQsByStatus("DateAccepted"); // Khách đã chấp nhận ngày mới
+            totalRFQNeedAction = pendingRFQCount + dateAcceptedRFQCount;
+        } catch (Exception e) {
+            // Ignore
+        }
+    }
+    
     // Check for access denied message
     String accessDeniedMsg = (String) session.getAttribute("accessDeniedMessage");
     if (accessDeniedMsg != null) {
@@ -353,7 +368,18 @@
           <a href="<%= contextPath %>/admin/rfq" 
              class="nav-link <%= isRFQPage ? "active" : "" %>">
             <i class="nav-icon fas fa-file-invoice"></i>
-            <p>Yêu cầu báo giá (RFQ)</p>
+            <p>Yêu cầu báo giá (RFQ)
+              <% if (totalRFQNeedAction > 0) { %>
+                <span class="badge badge-warning right"><%= totalRFQNeedAction %></span>
+              <% } %>
+            </p>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/quotations" 
+             class="nav-link <%= currentURI.contains("/admin/quotations") ? "active" : "" %>">
+            <i class="nav-icon fas fa-file-invoice-dollar"></i>
+            <p>Đơn Báo Giá</p>
           </a>
         </li>
         <% } %>

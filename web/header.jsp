@@ -219,6 +219,9 @@
                                         <a href="<%= request.getContextPath() %>/rfq/list" style="color: #ffc107;">
                                             <i class="fa fa-file-text"></i> Mua Buôn
                                         </a>
+                                        <a href="<%= request.getContextPath() %>/quotation/list" style="color: #17a2b8;">
+                                            <i class="fa fa-file-invoice-dollar"></i> Đơn Báo Giá
+                                        </a>
                                     </c:if>
                                     
                                     <a href="<%= request.getContextPath() %>/logout">Đăng xuất</a>

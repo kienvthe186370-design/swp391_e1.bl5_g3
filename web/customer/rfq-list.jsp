@@ -17,19 +17,16 @@
         .status-badge { font-size: 0.85rem; padding: 5px 12px; }
         .status-draft { background: #adb5bd; color: #fff; }
         .status-pending { background: #ffc107; color: #000; }
-        .status-reviewing { background: #17a2b8; color: #fff; }
         .status-dateproposed { background: #fd7e14; color: #fff; }
         .status-dateaccepted { background: #20c997; color: #fff; }
         .status-daterejected { background: #dc3545; color: #fff; }
         .status-quoted { background: #007bff; color: #fff; }
-        .status-quoteaccepted { background: #6f42c1; color: #fff; }
         .status-quoterejected { background: #dc3545; color: #fff; }
-        .status-quoteexpired { background: #fd7e14; color: #fff; }
         .status-completed { background: #28a745; color: #fff; }
         .status-cancelled { background: #6c757d; color: #fff; }
+        .border-orange { border-color: #fd7e14 !important; }
         .payment-method { font-size: 0.8rem; padding: 3px 8px; border-radius: 4px; }
         .payment-bank { background: #e3f2fd; color: #1565c0; }
-        .payment-cod { background: #fff3e0; color: #e65100; }
     </style>
 </head>
 <body>
@@ -64,24 +61,18 @@
             <div class="card mb-4">
                 <div class="card-body">
                     <form class="row g-3" method="GET">
-                        <div class="col-md-4">
+                        <div class="col-md-5">
                             <input type="text" class="form-control" name="keyword" placeholder="Tìm mã RFQ, công ty..." value="${keyword}">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-5">
                             <select class="form-control" name="status">
                                 <option value="">Tất cả trạng thái</option>
                                 <option value="Draft" ${status == 'Draft' ? 'selected' : ''}>Chờ xác nhận</option>
                                 <option value="Pending" ${status == 'Pending' ? 'selected' : ''}>Chờ xử lý</option>
-                                <option value="Reviewing" ${status == 'Reviewing' ? 'selected' : ''}>Đang xem xét</option>
                                 <option value="DateProposed" ${status == 'DateProposed' ? 'selected' : ''}>Đề xuất ngày mới</option>
+                                <option value="DateAccepted" ${status == 'DateAccepted' ? 'selected' : ''}>Đã chấp nhận ngày</option>
                                 <option value="Quoted" ${status == 'Quoted' ? 'selected' : ''}>Đã báo giá</option>
-                                <option value="QuoteExpired" ${status == 'QuoteExpired' ? 'selected' : ''}>Báo giá hết hạn</option>
-                                <option value="Completed" ${status == 'Completed' ? 'selected' : ''}>Hoàn thành</option>
                             </select>
-                        </div>
-                        <div class="col-md-3">
-                            <input type="text" class="form-control" value="Chuyển khoản ngân hàng" readonly>
-                            <input type="hidden" name="paymentMethod" value="BankTransfer">
                         </div>
                         <div class="col-md-2">
                             <button type="submit" class="btn btn-primary w-100"><i class="fa fa-search"></i> Tìm</button>
@@ -100,7 +91,7 @@
             </c:if>
 
             <c:forEach var="rfq" items="${rfqs}">
-                <div class="card rfq-card ${rfq.status == 'DateProposed' ? 'border-warning' : ''} ${rfq.status == 'Quoted' ? 'border-primary' : ''}">
+                <div class="card rfq-card border-${rfq.status == 'Draft' ? 'secondary' : ''} ${rfq.status == 'Pending' ? 'border-warning' : ''} ${rfq.status == 'DateProposed' ? 'border-orange' : ''} ${rfq.status == 'DateAccepted' ? 'border-info' : ''} ${rfq.status == 'Quoted' ? 'border-primary' : ''} ${rfq.status == 'Completed' ? 'border-success' : ''} ${rfq.status == 'QuoteRejected' ? 'border-danger' : ''}">
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-8">
@@ -111,7 +102,12 @@
                                                 ${rfq.rfqCode}
                                             </a>
                                         </h5>
-                                        <p class="text-muted mb-2"><i class="fa fa-building"></i> ${rfq.companyName}</p>
+                                        <p class="text-muted mb-1"><i class="fa fa-building"></i> ${rfq.companyName}</p>
+                                        <p class="text-muted mb-2">
+                                            <i class="fa fa-user"></i> ${rfq.contactPerson}
+                                            <span class="mx-2">|</span>
+                                            <i class="fa fa-envelope"></i> ${rfq.contactEmail}
+                                        </p>
                                     </div>
                                     <span class="badge status-badge status-${rfq.status.toLowerCase()}">${rfq.statusDisplayName}</span>
                                 </div>

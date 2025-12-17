@@ -29,6 +29,7 @@
         .history-item { position: relative; padding: 10px 0 15px 30px; border-bottom: 1px solid #eee; }
         .history-item:last-child { border-bottom: none; }
         .history-item::before { content: ''; width: 12px; height: 12px; background: #007bff; border-radius: 50%; position: absolute; left: 0; top: 15px; }
+        .history-item.rejected::before { background: #dc3545; }
         .history-item.completed::before { background: #28a745; }
         .info-label { font-weight: 600; color: #666; }
     </style>
@@ -56,7 +57,10 @@
     <section class="spad">
         <div class="container">
             <c:if test="${param.success == 'created'}">
-                <div class="alert alert-success"><i class="fa fa-check-circle"></i> Yêu cầu báo giá đã được gửi thành công!</div>
+                <div class="alert alert-success alert-dismissible fade show auto-dismiss" role="alert">
+                    <i class="fa fa-check-circle"></i> Yêu cầu báo giá đã được gửi thành công!
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
             </c:if>
 
             <div class="row">
@@ -109,16 +113,34 @@
                                         <p><span class="info-label">Ngày đề xuất:</span> <fmt:formatDate value="${rfq.proposedDeliveryDate}" pattern="dd/MM/yyyy"/></p>
                                     </c:if>
                                     <p><span class="info-label">Địa chỉ giao:</span> ${rfq.deliveryAddress}</p>
-                                    <c:if test="${not empty rfq.shippingCarrierName}">
-                                        <p><span class="info-label">Đơn vị vận chuyển:</span> ${rfq.shippingCarrierName} - ${rfq.shippingServiceName}</p>
-                                        <p><span class="info-label">Phí vận chuyển (dự kiến):</span> <fmt:formatNumber value="${rfq.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></p>
-                                        <p><span class="info-label">Thời gian giao:</span> ${rfq.estimatedDeliveryDays} ngày</p>
-                                    </c:if>
                                     <p><span class="info-label">Hình thức thanh toán:</span> Chuyển khoản ngân hàng (VNPay)</p>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Shipping Carrier Info -->
+                    <c:if test="${not empty rfq.shippingCarrierName}">
+                    <div class="card mb-4">
+                        <div class="card-header"><h5 class="mb-0"><i class="fa fa-truck"></i> Đơn Vị Vận Chuyển</h5></div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><span class="info-label">Đơn vị vận chuyển:</span> <strong>${rfq.shippingCarrierName}</strong></p>
+                                    <p><span class="info-label">Dịch vụ:</span> ${rfq.shippingServiceName}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><span class="info-label">Phí vận chuyển (dự kiến):</span> 
+                                        <span class="text-primary"><fmt:formatNumber value="${rfq.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></span>
+                                    </p>
+                                    <p><span class="info-label">Thời gian giao hàng:</span> 
+                                        <span class="badge badge-success">${rfq.estimatedDeliveryDays} ngày</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </c:if>
 
                     <!-- Action Required -->
                     <c:if test="${rfq.status == 'DateProposed'}">
@@ -156,16 +178,8 @@
                                 <c:if test="${not empty rfq.warrantyTerms}">
                                     <p>Bảo hành: ${rfq.warrantyTerms}</p>
                                 </c:if>
-                                <div class="d-flex gap-2">
-                                    <form action="${pageContext.request.contextPath}/rfq/payment" method="POST" class="mr-2">
-                                        <input type="hidden" name="rfqId" value="${rfq.rfqID}">
-                                        <button type="submit" class="btn btn-success btn-lg">
-                                            <i class="fa fa-check"></i> Chấp Nhận & Thanh Toán
-                                        </button>
-                                    </form>
-                                    <button type="button" class="btn btn-outline-danger" data-toggle="modal" data-target="#rejectQuoteModal">
-                                        <i class="fa fa-times"></i> Từ Chối
-                                    </button>
+                                <div class="alert alert-info mt-2">
+                                    <i class="fa fa-info-circle"></i> Vui lòng vào mục <a href="${pageContext.request.contextPath}/quotation/detail?id=${rfq.rfqID}" class="alert-link"><strong>Đơn Báo Giá</strong></a> để xem chi tiết và thanh toán.
                                 </div>
                             </div>
                         </div>
@@ -226,21 +240,22 @@
                                     </c:forEach>
                                 </tbody>
                                 <c:if test="${rfq.totalAmount != null && rfq.totalAmount > 0}">
+                                    <c:set var="colSpan" value="${(rfq.status == 'Quoted' || rfq.status == 'QuoteAccepted' || rfq.status == 'Completed') ? 3 : 1}" />
                                     <tfoot>
                                         <tr>
-                                            <td colspan="3" class="text-right"><strong>Tạm tính:</strong></td>
+                                            <td colspan="${colSpan}" class="text-right"><strong>Tạm tính:</strong></td>
                                             <td class="text-right"><fmt:formatNumber value="${rfq.subtotalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
                                         </tr>
                                         <tr>
-                                            <td colspan="3" class="text-right">Phí vận chuyển:</td>
+                                            <td colspan="${colSpan}" class="text-right">Phí vận chuyển:</td>
                                             <td class="text-right"><fmt:formatNumber value="${rfq.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
                                         </tr>
                                         <tr>
-                                            <td colspan="3" class="text-right">Thuế:</td>
+                                            <td colspan="${colSpan}" class="text-right">Thuế:</td>
                                             <td class="text-right"><fmt:formatNumber value="${rfq.taxAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
                                         </tr>
                                         <tr class="table-primary">
-                                            <td colspan="3" class="text-right"><strong>TỔNG CỘNG:</strong></td>
+                                            <td colspan="${colSpan}" class="text-right"><strong>TỔNG CỘNG:</strong></td>
                                             <td class="text-right"><strong><fmt:formatNumber value="${rfq.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></strong></td>
                                         </tr>
                                     </tfoot>
@@ -259,7 +274,7 @@
                             <div class="card-body">
                                 <div class="history-list">
                                     <c:forEach var="h" items="${rfq.history}">
-                                        <div class="history-item ${h.newStatus == 'Completed' ? 'completed' : ''}">
+                                        <div class="history-item ${h.newStatus == 'QuoteRejected' || h.newStatus == 'DateRejected' || h.newStatus == 'Cancelled' ? 'rejected' : ''} ${h.newStatus == 'Completed' ? 'completed' : ''}">
                                             <strong>${h.action}</strong>
                                             <p class="mb-1 small">${h.notes}</p>
                                             <small class="text-muted"><fmt:formatDate value="${h.changedDate}" pattern="dd/MM/yyyy HH:mm"/></small>
@@ -444,12 +459,15 @@
         var isSubmitting = false;
         var savedRfqId = null;
         
-        // Auto-save draft immediately when page loads (if not already saved)
+        // DO NOT auto-save draft immediately - only save when user leaves page
+        // This prevents creating duplicate RFQs (one draft + one submitted)
         $(document).ready(function() {
-            <c:if test="${empty rfq.rfqID || rfq.rfqID == 0}">
-            // Save draft immediately for new RFQ
-            saveDraftAsync();
-            </c:if>
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function() {
+                $('.auto-dismiss').fadeOut('slow', function() {
+                    $(this).remove();
+                });
+            }, 5000);
             
             // Intercept all link clicks to show confirmation
             $('a').not('[data-no-confirm]').on('click', function(e) {

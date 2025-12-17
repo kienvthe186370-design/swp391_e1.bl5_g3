@@ -38,10 +38,16 @@
         </div>
 
         <c:if test="${param.success == 'date_proposed'}">
-            <div class="alert alert-success"><i class="fas fa-check"></i> Đã gửi đề xuất ngày giao hàng mới!</div>
+            <div class="alert alert-success alert-dismissible fade show auto-dismiss" role="alert">
+                <i class="fas fa-check"></i> Đã gửi đề xuất ngày giao hàng mới!
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         </c:if>
         <c:if test="${param.success == 'quotation_sent'}">
-            <div class="alert alert-success"><i class="fas fa-check"></i> Đã gửi báo giá thành công!</div>
+            <div class="alert alert-success alert-dismissible fade show auto-dismiss" role="alert">
+                <i class="fas fa-check"></i> Đã gửi báo giá thành công!
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         </c:if>
 
         <div class="row">
@@ -261,5 +267,20 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                var alerts = document.querySelectorAll('.auto-dismiss');
+                alerts.forEach(function(alert) {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(function() {
+                        alert.remove();
+                    }, 500);
+                });
+            }, 5000);
+        });
+    </script>
 </body>
 </html>
