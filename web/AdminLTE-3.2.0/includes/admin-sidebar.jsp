@@ -65,7 +65,7 @@
     boolean isUserManagement = isCustomerPage || isEmployeePage;
     boolean isProductManagement = isProductPage || isStockPage; // Products and Stock pages
     boolean isCatalogManagement = isCategoryPage || isBrandPage || isAttributePage; // Categories, Brands, Attributes
-    boolean isMarketing = isSliderPage;
+    boolean isMarketing = isSliderPage || isVoucherPage;
     
     
     // ===== ROLE-BASED ACCESS CONTROL FLAGS =====

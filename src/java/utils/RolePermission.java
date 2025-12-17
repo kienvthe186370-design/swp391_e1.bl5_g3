@@ -171,7 +171,7 @@ public class RolePermission {
             return canManageMarketing(role);
         }
 
-        if (path.startsWith("/vouchers")) {
+        if (path.startsWith("/voucher")) {
             return canManageVouchers(role);
         }
 
