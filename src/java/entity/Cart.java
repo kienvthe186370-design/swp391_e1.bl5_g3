@@ -182,6 +182,19 @@ public class Cart {
         }
     }
     
+    /**
+     * Check if cart has any unavailable items (inactive products or variants)
+     * @return true if there are unavailable items
+     */
+    public boolean hasUnavailableItems() {
+        if (items == null || items.isEmpty()) {
+            return false;
+        }
+        
+        return items.stream()
+                .anyMatch(item -> !item.isAvailable());
+    }
+    
     @Override
     public String toString() {
         return "Cart{" +

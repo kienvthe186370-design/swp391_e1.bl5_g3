@@ -1,12 +1,14 @@
 package controller;
 
 import DAO.VoucherDAO;
+import entity.Customer;
 import entity.Voucher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.json.JSONObject;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -35,6 +37,19 @@ public class VoucherApiServlet extends HttpServlet {
             return;
         }
         
+        // Get customer from session
+        HttpSession session = request.getSession();
+        Customer customer = (Customer) session.getAttribute("customer");
+        
+        if (customer == null) {
+            result.put("success", false);
+            result.put("message", "Vui lòng đăng nhập để sử dụng voucher");
+            out.print(result.toString());
+            return;
+        }
+        
+        int customerID = customer.getCustomerID();
+        
         BigDecimal subtotal = BigDecimal.ZERO;
         try {
             if (subtotalStr != null && !subtotalStr.isEmpty()) {
@@ -45,27 +60,36 @@ public class VoucherApiServlet extends HttpServlet {
         }
         
         try {
-            Voucher voucher = voucherDAO.getVoucherByCode(voucherCode.trim());
+            // Validate voucher for this specific customer
+            Voucher voucher = voucherDAO.validateVoucherForCustomer(voucherCode.trim(), customerID, subtotal);
             
             if (voucher == null) {
-                result.put("success", false);
-                result.put("message", "Mã voucher không tồn tại");
-                out.print(result.toString());
-                return;
-            }
-            
-            // Check if voucher is valid
-            if (!voucher.isValid()) {
-                result.put("success", false);
-                result.put("message", "Mã voucher đã hết hạn hoặc không còn hiệu lực");
-                out.print(result.toString());
-                return;
-            }
-            
-            // Check minimum order value
-            if (voucher.getMinOrderValue() != null && subtotal.compareTo(voucher.getMinOrderValue()) < 0) {
-                result.put("success", false);
-                result.put("message", "Đơn hàng tối thiểu " + formatCurrency(voucher.getMinOrderValue()) + "đ để sử dụng voucher này");
+                // Check specific reason
+                Voucher basicVoucher = voucherDAO.getVoucherByCode(voucherCode.trim());
+                
+                if (basicVoucher == null) {
+                    result.put("success", false);
+                    result.put("message", "Mã voucher không tồn tại");
+                } else if (!basicVoucher.isValid()) {
+                    result.put("success", false);
+                    result.put("message", "Mã voucher đã hết hạn hoặc không còn hiệu lực");
+                } else if (subtotal.compareTo(basicVoucher.getMinOrderValue()) < 0) {
+                    result.put("success", false);
+                    result.put("message", "Đơn hàng tối thiểu " + formatCurrency(basicVoucher.getMinOrderValue()) + "đ để sử dụng voucher này");
+                } else if (basicVoucher.getMaxUsagePerCustomer() != null) {
+                    int usageCount = voucherDAO.getCustomerVoucherUsageCount(basicVoucher.getVoucherID(), customerID);
+                    if (usageCount >= basicVoucher.getMaxUsagePerCustomer()) {
+                        result.put("success", false);
+                        result.put("message", "Bạn đã sử dụng hết lượt áp dụng voucher này");
+                    } else {
+                        result.put("success", false);
+                        result.put("message", "Không thể áp dụng voucher này");
+                    }
+                } else {
+                    result.put("success", false);
+                    result.put("message", "Không thể áp dụng voucher này");
+                }
+                
                 out.print(result.toString());
                 return;
             }

@@ -280,20 +280,20 @@ function toggleMaxDiscount() {
 function toggleAppliedToID() {
   const appliedToType = $('#appliedToType').val();
   
-  // Hide all groups
+  // Hide all groups and disable their inputs
   $('#categoryGroup, #productGroup, #brandGroup').hide();
-  $('#categoryID, #productID, #brandID').removeAttr('required');
+  $('#categoryID, #productID, #brandID').removeAttr('required').prop('disabled', true);
   
-  // Show relevant group
+  // Show relevant group and enable its input
   if (appliedToType === 'category') {
     $('#categoryGroup').show();
-    $('#categoryID').attr('required', 'required');
+    $('#categoryID').attr('required', 'required').prop('disabled', false);
   } else if (appliedToType === 'product') {
     $('#productGroup').show();
-    $('#productID').attr('required', 'required');
+    $('#productID').attr('required', 'required').prop('disabled', false);
   } else if (appliedToType === 'brand') {
     $('#brandGroup').show();
-    $('#brandID').attr('required', 'required');
+    $('#brandID').attr('required', 'required').prop('disabled', false);
   }
 }
 </script>

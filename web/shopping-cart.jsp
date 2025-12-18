@@ -87,6 +87,7 @@
                     <c:when test="${param.error == 'no_available_variant'}">Sản phẩm hiện tại hết hàng!</c:when>
                     <c:when test="${param.error == 'variant_not_found'}">Không tìm thấy phiên bản sản phẩm!</c:when>
                     <c:when test="${param.error == 'product_inactive'}">Sản phẩm không còn kinh doanh!</c:when>
+                    <c:when test="${param.error == 'unavailable_items'}">Giỏ hàng có sản phẩm không còn bán. Vui lòng xóa trước khi thanh toán!</c:when>
                     <c:otherwise>Có lỗi xảy ra. Vui lòng thử lại!</c:otherwise>
                 </c:choose>
             </div>
@@ -115,6 +116,14 @@
                 </c:when>
                 <c:otherwise>
                     <!-- Cart with Items -->
+                    <!-- Check if there are unavailable items -->
+                    <c:set var="hasUnavailableItems" value="false" />
+                    <c:forEach var="item" items="${cartItems}">
+                        <c:if test="${!item.available}">
+                            <c:set var="hasUnavailableItems" value="true" />
+                        </c:if>
+                    </c:forEach>
+                    
                     <div class="row">
                         <div class="col-lg-8">
                             <div class="shopping__cart__table">
@@ -150,33 +159,59 @@
                                                         </c:if>
                                                         <h5><fmt:formatNumber value="${item.price}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫</h5>
                                                         
-                                                        <!-- Stock Warning -->
-                                                        <c:if test="${item.availableStock == 0}">
-                                                            <small class="text-danger"><i class="fa fa-exclamation-triangle"></i> Hết hàng</small>
+                                                        <!-- Product Unavailable Warning -->
+                                                        <c:if test="${!item.available}">
+                                                            <div class="alert alert-danger p-2 mt-2" style="font-size: 13px;">
+                                                                <i class="fa fa-ban"></i> <strong>Sản phẩm không còn bán</strong><br>
+                                                                <small>Vui lòng xóa khỏi giỏ hàng</small>
+                                                            </div>
                                                         </c:if>
-                                                        <c:if test="${item.availableStock > 0 && item.availableStock < 10}">
-                                                            <small class="text-warning"><i class="fa fa-exclamation-circle"></i> Chỉ còn ${item.availableStock} sản phẩm</small>
+                                                        
+                                                        <!-- Stock Warning (only if product is available) -->
+                                                        <c:if test="${item.available}">
+                                                            <c:if test="${item.availableStock == 0}">
+                                                                <small class="text-danger"><i class="fa fa-exclamation-triangle"></i> Hết hàng</small>
+                                                            </c:if>
+                                                            <c:if test="${item.availableStock > 0 && item.availableStock < 10}">
+                                                                <small class="text-warning"><i class="fa fa-exclamation-circle"></i> Chỉ còn ${item.availableStock} sản phẩm</small>
+                                                            </c:if>
                                                         </c:if>
                                                     </div>
                                                 </td>
                                                 <td class="quantity__item">
-                                                    <div class="quantity">
-                                                        <div class="pro-qty-2">
-                                                            <input type="number" 
-                                                                   class="cart-quantity-input"
-                                                                   value="${item.quantity}" 
-                                                                   min="1" 
-                                                                   max="${item.availableStock}"
-                                                                   data-cart-item-id="${item.cartItemID}"
-                                                                   ${item.availableStock == 0 ? 'disabled' : ''}>
-                                                        </div>
-                                                    </div>
+                                                    <c:choose>
+                                                        <c:when test="${!item.available}">
+                                                            <span class="text-muted">-</span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <div class="quantity">
+                                                                <div class="pro-qty-2">
+                                                                    <input type="number" 
+                                                                           class="cart-quantity-input"
+                                                                           value="${item.quantity}" 
+                                                                           min="1" 
+                                                                           max="${item.availableStock}"
+                                                                           data-cart-item-id="${item.cartItemID}"
+                                                                           ${item.availableStock == 0 ? 'disabled' : ''}>
+                                                                </div>
+                                                            </div>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </td>
                                                 <td class="cart__price">
-                                                    <fmt:formatNumber value="${item.total}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                    <c:choose>
+                                                        <c:when test="${!item.available}">
+                                                            <span class="text-muted" style="text-decoration: line-through;">
+                                                                <fmt:formatNumber value="${item.total}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                            </span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <fmt:formatNumber value="${item.total}" type="number" groupingUsed="true" maxFractionDigits="0"/>₫
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </td>
                                                 <td class="cart__close">
-                                                    <a href="#" onclick="removeCartItem(${item.cartItemID}); return false;">
+                                                    <a href="#" onclick="removeCartItem(${item.cartItemID}); return false;" title="${!item.available ? 'Xóa sản phẩm không còn bán' : 'Xóa khỏi giỏ hàng'}">
                                                         <i class="fa fa-close"></i>
                                                     </a>
                                                 </td>
@@ -232,10 +267,31 @@
                                         </span>
                                     </li>
                                 </ul>
-                                <a href="<%= request.getContextPath() %>/checkout" class="primary-btn">
-                                    Thanh toán
-                                    <span class="arrow_right"></span>
-                                </a>
+                                
+                                <!-- Warning if there are unavailable items -->
+                                <c:if test="${hasUnavailableItems}">
+                                    <div class="alert alert-danger mb-3" style="font-size: 14px;">
+                                        <i class="fa fa-exclamation-triangle"></i> 
+                                        <strong>Không thể thanh toán</strong><br>
+                                        Vui lòng xóa các sản phẩm không còn bán khỏi giỏ hàng
+                                    </div>
+                                </c:if>
+                                
+                                <!-- Checkout button - disabled if there are unavailable items -->
+                                <c:choose>
+                                    <c:when test="${hasUnavailableItems}">
+                                        <a href="#" class="primary-btn" style="background-color: #ccc; cursor: not-allowed; pointer-events: none;" onclick="return false;">
+                                            Thanh toán
+                                            <span class="arrow_right"></span>
+                                        </a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <a href="<%= request.getContextPath() %>/checkout" class="primary-btn">
+                                            Thanh toán
+                                            <span class="arrow_right"></span>
+                                        </a>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
                         </div>
                     </div>
