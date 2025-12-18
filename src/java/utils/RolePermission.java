@@ -22,11 +22,12 @@ public class RolePermission {
     }
 
     public static boolean canViewCustomers(String role) {
-        return SELLER_MANAGER.equalsIgnoreCase(role) || SELLER.equalsIgnoreCase(role);
+        // Seller không được xem danh sách khách hàng, chỉ SellerManager mới có quyền
+        return SELLER_MANAGER.equalsIgnoreCase(role);
     }
 
     public static boolean canManageOrders(String role) {
-        return SELLER_MANAGER.equalsIgnoreCase(role) || SELLER.equalsIgnoreCase(role);
+        return ADMIN.equalsIgnoreCase(role) || SELLER_MANAGER.equalsIgnoreCase(role) || SELLER.equalsIgnoreCase(role);
     }
 
     /**

@@ -41,12 +41,14 @@ public class OrderStatusValidator {
             return false;
         }
         
-        // Seller không được hủy đơn Processing trở đi
-        if ("Seller".equalsIgnoreCase(role)) {
-            if ("Cancelled".equals(toStatus) && 
-                ("Processing".equals(fromStatus) || "Shipping".equals(fromStatus))) {
-                return false;
-            }
+        // Chỉ Shipper mới được cập nhật trạng thái "Đã giao"
+        if ("Delivered".equals(toStatus) && !"Shipper".equalsIgnoreCase(role)) {
+            return false;
+        }
+        
+        // Seller không được hủy đơn (chỉ SellerManager trở lên mới được hủy)
+        if ("Seller".equalsIgnoreCase(role) && "Cancelled".equals(toStatus)) {
+            return false;
         }
         
         return RolePermission.canUpdateOrderStatus(role);
