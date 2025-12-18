@@ -79,7 +79,7 @@
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
                 <i class="fa fa-exclamation-circle"></i> 
                 <c:choose>
-                    <c:when test="${param.error == 'insufficient_stock'}">Sản phẩm không đủ số lượng trong kho!</c:when>
+                    <c:when test="${param.error == 'insufficient_stock'}">Sản phẩm không đủ số lượng!</c:when>
                     <c:when test="${param.error == 'product_not_found'}">Không tìm thấy sản phẩm!</c:when>
                     <c:when test="${param.error == 'invalid_quantity'}">Số lượng không hợp lệ!</c:when>
                     <c:when test="${param.error == 'no_price'}">Sản phẩm chưa có giá bán!</c:when>

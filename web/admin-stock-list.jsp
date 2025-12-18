@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý kho - Admin</title>
+    <title>Quản lý số lượng sản phẩm - Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -83,11 +83,11 @@
     <!-- Header & Breadcrumb -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h2 class="mb-1">Quản lý kho</h2>
+            <h2 class="mb-1">Quản lý số lượng sản phẩm</h2>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0">
                     <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Quản lý kho</li>
+                    <li class="breadcrumb-item active" aria-current="page">Quản lý số lượng sản phẩm</li>
                 </ol>
             </nav>
         </div>
@@ -126,7 +126,7 @@
         <div class="col-md-2">
             <select name="sortBy" class="form-select">
                 <option value="created_date" ${sortBy == 'created_date' ? 'selected' : ''}>Ngày tạo</option>
-                <option value="stock" ${sortBy == 'stock' ? 'selected' : ''}>Tồn kho</option>
+                <option value="stock" ${sortBy == 'stock' ? 'selected' : ''}>Số lượng sản phẩm</option>
                 <option value="cost_price" ${sortBy == 'cost_price' ? 'selected' : ''}>Giá vốn</option>
             </select>
         </div>
@@ -146,7 +146,7 @@
                 <th>Sản phẩm / SKU</th>
                 <th>Danh mục</th>
                 <th>Thương hiệu</th>
-                <th class="text-center">Tồn kho</th>
+                <th class="text-center">Số lượng</th>
                 <th class="text-end">Giá vốn TB</th>
                 <th class="text-end">Giá bán</th>
                 <th class="text-end">Lợi nhuận</th>
@@ -222,14 +222,14 @@
                                 <span class="badge bg-danger">Hết hàng</span>
                             </c:when>
                             <c:otherwise>
-                                <span class="badge bg-secondary">Chưa nhập</span>
+                                <span class="badge bg-secondary">Chưa thêm</span>
                             </c:otherwise>
                         </c:choose>
                     </td>
                     <td class="text-center">
                         <a href="${pageContext.request.contextPath}/admin/stock/detail?id=${item.variantId}" 
-                           class="btn btn-success btn-sm" title="Nhập kho">
-                            <i class="fas fa-plus"></i> Nhập kho
+                           class="btn btn-success btn-sm" title="Thêm số lượng sản phẩm">
+                            <i class="fas fa-plus"></i> Thêm số lượng sản phẩm
                         </a>
                     </td>
                 </tr>
@@ -238,7 +238,7 @@
                 <tr>
                     <td colspan="10" class="text-center py-4">
                         <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                        <p class="text-muted mb-0">Không có dữ liệu tồn kho.</p>
+                        <p class="text-muted mb-0">Không có dữ liệu số lượng sản phẩm.</p>
                     </td>
                 </tr>
             </c:if>

@@ -92,7 +92,7 @@
                 <th>Tên sản phẩm</th>
                 <th>Danh mục</th>
                 <th>Thương hiệu</th>
-                <th>Tồn kho</th>
+                <th>Số lượng</th>
                 <th>Giá bán</th>
             </tr>
             </thead>

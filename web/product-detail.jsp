@@ -1242,7 +1242,7 @@
             document.querySelector('.price-section').innerHTML = priceHtml;
         }
         
-        // Cập nhật trạng thái tồn kho
+        // Cập nhật trạng thái số lượng sản phẩm
         function updateStockStatus(stock) {
             var addToCartBtn = document.querySelector('.add-to-cart-btn');
             var buyNowBtn = document.querySelector('.buy-now-btn');

@@ -21,13 +21,13 @@
     <div class="container-fluid">
         <div class="row mb-2">
             <div class="col-sm-6">
-                <h1 class="m-0"><i class="fas fa-boxes mr-2"></i>Nhập kho sản phẩm</h1>
+                <h1 class="m-0"><i class="fas fa-boxes mr-2"></i>Thêm số lượng sản phẩm</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
                     <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/stock">Quản lý kho</a></li>
-                    <li class="breadcrumb-item active">Nhập kho</li>
+                    <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/stock">Quản lý số lượng sản phẩm</a></li>
+                    <li class="breadcrumb-item active">Thêm số lượng sản phẩm</li>
                 </ol>
             </div>
         </div>
@@ -82,7 +82,7 @@
                         <div class="row mt-4">
                             <div class="col mb-3">
                                 <div class="stat-box stock">
-                                    <div class="label"><i class="fas fa-cubes mr-1"></i>Tồn kho</div>
+                                    <div class="label"><i class="fas fa-cubes mr-1"></i>Số lượng sản phẩm</div>
                                     <div class="value text-info" id="currentStockDisplay">${stockDetail.currentStock}</div>
                                 </div>
                             </div>
@@ -115,13 +115,68 @@
                 </div>
 
 
+                <!-- Stock History Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-history mr-2"></i>Lịch sử thêm</h3>
+                    </div>
+                    <div class="card-body table-responsive p-0">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Ngày nhập</th>
+                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-right">Giá nhập/đơn vị</th>
+                                    <th class="text-right">Thành tiền</th>
+                                    <th>Người nhập</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:choose>
+                                    <c:when test="${not empty receiptHistory}">
+                                        <c:forEach var="receipt" items="${receiptHistory}">
+                                            <tr>
+                                                <td><span class="badge badge-secondary">#${receipt.receiptId}</span></td>
+                                                <td><fmt:formatDate value="${receipt.receiptDate}" pattern="dd/MM/yyyy HH:mm"/></td>
+                                                <td class="text-center"><strong>${receipt.quantity}</strong></td>
+                                                <td class="text-right"><fmt:formatNumber value="${receipt.unitCost}" type="number" maxFractionDigits="0"/>đ</td>
+                                                <td class="text-right"><strong><fmt:formatNumber value="${receipt.totalCost}" type="number" maxFractionDigits="0"/>đ</strong></td>
+                                                <td><i class="fas fa-user-circle mr-1"></i>${not empty receipt.createdByName ? receipt.createdByName : 'N/A'}</td>
+                                            </tr>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4 text-muted">
+                                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                                Chưa có lịch sử thêm số lượng
+                                            </td>
+                                        </tr>
+                                    </c:otherwise>
+                                </c:choose>
+                            </tbody>
+                            <c:if test="${not empty receiptHistory}">
+                                <tfoot class="bg-light">
+                                    <tr>
+                                        <td colspan="2"><strong>Tổng cộng</strong></td>
+                                        <td class="text-center"><strong class="text-primary">${receiptSummary.totalQuantity}</strong></td>
+                                        <td class="text-right">-</td>
+                                        <td class="text-right"><strong class="text-primary"><fmt:formatNumber value="${receiptSummary.totalAmount}" type="number" maxFractionDigits="0"/>đ</strong></td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </c:if>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- Right Column - Import Form -->
             <div class="col-lg-4">
                 <div class="card card-success">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>Nhập kho mới</h3>
+                        <h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>Số lượng thêm mới</h3>
                     </div>
                     <div class="card-body">
                         <form method="post" action="${pageContext.request.contextPath}/admin/stock/detail" id="stockForm">
@@ -188,7 +243,7 @@
                     <div class="card-body">
                         <div class="row text-center">
                             <div class="col-6">
-                                <div class="text-muted small mb-1">Tồn kho mới</div>
+                                <div class="text-muted small mb-1">Số lượng sản phẩm mới</div>
                                 <div class="h4 text-info mb-0" id="newStockPreview">${stockDetail.currentStock}</div>
                                 <small class="text-success" id="stockChangePreview"></small>
                             </div>

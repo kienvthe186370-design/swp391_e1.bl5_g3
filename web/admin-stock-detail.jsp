@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nhập kho sản phẩm - Admin</title>
+    <title>Quản lý số lượng sản phẩm - Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -79,12 +79,12 @@
     <div class="content-wrapper">
         <!-- Header -->
         <div class="content-header">
-            <h1><i class="fas fa-boxes me-2"></i>Nhập kho sản phẩm</h1>
+            <h1><i class="fas fa-boxes me-2"></i>Thêm số lượng sản phẩm sản phẩm</h1>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a></li>
                     <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/products">Sản phẩm</a></li>
-                    <li class="breadcrumb-item active">Nhập kho</li>
+                    <li class="breadcrumb-item active">Thêm số lượng sản phẩm</li>
                 </ol>
             </nav>
         </div>
@@ -135,7 +135,7 @@
                         <!-- Stats -->
                         <div class="stats-row" style="grid-template-columns: repeat(4, 1fr);">
                             <div class="stat-box stock">
-                                <div class="label"><i class="fas fa-cubes me-1"></i>Tồn kho hiện tại</div>
+                                <div class="label"><i class="fas fa-cubes me-1"></i>Số lượng sản phẩm hiện tại</div>
                                 <div class="value text-info" id="currentStockDisplay">${stockDetail.currentStock}</div>
                             </div>
                             <div class="stat-box cost">
@@ -163,7 +163,7 @@
                 <!-- Stock History Card -->
                 <div class="card">
                     <div class="card-header">
-                        <h3><i class="fas fa-history me-2"></i>Lịch sử nhập kho</h3>
+                        <h3><i class="fas fa-history me-2"></i>Lịch sử thêm số lượng sản phẩm</h3>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -199,7 +199,7 @@
                                             <tr>
                                                 <td colspan="6" class="text-center py-4 text-muted">
                                                     <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                                                    Chưa có lịch sử nhập kho
+                                                    Chưa có lịch sử thêm số lượng sản phẩm.
                                                 </td>
                                             </tr>
                                         </c:otherwise>
@@ -226,7 +226,7 @@
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-header bg-success">
-                        <h3><i class="fas fa-plus-circle me-2"></i>Nhập kho mới</h3>
+                        <h3><i class="fas fa-plus-circle me-2"></i>Thêm số lượng sản phẩm mới</h3>
                     </div>
                     <div class="card-body">
                         <form method="post" action="${pageContext.request.contextPath}/admin/stock/detail" id="stockForm">
@@ -286,7 +286,7 @@
                             <!-- Buttons -->
                             <div class="d-grid gap-2">
                                 <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-check me-2"></i>Xác nhận nhập kho
+                                    <i class="fas fa-check me-2"></i>Xác nhận thêm số lượng sản phẩm
                                 </button>
                                 <a href="${pageContext.request.contextPath}/admin/products" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left me-2"></i>Quay lại
@@ -304,7 +304,7 @@
                     <div class="card-body">
                         <div class="row text-center">
                             <div class="col-6">
-                                <div class="text-muted small mb-1">Tồn kho mới</div>
+                                <div class="text-muted small mb-1">Số lượng sản phẩm mới</div>
                                 <div class="h4 text-info mb-0" id="newStockPreview">${stockDetail.currentStock}</div>
                                 <small class="text-success" id="stockChangePreview"></small>
                             </div>
