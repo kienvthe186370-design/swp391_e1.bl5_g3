@@ -151,7 +151,7 @@
         </li>
         
 <% if (isAdmin) { %>
-        <!-- ==================== ADMIN - GIỮ NGUYÊN MENU CŨ ==================== -->
+        <!-- ==================== ADMIN - CHỈ QUẢN LÝ USER VÀ SẢN PHẨM ==================== -->
         
         <!-- User Management - Admin only -->
         <li class="nav-item <%= isEmployeePage ? "menu-open" : "" %>">
@@ -232,91 +232,6 @@
               </a>
             </li>
           </ul>
-        </li>
-        
-        <!-- Marketing - Admin -->
-        <li class="nav-item <%= isMarketing ? "menu-open" : "" %>">
-          <a href="#" class="nav-link <%= isMarketing ? "active" : "" %>">
-            <i class="nav-icon fas fa-bullhorn"></i>
-            <p>
-              Marketing
-              <i class="fas fa-angle-left right"></i>
-            </p>
-          </a>
-          <ul class="nav nav-treeview">
-            <li class="nav-item">
-              <a href="<%= contextPath %>/admin/slider" 
-                 class="nav-link <%= isSliderPage ? "active" : "" %>">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Sliders</p>
-              </a>
-            </li>
-          </ul>
-          <ul class="nav nav-treeview">
-            <li class="nav-item">
-              <a href="<%= contextPath %>/admin/blog" 
-                 class="nav-link <%= isBlogPage ? "active" : "" %>">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Blog</p>
-              </a>
-            </li>
-          </ul>
-          <ul class="nav nav-treeview">
-            <li class="nav-item">
-              <a href="<%= contextPath %>/admin/discount" 
-                 class="nav-link <%= isPromotionPage ? "active" : "" %>">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Promotion</p>
-              </a>
-            </li>
-          </ul>
-        </li>
-        
-        <!-- Orders - Admin (chỉ xem, không xử lý) -->
-        <li class="nav-item">
-          <a href="<%= contextPath %>/admin/orders" 
-             class="nav-link <%= isOrderPage ? "active" : "" %>">
-            <i class="nav-icon fas fa-shopping-cart"></i>
-            <p>Đơn hàng</p>
-          </a>
-        </li>
-        
-        <!-- Admin không xử lý Refund - Refund do Seller/SellerManager xử lý -->
-        
-        <!-- Vouchers - Admin -->
-        <li class="nav-item">
-          <a href="<%= contextPath %>/admin/voucher" 
-             class="nav-link <%= isVoucherPage ? "active" : "" %>">
-            <i class="nav-icon fas fa-ticket-alt"></i>
-            <p>Voucher</p>
-          </a>
-        </li>
-        
-        <!-- Reports - Admin -->
-        <li class="nav-item">
-          <a href="<%= contextPath %>/admin/reports" 
-             class="nav-link <%= isReportsPage ? "active" : "" %>">
-            <i class="nav-icon fas fa-chart-bar"></i>
-            <p>Báo cáo</p>
-          </a>
-        </li>
-        
-        <!-- Quản lý đánh giá - Admin -->
-        <li class="nav-item">
-          <a href="<%= contextPath %>/feedbacks" 
-             class="nav-link <%= currentURI.contains("/feedbacks") ? "active" : "" %>">
-            <i class="nav-icon fas fa-comments"></i>
-            <p>Quản lý đánh giá</p>
-          </a>
-        </li>
-        
-        <!-- Settings - Admin -->
-        <li class="nav-item">
-          <a href="<%= contextPath %>/admin/settings" 
-             class="nav-link <%= isSettingsPage ? "active" : "" %>">
-            <i class="nav-icon fas fa-cog"></i>
-            <p>Cài đặt</p>
-          </a>
         </li>
         
 <% } else { %>

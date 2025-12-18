@@ -32,9 +32,8 @@ public class FeedbackServlet extends HttpServlet {
         HttpSession session = request.getSession();
         Employee employee = (Employee) session.getAttribute("employee");
         
-        // Kiểm tra quyền Marketer hoặc Admin
-        if (employee == null || 
-            (!"Marketer".equalsIgnoreCase(employee.getRole()) && !"Admin".equalsIgnoreCase(employee.getRole()))) {
+        // Kiểm tra quyền - Chỉ Marketer được truy cập
+        if (employee == null || !"Marketer".equalsIgnoreCase(employee.getRole())) {
             response.sendRedirect(request.getContextPath() + "/access-denied.jsp");
             return;
         }
@@ -103,9 +102,8 @@ public class FeedbackServlet extends HttpServlet {
         HttpSession session = request.getSession();
         Employee employee = (Employee) session.getAttribute("employee");
         
-        // Kiểm tra quyền Marketer hoặc Admin
-        if (employee == null || 
-            (!"Marketer".equalsIgnoreCase(employee.getRole()) && !"Admin".equalsIgnoreCase(employee.getRole()))) {
+        // Kiểm tra quyền - Chỉ Marketer được truy cập
+        if (employee == null || !"Marketer".equalsIgnoreCase(employee.getRole())) {
             response.sendRedirect(request.getContextPath() + "/access-denied.jsp");
             return;
         }
