@@ -77,7 +77,7 @@
                     <div class="col-lg-4 col-6">
                         <div class="small-box bg-info">
                             <div class="inner">
-                                <h3>${orders.size()}</h3>
+                                <h3>${totalOrders}</h3>
                                 <p>Tổng đơn được phân</p>
                             </div>
                             <div class="icon"><i class="fas fa-list"></i></div>
@@ -85,17 +85,52 @@
                     </div>
                 </div>
 
+                <!-- Filter -->
+                <div class="card card-outline card-primary">
+                    <div class="card-body py-2">
+                        <form method="get" class="form-inline">
+                            <input type="hidden" name="action" value="shipperOrders">
+                            
+                            <div class="form-group mr-2">
+                                <select name="status" class="form-control form-control-sm">
+                                    <option value="">-- Tất cả trạng thái --</option>
+                                    <option value="pending" ${statusFilter == 'pending' ? 'selected' : ''}>Chờ lấy hàng</option>
+                                    <option value="delivering" ${statusFilter == 'delivering' ? 'selected' : ''}>Đang giao</option>
+                                    <option value="delivered" ${statusFilter == 'delivered' ? 'selected' : ''}>Đã giao</option>
+                                    <option value="failed" ${statusFilter == 'failed' ? 'selected' : ''}>Giao thất bại</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group mr-2">
+                                <input type="text" name="search" class="form-control form-control-sm" 
+                                       placeholder="Mã đơn, tên KH, SĐT..." value="${searchKeyword}">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-sm btn-primary mr-2">
+                                <i class="fas fa-search"></i> Tìm kiếm
+                            </button>
+                            
+                            <a href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders" class="btn btn-sm btn-secondary">
+                                <i class="fas fa-redo"></i> Đặt lại
+                            </a>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- Order List -->
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title"><i class="fas fa-clipboard-list"></i> Danh sách đơn hàng</h3>
+                        <div class="card-tools">
+                            <span class="badge badge-info">Tổng: ${totalOrders} đơn</span>
+                        </div>
                     </div>
                     <div class="card-body p-0">
                         <c:choose>
                             <c:when test="${empty orders}">
                                 <div class="p-4 text-center text-muted">
                                     <i class="fas fa-inbox fa-3x mb-3"></i>
-                                    <p>Chưa có đơn hàng nào được phân công cho bạn.</p>
+                                    <p>Không tìm thấy đơn hàng nào.</p>
                                 </div>
                             </c:when>
                             <c:otherwise>
@@ -167,6 +202,55 @@
                             </c:otherwise>
                         </c:choose>
                     </div>
+                    
+                    <!-- Pagination -->
+                    <c:if test="${totalPages > 1}">
+                        <div class="card-footer clearfix">
+                            <ul class="pagination pagination-sm m-0 float-right">
+                                <c:if test="${currentPage > 1}">
+                                    <li class="page-item">
+                                        <a class="page-link" href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders&page=${currentPage - 1}&status=${statusFilter}&search=${searchKeyword}">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                </c:if>
+                                
+                                <c:forEach begin="1" end="${totalPages}" var="i">
+                                    <c:choose>
+                                        <c:when test="${i == currentPage}">
+                                            <li class="page-item active">
+                                                <span class="page-link">${i}</span>
+                                            </li>
+                                        </c:when>
+                                        <c:when test="${i <= 3 || i > totalPages - 2 || (i >= currentPage - 1 && i <= currentPage + 1)}">
+                                            <li class="page-item">
+                                                <a class="page-link" href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders&page=${i}&status=${statusFilter}&search=${searchKeyword}">${i}</a>
+                                            </li>
+                                        </c:when>
+                                        <c:when test="${i == 4 && currentPage > 5}">
+                                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                                        </c:when>
+                                        <c:when test="${i == totalPages - 2 && currentPage < totalPages - 4}">
+                                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                                        </c:when>
+                                    </c:choose>
+                                </c:forEach>
+                                
+                                <c:if test="${currentPage < totalPages}">
+                                    <li class="page-item">
+                                        <a class="page-link" href="${pageContext.request.contextPath}/admin/orders?action=shipperOrders&page=${currentPage + 1}&status=${statusFilter}&search=${searchKeyword}">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                </c:if>
+                            </ul>
+                            <div class="float-left">
+                                <small class="text-muted">
+                                    Trang ${currentPage}/${totalPages} (${totalOrders} đơn hàng)
+                                </small>
+                            </div>
+                        </div>
+                    </c:if>
                 </div>
             </div>
         </section>

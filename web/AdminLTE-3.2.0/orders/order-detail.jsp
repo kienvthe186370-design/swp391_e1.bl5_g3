@@ -277,7 +277,7 @@
                         </div>
 
                         <!-- Cập nhật trạng thái -->
-                        <c:if test="${canUpdateStatus && order.orderStatus != 'Delivered' && order.orderStatus != 'Cancelled'}">
+                        <c:if test="${canUpdateStatus && order.orderStatus != 'Delivered' && order.orderStatus != 'Cancelled' && not empty availableStatuses}">
                             <div class="card">
                                 <div class="card-header">
                                     <h3 class="card-title">Cập nhật trạng thái</h3>
@@ -297,10 +297,10 @@
                                         
                                         <!-- Hiển thị đơn vị vận chuyển đã chọn từ checkout -->
                                         <c:if test="${order.shipping != null && order.shipping.carrierName != null}">
-                                        <div class="alert alert-info mb-2">
-                                            <i class="fas fa-truck"></i> <strong>Đơn vị vận chuyển:</strong> ${order.shipping.carrierName}
-                                            <br><small>Dự kiến: ${order.shipping.estimatedDelivery}</small>
-                                        </div>
+                                            <div class="alert alert-info mb-2">
+                                                <i class="fas fa-truck"></i> <strong>Đơn vị vận chuyển:</strong> ${order.shipping.carrierName}
+                                                <br><small>Dự kiến: ${order.shipping.estimatedDelivery}</small>
+                                            </div>
                                         </c:if>
                                         
                                         <div class="form-group">

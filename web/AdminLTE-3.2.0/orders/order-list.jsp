@@ -62,8 +62,62 @@
                     <c:remove var="error" scope="session"/>
                 </c:if>
 
-                <!-- Tabs cho SellerManager -->
-                <c:if test="${userRole == 'SellerManager' || userRole == 'Admin'}">
+                <!-- Tabs cho SellerManager - đầy đủ trạng thái -->
+                <c:if test="${userRole == 'SellerManager'}">
+                    <ul class="nav nav-tabs mb-3">
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == null || param.tab == 'all' ? 'active' : ''}" 
+                               href="?tab=all">
+                                Tất cả <span class="badge badge-primary">${allCount}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == 'unassigned' ? 'active' : ''}" 
+                               href="?tab=unassigned">
+                                Chưa phân công <span class="badge badge-warning">${unassignedCount}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == 'Pending' ? 'active' : ''}" 
+                               href="?tab=Pending">
+                                Chờ xử lý <span class="badge badge-secondary">${pendingCount}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == 'Confirmed' ? 'active' : ''}" 
+                               href="?tab=Confirmed">
+                                Đã xác nhận <span class="badge badge-info">${confirmedCount}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == 'Processing' ? 'active' : ''}" 
+                               href="?tab=Processing">
+                                Đang xử lý <span class="badge badge-primary">${processingCount}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == 'Shipping' ? 'active' : ''}" 
+                               href="?tab=Shipping">
+                                Đang giao <span class="badge badge-warning">${shippingCount}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == 'Delivered' ? 'active' : ''}" 
+                               href="?tab=Delivered">
+                                Đã giao <span class="badge badge-success">${deliveredCount}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == 'Cancelled' ? 'active' : ''}" 
+                               href="?tab=Cancelled">
+                                Đã hủy <span class="badge badge-danger">${cancelledCount}</span>
+                            </a>
+                        </li>
+                    </ul>
+                </c:if>
+                
+                <!-- Tabs cho Admin - giữ đơn giản -->
+                <c:if test="${userRole == 'Admin'}">
                     <ul class="nav nav-tabs mb-3">
                         <li class="nav-item">
                             <a class="nav-link ${param.tab == null || param.tab == 'all' ? 'active' : ''}" 
@@ -71,11 +125,52 @@
                                 Tất cả <span class="badge badge-primary">${totalOrders}</span>
                             </a>
                         </li>
+                    </ul>
+                </c:if>
+                
+                <!-- Tabs cho Seller - đầy đủ trạng thái -->
+                <c:if test="${userRole == 'Seller'}">
+                    <ul class="nav nav-tabs mb-3">
                         <li class="nav-item">
-                            <a class="nav-link ${param.tab == 'unassigned' ? 'active' : ''}" 
-                               href="?tab=unassigned">
-                                Chưa phân công 
-                                <span class="badge badge-warning">${unassignedCount}</span>
+                            <a class="nav-link ${param.tab == null || param.tab == 'all' ? 'active' : ''}" 
+                               href="?tab=all">
+                                Tất cả <span class="badge badge-primary">${allCount}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == 'Pending' ? 'active' : ''}" 
+                               href="?tab=Pending">
+                                Chờ xử lý <span class="badge badge-secondary">${pendingCount}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == 'Confirmed' ? 'active' : ''}" 
+                               href="?tab=Confirmed">
+                                Đã xác nhận <span class="badge badge-info">${confirmedCount}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == 'Processing' ? 'active' : ''}" 
+                               href="?tab=Processing">
+                                Đang xử lý <span class="badge badge-primary">${processingCount}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == 'Shipping' ? 'active' : ''}" 
+                               href="?tab=Shipping">
+                                Đang giao <span class="badge badge-warning">${shippingCount}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == 'Delivered' ? 'active' : ''}" 
+                               href="?tab=Delivered">
+                                Đã giao <span class="badge badge-success">${deliveredCount}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link ${param.tab == 'Cancelled' ? 'active' : ''}" 
+                               href="?tab=Cancelled">
+                                Đã hủy <span class="badge badge-danger">${cancelledCount}</span>
                             </a>
                         </li>
                     </ul>
@@ -260,36 +355,51 @@
                     <!-- Pagination -->
                     <div class="card-footer clearfix">
                         <div class="float-left">
-                            Hiển thị ${(currentPage-1)*pageSize + 1} - ${currentPage*pageSize > totalOrders ? totalOrders : currentPage*pageSize} 
-                            / ${totalOrders} đơn hàng
+                            <c:choose>
+                                <c:when test="${totalOrders > 0}">
+                                    Hiển thị ${(currentPage-1)*pageSize + 1} - ${currentPage*pageSize > totalOrders ? totalOrders : currentPage*pageSize} 
+                                    / ${totalOrders} đơn hàng
+                                </c:when>
+                                <c:otherwise>
+                                    Không có đơn hàng nào
+                                </c:otherwise>
+                            </c:choose>
                         </div>
-                        <ul class="pagination pagination-sm m-0 float-right">
-                            <c:if test="${currentPage > 1}">
-                                <li class="page-item">
-                                    <a class="page-link" href="?page=${currentPage-1}&tab=${param.tab}&search=${param.search}&status=${param.status}">
-                                        &laquo;
-                                    </a>
-                                </li>
-                            </c:if>
-                            
-                            <c:forEach begin="1" end="${totalPages}" var="i">
-                                <c:if test="${i <= 5 || i > totalPages - 2 || (i >= currentPage - 1 && i <= currentPage + 1)}">
-                                    <li class="page-item ${i == currentPage ? 'active' : ''}">
-                                        <a class="page-link" href="?page=${i}&tab=${param.tab}&search=${param.search}&status=${param.status}">
-                                            ${i}
+                        <c:if test="${totalPages > 1}">
+                            <ul class="pagination pagination-sm m-0 float-right">
+                                <c:if test="${currentPage > 1}">
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=${currentPage-1}&tab=${param.tab}&search=${param.search}&status=${param.status}&paymentStatus=${param.paymentStatus}&fromDate=${param.fromDate}&toDate=${param.toDate}">
+                                            &laquo;
                                         </a>
                                     </li>
                                 </c:if>
-                            </c:forEach>
-                            
-                            <c:if test="${currentPage < totalPages}">
-                                <li class="page-item">
-                                    <a class="page-link" href="?page=${currentPage+1}&tab=${param.tab}&search=${param.search}&status=${param.status}">
-                                        &raquo;
-                                    </a>
-                                </li>
-                            </c:if>
-                        </ul>
+                                
+                                <c:forEach begin="1" end="${totalPages}" var="i">
+                                    <c:if test="${i <= 3 || i > totalPages - 2 || (i >= currentPage - 1 && i <= currentPage + 1)}">
+                                        <li class="page-item ${i == currentPage ? 'active' : ''}">
+                                            <a class="page-link" href="?page=${i}&tab=${param.tab}&search=${param.search}&status=${param.status}&paymentStatus=${param.paymentStatus}&fromDate=${param.fromDate}&toDate=${param.toDate}">
+                                                ${i}
+                                            </a>
+                                        </li>
+                                    </c:if>
+                                    <c:if test="${i == 3 && currentPage > 5 && totalPages > 7}">
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    </c:if>
+                                    <c:if test="${i == currentPage + 1 && i < totalPages - 2 && totalPages > 7}">
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    </c:if>
+                                </c:forEach>
+                                
+                                <c:if test="${currentPage < totalPages}">
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=${currentPage+1}&tab=${param.tab}&search=${param.search}&status=${param.status}&paymentStatus=${param.paymentStatus}&fromDate=${param.fromDate}&toDate=${param.toDate}">
+                                            &raquo;
+                                        </a>
+                                    </li>
+                                </c:if>
+                            </ul>
+                        </c:if>
                     </div>
                 </div>
                 
