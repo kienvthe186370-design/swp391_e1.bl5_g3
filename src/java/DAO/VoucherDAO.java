@@ -23,7 +23,7 @@ public class VoucherDAO extends DBContext {
         String sql = """
             SELECT VoucherID, VoucherCode, VoucherName, Description, DiscountType, 
                    DiscountValue, MinOrderValue, MaxDiscountAmount, MaxUsage, UsedCount,
-                   StartDate, EndDate, IsActive, IsPrivate, CreatedBy, CreatedDate
+                   MaxUsagePerCustomer, StartDate, EndDate, IsActive, IsPrivate, CreatedBy, CreatedDate
             FROM Vouchers
             WHERE IsActive = 1 AND GETDATE() BETWEEN StartDate AND EndDate
             ORDER BY CreatedDate DESC
@@ -52,7 +52,7 @@ public class VoucherDAO extends DBContext {
         String sql = """
             SELECT VoucherID, VoucherCode, VoucherName, Description, DiscountType, 
                    DiscountValue, MinOrderValue, MaxDiscountAmount, MaxUsage, UsedCount,
-                   StartDate, EndDate, IsActive, IsPrivate, CreatedBy, CreatedDate
+                   MaxUsagePerCustomer, StartDate, EndDate, IsActive, IsPrivate, CreatedBy, CreatedDate
             FROM Vouchers
             WHERE IsActive = 1 
               AND IsPrivate = 0 
@@ -85,7 +85,7 @@ public class VoucherDAO extends DBContext {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT VoucherID, VoucherCode, VoucherName, Description, DiscountType, ");
         sql.append("DiscountValue, MinOrderValue, MaxDiscountAmount, MaxUsage, UsedCount, ");
-        sql.append("StartDate, EndDate, IsActive, IsPrivate, CreatedBy, CreatedDate ");
+        sql.append("MaxUsagePerCustomer, StartDate, EndDate, IsActive, IsPrivate, CreatedBy, CreatedDate ");
         sql.append("FROM Vouchers WHERE 1=1 ");
         
         // Search by code or name
@@ -199,7 +199,7 @@ public class VoucherDAO extends DBContext {
         String sql = """
             SELECT VoucherID, VoucherCode, VoucherName, Description, DiscountType, 
                    DiscountValue, MinOrderValue, MaxDiscountAmount, MaxUsage, UsedCount,
-                   StartDate, EndDate, IsActive, IsPrivate, CreatedBy, CreatedDate
+                   MaxUsagePerCustomer, StartDate, EndDate, IsActive, IsPrivate, CreatedBy, CreatedDate
             FROM Vouchers
             WHERE VoucherID = ?
         """;
@@ -228,7 +228,7 @@ public class VoucherDAO extends DBContext {
         String sql = """
             SELECT VoucherID, VoucherCode, VoucherName, Description, DiscountType, 
                    DiscountValue, MinOrderValue, MaxDiscountAmount, MaxUsage, UsedCount,
-                   StartDate, EndDate, IsActive, IsPrivate, CreatedBy, CreatedDate
+                   MaxUsagePerCustomer, StartDate, EndDate, IsActive, IsPrivate, CreatedBy, CreatedDate
             FROM Vouchers
             WHERE VoucherCode = ?
         """;
@@ -257,9 +257,9 @@ public class VoucherDAO extends DBContext {
         String sql = """
             INSERT INTO Vouchers (VoucherCode, VoucherName, Description, DiscountType, 
                                   DiscountValue, MinOrderValue, MaxDiscountAmount, MaxUsage, 
-                                  UsedCount, StartDate, EndDate, IsActive, IsPrivate, 
+                                  UsedCount, MaxUsagePerCustomer, StartDate, EndDate, IsActive, IsPrivate, 
                                   CreatedBy, CreatedDate)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, GETDATE())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, GETDATE())
         """;
         
         System.out.println("=== INSERT VOUCHER DAO START ===");
@@ -290,15 +290,21 @@ public class VoucherDAO extends DBContext {
                 ps.setNull(8, Types.INTEGER);
             }
             
-            ps.setTimestamp(9, voucher.getStartDate());
-            ps.setTimestamp(10, voucher.getEndDate());
-            ps.setBoolean(11, voucher.isIsActive());
-            ps.setBoolean(12, voucher.isIsPrivate());
+            if (voucher.getMaxUsagePerCustomer() != null) {
+                ps.setInt(9, voucher.getMaxUsagePerCustomer());
+            } else {
+                ps.setNull(9, Types.INTEGER);
+            }
+            
+            ps.setTimestamp(10, voucher.getStartDate());
+            ps.setTimestamp(11, voucher.getEndDate());
+            ps.setBoolean(12, voucher.isIsActive());
+            ps.setBoolean(13, voucher.isIsPrivate());
             
             if (voucher.getCreatedBy() != null) {
-                ps.setInt(13, voucher.getCreatedBy());
+                ps.setInt(14, voucher.getCreatedBy());
             } else {
-                ps.setNull(13, Types.INTEGER);
+                ps.setNull(14, Types.INTEGER);
             }
             
             System.out.println("Executing INSERT...");
@@ -326,7 +332,7 @@ public class VoucherDAO extends DBContext {
             UPDATE Vouchers 
             SET VoucherCode = ?, VoucherName = ?, Description = ?, DiscountType = ?,
                 DiscountValue = ?, MinOrderValue = ?, MaxDiscountAmount = ?, MaxUsage = ?,
-                StartDate = ?, EndDate = ?, IsActive = ?, IsPrivate = ?
+                MaxUsagePerCustomer = ?, StartDate = ?, EndDate = ?, IsActive = ?, IsPrivate = ?
             WHERE VoucherID = ?
         """;
         
@@ -352,11 +358,17 @@ public class VoucherDAO extends DBContext {
                 ps.setNull(8, Types.INTEGER);
             }
             
-            ps.setTimestamp(9, voucher.getStartDate());
-            ps.setTimestamp(10, voucher.getEndDate());
-            ps.setBoolean(11, voucher.isIsActive());
-            ps.setBoolean(12, voucher.isIsPrivate());
-            ps.setInt(13, voucher.getVoucherID());
+            if (voucher.getMaxUsagePerCustomer() != null) {
+                ps.setInt(9, voucher.getMaxUsagePerCustomer());
+            } else {
+                ps.setNull(9, Types.INTEGER);
+            }
+            
+            ps.setTimestamp(10, voucher.getStartDate());
+            ps.setTimestamp(11, voucher.getEndDate());
+            ps.setBoolean(12, voucher.isIsActive());
+            ps.setBoolean(13, voucher.isIsPrivate());
+            ps.setInt(14, voucher.getVoucherID());
             
             int rowsAffected = ps.executeUpdate();
             System.out.println("✅ Updated voucher ID: " + voucher.getVoucherID() + " - Rows affected: " + rowsAffected);
@@ -562,6 +574,142 @@ public class VoucherDAO extends DBContext {
     }
     
     /**
+     * Check if customer has already used this voucher
+     * @param voucherId Voucher ID
+     * @param customerId Customer ID
+     * @return Number of times customer has used this voucher
+     */
+    public int getCustomerVoucherUsageCount(int voucherId, int customerId) {
+        String sql = "SELECT COUNT(*) FROM VoucherUsageHistory WHERE VoucherID = ? AND CustomerID = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, voucherId);
+            ps.setInt(2, customerId);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error in getCustomerVoucherUsageCount: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return 0;
+    }
+    
+    /**
+     * Get list of voucher IDs that customer has used up (reached max usage per customer)
+     * @param customerId Customer ID
+     * @return List of voucher IDs that customer cannot use anymore
+     */
+    public List<Integer> getUsedUpVoucherIdsForCustomer(int customerId) {
+        List<Integer> usedUpVoucherIds = new ArrayList<>();
+        String sql = """
+            SELECT v.VoucherID
+            FROM Vouchers v
+            INNER JOIN (
+                SELECT VoucherID, COUNT(*) as UsageCount
+                FROM VoucherUsageHistory
+                WHERE CustomerID = ?
+                GROUP BY VoucherID
+            ) vh ON v.VoucherID = vh.VoucherID
+            WHERE v.MaxUsagePerCustomer IS NOT NULL 
+              AND vh.UsageCount >= v.MaxUsagePerCustomer
+        """;
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, customerId);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                usedUpVoucherIds.add(rs.getInt("VoucherID"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error in getUsedUpVoucherIdsForCustomer: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return usedUpVoucherIds;
+    }
+    
+    /**
+     * Record voucher usage in history
+     * @param voucherId Voucher ID
+     * @param customerId Customer ID
+     * @param orderId Order ID
+     * @param discountAmount Discount amount applied
+     * @return true if successful
+     */
+    public boolean recordVoucherUsage(int voucherId, int customerId, int orderId, BigDecimal discountAmount) {
+        String sql = """
+            INSERT INTO VoucherUsageHistory (VoucherID, CustomerID, OrderID, DiscountAmount, UsedDate)
+            VALUES (?, ?, ?, ?, GETDATE())
+        """;
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, voucherId);
+            ps.setInt(2, customerId);
+            ps.setInt(3, orderId);
+            ps.setBigDecimal(4, discountAmount);
+            
+            int rowsAffected = ps.executeUpdate();
+            System.out.println("✅ Recorded voucher usage - VoucherID: " + voucherId + ", CustomerID: " + customerId + ", OrderID: " + orderId);
+            return rowsAffected > 0;
+            
+        } catch (SQLException e) {
+            System.err.println("❌ Error in recordVoucherUsage: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Validate voucher for a specific customer
+     * @param voucherCode Voucher code
+     * @param customerId Customer ID
+     * @param orderAmount Order amount
+     * @return Voucher object if valid, null otherwise
+     */
+    public Voucher validateVoucherForCustomer(String voucherCode, int customerId, BigDecimal orderAmount) {
+        Voucher voucher = getVoucherByCode(voucherCode);
+        
+        if (voucher == null) {
+            System.out.println("❌ Voucher not found: " + voucherCode);
+            return null;
+        }
+        
+        // Check if voucher is valid (active, within date range, usage not exceeded)
+        if (!isVoucherValid(voucher)) {
+            return null;
+        }
+        
+        // Check minimum order value
+        if (orderAmount.compareTo(voucher.getMinOrderValue()) < 0) {
+            System.out.println("❌ Order amount is below minimum: " + voucher.getMinOrderValue());
+            return null;
+        }
+        
+        // Check if customer has exceeded usage limit for this voucher
+        if (voucher.getMaxUsagePerCustomer() != null) {
+            int usageCount = getCustomerVoucherUsageCount(voucher.getVoucherID(), customerId);
+            if (usageCount >= voucher.getMaxUsagePerCustomer()) {
+                System.out.println("❌ Customer has exceeded usage limit for this voucher. Used: " + usageCount + ", Max: " + voucher.getMaxUsagePerCustomer());
+                return null;
+            }
+        }
+        
+        System.out.println("✅ Voucher is valid for customer");
+        return voucher;
+    }
+    
+    /**
      * Map ResultSet to Voucher object
      */
     private Voucher mapResultSetToVoucher(ResultSet rs) throws SQLException {
@@ -579,6 +727,10 @@ public class VoucherDAO extends DBContext {
         voucher.setMaxUsage(maxUsage);
         
         voucher.setUsedCount(rs.getInt("UsedCount"));
+        
+        Integer maxUsagePerCustomer = (Integer) rs.getObject("MaxUsagePerCustomer");
+        voucher.setMaxUsagePerCustomer(maxUsagePerCustomer);
+        
         voucher.setStartDate(rs.getTimestamp("StartDate"));
         voucher.setEndDate(rs.getTimestamp("EndDate"));
         voucher.setIsActive(rs.getBoolean("IsActive"));

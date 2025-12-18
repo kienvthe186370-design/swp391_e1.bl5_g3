@@ -60,6 +60,13 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
         
+        // Check if cart has unavailable items (inactive products/variants)
+        if (cart.hasUnavailableItems()) {
+            System.out.println("[Checkout] Cart has unavailable items, cannot checkout");
+            response.sendRedirect("cart?error=unavailable_items");
+            return;
+        }
+        
         List<CartItem> cartItems = cart.getItems();
         BigDecimal subtotal = BigDecimal.ZERO;
         try {
@@ -88,12 +95,15 @@ public class CheckoutServlet extends HttpServlet {
         // Get vouchers - skip if slow
         System.out.println("[Checkout] Getting vouchers...");
         List<Voucher> vouchers = new ArrayList<>();
+        List<Integer> usedUpVoucherIds = new ArrayList<>();
         try {
             vouchers = voucherDAO.getActivePublicVouchers();
+            // Get list of vouchers that customer has used up
+            usedUpVoucherIds = voucherDAO.getUsedUpVoucherIdsForCustomer(customerID);
         } catch (Exception e) {
             System.err.println("[Checkout] Error getting vouchers: " + e.getMessage());
         }
-        System.out.println("[Checkout] Vouchers loaded: " + vouchers.size() + " - Time: " + (System.currentTimeMillis() - startTime) + "ms");
+        System.out.println("[Checkout] Vouchers loaded: " + vouchers.size() + ", Used up: " + usedUpVoucherIds.size() + " - Time: " + (System.currentTimeMillis() - startTime) + "ms");
         
         // Get shipping rates - Use default rates for fast loading
         List<ShippingRate> shippingRates = getDefaultShippingRates();
@@ -106,6 +116,7 @@ public class CheckoutServlet extends HttpServlet {
         request.setAttribute("defaultAddress", defaultAddress);
         request.setAttribute("vouchers", vouchers);
         request.setAttribute("publicVouchers", vouchers); // For voucher modal
+        request.setAttribute("usedUpVoucherIds", usedUpVoucherIds); // Vouchers customer has used up
         request.setAttribute("shippingRates", shippingRates);
         
         System.out.println("[Checkout] === FORWARDING to checkout.jsp === Total time: " + (System.currentTimeMillis() - startTime) + "ms");
@@ -161,6 +172,13 @@ public class CheckoutServlet extends HttpServlet {
                 response.sendRedirect("shopping-cart.jsp?error=empty");
                 return;
             }
+            
+            // Check if cart has unavailable items
+            if (cart.hasUnavailableItems()) {
+                response.sendRedirect("cart?error=unavailable_items");
+                return;
+            }
+            
             cartItems = cart.getItems();
         }
         
@@ -213,10 +231,14 @@ public class CheckoutServlet extends HttpServlet {
             
             // Apply voucher if provided
             if (voucherCode != null && !voucherCode.trim().isEmpty()) {
-                Voucher voucher = voucherDAO.getVoucherByCode(voucherCode.trim());
-                if (voucher != null && voucher.isValid()) {
+                // Validate voucher for this customer
+                Voucher voucher = voucherDAO.validateVoucherForCustomer(voucherCode.trim(), customerID, subtotal);
+                if (voucher != null) {
                     voucherDiscount = voucher.calculateDiscount(subtotal);
                     voucherID = voucher.getVoucherID();
+                    System.out.println("✅ Voucher validated: " + voucherCode + ", Discount: " + voucherDiscount);
+                } else {
+                    System.out.println("❌ Voucher validation failed for customer: " + customerID);
                 }
             }
             
@@ -262,6 +284,27 @@ public class CheckoutServlet extends HttpServlet {
                 request.setAttribute("error", "Không thể tạo đơn hàng. Vui lòng thử lại.");
                 doGet(request, response);
                 return;
+            }
+            
+            // Record voucher usage and increment used count if voucher was applied
+            if (voucherID != null && voucherDiscount.compareTo(BigDecimal.ZERO) > 0) {
+                try {
+                    // Record usage history
+                    boolean historyRecorded = voucherDAO.recordVoucherUsage(voucherID, customerID, orderID, voucherDiscount);
+                    
+                    // Increment used count
+                    boolean countIncremented = voucherDAO.incrementUsedCount(voucherID);
+                    
+                    if (historyRecorded && countIncremented) {
+                        System.out.println("✅ Voucher usage recorded successfully for OrderID: " + orderID);
+                    } else {
+                        System.err.println("⚠️ Failed to record voucher usage for OrderID: " + orderID);
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ Error recording voucher usage: " + e.getMessage());
+                    e.printStackTrace();
+                    // Don't fail the order, just log the error
+                }
             }
             
             // Create Shipping record with carrier info from checkout

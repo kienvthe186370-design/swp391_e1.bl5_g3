@@ -107,6 +107,26 @@ public class BlogController extends HttpServlet {
                 return;
             }
             
+            // Increment view count (with session tracking to prevent spam)
+            HttpSession session = request.getSession();
+            String viewedBlogsKey = "viewedBlogs";
+            @SuppressWarnings("unchecked")
+            java.util.Set<Integer> viewedBlogs = (java.util.Set<Integer>) session.getAttribute(viewedBlogsKey);
+            
+            if (viewedBlogs == null) {
+                viewedBlogs = new java.util.HashSet<>();
+                session.setAttribute(viewedBlogsKey, viewedBlogs);
+            }
+            
+            // Only increment if user hasn't viewed this blog in current session
+            if (!viewedBlogs.contains(id)) {
+                blogDAO.incrementViewCount(id);
+                viewedBlogs.add(id);
+                // Reload blog to get updated view count
+                blog = blogDAO.findById(id);
+                System.out.println("📊 Blog view count incremented: " + blog.getTitle() + " (Views: " + blog.getViewCount() + ")");
+            }
+            
             // Get related blogs (same status, different ID)
             List<BlogPost> relatedBlogs = blogDAO.search(null, "published");
             relatedBlogs.removeIf(b -> b.getPostId() == id);

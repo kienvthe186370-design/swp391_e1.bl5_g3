@@ -196,6 +196,18 @@ public class BlogPostDAO {
             ps.executeUpdate();
         }
     }
+    
+    /**
+     * Tăng lượt xem cho blog post
+     */
+    public void incrementViewCount(int postId) throws SQLException {
+        String sql = "UPDATE BlogPosts SET ViewCount = ViewCount + 1 WHERE PostID = ?";
+        try (Connection con = db.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, postId);
+            ps.executeUpdate();
+        }
+    }
 }
 
 

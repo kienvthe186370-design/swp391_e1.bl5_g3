@@ -198,11 +198,16 @@ public class VoucherController extends HttpServlet {
             Integer maxUsage = (maxUsageStr != null && !maxUsageStr.trim().isEmpty()) 
                 ? Integer.parseInt(maxUsageStr) : null;
             
+            String maxUsagePerCustomerStr = request.getParameter("maxUsagePerCustomer");
+            Integer maxUsagePerCustomer = (maxUsagePerCustomerStr != null && !maxUsagePerCustomerStr.trim().isEmpty()) 
+                ? Integer.parseInt(maxUsagePerCustomerStr) : 1; // Default to 1 - each customer can use once
+            
             String startDateStr = request.getParameter("startDate");
             String endDateStr = request.getParameter("endDate");
             
             System.out.println("startDate: " + startDateStr);
             System.out.println("endDate: " + endDateStr);
+            System.out.println("maxUsagePerCustomer: " + maxUsagePerCustomer);
             
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
             Timestamp startDate = new Timestamp(sdf.parse(startDateStr).getTime());
@@ -212,6 +217,13 @@ public class VoucherController extends HttpServlet {
             
             boolean isActive = request.getParameter("isActive") != null;
             boolean isPrivate = request.getParameter("isPrivate") != null;
+            
+            // Validate: MaxUsagePerCustomer must be <= MaxUsage (if MaxUsage is set)
+            if (maxUsage != null && maxUsagePerCustomer != null && maxUsagePerCustomer > maxUsage) {
+                System.err.println("❌ MaxUsagePerCustomer (" + maxUsagePerCustomer + ") > MaxUsage (" + maxUsage + ")");
+                response.sendRedirect(request.getContextPath() + "/admin/voucher?error=invalid_usage_limit");
+                return;
+            }
             
             // Check if voucher code already exists
             System.out.println("Checking if voucher code exists: " + voucherCode);
@@ -242,6 +254,7 @@ public class VoucherController extends HttpServlet {
             voucher.setMinOrderValue(minOrderValue);
             voucher.setMaxDiscountAmount(maxDiscountAmount);
             voucher.setMaxUsage(maxUsage);
+            voucher.setMaxUsagePerCustomer(maxUsagePerCustomer);
             voucher.setStartDate(startDate);
             voucher.setEndDate(endDate);
             voucher.setIsActive(isActive);
@@ -317,6 +330,10 @@ public class VoucherController extends HttpServlet {
             Integer maxUsage = (maxUsageStr != null && !maxUsageStr.trim().isEmpty()) 
                 ? Integer.parseInt(maxUsageStr) : null;
             
+            String maxUsagePerCustomerStr = request.getParameter("maxUsagePerCustomer");
+            Integer maxUsagePerCustomer = (maxUsagePerCustomerStr != null && !maxUsagePerCustomerStr.trim().isEmpty()) 
+                ? Integer.parseInt(maxUsagePerCustomerStr) : 1; // Default to 1 - each customer can use once
+            
             String startDateStr = request.getParameter("startDate");
             String endDateStr = request.getParameter("endDate");
             
@@ -326,6 +343,13 @@ public class VoucherController extends HttpServlet {
             
             boolean isActive = request.getParameter("isActive") != null;
             boolean isPrivate = request.getParameter("isPrivate") != null;
+            
+            // Validate: MaxUsagePerCustomer must be <= MaxUsage (if MaxUsage is set)
+            if (maxUsage != null && maxUsagePerCustomer != null && maxUsagePerCustomer > maxUsage) {
+                System.err.println("❌ MaxUsagePerCustomer (" + maxUsagePerCustomer + ") > MaxUsage (" + maxUsage + ")");
+                response.sendRedirect(request.getContextPath() + "/admin/voucher?error=invalid_usage_limit");
+                return;
+            }
             
             // Check if voucher code already exists (excluding current voucher)
             if (voucherDAO.isVoucherCodeExists(voucherCode, id)) {
@@ -343,6 +367,7 @@ public class VoucherController extends HttpServlet {
             voucher.setMinOrderValue(minOrderValue);
             voucher.setMaxDiscountAmount(maxDiscountAmount);
             voucher.setMaxUsage(maxUsage);
+            voucher.setMaxUsagePerCustomer(maxUsagePerCustomer);
             voucher.setStartDate(startDate);
             voucher.setEndDate(endDate);
             voucher.setIsActive(isActive);

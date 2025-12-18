@@ -94,6 +94,14 @@
             <i class="icon fas fa-ban"></i> Mã voucher đã tồn tại!
           </div>
         </c:if>
+        <c:if test="${param.error == 'invalid_usage_limit'}">
+          <div class="alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <i class="icon fas fa-exclamation-triangle"></i> 
+            <strong>Lỗi giới hạn sử dụng!</strong> 
+            Số lần sử dụng tối đa / khách hàng không được lớn hơn tổng số lần sử dụng của voucher.
+          </div>
+        </c:if>
         <c:if test="${param.error == 'add_failed' || param.error == 'update_failed' || param.error == 'delete_failed'}">
           <div class="alert alert-danger alert-dismissible fade show">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -215,10 +223,15 @@
                     </td>
                     <td><fmt:formatNumber value="${voucher.minOrderValue}" pattern="#,##0"/>₫</td>
                     <td>
-                      ${voucher.usedCount}
+                      <strong>${voucher.usedCount}</strong>
                       <c:if test="${voucher.maxUsage != null}">
                         / ${voucher.maxUsage}
                       </c:if>
+                      <br>
+                      <small class="text-muted">
+                        <i class="fas fa-user"></i> Tối đa/KH: 
+                        <strong>${voucher.maxUsagePerCustomer != null ? voucher.maxUsagePerCustomer : 'N/A'}</strong>
+                      </small>
                     </td>
                     <td>
                       <small>

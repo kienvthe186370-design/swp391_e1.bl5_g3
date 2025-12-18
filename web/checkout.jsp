@@ -596,14 +596,29 @@
                             </div>
                         </c:when>
                         <c:otherwise>
+                            <!-- Debug: Show used up voucher IDs -->
+                            <c:if test="${not empty usedUpVoucherIds}">
+                                <div style="display:none;">Used up IDs: ${usedUpVoucherIds}</div>
+                            </c:if>
+                            
                             <div class="voucher-list">
                                 <c:forEach var="v" items="${publicVouchers}">
-                                    <div class="voucher-card" data-code="${v.voucherCode}" 
+                                    <c:set var="isUsedUp" value="false" />
+                                    <c:forEach var="usedId" items="${usedUpVoucherIds}">
+                                        <c:if test="${usedId == v.voucherID}">
+                                            <c:set var="isUsedUp" value="true" />
+                                        </c:if>
+                                    </c:forEach>
+                                    
+                                    <div class="voucher-card ${isUsedUp ? 'used-up' : ''}" 
+                                         data-code="${v.voucherCode}" 
+                                         data-voucher-id="${v.voucherID}"
                                          data-discount-type="${v.discountType}"
                                          data-discount-value="${v.discountValue}"
                                          data-min-order="${v.minOrderValue}"
                                          data-max-discount="${v.maxDiscountAmount}"
                                          data-name="${v.voucherName}"
+                                         data-used-up="${isUsedUp}"
                                          onclick="selectVoucherInModal(this)">
                                         <div class="d-flex">
                                             <div class="voucher-icon">
@@ -633,9 +648,23 @@
                                                         <i class="fa fa-clock-o"></i> HSD: <fmt:formatDate value="${v.endDate}" pattern="dd/MM/yyyy"/>
                                                     </small>
                                                 </div>
+                                                <c:if test="${isUsedUp}">
+                                                    <div class="voucher-used-badge">
+                                                        <small class="text-danger">
+                                                            <i class="fa fa-ban"></i> Đã sử dụng
+                                                        </small>
+                                                    </div>
+                                                </c:if>
                                             </div>
                                             <div class="voucher-select">
-                                                <i class="fa fa-check-circle text-success" style="font-size: 24px; display: none;"></i>
+                                                <c:choose>
+                                                    <c:when test="${isUsedUp}">
+                                                        <i class="fa fa-ban text-danger" style="font-size: 24px;"></i>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <i class="fa fa-check-circle text-success" style="font-size: 24px; display: none;"></i>
+                                                    </c:otherwise>
+                                                </c:choose>
                                             </div>
                                         </div>
                                     </div>
@@ -675,6 +704,19 @@
             opacity: 0.6;
             cursor: not-allowed;
             background: #f5f5f5;
+        }
+        .voucher-card.used-up {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f9f9f9;
+            border-color: #ccc;
+        }
+        .voucher-card.used-up:hover {
+            border-color: #ccc;
+            box-shadow: none;
+        }
+        .voucher-used-badge {
+            margin-top: 5px;
         }
         .voucher-icon {
             width: 80px;
@@ -1146,6 +1188,11 @@
         function openVoucherModal() {
             // Check eligibility for each voucher based on subtotal
             $('.voucher-card').each(function() {
+                // Skip if already used up
+                if ($(this).hasClass('used-up')) {
+                    return;
+                }
+                
                 var minOrder = parseFloat($(this).data('min-order')) || 0;
                 if (subtotal < minOrder) {
                     $(this).addClass('disabled');
@@ -1159,6 +1206,12 @@
         }
         
         function selectVoucherInModal(el) {
+            // Check if voucher is used up
+            if ($(el).data('used-up') === true || $(el).hasClass('used-up')) {
+                alert('Bạn đã sử dụng hết lượt áp dụng voucher này');
+                return;
+            }
+            
             if ($(el).hasClass('disabled')) {
                 var minOrder = parseFloat($(el).data('min-order')) || 0;
                 alert('Đơn hàng chưa đạt giá trị tối thiểu ' + formatCurrency(minOrder) + 'đ để sử dụng voucher này');
@@ -1178,48 +1231,65 @@
                 return;
             }
             
+            // Check if voucher is used up (double check)
+            if ($selected.data('used-up') === true || $selected.hasClass('used-up')) {
+                alert('Bạn đã sử dụng hết lượt áp dụng voucher này');
+                return;
+            }
+            
             var code = $selected.data('code');
             var discountType = $selected.data('discount-type');
             var discountValue = parseFloat($selected.data('discount-value')) || 0;
-            var maxDiscount = parseFloat($selected.data('max-discount')) || null;
             var name = $selected.data('name');
             
-            // Calculate discount
-            var discount = 0;
-            if (discountType === 'percentage') {
-                discount = subtotal * discountValue / 100;
-                if (maxDiscount && discount > maxDiscount) {
-                    discount = maxDiscount;
-                }
-            } else {
-                discount = discountValue;
-                if (discount > subtotal) {
-                    discount = subtotal;
-                }
-            }
-            
-            // Apply voucher
-            selectedVoucher = { code: code, discount: discount, name: name };
-            voucherDiscount = discount;
-            
-            $('#voucherCode').val(code);
-            $('#voucherDiscount').val(discount);
-            $('#voucherRow').show();
-            $('#voucherDisplay').text('-' + formatCurrency(discount) + 'đ');
-            
-            // Update display
-            var descText = discountType === 'percentage' ? 
-                ('Giảm ' + discountValue + '%') : 
-                ('Giảm ' + formatCurrency(discountValue) + 'đ');
-            
-            $('#selectedVoucherCode').text(code);
-            $('#selectedVoucherDesc').text(' - ' + descText);
-            $('#selectedVoucherDisplay').show();
-            $('#voucherInputSection').hide();
-            $('#voucherMessage').html('<span class="voucher-success"><i class="fa fa-check-circle"></i> Áp dụng voucher thành công!</span>');
-            
-            updateTotal();
+            // Close modal and show loading
             $('#voucherModal').modal('hide');
+            $('#voucherMessage').html('<span class="text-muted"><i class="fa fa-spinner fa-spin"></i> Đang kiểm tra voucher...</span>');
+            
+            // Validate voucher via API (to check customer usage limit)
+            $.ajax({
+                url: 'api/voucher',
+                method: 'POST',
+                data: { voucherCode: code, subtotal: subtotal },
+                dataType: 'json',
+                success: function(data) {
+                    if (data.success) {
+                        var discount = parseFloat(data.discount) || 0;
+                        
+                        // Apply voucher
+                        selectedVoucher = { code: code, discount: discount, name: name };
+                        voucherDiscount = discount;
+                        
+                        $('#voucherCode').val(code);
+                        $('#voucherDiscount').val(discount);
+                        $('#voucherRow').show();
+                        $('#voucherDisplay').text('-' + formatCurrency(discount) + 'đ');
+                        
+                        // Update display
+                        var descText = discountType === 'percentage' ? 
+                            ('Giảm ' + discountValue + '%') : 
+                            ('Giảm ' + formatCurrency(discountValue) + 'đ');
+                        
+                        $('#selectedVoucherCode').text(code);
+                        $('#selectedVoucherDesc').text(' - ' + descText);
+                        $('#selectedVoucherDisplay').show();
+                        $('#voucherInputSection').hide();
+                        $('#voucherMessage').html('<span class="voucher-success"><i class="fa fa-check-circle"></i> ' + data.message + '</span>');
+                        
+                        updateTotal();
+                    } else {
+                        // Voucher validation failed
+                        voucherDiscount = 0;
+                        $('#voucherDiscount').val(0);
+                        $('#voucherRow').hide();
+                        $('#voucherMessage').html('<span class="voucher-error"><i class="fa fa-times-circle"></i> ' + data.message + '</span>');
+                        updateTotal();
+                    }
+                },
+                error: function() {
+                    $('#voucherMessage').html('<span class="voucher-error"><i class="fa fa-times-circle"></i> Lỗi kết nối, vui lòng thử lại</span>');
+                }
+            });
         }
         
         function removeVoucher() {
