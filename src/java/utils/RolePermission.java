@@ -123,71 +123,118 @@ public class RolePermission {
         return role != null && !role.trim().isEmpty();
     }
 
+    /**
+     * Kiểm tra quyền truy cập (backward compatible)
+     */
     public static boolean hasPermission(String role, String path) {
+        return hasPermission(role, path, null);
+    }
+    
+    /**
+     * Kiểm tra quyền truy cập với action parameter
+     * @param role Role của user
+     * @param path Path sau /admin (VD: /orders, /products)
+     * @param action Action từ query string (VD: assignment, shipperOrders)
+     */
+    public static boolean hasPermission(String role, String path, String action) {
         if (role == null || path == null) {
             return false;
         }
 
-        // RFQ: chỉ SellerManager, Admin cũng không được thao tác
-        if (path.startsWith("/rfq")) {
-            return canManageRFQ(role);
-        }
-        
-        // Quotations (Đơn Báo Giá): chỉ SellerManager
-        if (path.startsWith("/quotations")) {
-            return canManageRFQ(role);
-        }
-
-        // Admin: full quyền cho các phần còn lại
-        if (ADMIN.equalsIgnoreCase(role)) {
-            return true;
-        }
-
+        // Dashboard - tất cả role đều được vào
         if (path.equals("/dashboard") || path.isEmpty() || path.equals("/")) {
             return canViewDashboard(role);
         }
 
-        if (path.startsWith("/employees")) {
+        // ==================== ADMIN PERMISSIONS ====================
+        // Admin chỉ quản lý: employees, products, stock, categories, brands, attributes
+        if (ADMIN.equalsIgnoreCase(role)) {
+            if (path.startsWith("/employees")) return true;
+            if (path.startsWith("/products")) return true;
+            if (path.startsWith("/stock")) return true;
+            if (path.startsWith("/categories")) return true;
+            if (path.startsWith("/brands")) return true;
+            if (path.startsWith("/attributes")) return true;
+            // Admin KHÔNG được truy cập các phần khác
             return false;
         }
 
-        if (path.startsWith("/customers")) {
-            return canViewCustomers(role);
-        }
-
-        if (path.startsWith("/orders")) {
-            // Shipper có thể xem đơn hàng của mình
-            return canManageOrders(role) || isShipper(role);
-        }
-
-        // Refund: SellerManager giám sát, Seller xử lý đơn của mình
-        if (path.startsWith("/refund")) {
-            return canManageRefunds(role);
-        }
-
-        if (path.startsWith("/products")) {
-            return canManageProducts(role);
-        }
-
-        if (path.startsWith("/categories") || path.startsWith("/brands") || path.startsWith("/attributes")) {
-            return canManageCatalog(role);
-        }
-
-        if (path.startsWith("/slider") || path.startsWith("/banner") || path.startsWith("/blog") || path.startsWith("/discount")) {
-            return canManageMarketing(role);
-        }
-
-        if (path.startsWith("/voucher")) {
-            return canManageVouchers(role);
-        }
-
-        if (path.startsWith("/reports")) {
-            return canViewSalesReports(role);
-        }
-
-        if (path.startsWith("/settings")) {
+        // ==================== SELLER MANAGER PERMISSIONS ====================
+        if (SELLER_MANAGER.equalsIgnoreCase(role)) {
+            // Khách hàng
+            if (path.startsWith("/customers")) return true;
+            
+            // Đơn hàng - tất cả actions
+            if (path.startsWith("/orders")) return true;
+            
+            // Hoàn tiền
+            if (path.startsWith("/refund")) return true;
+            
+            // RFQ và Quotations
+            if (path.startsWith("/rfq")) return true;
+            if (path.startsWith("/quotations")) return true;
+            
+            // Báo cáo
+            if (path.startsWith("/reports")) return true;
+            
             return false;
         }
+
+        // ==================== SELLER PERMISSIONS ====================
+        if (SELLER.equalsIgnoreCase(role)) {
+            // Đơn hàng - chỉ list và detail, KHÔNG được assignment
+            if (path.startsWith("/orders")) {
+                if (action == null || action.isEmpty()) return true;
+                if ("list".equals(action)) return true;
+                if ("detail".equals(action)) return true;
+                // Không cho phép: assignment, shipperAssignment, shipperOrders
+                return false;
+            }
+            
+            // Hoàn tiền
+            if (path.startsWith("/refund")) return true;
+            
+            return false;
+        }
+
+        // ==================== MARKETER PERMISSIONS ====================
+        if (MARKETER.equalsIgnoreCase(role)) {
+            // Sản phẩm
+            if (path.startsWith("/products")) return true;
+            
+            // Danh mục
+            if (path.startsWith("/categories")) return true;
+            if (path.startsWith("/brands")) return true;
+            if (path.startsWith("/attributes")) return true;
+            
+            // Marketing
+            if (path.startsWith("/slider")) return true;
+            if (path.startsWith("/blog")) return true;
+            if (path.startsWith("/discount")) return true;
+            
+            // Voucher
+            if (path.startsWith("/voucher")) return true;
+            
+            // Feedbacks - check riêng trong servlet vì path khác
+            
+            return false;
+        }
+
+        // ==================== SHIPPER PERMISSIONS ====================
+        if (SHIPPER.equalsIgnoreCase(role)) {
+            // Đơn hàng - chỉ shipperOrders và shipperDetail
+            if (path.startsWith("/orders")) {
+                if (action == null || action.isEmpty()) return true; // Default sẽ redirect trong servlet
+                if ("shipperOrders".equals(action)) return true;
+                if ("shipperDetail".equals(action)) return true;
+                // Không cho phép các action khác
+                return false;
+            }
+            return false;
+        }
+
+        // ==================== STAFF và các role khác ====================
+        // Mặc định không có quyền gì
         return false;
     }
 

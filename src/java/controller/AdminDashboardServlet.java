@@ -36,23 +36,17 @@ public class AdminDashboardServlet extends HttpServlet {
             return;
         }
         
-        // Chỉ Admin mới được xem dashboard thống kê
         String role = employee.getRole();
+        request.setAttribute("userRole", role);
+        request.setAttribute("employeeName", employee.getFullName());
+        
+        // Nếu không phải Admin, chỉ hiển thị welcome message
         if (!"Admin".equals(role)) {
-            // Redirect các role khác về trang phù hợp
-            if ("Seller".equals(role) || "SellerManager".equals(role)) {
-                response.sendRedirect(request.getContextPath() + "/admin/orders");
-            } else if ("Warehouse".equals(role) || "WarehouseManager".equals(role)) {
-                response.sendRedirect(request.getContextPath() + "/admin/stock");
-            } else if ("Marketing".equals(role)) {
-                response.sendRedirect(request.getContextPath() + "/admin/products");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/admin/orders");
-            }
+            request.getRequestDispatcher("/AdminLTE-3.2.0/dashboard.jsp").forward(request, response);
             return;
         }
         
-        // Xử lý filter ngày
+        // Xử lý filter ngày (chỉ cho Admin)
         String filterType = request.getParameter("filter");
         String fromDateStr = request.getParameter("fromDate");
         String toDateStr = request.getParameter("toDate");

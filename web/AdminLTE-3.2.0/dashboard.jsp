@@ -2,15 +2,11 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page import="entity.Employee" %>
+<%@ page import="utils.RolePermission" %>
 <%
     Employee employee = (Employee) session.getAttribute("employee");
     if (employee == null) {
         response.sendRedirect(request.getContextPath() + "/login");
-        return;
-    }
-    // Chỉ Admin mới được xem dashboard
-    if (!"Admin".equals(employee.getRole())) {
-        response.sendRedirect(request.getContextPath() + "/admin/orders");
         return;
     }
 %>
@@ -48,6 +44,10 @@
 
         <section class="content">
             <div class="container-fluid">
+                
+                <c:choose>
+                    <c:when test="${userRole == 'Admin'}">
+                <!-- ==================== ADMIN DASHBOARD ==================== -->
                 
                 <!-- Bộ lọc thời gian -->
                 <div class="card card-outline card-primary mb-3">
@@ -244,78 +244,54 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Đơn hàng gần đây -->
+                
+                    </c:when>
+                    <c:otherwise>
+                <!-- ==================== WELCOME MESSAGE FOR OTHER ROLES ==================== -->
                 <div class="row">
                     <div class="col-12">
+                        <div class="callout callout-info">
+                            <h5><i class="fas fa-info-circle mr-2"></i>Xin chào, ${employeeName}!</h5>
+                            <p class="mb-0">
+                                Bạn đang đăng nhập với vai trò: 
+                                <strong><%= RolePermission.getRoleDisplayName((String) request.getAttribute("userRole")) %></strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-lg-6">
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title"><i class="fas fa-list mr-1"></i> Đơn hàng gần đây</h3>
-                                <div class="card-tools">
-                                    <a href="${pageContext.request.contextPath}/admin/orders" class="btn btn-tool">
-                                        Xem tất cả <i class="fas fa-arrow-right"></i>
-                                    </a>
-                                </div>
+                                <h3 class="card-title"><i class="fas fa-info-circle mr-2"></i>Thông tin tài khoản</h3>
                             </div>
-                            <div class="card-body p-0">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Mã đơn</th>
-                                            <th>Khách hàng</th>
-                                            <th>Tổng tiền</th>
-                                            <th>Trạng thái</th>
-                                            <th>Ngày đặt</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:forEach var="order" items="${recentOrders}">
-                                            <tr>
-                                                <td><strong>${order.orderCode}</strong></td>
-                                                <td>${order.customerName}</td>
-                                                <td><fmt:formatNumber value="${order.totalAmount}" type="number" maxFractionDigits="0"/>₫</td>
-                                                <td>
-                                                    <c:choose>
-                                                        <c:when test="${order.orderStatus == 'Pending'}">
-                                                            <span class="badge badge-secondary">Chờ xử lý</span>
-                                                        </c:when>
-                                                        <c:when test="${order.orderStatus == 'Confirmed'}">
-                                                            <span class="badge badge-info">Đã xác nhận</span>
-                                                        </c:when>
-                                                        <c:when test="${order.orderStatus == 'Processing'}">
-                                                            <span class="badge badge-primary">Đang xử lý</span>
-                                                        </c:when>
-                                                        <c:when test="${order.orderStatus == 'Shipping'}">
-                                                            <span class="badge badge-warning">Đang giao</span>
-                                                        </c:when>
-                                                        <c:when test="${order.orderStatus == 'Delivered'}">
-                                                            <span class="badge badge-success">Đã giao</span>
-                                                        </c:when>
-                                                        <c:when test="${order.orderStatus == 'Cancelled'}">
-                                                            <span class="badge badge-danger">Đã hủy</span>
-                                                        </c:when>
-                                                    </c:choose>
-                                                </td>
-                                                <td><fmt:formatDate value="${order.orderDate}" pattern="dd/MM/yyyy HH:mm"/></td>
-                                                <td>
-                                                    <a href="${pageContext.request.contextPath}/admin/orders/detail?id=${order.orderID}" 
-                                                       class="btn btn-xs btn-info">
-                                                        <i class="fas fa-eye"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        </c:forEach>
-                                        <c:if test="${empty recentOrders}">
-                                            <tr><td colspan="6" class="text-center text-muted">Chưa có đơn hàng</td></tr>
-                                        </c:if>
-                                    </tbody>
+                            <div class="card-body">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td width="40%"><strong>Họ tên:</strong></td>
+                                        <td>${employeeName}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Vai trò:</strong></td>
+                                        <td>
+                                            <span class="badge badge-info">
+                                                <%= RolePermission.getRoleDisplayName((String) request.getAttribute("userRole")) %>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Email:</strong></td>
+                                        <td><%= ((Employee) session.getAttribute("employee")).getEmail() %></td>
+                                    </tr>
                                 </table>
                             </div>
                         </div>
                     </div>
                 </div>
-                
+                    </c:otherwise>
+                </c:choose>
+
             </div>
         </section>
     </div>
@@ -324,6 +300,7 @@
 </div>
 
 <jsp:include page="includes/admin-scripts.jsp" />
+<c:if test="${userRole == 'Admin'}">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -431,5 +408,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+</c:if>
 </body>
 </html>
