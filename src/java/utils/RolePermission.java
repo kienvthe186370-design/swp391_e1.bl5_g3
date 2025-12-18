@@ -39,10 +39,26 @@ public class RolePermission {
     }
 
     /**
-     * Quyền quản lý RFQ (chỉ SellerManager)
+     * Quyền quản lý RFQ (Seller và SellerManager)
+     * - Seller: Xử lý RFQ được assign cho mình
+     * - SellerManager: Giám sát tất cả (nhưng không xử lý trực tiếp theo yêu cầu mới)
      */
     public static boolean canManageRFQ(String role) {
-        return SELLER_MANAGER.equalsIgnoreCase(role);
+        return SELLER.equalsIgnoreCase(role) || SELLER_MANAGER.equalsIgnoreCase(role);
+    }
+    
+    /**
+     * Quyền xử lý RFQ trực tiếp (chỉ Seller)
+     */
+    public static boolean canProcessRFQ(String role) {
+        return SELLER.equalsIgnoreCase(role);
+    }
+    
+    /**
+     * Kiểm tra có phải Seller không
+     */
+    public static boolean isSeller(String role) {
+        return SELLER.equalsIgnoreCase(role);
     }
 
     public static boolean canViewSalesReports(String role) {
@@ -127,12 +143,12 @@ public class RolePermission {
             return false;
         }
 
-        // RFQ: chỉ SellerManager, Admin cũng không được thao tác
+        // RFQ: Seller xử lý, SellerManager giám sát
         if (path.startsWith("/rfq")) {
             return canManageRFQ(role);
         }
         
-        // Quotations (Đơn Báo Giá): chỉ SellerManager
+        // Quotations (Đơn Báo Giá): Seller xử lý, SellerManager giám sát
         if (path.startsWith("/quotations")) {
             return canManageRFQ(role);
         }

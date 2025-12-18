@@ -61,15 +61,28 @@
                         <div class="card-header"><h5 class="mb-0"><i class="fas fa-calculator"></i> Định Giá Sản Phẩm</h5></div>
                         <div class="card-body">
                             <c:forEach var="item" items="${rfq.items}" varStatus="loop">
-                                <div class="product-item" data-index="${loop.index}" data-cost="${item.costPrice != null ? item.costPrice : 0}" data-quantity="${item.quantity}" data-min-margin="${item.minProfitMargin != null ? item.minProfitMargin : 30}">
+                                <div class="product-item" data-index="${loop.index}" data-cost="${item.costPrice != null ? item.costPrice : 0}" data-quantity="${item.quantity}" data-max-margin="${item.minProfitMargin != null ? item.minProfitMargin : 30}">
                                     <div class="row align-items-center mb-3">
-                                        <div class="col-md-8">
+                                        <div class="col-auto">
+                                            <c:choose>
+                                                <c:when test="${not empty item.productImage}">
+                                                    <img src="${pageContext.request.contextPath}/${item.productImage}" alt="${item.productName}" 
+                                                         style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid #dee2e6;">
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div style="width:70px;height:70px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;display:flex;align-items:center;justify-content:center;">
+                                                        <i class="fas fa-image text-muted fa-2x"></i>
+                                                    </div>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                        <div class="col">
                                             <h6 class="mb-1">${item.productName}</h6>
                                             <small class="text-muted">SKU: ${item.sku != null ? item.sku : 'N/A'} | Yêu cầu: <strong>${item.quantity}</strong> cái</small>
                                         </div>
-                                        <div class="col-md-4 text-end">
+                                        <div class="col-auto text-end">
                                             <span class="badge bg-info">Giá vốn: <fmt:formatNumber value="${item.costPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></span>
-                                            <span class="badge bg-warning text-dark">Min: ${item.minProfitMargin != null ? item.minProfitMargin : 30}%</span>
+                                            <span class="badge bg-danger">Max: ${item.minProfitMargin != null ? item.minProfitMargin : 30}%</span>
                                         </div>
                                     </div>
                                     <div class="row">
@@ -84,11 +97,13 @@
                                         <div class="col-md-3">
                                             <label class="form-label">% Lợi Nhuận <span class="text-danger">*</span></label>
                                             <div class="input-group">
-                                                <input type="number" class="form-control profit-margin" name="items[${loop.index}][profitMargin]" 
-                                                       value="${item.minProfitMargin != null ? item.minProfitMargin : 30}" min="${item.minProfitMargin != null ? item.minProfitMargin : 30}" step="0.01" required onchange="validateAndCalculatePrice(${loop.index})">
+                                                <input type="text" class="form-control profit-margin" name="items[${loop.index}][profitMargin]" 
+                                                       value="0" maxlength="5" required 
+                                                       oninput="sanitizeProfitInput(this); calculatePrice(${loop.index})" 
+                                                       onblur="validateProfitOnBlur(${loop.index})">
                                                 <span class="input-group-text">%</span>
                                             </div>
-                                            <small class="text-muted">Tối thiểu: ${item.minProfitMargin != null ? item.minProfitMargin : 30}%</small>
+                                            <small class="text-muted">Tối đa: ${item.minProfitMargin != null ? item.minProfitMargin : 30}% (giá bán lẻ)</small>
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label">Đơn Giá (₫)</label>
@@ -103,7 +118,7 @@
                                             </div>
                                         </div>
                                         <div class="col-12 mt-2">
-                                            <input type="text" class="form-control" name="items[${loop.index}][notes]" placeholder="Ghi chú cho sản phẩm này...">
+                                            <input type="text" class="form-control" name="items[${loop.index}][notes]" placeholder="Ghi chú cho sản phẩm này..." maxlength="200">
                                         </div>
                                     </div>
                                 </div>
@@ -203,10 +218,6 @@
                                     <input type="text" class="form-control calculated-field" value="Chuyển khoản ngân hàng (VNPay)" readonly>
                                     <input type="hidden" name="paymentMethod" value="BankTransfer">
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Báo Giá Có Hiệu Lực Đến <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="quotationValidUntil" id="validUntil" required>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -261,27 +272,60 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             // Set default valid until date (7 days from now)
-            var validDate = new Date();
-            validDate.setDate(validDate.getDate() + 7);
-            document.getElementById('validUntil').value = validDate.toISOString().split('T')[0];
-            
             // Calculate all prices
             document.querySelectorAll('.product-item').forEach(function(item, index) {
                 calculatePrice(index);
             });
         });
 
-        function validateAndCalculatePrice(index) {
+        // Sanitize profit input - chỉ cho phép số và dấu chấm thập phân
+        function sanitizeProfitInput(input) {
+            var value = input.value;
+            // Xóa dấu cách
+            value = value.replace(/\s/g, '');
+            // Chỉ giữ số và dấu chấm
+            value = value.replace(/[^0-9.]/g, '');
+            // Chỉ cho phép 1 dấu chấm
+            var parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+            input.value = value;
+        }
+        
+        // Validate khi blur (rời khỏi input)
+        function validateProfitOnBlur(index) {
             var item = document.querySelector('.product-item[data-index="' + index + '"]');
-            var minMargin = parseFloat(item.dataset.minMargin) || 30;
+            var maxMargin = parseFloat(item.dataset.maxMargin) || 30;
             var profitInput = item.querySelector('.profit-margin');
-            var profitMargin = parseFloat(profitInput.value) || 0;
             
-            // Validate min profit margin
-            if (profitMargin < minMargin) {
-                profitInput.value = minMargin;
+            // Trim và xử lý
+            var value = profitInput.value.trim();
+            
+            // Nếu để trống hoặc chỉ có dấu chấm -> set về 0
+            if (value === '' || value === '.') {
+                profitInput.value = '0';
+                value = '0';
+            }
+            
+            // Xử lý số 0 ở đầu (ví dụ: 05 -> 5, nhưng 0.5 giữ nguyên)
+            if (value.length > 1 && value[0] === '0' && value[1] !== '.') {
+                value = parseFloat(value).toString();
+                profitInput.value = value;
+            }
+            
+            var profitMargin = parseFloat(value) || 0;
+            
+            // Validate max profit margin
+            if (profitMargin < 0 || isNaN(profitMargin)) {
+                profitInput.value = 0;
                 profitInput.classList.add('is-invalid');
-                alert('% Lợi nhuận không được thấp hơn ngưỡng tối thiểu ' + minMargin + '% đã thiết lập trong quản lý kho!');
+                alert('% Lợi nhuận không hợp lệ!');
+                setTimeout(function() { profitInput.classList.remove('is-invalid'); }, 2000);
+            } else if (profitMargin > maxMargin) {
+                profitInput.value = maxMargin;
+                profitInput.classList.add('is-invalid');
+                alert('% Lợi nhuận không được vượt quá ' + maxMargin + '% (giá bán lẻ)!');
                 setTimeout(function() { profitInput.classList.remove('is-invalid'); }, 2000);
             } else {
                 profitInput.classList.remove('is-invalid');

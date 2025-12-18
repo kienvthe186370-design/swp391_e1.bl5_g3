@@ -101,16 +101,28 @@
         }
     }
     
-    // RFQ pending count (for SellerManager) - đếm các đơn cần xử lý
+    // RFQ pending count - đếm các đơn cần xử lý
+    // Seller: chỉ đếm RFQ được assign cho mình
+    // SellerManager: đếm tất cả (giám sát)
     int pendingRFQCount = 0;
-    int dateAcceptedRFQCount = 0;
+    int reviewingRFQCount = 0;
     int totalRFQNeedAction = 0;
+    boolean isSeller = RolePermission.isSeller(userRole);
     if (canAccessRFQ) {
         try {
-            DAO.RFQDAO rfqDAO = new DAO.RFQDAO();
-            pendingRFQCount = rfqDAO.countRFQsByStatus("Pending"); // Đơn mới
-            dateAcceptedRFQCount = rfqDAO.countRFQsByStatus("DateAccepted"); // Khách đã chấp nhận ngày mới
-            totalRFQNeedAction = pendingRFQCount + dateAcceptedRFQCount;
+            DAO.RFQDAONew rfqDAO = new DAO.RFQDAONew();
+            if (isSeller) {
+                // Seller: đếm RFQ được assign cho mình
+                int[] stats = rfqDAO.getRFQStatistics(employee.getEmployeeID());
+                reviewingRFQCount = stats[1]; // Reviewing
+                totalRFQNeedAction = stats[1] + stats[2]; // Reviewing + Negotiating
+            } else {
+                // SellerManager: đếm tất cả
+                int[] stats = rfqDAO.getRFQStatistics(null);
+                pendingRFQCount = stats[0]; // Pending (chưa assign)
+                reviewingRFQCount = stats[1]; // Reviewing
+                totalRFQNeedAction = stats[0] + stats[1] + stats[2];
+            }
         } catch (Exception e) {
             // Ignore
         }
@@ -383,8 +395,8 @@
         </li>
         <% } %>
         
-        <!-- RFQ Management - Chỉ SellerManager -->
-        <% if (canAccessRFQ) { %>
+        <!-- RFQ Management - Chỉ Seller (SellerManager chỉ giám sát, không xử lý trực tiếp) -->
+        <% if (canAccessRFQ && isSeller) { %>
         <li class="nav-item">
           <a href="<%= contextPath %>/admin/rfq" 
              class="nav-link <%= isRFQPage ? "active" : "" %>">

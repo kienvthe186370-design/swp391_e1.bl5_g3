@@ -208,8 +208,15 @@ public class EmployeeDAO extends DBContext {
      * Tạo nhân viên mới
      */
     public boolean createEmployee(String fullName, String email, String password, String phone, String role) {
-        String sql = "INSERT INTO Employees (FullName, Email, PasswordHash, Phone, Role, IsActive, CreatedDate) "
-                   + "VALUES (?, ?, ?, ?, ?, 1, GETDATE())";
+        return createEmployee(fullName, email, password, phone, role, false);
+    }
+
+    /**
+     * Tạo nhân viên mới với tùy chọn bắt buộc đổi mật khẩu
+     */
+    public boolean createEmployee(String fullName, String email, String password, String phone, String role, boolean mustChangePassword) {
+        String sql = "INSERT INTO Employees (FullName, Email, PasswordHash, Phone, Role, IsActive, MustChangePassword, CreatedDate) "
+                   + "VALUES (?, ?, ?, ?, ?, 1, ?, GETDATE())";
         
         // DEBUG LOG
         System.out.println("========== CREATE EMPLOYEE DEBUG ==========");
@@ -217,7 +224,7 @@ public class EmployeeDAO extends DBContext {
         System.out.println("Email: [" + email + "]");
         System.out.println("Phone: [" + phone + "]");
         System.out.println("Role: [" + role + "]");
-        System.out.println("Role length: " + (role != null ? role.length() : "null"));
+        System.out.println("MustChangePassword: " + mustChangePassword);
         System.out.println("============================================");
         
         try (Connection conn = getConnection();
@@ -233,6 +240,7 @@ public class EmployeeDAO extends DBContext {
                 ps.setNull(4, java.sql.Types.VARCHAR);
             }
             ps.setString(5, role);
+            ps.setBoolean(6, mustChangePassword);
             
             int result = ps.executeUpdate();
             System.out.println("Create result: " + result);
@@ -356,6 +364,47 @@ public class EmployeeDAO extends DBContext {
         employee.setActive(rs.getBoolean("IsActive"));
         employee.setCreatedDate(rs.getTimestamp("CreatedDate"));
         employee.setLastLogin(rs.getTimestamp("LastLogin"));
+        try {
+            employee.setMustChangePassword(rs.getBoolean("MustChangePassword"));
+        } catch (SQLException e) {
+            employee.setMustChangePassword(false);
+        }
         return employee;
+    }
+
+    /**
+     * Cập nhật trạng thái bắt buộc đổi mật khẩu
+     */
+    public boolean setMustChangePassword(int employeeID, boolean mustChangePassword) {
+        String sql = "UPDATE Employees SET MustChangePassword = ? WHERE EmployeeID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setBoolean(1, mustChangePassword);
+            ps.setInt(2, employeeID);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, null, e);
+            return false;
+        }
+    }
+
+    /**
+     * Cập nhật mật khẩu và tắt cờ bắt buộc đổi mật khẩu
+     */
+    public boolean updatePasswordAndClearMustChange(int employeeID, String newPassword) {
+        String sql = "UPDATE Employees SET PasswordHash = ?, MustChangePassword = 0 WHERE EmployeeID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, PasswordUtil.hashPassword(newPassword));
+            ps.setInt(2, employeeID);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, null, e);
+            return false;
+        }
     }
 }

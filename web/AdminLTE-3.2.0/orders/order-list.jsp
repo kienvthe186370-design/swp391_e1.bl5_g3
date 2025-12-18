@@ -172,11 +172,14 @@
                             </thead>
                             <tbody>
                                 <c:forEach var="order" items="${orders}">
-                                    <tr>
+                                    <tr class="${order.rfqID != null ? 'table-warning' : ''}">
                                         <td>
                                             <a href="?action=detail&id=${order.orderID}">
                                                 <strong>${order.orderCode}</strong>
                                             </a>
+                                            <c:if test="${order.rfqID != null}">
+                                                <br><span class="badge badge-danger"><i class="fas fa-building"></i> Mua Buôn</span>
+                                            </c:if>
                                         </td>
                                         <td>
                                             ${order.customer.fullName}

@@ -69,11 +69,11 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                     <label>Tên Công Ty</label>
-                                    <input type="text" class="form-control" name="companyName" value="${draftRfq.companyName}">
+                                    <input type="text" class="form-control" name="companyName" value="${draftRfq.companyName}" maxlength="100">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Mã Số Thuế</label>
-                                <input type="text" class="form-control" name="taxID" value="${draftRfq.taxID}">
+                                <input type="text" class="form-control" name="taxID" value="${draftRfq.taxID}" maxlength="20">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Loại Hình Kinh Doanh</label>
@@ -96,19 +96,22 @@
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label class="required-field">Người Liên Hệ</label>
-                                <input type="text" class="form-control" name="contactPerson" value="${not empty draftRfq.contactPerson ? draftRfq.contactPerson : customer.fullName}" required>
+                                <input type="text" class="form-control" name="contactPerson" id="contactPerson" value="${not empty draftRfq.contactPerson ? draftRfq.contactPerson : customer.fullName}" required maxlength="50">
+                                <small class="text-danger d-none" id="contactPersonError"></small>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="required-field">Số Điện Thoại</label>
-                                <input type="tel" class="form-control" name="contactPhone" value="${not empty draftRfq.contactPhone ? draftRfq.contactPhone : customer.phone}" required>
+                                <input type="tel" class="form-control" name="contactPhone" id="contactPhone" value="${not empty draftRfq.contactPhone ? draftRfq.contactPhone : customer.phone}" required maxlength="15">
+                                <small class="text-danger d-none" id="contactPhoneError"></small>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="required-field">Email</label>
-                                <input type="email" class="form-control" name="contactEmail" value="${not empty draftRfq.contactEmail ? draftRfq.contactEmail : customer.email}" required>
+                                <input type="email" class="form-control" name="contactEmail" id="contactEmail" value="${not empty draftRfq.contactEmail ? draftRfq.contactEmail : customer.email}" required maxlength="50">
+                                <small class="text-danger d-none" id="contactEmailError"></small>
                             </div>
                             <div class="col-12 mb-3">
                                 <label>Liên Hệ Dự Phòng</label>
-                                <input type="text" class="form-control" name="alternativeContact" value="${draftRfq.alternativeContact}">
+                                <input type="text" class="form-control" name="alternativeContact" value="${draftRfq.alternativeContact}" maxlength="100">
                             </div>
                         </div>
                     </div>
@@ -140,14 +143,15 @@
                                 </select>
                                 <input type="hidden" name="deliveryWardId" id="deliveryWardId" value="${draftRfq.deliveryWardId}">
                             </div>
-                            <div class="col-md-12 mb-3">
+                            <div class="col-md-8 mb-3">
                                 <label class="required-field">Địa Chỉ Chi Tiết</label>
-                                <input type="text" class="form-control" name="deliveryStreet" id="deliveryStreet" placeholder="Số nhà, tên đường..." value="${draftRfq.deliveryStreet}" required>
+                                <input type="text" class="form-control" name="deliveryStreet" id="deliveryStreet" placeholder="Số nhà, tên đường..." value="${draftRfq.deliveryStreet}" required maxlength="200">
                                 <input type="hidden" name="deliveryAddress" id="deliveryAddress" value="${draftRfq.deliveryAddress}">
                             </div>
-                            <div class="col-12 mb-3">
-                                <label>Yêu Cầu Đặc Biệt</label>
-                                <textarea class="form-control" name="deliveryInstructions" rows="2">${draftRfq.deliveryInstructions}</textarea>
+                            <div class="col-md-4 mb-3">
+                                <label class="required-field">Ngày Mong Muốn Nhận Hàng</label>
+                                <input type="text" class="form-control" name="requestedDeliveryDate" id="deliveryDate" placeholder="dd/mm/yyyy" required autocomplete="off">
+                                <small class="text-muted">Chọn ngày bạn muốn nhận hàng</small>
                             </div>
                         </div>
                     </div>
@@ -198,11 +202,6 @@
                                                         <i class="fa fa-trash"></i>
                                                     </button>
                                                 </div>
-                                                <div class="col-md-1"></div>
-                                                <div class="col-md-11 mb-2">
-                                                    <label>Yêu Cầu Đặc Biệt</label>
-                                                    <input type="text" class="form-control" name="specialRequirements" value="${item.specialRequirements}">
-                                                </div>
                                             </div>
                                         </div>
                                     </c:forEach>
@@ -240,11 +239,6 @@
                                                     <i class="fa fa-trash"></i>
                                                 </button>
                                             </div>
-                                            <div class="col-md-1"></div>
-                                            <div class="col-md-11 mb-2">
-                                                <label>Yêu Cầu Đặc Biệt</label>
-                                                <input type="text" class="form-control" name="specialRequirements">
-                                            </div>
                                         </div>
                                     </div>
                                 </c:otherwise>
@@ -256,59 +250,7 @@
                     </div>
                 </div>
 
-                <!-- Shipping Method -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <div class="section-header"><h5 class="mb-0"><i class="fa fa-truck"></i> Phương Thức Vận Chuyển</h5></div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <button type="button" class="btn btn-info" id="btnCalculateShipping" onclick="calculateShippingRates()">
-                                    <i class="fa fa-calculator"></i> Tính Phí Vận Chuyển
-                                </button>
-                                <small class="text-muted ml-2">Vui lòng chọn địa chỉ giao hàng và sản phẩm trước khi tính phí</small>
-                            </div>
-                        </div>
-                        
-                        <div id="shippingRatesContainer" style="display:none;">
-                            <div id="shippingRatesLoading" class="text-center py-3" style="display:none;">
-                                <i class="fa fa-spinner fa-spin fa-2x"></i>
-                                <p class="mt-2">Đang tính phí vận chuyển...</p>
-                            </div>
-                            <div id="shippingRatesList"></div>
-                            <input type="hidden" name="shippingCarrierId" id="shippingCarrierId">
-                            <input type="hidden" name="shippingCarrierName" id="shippingCarrierName">
-                            <input type="hidden" name="shippingServiceName" id="shippingServiceName">
-                            <input type="hidden" name="shippingFee" id="shippingFeeInput">
-                            <input type="hidden" name="estimatedDeliveryDays" id="estimatedDeliveryDays">
-                        </div>
-                        
-                        <div id="shippingError" class="alert alert-danger mt-3" style="display:none;">
-                            <i class="fa fa-exclamation-triangle"></i> <span id="shippingErrorMsg"></span>
-                        </div>
-                        
-                        <hr class="my-4">
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label class="required-field">Ngày Mong Muốn Nhận Hàng</label>
-                                <input type="text" class="form-control" name="requestedDeliveryDate" id="deliveryDate" placeholder="dd/mm/yyyy" required disabled autocomplete="off">
-                                <small class="text-muted" id="deliveryDateHint">Vui lòng chọn đơn vị vận chuyển trước</small>
-                            </div>
-                            <div class="col-md-6">
-                                <div id="selectedShippingInfo" style="display:none;">
-                                    <label>Thông Tin Vận Chuyển Đã Chọn</label>
-                                    <div class="alert alert-success mb-0">
-                                        <strong id="selectedCarrierName"></strong><br>
-                                        <span id="selectedServiceName"></span><br>
-                                        Phí ship: <strong id="selectedShippingFee"></strong><br>
-                                        Thời gian giao: <strong id="selectedDeliveryTime"></strong>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
 
                 <!-- Payment & Notes -->
                 <div class="card mb-4">
@@ -320,13 +262,6 @@
                                 <input type="text" class="form-control" value="Chuyển khoản ngân hàng" readonly>
                                 <input type="hidden" name="preferredPaymentMethod" value="BankTransfer">
                                 <small class="text-muted">Thanh toán qua VNPay sau khi chấp nhận báo giá</small>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <!-- Placeholder for alignment -->
-                            </div>
-                            <div class="col-12 mb-3">
-                                <label>Ghi Chú Thêm</label>
-                                <textarea class="form-control" name="customerNotes" rows="3" placeholder="Mọi yêu cầu đặc biệt hoặc thông tin bổ sung...">${draftRfq.customerNotes}</textarea>
                             </div>
                         </div>
                     </div>
@@ -358,6 +293,7 @@
 
     <script src="${pageContext.request.contextPath}/js/jquery-3.3.1.min.js"></script>
     <script src="${pageContext.request.contextPath}/js/bootstrap.min.js"></script>
+    <script src="${pageContext.request.contextPath}/js/main.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.vi.min.js"></script>
     <script>
@@ -374,8 +310,8 @@
                 }
             });
             
-            // Delivery date is disabled by default until shipping method is selected
-            $('#deliveryDate').prop('disabled', true);
+            // Initialize delivery date picker
+            initDeliveryDatePicker();
             
             // Bind change event for product select
             $(document).on('change', '.product-select', function() {
@@ -597,10 +533,8 @@
                         for (var i = 0; i < variants.length; i++) {
                             var v = variants[i];
                             if (v.isActive) {
-                                var price = v.sellingPrice ? new Intl.NumberFormat('vi-VN').format(v.sellingPrice) + '₫' : '';
-                                var stock = v.stock ? ' (Kho: ' + v.stock + ')' : '';
                                 var selected = (selectedVariantId && v.variantId == selectedVariantId) ? ' selected' : '';
-                                options += '<option value="' + v.variantId + '"' + selected + '>' + v.sku + ' - ' + price + stock + '</option>';
+                                options += '<option value="' + v.variantId + '"' + selected + '>' + v.sku + '</option>';
                             }
                         }
                     }
@@ -652,11 +586,6 @@
                                 '<i class="fa fa-trash"></i>' +
                             '</button>' +
                         '</div>' +
-                        '<div class="col-md-1"></div>' +
-                        '<div class="col-md-11 mb-2">' +
-                            '<label>Yêu Cầu Đặc Biệt</label>' +
-                            '<input type="text" class="form-control" name="specialRequirements">' +
-                        '</div>' +
                     '</div>' +
                 '</div>';
             productList.append(newRow);
@@ -692,9 +621,103 @@
             normalizeQuantity(this);
         });
         
+        // ===== Validation Functions =====
+        // Validate người liên hệ: không được toàn số hoặc ký tự đặc biệt
+        function validateContactPerson(value) {
+            if (!value || value.trim() === '') return { valid: false, message: 'Vui lòng nhập tên người liên hệ' };
+            var trimmed = value.trim();
+            // Không được toàn số
+            if (/^\d+$/.test(trimmed)) return { valid: false, message: 'Tên không được chỉ chứa số' };
+            // Không được toàn ký tự đặc biệt
+            if (/^[^a-zA-ZÀ-ỹ\s]+$/.test(trimmed)) return { valid: false, message: 'Tên không hợp lệ' };
+            // Phải có ít nhất 1 chữ cái
+            if (!/[a-zA-ZÀ-ỹ]/.test(trimmed)) return { valid: false, message: 'Tên phải chứa ít nhất một chữ cái' };
+            return { valid: true };
+        }
+        
+        // Validate số điện thoại Việt Nam
+        function validateVietnamesePhone(value) {
+            if (!value || value.trim() === '') return { valid: false, message: 'Vui lòng nhập số điện thoại' };
+            var phone = value.trim().replace(/\s/g, '');
+            // Số điện thoại VN: 10 số, bắt đầu bằng số 0
+            var vnPhoneRegex = /^0\d{9}$/;
+            if (!vnPhoneRegex.test(phone)) return { valid: false, message: 'Số điện thoại phải có 10 số và bắt đầu bằng số 0' };
+            return { valid: true };
+        }
+        
+        // Validate email
+        function validateEmail(value) {
+            if (!value || value.trim() === '') return { valid: false, message: 'Vui lòng nhập email' };
+            var email = value.trim();
+            var emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(email)) return { valid: false, message: 'Email không hợp lệ' };
+            return { valid: true };
+        }
+        
+        // Show/hide error message
+        function showFieldError(fieldId, errorId, result) {
+            var field = $('#' + fieldId);
+            var error = $('#' + errorId);
+            if (!result.valid) {
+                field.addClass('is-invalid');
+                error.text(result.message).removeClass('d-none');
+                return false;
+            } else {
+                field.removeClass('is-invalid');
+                error.addClass('d-none');
+                return true;
+            }
+        }
+        
+        // Real-time validation on blur
+        $('#contactPerson').on('blur', function() {
+            showFieldError('contactPerson', 'contactPersonError', validateContactPerson($(this).val()));
+        });
+        $('#contactPhone').on('blur', function() {
+            showFieldError('contactPhone', 'contactPhoneError', validateVietnamesePhone($(this).val()));
+        });
+        $('#contactEmail').on('blur', function() {
+            showFieldError('contactEmail', 'contactEmailError', validateEmail($(this).val()));
+        });
+        
+        // Prevent non-numeric input in quantity fields
+        $(document).on('keypress', '.quantity-input', function(e) {
+            if (e.which < 48 || e.which > 57) {
+                e.preventDefault();
+            }
+        });
+        $(document).on('paste', '.quantity-input', function(e) {
+            var pastedData = e.originalEvent.clipboardData.getData('text');
+            if (!/^\d+$/.test(pastedData)) {
+                e.preventDefault();
+            }
+        });
+        
         // Validate form before submit
         $('#rfqForm').on('submit', function(e) {
             let ok = true;
+            var errorMessages = [];
+            
+            // Validate contact person
+            var contactResult = validateContactPerson($('#contactPerson').val());
+            if (!showFieldError('contactPerson', 'contactPersonError', contactResult)) {
+                ok = false;
+                errorMessages.push(contactResult.message);
+            }
+            
+            // Validate phone
+            var phoneResult = validateVietnamesePhone($('#contactPhone').val());
+            if (!showFieldError('contactPhone', 'contactPhoneError', phoneResult)) {
+                ok = false;
+                errorMessages.push(phoneResult.message);
+            }
+            
+            // Validate email
+            var emailResult = validateEmail($('#contactEmail').val());
+            if (!showFieldError('contactEmail', 'contactEmailError', emailResult)) {
+                ok = false;
+                errorMessages.push(emailResult.message);
+            }
             
             // Check minimum quantity for each product
             $('.quantity-input').each(function() {
@@ -711,19 +734,54 @@
                 }
             });
             
-            // Check shipping method selected
-            if (!$('#shippingCarrierId').val()) {
+            // Check delivery address (city, district, ward)
+            if (!$('#deliveryCity').val()) {
                 ok = false;
-                // Check if shipping rates were loaded but none selected
-                if ($('#shippingRatesList').find('input[type="radio"]').length > 0) {
-                    alert('Vui lòng chọn một đơn vị vận chuyển từ danh sách.');
-                } else {
-                    alert('Vui lòng bấm "Tính Phí Vận Chuyển" và chọn đơn vị vận chuyển.\n\nNếu địa điểm của bạn không có đơn vị vận chuyển nào nhận, vui lòng chọn địa điểm khác.');
-                }
+                $('#deliveryCity').addClass('is-invalid');
+                errorMessages.push('Vui lòng chọn Tỉnh/Thành phố');
+            } else {
+                $('#deliveryCity').removeClass('is-invalid');
+            }
+            
+            if (!$('#deliveryDistrict').val()) {
+                ok = false;
+                $('#deliveryDistrict').addClass('is-invalid');
+                errorMessages.push('Vui lòng chọn Quận/Huyện');
+            } else {
+                $('#deliveryDistrict').removeClass('is-invalid');
+            }
+            
+            if (!$('#deliveryWard').val()) {
+                ok = false;
+                $('#deliveryWard').addClass('is-invalid');
+                errorMessages.push('Vui lòng chọn Phường/Xã');
+            } else {
+                $('#deliveryWard').removeClass('is-invalid');
+            }
+            
+            // Check delivery street
+            if (!$('#deliveryStreet').val() || $('#deliveryStreet').val().trim() === '') {
+                ok = false;
+                $('#deliveryStreet').addClass('is-invalid');
+                errorMessages.push('Vui lòng nhập địa chỉ chi tiết');
+            } else {
+                $('#deliveryStreet').removeClass('is-invalid');
+            }
+            
+            // Check delivery date
+            if (!$('#deliveryDate').val()) {
+                ok = false;
+                $('#deliveryDate').addClass('is-invalid');
+                errorMessages.push('Vui lòng chọn ngày mong muốn nhận hàng');
+            } else {
+                $('#deliveryDate').removeClass('is-invalid');
             }
             
             if (!ok) {
                 e.preventDefault();
+                if (errorMessages.length > 0) {
+                    alert('Vui lòng kiểm tra lại thông tin:\n- ' + errorMessages.join('\n- '));
+                }
                 return false;
             }
             return true;
@@ -745,208 +803,27 @@
             }
         }
         
-        // ===== Shipping Rate Functions =====
-        var selectedShippingRate = null;
+        // ===== Delivery Date Functions =====
+        // Draft delivery date from server
+        var draftDeliveryDate = '<fmt:formatDate value="${draftRfq.requestedDeliveryDate}" pattern="dd/MM/yyyy"/>';
         
-        function calculateShippingRates() {
-            var cityId = $('#deliveryCityId').val();
-            var districtId = $('#deliveryDistrictId').val();
-            
-            if (!cityId || !districtId) {
-                alert('Vui lòng chọn Tỉnh/Thành phố và Quận/Huyện trước khi tính phí vận chuyển.');
-                return;
-            }
-            
-            // Calculate total weight based on quantity (assume 500g per item)
-            var totalQuantity = 0;
-            $('.quantity-input').each(function() {
-                totalQuantity += parseInt($(this).val()) || 0;
-            });
-            
-            if (totalQuantity === 0) {
-                alert('Vui lòng chọn sản phẩm và số lượng trước khi tính phí vận chuyển.');
-                return;
-            }
-            
-            var weight = totalQuantity * 500; // 500g per item
-            
-            $('#shippingRatesContainer').show();
-            $('#shippingRatesLoading').show();
-            $('#shippingRatesList').html('');
-            $('#shippingError').hide();
-            
-            $.ajax({
-                url: contextPath + '/api/goship/rates',
-                type: 'GET',
-                data: {
-                    toCityId: cityId,
-                    toDistrictId: districtId,
-                    weight: weight,
-                    cod: 0
-                },
-                dataType: 'json',
-                success: function(response) {
-                    $('#shippingRatesLoading').hide();
-                    
-                    if (response.success && response.rates && response.rates.length > 0) {
-                        renderShippingRates(response.rates);
-                        $('#shippingError').hide();
-                    } else {
-                        $('#shippingError').show();
-                        $('#shippingErrorMsg').html('<strong>Địa điểm của bạn không có đơn vị vận chuyển nào nhận.</strong><br>Vui lòng chọn địa điểm khác hoặc liên hệ với chúng tôi để được hỗ trợ.');
-                        $('#shippingRatesList').html('');
-                    }
-                },
-                error: function() {
-                    $('#shippingRatesLoading').hide();
-                    $('#shippingError').show();
-                    $('#shippingErrorMsg').text('Lỗi kết nối đến dịch vụ vận chuyển. Vui lòng thử lại sau.');
-                }
-            });
-        }
-        
-        function renderShippingRates(rates) {
-            var html = '<div class="list-group">';
-            
-            for (var i = 0; i < rates.length; i++) {
-                var rate = rates[i];
-                var estimatedDays = parseEstimatedDays(rate.estimatedDelivery);
-                var priceFormatted = new Intl.NumberFormat('vi-VN').format(rate.price) + '₫';
-                
-                html += '<label class="list-group-item list-group-item-action d-flex align-items-center" style="cursor:pointer;">';
-                html += '<input type="radio" name="shippingRateRadio" class="mr-3" ';
-                html += 'data-id="' + rate.id + '" ';
-                html += 'data-carrier="' + escapeHtml(rate.carrierName) + '" ';
-                html += 'data-service="' + escapeHtml(rate.serviceName) + '" ';
-                html += 'data-price="' + rate.price + '" ';
-                html += 'data-days="' + estimatedDays + '" ';
-                html += 'data-delivery="' + escapeHtml(rate.estimatedDelivery) + '" ';
-                html += 'onchange="selectShippingRate(this)">';
-                
-                if (rate.carrierLogo) {
-                    html += '<img src="' + rate.carrierLogo + '" alt="" style="width:50px;height:30px;object-fit:contain;" class="mr-3">';
-                }
-                
-                html += '<div class="flex-grow-1">';
-                html += '<strong>' + escapeHtml(rate.carrierName) + '</strong>';
-                html += '<br><small class="text-muted">' + escapeHtml(rate.serviceName) + ' - ' + escapeHtml(rate.estimatedDelivery) + '</small>';
-                html += '</div>';
-                html += '<div class="text-right">';
-                html += '<strong class="text-primary">' + priceFormatted + '</strong>';
-                html += '</div>';
-                html += '</label>';
-            }
-            
-            html += '</div>';
-            $('#shippingRatesList').html(html);
-        }
-        
-        function parseEstimatedDays(estimatedDelivery) {
-            // Parse "2-3 ngày", "1-2 ngày", "12 giờ", "24 giờ" to get days
-            if (!estimatedDelivery) return 3;
-            
-            var lowerText = estimatedDelivery.toLowerCase();
-            var match = lowerText.match(/(\d+)[-–]?(\d+)?/);
-            
-            if (match) {
-                var maxValue = parseInt(match[2] || match[1]) || 3;
-                
-                // Check if it's hours (giờ) - convert to days (round up)
-                if (lowerText.indexOf('giờ') !== -1 || lowerText.indexOf('gio') !== -1 || lowerText.indexOf('hour') !== -1) {
-                    return Math.ceil(maxValue / 24) || 1; // At least 1 day
-                }
-                
-                // Otherwise it's days
-                return maxValue;
-            }
-            return 3; // Default 3 days
-        }
-        
-        function selectShippingRate(radio) {
-            var $radio = $(radio);
-            
-            selectedShippingRate = {
-                id: $radio.data('id'),
-                carrierName: $radio.data('carrier'),
-                serviceName: $radio.data('service'),
-                price: $radio.data('price'),
-                days: $radio.data('days'),
-                deliveryTime: $radio.data('delivery')
-            };
-            
-            // Update hidden fields
-            $('#shippingCarrierId').val(selectedShippingRate.id);
-            $('#shippingCarrierName').val(selectedShippingRate.carrierName);
-            $('#shippingServiceName').val(selectedShippingRate.serviceName);
-            $('#shippingFeeInput').val(selectedShippingRate.price);
-            $('#estimatedDeliveryDays').val(selectedShippingRate.days);
-            
-            // Show selected info
-            $('#selectedShippingInfo').show();
-            $('#selectedCarrierName').text(selectedShippingRate.carrierName);
-            $('#selectedServiceName').text(selectedShippingRate.serviceName);
-            $('#selectedShippingFee').text(new Intl.NumberFormat('vi-VN').format(selectedShippingRate.price) + '₫');
-            $('#selectedDeliveryTime').text('Dự kiến giao ' + selectedShippingRate.deliveryTime);
-            
-            // Enable and set min date for delivery date
-            updateDeliveryDateConstraints(selectedShippingRate.days);
-        }
-        
-        function updateDeliveryDateConstraints(deliveryDays) {
-            var today = new Date();
-            var minDate = new Date();
-            minDate.setDate(today.getDate() + deliveryDays);
-            
-            // Format date as dd/mm/yyyy for display
-            var day = String(minDate.getDate()).padStart(2, '0');
-            var month = String(minDate.getMonth() + 1).padStart(2, '0');
-            var year = minDate.getFullYear();
-            var formattedDate = day + '/' + month + '/' + year;
-            
-            // Destroy existing datepicker if any
-            $('#deliveryDate').datepicker('destroy');
+        function initDeliveryDatePicker() {
+            var tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1); // Minimum tomorrow
             
             // Initialize datepicker with Vietnamese locale and dd/mm/yyyy format
             $('#deliveryDate').datepicker({
                 format: 'dd/mm/yyyy',
                 language: 'vi',
-                startDate: minDate,
+                startDate: tomorrow,
                 autoclose: true,
                 todayHighlight: true
             });
             
-            $('#deliveryDate').prop('disabled', false);
-            $('#deliveryDate').val(formattedDate); // Set default to earliest possible date
-            
-            var dayNames = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
-            
-            $('#deliveryDateHint').html('Ngày sớm nhất có thể nhận hàng: <strong>' + formattedDate + '</strong> (' + dayNames[minDate.getDay()] + ')');
-        }
-        
-        function escapeHtml(text) {
-            if (!text) return '';
-            var div = document.createElement('div');
-            div.appendChild(document.createTextNode(text));
-            return div.innerHTML;
-        }
-        
-        // Reset shipping when address changes
-        $('#deliveryCity, #deliveryDistrict').change(function() {
-            resetShippingSelection();
-        });
-        
-        function resetShippingSelection() {
-            selectedShippingRate = null;
-            $('#shippingCarrierId').val('');
-            $('#shippingCarrierName').val('');
-            $('#shippingServiceName').val('');
-            $('#shippingFeeInput').val('');
-            $('#estimatedDeliveryDays').val('');
-            $('#shippingRatesContainer').hide();
-            $('#shippingRatesList').html('');
-            $('#selectedShippingInfo').hide();
-            $('#deliveryDate').prop('disabled', true).val('');
-            $('#deliveryDateHint').text('Vui lòng chọn đơn vị vận chuyển trước');
+            // Set draft delivery date if exists (already formatted as dd/MM/yyyy)
+            if (draftDeliveryDate && draftDeliveryDate.trim() !== '') {
+                $('#deliveryDate').datepicker('setDate', draftDeliveryDate.trim());
+            }
         }
     </script>
 </body>

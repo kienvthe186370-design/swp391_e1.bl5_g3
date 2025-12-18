@@ -28,7 +28,12 @@
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1 class="m-0">Chi tiết đơn hàng ${order.orderCode}</h1>
+                        <h1 class="m-0">
+                            Chi tiết đơn hàng ${order.orderCode}
+                            <c:if test="${order.rfqID != null}">
+                                <span class="badge badge-danger"><i class="fas fa-building"></i> Mua Buôn</span>
+                            </c:if>
+                        </h1>
                     </div>
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">

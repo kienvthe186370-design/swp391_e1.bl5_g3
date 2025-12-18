@@ -57,14 +57,19 @@
         </select>
       </div>
       
+      <% if (isEditMode) { %>
       <div class="form-group">
-        <label for="password">Mật khẩu <%= isEditMode ? "" : "<span class=\"text-danger\">*</span>" %></label>
+        <label for="password">Mật khẩu mới</label>
         <input type="password" class="form-control" id="password" name="password" 
-               <%= isEditMode ? "" : "required" %> placeholder="<%= isEditMode ? "Nhập mật khẩu mới (để trống nếu không muốn thay đổi)" : "Nhập mật khẩu" %>" minlength="6">
-        <small class="form-text text-muted">
-          <%= isEditMode ? "Để trống nếu không muốn thay đổi mật khẩu" : "Mật khẩu tối thiểu 6 ký tự" %>
-        </small>
+               placeholder="Nhập mật khẩu mới (để trống nếu không muốn thay đổi)" minlength="6">
+        <small class="form-text text-muted">Để trống nếu không muốn thay đổi mật khẩu</small>
       </div>
+      <% } else { %>
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Mật khẩu sẽ được tự động tạo và gửi qua email cho nhân viên. 
+        Nhân viên sẽ được yêu cầu đổi mật khẩu khi đăng nhập lần đầu.
+      </div>
+      <% } %>
       
     </div>
     <div class="card-footer">
@@ -85,7 +90,9 @@ document.getElementById('employeeForm').addEventListener('submit', function(e) {
     var email = document.getElementById('email').value.trim();
     var phone = document.getElementById('phone').value.trim();
     var role = document.getElementById('role').value;
-    var password = document.getElementById('password').value;
+    var passwordField = document.getElementById('password');
+    var password = passwordField ? passwordField.value : '';
+    var isEditMode = document.getElementById('password') !== null;
     
     // Validate họ tên
     var nameRegex = /^[a-zA-ZÀ-ỹ0-9\s]+$/;
@@ -121,25 +128,14 @@ document.getElementById('employeeForm').addEventListener('submit', function(e) {
         return false;
     }
     
-    <c:if test="${!isEditMode}">
-    // Create mode: mật khẩu bắt buộc
-    if (password.length < 6) {
-        e.preventDefault();
-        alert('Mật khẩu phải có ít nhất 6 ký tự!');
-        return false;
-    }
-    </c:if>
-    
-    <c:if test="${isEditMode}">
     // Edit mode: chỉ validate nếu có nhập mật khẩu
-    if (password.length > 0) {
+    if (isEditMode && password.length > 0) {
         if (password.length < 6) {
             e.preventDefault();
             alert('Mật khẩu phải có ít nhất 6 ký tự!');
             return false;
         }
     }
-    </c:if>
     
     return true;
 });

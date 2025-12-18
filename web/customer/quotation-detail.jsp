@@ -6,23 +6,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi Tiết Báo Giá ${rfq.rfqCode} - Pickleball Shop</title>
+    <title>Chi Tiết Báo Giá ${quotation.quotationCode} - Pickleball Shop</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/bootstrap.min.css" type="text/css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/font-awesome.min.css" type="text/css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css" type="text/css">
     <style>
-        .status-badge { font-size: 1rem; padding: 8px 16px; border-radius: 4px; }
-        .bg-quoted { background: #ffc107 !important; color: #000 !important; }
-        .bg-completed { background: #28a745 !important; color: #fff !important; }
-        .bg-quoterejected { background: #dc3545 !important; color: #fff !important; }
+        .status-badge { font-size: 1rem; padding: 8px 16px; border-radius: 20px; }
+        .status-sent { background: #007bff; color: #fff; }
+        .status-customercountered { background: #ffc107; color: #000; }
+        .status-sellercountered { background: #17a2b8; color: #fff; }
+        .status-accepted { background: #28a745; color: #fff; }
+        .status-paid { background: #28a745; color: #fff; }
+        .status-rejected { background: #dc3545; color: #fff; }
+        .status-expired { background: #6c757d; color: #fff; }
         .info-label { font-weight: 600; color: #666; }
-        .history-list { padding-left: 0; margin-left: 0; list-style: none; }
-        .history-item { position: relative; padding: 10px 0 15px 30px; border-bottom: 1px solid #eee; }
+        .history-list { list-style: none; padding: 0; margin: 0; }
+        .history-item { position: relative; padding: 12px 0 12px 30px; border-bottom: 1px solid #eee; }
         .history-item:last-child { border-bottom: none; }
-        .history-item::before { content: ''; width: 12px; height: 12px; background: #007bff; border-radius: 50%; position: absolute; left: 0; top: 15px; }
+        .history-item::before { content: ''; width: 12px; height: 12px; background: #007bff; border-radius: 50%; position: absolute; left: 0; top: 16px; }
         .history-item.rejected::before { background: #dc3545; }
-        .history-item.completed::before { background: #28a745; }
+        .history-item.accepted::before, .history-item.paid::before { background: #28a745; }
+        .history-item.counter::before { background: #ffc107; }
+        .negotiation-box { background: #f8f9fa; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; }
+        .price-display { font-size: 1.5rem; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -36,8 +43,8 @@
                         <h4>Chi Tiết Báo Giá</h4>
                         <div class="breadcrumb__links">
                             <a href="${pageContext.request.contextPath}/Home">Trang chủ</a>
-                            <a href="${pageContext.request.contextPath}/quotation/list">Đơn Báo Giá</a>
-                            <span>${rfq.rfqCode}</span>
+                            <a href="${pageContext.request.contextPath}/quotation/list">Báo giá</a>
+                            <span>${quotation.quotationCode}</span>
                         </div>
                     </div>
                 </div>
@@ -47,9 +54,40 @@
 
     <section class="spad">
         <div class="container">
-            <c:if test="${param.success == 'rejected'}">
+            <!-- Alert Messages -->
+            <c:if test="${param.success == 'accepted'}">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fa fa-check-circle"></i> Bạn đã chấp nhận báo giá. Vui lòng thanh toán để hoàn tất.
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            </c:if>
+            <c:if test="${param.success == 'countered'}">
                 <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <i class="fa fa-comments"></i> Đã gửi đề xuất giá của bạn. Vui lòng chờ Seller phản hồi.
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            </c:if>
+            <c:if test="${param.success == 'rejected'}">
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
                     <i class="fa fa-info-circle"></i> Bạn đã từ chối báo giá này.
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            </c:if>
+            <c:if test="${param.error == 'cannot_accept'}">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fa fa-exclamation-circle"></i> Không thể chấp nhận báo giá ở trạng thái hiện tại.
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            </c:if>
+            <c:if test="${param.error == 'cannot_counter'}">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fa fa-exclamation-circle"></i> Không thể thương lượng giá. Đã hết số lần thương lượng hoặc trạng thái không phù hợp.
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            </c:if>
+            <c:if test="${param.error == 'expired'}">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fa fa-exclamation-circle"></i> Báo giá đã hết hạn.
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
                 </div>
             </c:if>
@@ -60,96 +98,186 @@
                     <!-- Quotation Info -->
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fa fa-file-text-o"></i> ${rfq.rfqCode}</h5>
-                            <span class="badge status-badge bg-${rfq.status.toLowerCase()}">
-                                <c:choose>
-                                    <c:when test="${rfq.status == 'Quoted'}">Chờ chấp nhận</c:when>
-                                    <c:when test="${rfq.status == 'Completed'}">Đã thanh toán</c:when>
-                                    <c:when test="${rfq.status == 'QuoteRejected'}">Đã từ chối</c:when>
-                                    <c:otherwise>${rfq.statusDisplayName}</c:otherwise>
-                                </c:choose>
+                            <h5 class="mb-0"><i class="fa fa-file-text-o"></i> ${quotation.quotationCode}</h5>
+                            <span class="badge status-badge status-${quotation.status.toLowerCase()}">
+                                ${quotation.statusDisplayName}
                             </span>
                         </div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <p><span class="info-label">Công ty:</span> ${rfq.companyName}</p>
-                                    <p><span class="info-label">Mã số thuế:</span> ${rfq.taxID != null ? rfq.taxID : 'N/A'}</p>
-                                    <p><span class="info-label">Loại hình:</span> 
-                                        <c:choose>
-                                            <c:when test="${rfq.businessType == 'Retailer'}">Bán lẻ</c:when>
-                                            <c:when test="${rfq.businessType == 'Distributor'}">Nhà phân phối</c:when>
-                                            <c:when test="${rfq.businessType == 'Other'}">Khác</c:when>
-                                            <c:otherwise>${rfq.businessType != null ? rfq.businessType : 'N/A'}</c:otherwise>
-                                        </c:choose>
-                                    </p>
-                                    <p><span class="info-label">Người liên hệ:</span> ${rfq.contactPerson}</p>
-                                    <p><span class="info-label">Điện thoại:</span> ${rfq.contactPhone}</p>
-                                    <p><span class="info-label">Email:</span> ${rfq.contactEmail}</p>
+                                    <c:if test="${quotation.rfq != null}">
+                                        <p><span class="info-label">RFQ:</span> 
+                                            <a href="${pageContext.request.contextPath}/rfq/detail?id=${quotation.rfqID}">${quotation.rfq.rfqCode}</a>
+                                        </p>
+                                        <p><span class="info-label">Công ty:</span> ${quotation.rfq.companyName}</p>
+                                        <p><span class="info-label">Người liên hệ:</span> ${quotation.rfq.contactPerson}</p>
+                                        <p><span class="info-label">Điện thoại:</span> ${quotation.rfq.contactPhone}</p>
+                                    </c:if>
                                 </div>
                                 <div class="col-md-6">
-                                    <p><span class="info-label">Ngày báo giá:</span> <fmt:formatDate value="${rfq.quotationSentDate}" pattern="dd/MM/yyyy"/></p>
-                                    <p><span class="info-label">Hiệu lực đến:</span> <fmt:formatDate value="${rfq.quotationValidUntil}" pattern="dd/MM/yyyy"/></p>
-                                    <p><span class="info-label">Ngày giao hàng:</span> <fmt:formatDate value="${rfq.requestedDeliveryDate}" pattern="dd/MM/yyyy"/></p>
-                                    <p><span class="info-label">Địa chỉ giao:</span> ${rfq.deliveryAddress}</p>
-                                    <p><span class="info-label">Thanh toán:</span> Chuyển khoản ngân hàng (VNPay)</p>
+                                    <p><span class="info-label">Ngày gửi báo giá:</span> <fmt:formatDate value="${quotation.quotationSentDate}" pattern="dd/MM/yyyy HH:mm"/></p>
+                                    <p><span class="info-label">Hiệu lực đến:</span> 
+                                        <fmt:formatDate value="${quotation.quotationValidUntil}" pattern="dd/MM/yyyy"/>
+                                        <c:if test="${quotation.expired}">
+                                            <span class="badge badge-danger">Hết hạn</span>
+                                        </c:if>
+                                    </p>
+                                    <p><span class="info-label">Thanh toán:</span> 
+                                        <c:choose>
+                                            <c:when test="${quotation.paymentMethod == 'BankTransfer'}">Chuyển khoản (VNPay)</c:when>
+                                            <c:otherwise>${quotation.paymentMethod}</c:otherwise>
+                                        </c:choose>
+                                    </p>
+                                    <p><span class="info-label">Thương lượng:</span> ${quotation.negotiationCount}/${quotation.maxNegotiationCount} lần</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Shipping Carrier Info -->
-                    <c:if test="${not empty rfq.shippingCarrierName}">
+                    <!-- Shipping Info -->
+                    <c:if test="${not empty quotation.shippingCarrierName}">
                     <div class="card mb-4">
-                        <div class="card-header"><h5 class="mb-0"><i class="fa fa-truck"></i> Đơn Vị Vận Chuyển</h5></div>
+                        <div class="card-header"><h5 class="mb-0"><i class="fa fa-truck"></i> Vận Chuyển</h5></div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <p><span class="info-label">Đơn vị vận chuyển:</span> <strong>${rfq.shippingCarrierName}</strong></p>
-                                    <p><span class="info-label">Dịch vụ:</span> ${rfq.shippingServiceName}</p>
+                                    <p><span class="info-label">Đơn vị vận chuyển:</span> <strong>${quotation.shippingCarrierName}</strong></p>
+                                    <p><span class="info-label">Dịch vụ:</span> ${quotation.shippingServiceName}</p>
                                 </div>
                                 <div class="col-md-6">
-                                    <p><span class="info-label">Phí vận chuyển (dự kiến):</span> 
-                                        <span class="text-primary"><fmt:formatNumber value="${rfq.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></span>
+                                    <p><span class="info-label">Phí vận chuyển:</span> 
+                                        <span class="text-primary"><fmt:formatNumber value="${quotation.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></span>
                                     </p>
-                                    <p><span class="info-label">Thời gian giao hàng:</span> 
-                                        <span class="badge badge-success">${rfq.estimatedDeliveryDays} ngày</span>
+                                    <p><span class="info-label">Thời gian giao:</span> 
+                                        <span class="badge badge-success">${quotation.estimatedDeliveryDays} ngày</span>
                                     </p>
                                 </div>
                             </div>
+                            <c:if test="${quotation.rfq != null && not empty quotation.rfq.deliveryAddress}">
+                                <p><span class="info-label">Địa chỉ giao:</span> ${quotation.rfq.deliveryAddress}</p>
+                            </c:if>
                         </div>
                     </div>
                     </c:if>
 
-                    <!-- Action Card for Quoted status -->
-                    <c:if test="${rfq.status == 'Quoted'}">
+                    <!-- Price Negotiation Section -->
+                    <c:if test="${quotation.status == 'Sent' || quotation.status == 'SellerCountered'}">
                         <div class="card mb-4 border-primary">
                             <div class="card-header bg-primary text-white">
-                                <i class="fa fa-credit-card"></i> Thanh Toán Báo Giá
+                                <i class="fa fa-gavel"></i> Xử Lý Báo Giá
                             </div>
                             <div class="card-body">
-                                <p class="mb-2">Tổng giá trị: <strong class="text-primary" style="font-size: 1.5rem;">
-                                    <fmt:formatNumber value="${rfq.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
-                                </strong></p>
-                                <p class="text-muted small mb-3">Báo giá có hiệu lực đến: <fmt:formatDate value="${rfq.quotationValidUntil}" pattern="dd/MM/yyyy"/></p>
-                                
-                                <div class="d-flex">
-                                    <form action="${pageContext.request.contextPath}/rfq/payment" method="POST" class="mr-2">
-                                        <input type="hidden" name="rfqId" value="${rfq.rfqID}">
-                                        <button type="submit" class="btn btn-success btn-lg">
-                                            <i class="fa fa-check"></i> Thanh Toán Ngay
-                                        </button>
-                                    </form>
-                                    <button type="button" class="btn btn-outline-danger" data-toggle="modal" data-target="#rejectQuoteModal">
-                                        <i class="fa fa-times"></i> Từ Chối
-                                    </button>
+                                <!-- Current Price -->
+                                <div class="text-center mb-4">
+                                    <p class="mb-1">Giá báo giá hiện tại:</p>
+                                    <h3 class="text-primary price-display">
+                                        <c:choose>
+                                            <c:when test="${quotation.sellerCounterPrice != null}">
+                                                <fmt:formatNumber value="${quotation.sellerCounterPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <fmt:formatNumber value="${quotation.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </h3>
+                                    <c:if test="${quotation.status == 'SellerCountered' && not empty quotation.sellerCounterNote}">
+                                        <p class="text-muted"><i class="fa fa-comment"></i> Ghi chú từ Seller: ${quotation.sellerCounterNote}</p>
+                                    </c:if>
                                 </div>
+
+                                <!-- Action Buttons -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <form action="${pageContext.request.contextPath}/quotation/accept" method="POST">
+                                            <input type="hidden" name="quotationId" value="${quotation.quotationID}">
+                                            <button type="submit" class="btn btn-success btn-lg w-100" ${quotation.expired ? 'disabled' : ''}>
+                                                <i class="fa fa-check"></i> Chấp Nhận Giá Này
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <button type="button" class="btn btn-outline-danger btn-lg w-100" data-toggle="modal" data-target="#rejectModal">
+                                            <i class="fa fa-times"></i> Từ Chối
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Counter Price Option -->
+                                <c:if test="${quotation.canCustomerCounter()}">
+                                    <hr>
+                                    <div class="negotiation-box">
+                                        <h6><i class="fa fa-comments"></i> Thương Lượng Giá (còn ${quotation.remainingNegotiations} lần)</h6>
+                                        <form action="${pageContext.request.contextPath}/quotation/counter" method="POST" onsubmit="return validateCounterForm()">
+                                            <input type="hidden" name="quotationId" value="${quotation.quotationID}">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label>Giá bạn đề xuất (₫) <span class="text-danger">*</span></label>
+                                                    <input type="number" class="form-control" name="counterPrice" id="counterPrice" 
+                                                           min="1" required placeholder="Nhập giá đề xuất">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label>Ghi chú</label>
+                                                    <input type="text" class="form-control" name="note" maxlength="500" placeholder="Lý do đề xuất giá này...">
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="fa fa-paper-plane"></i> Gửi Đề Xuất Giá
+                                            </button>
+                                        </form>
+                                    </div>
+                                </c:if>
+                                <c:if test="${!quotation.canCustomerCounter() && quotation.negotiationCount >= quotation.maxNegotiationCount}">
+                                    <div class="alert alert-warning mt-3">
+                                        <i class="fa fa-exclamation-triangle"></i> Đã hết số lần thương lượng. Vui lòng chấp nhận hoặc từ chối báo giá.
+                                    </div>
+                                </c:if>
                             </div>
                         </div>
                     </c:if>
 
-                    <!-- Completed status -->
-                    <c:if test="${rfq.status == 'Completed'}">
+                    <!-- Customer Countered - Waiting for Seller -->
+                    <c:if test="${quotation.status == 'CustomerCountered'}">
+                        <div class="card mb-4 border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <i class="fa fa-hourglass-half"></i> Chờ Seller Phản Hồi
+                            </div>
+                            <div class="card-body">
+                                <p>Bạn đã đề xuất giá: <strong class="text-primary price-display">
+                                    <fmt:formatNumber value="${quotation.customerCounterPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                </strong></p>
+                                <c:if test="${not empty quotation.customerCounterNote}">
+                                    <p><i class="fa fa-comment"></i> Ghi chú: ${quotation.customerCounterNote}</p>
+                                </c:if>
+                                <p class="text-muted mb-0">Vui lòng chờ Seller xem xét và phản hồi đề xuất của bạn.</p>
+                            </div>
+                        </div>
+                    </c:if>
+
+                    <!-- Accepted - Payment -->
+                    <c:if test="${quotation.status == 'Accepted'}">
+                        <div class="card mb-4 border-success">
+                            <div class="card-header bg-success text-white">
+                                <i class="fa fa-credit-card"></i> Thanh Toán
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-3">Tổng giá trị cần thanh toán: 
+                                    <strong class="text-success price-display">
+                                        <fmt:formatNumber value="${quotation.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                    </strong>
+                                </p>
+                                <form action="${pageContext.request.contextPath}/quotation/payment" method="POST">
+                                    <input type="hidden" name="quotationId" value="${quotation.quotationID}">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fa fa-credit-card"></i> Thanh Toán Ngay (VNPay)
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </c:if>
+
+                    <!-- Paid -->
+                    <c:if test="${quotation.status == 'Paid'}">
                         <div class="card mb-4 border-success">
                             <div class="card-header bg-success text-white">
                                 <i class="fa fa-check-circle"></i> Đã Thanh Toán Thành Công
@@ -160,16 +288,31 @@
                         </div>
                     </c:if>
 
-                    <!-- Rejected status -->
-                    <c:if test="${rfq.status == 'QuoteRejected'}">
+                    <!-- Rejected -->
+                    <c:if test="${quotation.status == 'Rejected'}">
                         <div class="card mb-4 border-danger">
                             <div class="card-header bg-danger text-white">
                                 <i class="fa fa-times-circle"></i> Báo Giá Đã Bị Từ Chối
                             </div>
                             <div class="card-body">
-                                <c:if test="${not empty rfq.rejectionReason}">
-                                    <p><strong>Lý do:</strong> ${rfq.rejectionReason}</p>
+                                <c:if test="${not empty quotation.rejectionReason}">
+                                    <p><strong>Lý do:</strong> ${quotation.rejectionReason}</p>
                                 </c:if>
+                                <a href="${pageContext.request.contextPath}/rfq/form" class="btn btn-primary">
+                                    <i class="fa fa-plus"></i> Tạo Yêu Cầu Báo Giá Mới
+                                </a>
+                            </div>
+                        </div>
+                    </c:if>
+
+                    <!-- Expired -->
+                    <c:if test="${quotation.status == 'Expired' || quotation.expired}">
+                        <div class="card mb-4 border-secondary">
+                            <div class="card-header bg-secondary text-white">
+                                <i class="fa fa-clock-o"></i> Báo Giá Đã Hết Hạn
+                            </div>
+                            <div class="card-body">
+                                <p>Báo giá này đã hết hạn vào ngày <fmt:formatDate value="${quotation.quotationValidUntil}" pattern="dd/MM/yyyy"/>.</p>
                                 <a href="${pageContext.request.contextPath}/rfq/form" class="btn btn-primary">
                                     <i class="fa fa-plus"></i> Tạo Yêu Cầu Báo Giá Mới
                                 </a>
@@ -191,7 +334,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <c:forEach var="item" items="${rfq.items}">
+                                    <c:forEach var="item" items="${quotation.items}">
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
@@ -214,24 +357,40 @@
                                 <tfoot>
                                     <tr>
                                         <td colspan="3" class="text-right"><strong>Tạm tính:</strong></td>
-                                        <td class="text-right"><fmt:formatNumber value="${rfq.subtotalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
+                                        <td class="text-right"><fmt:formatNumber value="${quotation.subtotalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
                                     </tr>
                                     <tr>
                                         <td colspan="3" class="text-right">Phí vận chuyển:</td>
-                                        <td class="text-right"><fmt:formatNumber value="${rfq.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
+                                        <td class="text-right"><fmt:formatNumber value="${quotation.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="3" class="text-right">Thuế:</td>
-                                        <td class="text-right"><fmt:formatNumber value="${rfq.taxAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
+                                        <td colspan="3" class="text-right">Thuế VAT:</td>
+                                        <td class="text-right"><fmt:formatNumber value="${quotation.taxAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
                                     </tr>
                                     <tr class="table-primary">
                                         <td colspan="3" class="text-right"><strong>TỔNG CỘNG:</strong></td>
-                                        <td class="text-right"><strong><fmt:formatNumber value="${rfq.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></strong></td>
+                                        <td class="text-right"><strong><fmt:formatNumber value="${quotation.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></strong></td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
                     </div>
+
+                    <!-- Terms -->
+                    <c:if test="${not empty quotation.quotationTerms || not empty quotation.warrantyTerms}">
+                    <div class="card mb-4">
+                        <div class="card-header"><h5 class="mb-0"><i class="fa fa-file-text"></i> Điều Khoản</h5></div>
+                        <div class="card-body">
+                            <c:if test="${not empty quotation.warrantyTerms}">
+                                <p><span class="info-label">Bảo hành:</span> ${quotation.warrantyTerms}</p>
+                            </c:if>
+                            <c:if test="${not empty quotation.quotationTerms}">
+                                <p><span class="info-label">Điều khoản khác:</span></p>
+                                <pre style="white-space: pre-wrap; font-family: inherit;">${quotation.quotationTerms}</pre>
+                            </c:if>
+                        </div>
+                    </div>
+                    </c:if>
 
                     <!-- Back button -->
                     <a href="${pageContext.request.contextPath}/quotation/list" class="btn btn-secondary">
@@ -241,42 +400,28 @@
 
                 <!-- Sidebar -->
                 <div class="col-lg-4">
-                    <!-- History -->
-                    <c:if test="${not empty rfq.history}">
-                        <div class="card">
-                            <div class="card-header"><h5 class="mb-0"><i class="fa fa-history"></i> Lịch Sử</h5></div>
-                            <div class="card-body">
-                                <div class="history-list">
-                                    <c:forEach var="h" items="${rfq.history}">
-                                        <div class="history-item ${h.newStatus == 'QuoteRejected' || h.newStatus == 'DateRejected' || h.newStatus == 'Cancelled' ? 'rejected' : ''} ${h.newStatus == 'Completed' ? 'completed' : ''}">
-                                            <strong>${h.action}</strong>
-                                            <p class="mb-1 small">${h.notes}</p>
-                                            <small class="text-muted"><fmt:formatDate value="${h.changedDate}" pattern="dd/MM/yyyy HH:mm"/></small>
-                                        </div>
-                                    </c:forEach>
-                                </div>
-                            </div>
-                        </div>
-                    </c:if>
+                    <!-- Lịch sử đã được ẩn theo yêu cầu -->
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Reject Quote Modal -->
-    <div class="modal fade" id="rejectQuoteModal" tabindex="-1">
+    <!-- Reject Modal -->
+    <div class="modal fade" id="rejectModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form action="${pageContext.request.contextPath}/quotation/reject" method="POST">
-                    <input type="hidden" name="rfqId" value="${rfq.rfqID}">
+                <form action="${pageContext.request.contextPath}/quotation/reject" method="POST" onsubmit="return validateRejectForm()">
+                    <input type="hidden" name="quotationId" value="${quotation.quotationID}">
                     <div class="modal-header">
                         <h5 class="modal-title">Từ Chối Báo Giá</h5>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
-                            <label>Lý do từ chối</label>
-                            <textarea class="form-control" name="reason" rows="3" required placeholder="Vui lòng cho biết lý do từ chối..."></textarea>
+                            <label>Lý do từ chối <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="reason" id="rejectReason" rows="3" maxlength="500" required 
+                                      placeholder="Vui lòng cho biết lý do từ chối..."></textarea>
+                            <small class="text-muted"><span id="rejectReasonCount">0</span>/500 ký tự</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -291,5 +436,41 @@
     <%@include file="../footer.jsp"%>
     <script src="${pageContext.request.contextPath}/js/jquery-3.3.1.min.js"></script>
     <script src="${pageContext.request.contextPath}/js/bootstrap.min.js"></script>
+    <script src="${pageContext.request.contextPath}/js/main.js"></script>
+    <script>
+        // Hide preloader immediately when DOM is ready
+        $(document).ready(function() {
+            $(".loader").fadeOut();
+            $("#preloder").delay(100).fadeOut("slow");
+        });
+        
+        // Character count for reject reason
+        var rejectReasonEl = document.getElementById('rejectReason');
+        if (rejectReasonEl) {
+            rejectReasonEl.addEventListener('input', function() {
+                document.getElementById('rejectReasonCount').textContent = this.value.length;
+            });
+        }
+        
+        function validateRejectForm() {
+            var reason = document.getElementById('rejectReason').value.trim();
+            if (!reason) {
+                alert('Vui lòng nhập lý do từ chối');
+                return false;
+            }
+            return true;
+        }
+        
+        function validateCounterForm() {
+            var priceEl = document.getElementById('counterPrice');
+            if (!priceEl) return true;
+            var price = priceEl.value;
+            if (!price || price <= 0) {
+                alert('Vui lòng nhập giá đề xuất hợp lệ');
+                return false;
+            }
+            return true;
+        }
+    </script>
 </body>
 </html>
