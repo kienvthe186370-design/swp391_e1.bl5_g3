@@ -1,9 +1,9 @@
 package controller;
 
-import DAO.DiscountCampaignDAO;
-import DAO.CategoryDAO;
-import DAO.ProductDAO;
 import DAO.BrandDAO;
+import DAO.CategoryDAO;
+import DAO.DiscountCampaignDAO;
+import DAO.ProductDAO;
 import entity.DiscountCampaign;
 import entity.Employee;
 import java.io.IOException;
@@ -211,6 +211,12 @@ public class AdminDiscountCampaignController extends HttpServlet {
                 return;
             }
             
+            // Validate appliedToID when not "all"
+            if (!"all".equals(appliedToType) && (appliedToIDStr == null || appliedToIDStr.trim().isEmpty())) {
+                response.sendRedirect(request.getContextPath() + "/admin/discount?action=add&error=missing_id");
+                return;
+            }
+            
             DiscountCampaign campaign = new DiscountCampaign();
             campaign.setCampaignName(campaignName.trim());
             campaign.setDiscountType(discountType);
@@ -224,6 +230,8 @@ public class AdminDiscountCampaignController extends HttpServlet {
             
             if (!"all".equals(appliedToType) && appliedToIDStr != null && !appliedToIDStr.trim().isEmpty()) {
                 campaign.setAppliedToID(Integer.parseInt(appliedToIDStr));
+            } else {
+                campaign.setAppliedToID(null);
             }
             
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
