@@ -101,7 +101,7 @@
                             <th class="text-center">Số lượng</th>
                             <th class="text-center">Đã giữ</th>
                             <th class="text-right">Giá vốn TB</th>
-                            <th class="text-right">Giá bán</th>
+                            <th class="text-right">Giá bán lẻ MM</th>
                             <th class="text-right">Lợi nhuận</th>
                             <th class="text-center">Tình trạng</th>
                             <th class="text-center">Thao tác</th>

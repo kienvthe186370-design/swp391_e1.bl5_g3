@@ -18,7 +18,7 @@ import java.util.Map;
 public class FeedbackServlet extends HttpServlet {
 
     private ReviewDAO reviewDAO;
-    private static final int PAGE_SIZE = 10;
+    private static final int PAGE_SIZE = 5;
 
     @Override
     public void init() throws ServletException {
