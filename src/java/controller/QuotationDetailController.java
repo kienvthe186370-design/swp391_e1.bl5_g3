@@ -55,6 +55,7 @@ public class QuotationDetailController extends HttpServlet {
         }
 
         request.setAttribute("rfq", rfq);
+        request.setAttribute("fromQuotation", true); // Đánh dấu đến từ trang Quotation
         // Dùng lại trang chi tiết RFQ cho đơn báo giá
         request.getRequestDispatcher("/AdminLTE-3.2.0/admin-rfq-detail.jsp").forward(request, response);
     }

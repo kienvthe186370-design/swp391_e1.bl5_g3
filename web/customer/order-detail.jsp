@@ -34,6 +34,10 @@
         .product-item { display: flex; align-items: center; padding: 15px 0; border-bottom: 1px solid #f0f0f0; }
         .product-item:last-child { border-bottom: none; }
         .product-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; margin-right: 15px; }
+        
+        /* Style cho đơn hàng Mua Buôn (RFQ) */
+        .badge-wholesale { background: #ca1515; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
+        .rfq-header { background: #fff5f5 !important; border-left: 4px solid #ca1515; }
     </style>
 </head>
 <body>
@@ -74,10 +78,15 @@
             </c:if>
             
             <!-- Order Header -->
-            <div class="info-card">
+            <div class="info-card ${order.rfqID != null ? 'rfq-header' : ''}">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h4 class="mb-1">Đơn hàng: ${order.orderCode}</h4>
+                        <h4 class="mb-1">
+                            Đơn hàng: ${order.orderCode}
+                            <c:if test="${order.rfqID != null}">
+                                <span class="badge-wholesale"><i class="fa fa-building"></i> Mua Buôn</span>
+                            </c:if>
+                        </h4>
                         <small class="text-muted">
                             Đặt ngày: <fmt:formatDate value="${order.orderDate}" pattern="dd/MM/yyyy HH:mm"/>
                         </small>

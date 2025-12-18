@@ -18,8 +18,6 @@
         .stat-card .stat-icon { font-size: 2.5rem; opacity: 0.7; }
         .stat-card .stat-number { font-size: 1.75rem; font-weight: 700; }
         .stat-card .stat-label { font-size: 0.875rem; opacity: 0.9; }
-        .priority-high { border-left: 4px solid #dc3545; }
-        .priority-normal { border-left: 4px solid #007bff; }
         .status-badge { font-size: 0.8rem; padding: 4px 10px; }
     </style>
 </head>
@@ -74,13 +72,13 @@
                 </div>
             </div>
             <div class="col-lg-3 col-6 mb-3">
-                <div class="stat-card success">
+                <div class="stat-card danger" style="background: linear-gradient(135deg, #dc3545, #c82333);">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <div class="stat-number">${completedCount}</div>
-                            <div class="stat-label">Hoàn Thành</div>
+                            <div class="stat-number">${cancelledCount}</div>
+                            <div class="stat-label">Đã Hủy</div>
                         </div>
-                        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
                     </div>
                 </div>
             </div>
@@ -99,7 +97,8 @@
                             <option value="Pending" ${status == 'Pending' ? 'selected' : ''}>Chờ xử lý</option>
                             <option value="DateProposed" ${status == 'DateProposed' ? 'selected' : ''}>Đề xuất ngày</option>
                             <option value="Quoted" ${status == 'Quoted' ? 'selected' : ''}>Đã báo giá</option>
-                            <option value="Completed" ${status == 'Completed' ? 'selected' : ''}>Hoàn thành</option>
+                            <option value="DateAccepted" ${status == 'DateAccepted' ? 'selected' : ''}>Đã chấp nhận ngày</option>
+                            <option value="Cancelled" ${status == 'Cancelled' ? 'selected' : ''}>Đã hủy</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -139,7 +138,7 @@
                         </thead>
                         <tbody>
                             <c:forEach var="rfq" items="${rfqs}">
-                                <tr class="${rfq.status == 'Pending' ? 'priority-high' : 'priority-normal'}">
+                                <tr>
                                     <td>
                                         <a href="${pageContext.request.contextPath}/admin/rfq/detail?id=${rfq.rfqID}">
                                             <strong>${rfq.rfqCode}</strong>

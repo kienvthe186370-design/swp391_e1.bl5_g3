@@ -88,7 +88,7 @@
                 <select class="form-control" name="status">
                   <option value="">Tất cả trạng thái</option>
                   <option value="Quoted" ${status == 'Quoted' ? 'selected' : ''}>Chờ chấp nhận</option>
-                  <option value="QuoteAccepted" ${status == 'QuoteAccepted' ? 'selected' : ''}>Đã thanh toán</option>
+                  <option value="Completed" ${status == 'Completed' ? 'selected' : ''}>Đã thanh toán</option>
                   <option value="QuoteRejected" ${status == 'QuoteRejected' ? 'selected' : ''}>Từ chối báo giá</option>
                 </select>
               </div>
@@ -139,7 +139,7 @@
                           <c:when test="${rfq.status == 'Quoted'}">
                             <span class="badge badge-warning text-dark">Chờ chấp nhận</span>
                           </c:when>
-                          <c:when test="${rfq.status == 'QuoteAccepted'}">
+                          <c:when test="${rfq.status == 'Completed'}">
                             <span class="badge badge-success">Đã thanh toán</span>
                           </c:when>
                           <c:when test="${rfq.status == 'QuoteRejected'}">

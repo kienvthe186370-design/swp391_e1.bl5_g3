@@ -651,28 +651,96 @@ public class RFQDAO extends DBContext {
     /**
      * Hoàn thành RFQ (sau khi checkout)
      */
+    // Store last error for debugging
+    private String lastCompleteError = null;
+    
+    public String getLastCompleteError() {
+        return lastCompleteError;
+    }
+    
     public boolean completeRFQ(int rfqID, int orderID) {
+        return completeRFQ(rfqID, orderID, null, null);
+    }
+    
+    public boolean completeRFQ(int rfqID, int orderID, java.math.BigDecimal paymentAmount, String transactionNo) {
         Connection conn = null;
+        lastCompleteError = null;
         try {
             conn = getConnection();
             conn.setAutoCommit(false);
             
-            RFQ rfq = getRFQById(rfqID);
-            String oldStatus = rfq.getStatus();
+            // Get old status and total amount
+            String oldStatus = "Quoted";
+            java.math.BigDecimal totalAmount = null;
+            String getStatusSql = "SELECT Status, TotalAmount FROM RFQs WHERE RFQID = ?";
+            try (PreparedStatement ps = conn.prepareStatement(getStatusSql)) {
+                ps.setInt(1, rfqID);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        oldStatus = rs.getString("Status");
+                        totalAmount = rs.getBigDecimal("TotalAmount");
+                    }
+                }
+            }
+            
+            // Use totalAmount if paymentAmount not provided
+            if (paymentAmount == null && totalAmount != null) {
+                paymentAmount = totalAmount;
+            }
+            
+            System.out.println("[RFQDAO.completeRFQ] RFQID: " + rfqID + ", OldStatus: " + oldStatus + ", OrderID: " + orderID);
             
             String sql = "UPDATE RFQs SET Status = ?, UpdatedDate = GETDATE() WHERE RFQID = ?";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, RFQ.STATUS_COMPLETED);
                 ps.setInt(2, rfqID);
-                ps.executeUpdate();
+                int rowsUpdated = ps.executeUpdate();
+                System.out.println("[RFQDAO.completeRFQ] Rows updated: " + rowsUpdated);
+                if (rowsUpdated == 0) {
+                    lastCompleteError = "No rows updated - RFQID may not exist";
+                    conn.rollback();
+                    return false;
+                }
             }
             
-            insertHistory(conn, rfqID, oldStatus, RFQ.STATUS_COMPLETED, "Completed", 
-                         "RFQ hoàn thành. Order ID: " + orderID, null, "system");
+            // Insert payment history
+            try {
+                String historySql = "INSERT INTO RFQHistory (RFQID, OldStatus, NewStatus, Action, Notes, ChangedBy, ChangedByType, ChangedDate) " +
+                                   "VALUES (?, ?, ?, ?, ?, 0, 'customer', GETDATE())";
+                try (PreparedStatement historyPs = conn.prepareStatement(historySql)) {
+                    historyPs.setInt(1, rfqID);
+                    historyPs.setString(2, oldStatus);
+                    historyPs.setString(3, RFQ.STATUS_COMPLETED);
+                    historyPs.setString(4, "Payment Received");
+                    
+                    // Format payment amount
+                    String notes;
+                    if (paymentAmount != null) {
+                        java.text.NumberFormat formatter = java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN"));
+                        notes = "Khách hàng đã thanh toán: " + formatter.format(paymentAmount) + " đ";
+                        if (transactionNo != null && !transactionNo.isEmpty()) {
+                            notes += " (Mã GD: " + transactionNo + ")";
+                        }
+                        if (orderID > 0) {
+                            notes += ". Đơn hàng #" + orderID + " đã được tạo.";
+                        }
+                    } else {
+                        notes = "RFQ hoàn thành. Order ID: " + orderID;
+                    }
+                    
+                    historyPs.setString(5, notes);
+                    historyPs.executeUpdate();
+                }
+            } catch (SQLException historyEx) {
+                System.err.println("[RFQDAO.completeRFQ] History insert failed (non-fatal): " + historyEx.getMessage());
+            }
             
             conn.commit();
+            System.out.println("[RFQDAO.completeRFQ] Committed successfully");
             return true;
         } catch (SQLException e) {
+            lastCompleteError = "SQL Error: " + e.getMessage() + " (Code: " + e.getErrorCode() + ", State: " + e.getSQLState() + ")";
+            System.err.println("[RFQDAO.completeRFQ] ERROR: " + lastCompleteError);
             Logger.getLogger(RFQDAO.class.getName()).log(Level.SEVERE, null, e);
             if (conn != null) try { conn.rollback(); } catch (SQLException ex) {}
             return false;
@@ -884,7 +952,7 @@ public class RFQDAO extends DBContext {
             sql.append("AND r.Status IN (?, ?, ?) ");
             params.add(RFQ.STATUS_QUOTED);
             params.add(RFQ.STATUS_QUOTE_REJECTED);
-            params.add(RFQ.STATUS_QUOTE_ACCEPTED);
+            params.add(RFQ.STATUS_COMPLETED);
         } else {
             sql.append("AND r.Status = ? ");
             params.add(status);
@@ -937,7 +1005,7 @@ public class RFQDAO extends DBContext {
             sql.append("AND r.Status IN (?, ?, ?) ");
             params.add(RFQ.STATUS_QUOTED);
             params.add(RFQ.STATUS_QUOTE_REJECTED);
-            params.add(RFQ.STATUS_QUOTE_ACCEPTED);
+            params.add(RFQ.STATUS_COMPLETED);
         } else {
             sql.append("AND r.Status = ? ");
             params.add(status);
@@ -1435,6 +1503,130 @@ public class RFQDAO extends DBContext {
         } finally {
             closeConnection(conn);
         }
+    }
+
+    // ==================== CUSTOMER QUOTATION METHODS ====================
+    
+    /**
+     * Lấy danh sách đơn báo giá của customer (status: Quoted, Completed, QuoteRejected)
+     */
+    public List<RFQ> getCustomerQuotations(int customerID, String keyword, String status, int page, int pageSize) {
+        List<RFQ> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT r.*, c.FullName as CustomerName ");
+        sql.append("FROM RFQs r ");
+        sql.append("LEFT JOIN Customers c ON r.CustomerID = c.CustomerID ");
+        sql.append("WHERE r.CustomerID = ? ");
+
+        List<Object> params = new ArrayList<>();
+        params.add(customerID);
+
+        // Chỉ lấy các trạng thái liên quan báo giá
+        if (status == null || status.isEmpty()) {
+            sql.append("AND r.Status IN (?, ?, ?) ");
+            params.add(RFQ.STATUS_QUOTED);
+            params.add(RFQ.STATUS_QUOTE_REJECTED);
+            params.add(RFQ.STATUS_COMPLETED);
+        } else {
+            sql.append("AND r.Status = ? ");
+            params.add(status);
+        }
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String kw = "%" + keyword.trim() + "%";
+            sql.append("AND (r.RFQCode LIKE ? OR r.CompanyName LIKE ?) ");
+            params.add(kw);
+            params.add(kw);
+        }
+
+        sql.append("ORDER BY r.CreatedDate DESC ");
+        sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            for (Object p : params) {
+                if (p instanceof Integer) ps.setInt(idx++, (Integer) p);
+                else if (p instanceof String) ps.setString(idx++, (String) p);
+            }
+            ps.setInt(idx++, (page - 1) * pageSize);
+            ps.setInt(idx, pageSize);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToRFQ(rs));
+                }
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(RFQDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return list;
+    }
+
+    /**
+     * Đếm số đơn báo giá của customer theo filter
+     */
+    public int countCustomerQuotations(int customerID, String keyword, String status) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM RFQs r ");
+        sql.append("WHERE r.CustomerID = ? ");
+
+        List<Object> params = new ArrayList<>();
+        params.add(customerID);
+
+        if (status == null || status.isEmpty()) {
+            sql.append("AND r.Status IN (?, ?, ?) ");
+            params.add(RFQ.STATUS_QUOTED);
+            params.add(RFQ.STATUS_QUOTE_REJECTED);
+            params.add(RFQ.STATUS_COMPLETED);
+        } else {
+            sql.append("AND r.Status = ? ");
+            params.add(status);
+        }
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String kw = "%" + keyword.trim() + "%";
+            sql.append("AND (r.RFQCode LIKE ? OR r.CompanyName LIKE ?) ");
+            params.add(kw);
+            params.add(kw);
+        }
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            for (Object p : params) {
+                if (p instanceof Integer) ps.setInt(idx++, (Integer) p);
+                else if (p instanceof String) ps.setString(idx++, (String) p);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(RFQDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return 0;
+    }
+
+    /**
+     * Đếm số RFQ theo status
+     */
+    public int countRFQsByStatus(String status) {
+        String sql = "SELECT COUNT(*) FROM RFQs WHERE Status = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(RFQDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return 0;
     }
 
     private RFQItem mapResultSetToRFQItem(ResultSet rs) throws SQLException {

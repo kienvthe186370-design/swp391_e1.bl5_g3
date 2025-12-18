@@ -181,17 +181,40 @@ public class CustomerRFQController extends HttpServlet {
         
         try {
             System.out.println("[CustomerRFQ] === START submitRFQ ===");
+            
+            // Check if there's an existing draft to update
+            String draftRfqIdStr = request.getParameter("draftRfqId");
+            
+            if (draftRfqIdStr != null && !draftRfqIdStr.isEmpty()) {
+                // Update existing draft and submit it
+                int draftId = Integer.parseInt(draftRfqIdStr);
+                RFQ existingRfq = rfqDAO.getRFQById(draftId);
+                
+                if (existingRfq != null && existingRfq.getCustomerID() == customer.getCustomerID() 
+                    && RFQ.STATUS_DRAFT.equals(existingRfq.getStatus())) {
+                    System.out.println("[CustomerRFQ] Updating and submitting existing draft: " + draftId);
+                    
+                    RFQData data = buildRFQFromRequest(request, customer);
+                    rfqDAO.updateDraftRFQ(draftId, data.getRfq(), data.getItems());
+                    boolean success = rfqDAO.submitDraftRFQ(draftId);
+                    
+                    if (success) {
+                        response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + draftId + "&success=created");
+                    } else {
+                        request.setAttribute("error", "Có lỗi khi gửi đơn. Vui lòng thử lại.");
+                        showRFQForm(request, response, customer);
+                    }
+                    return;
+                }
+            }
+            
+            // No draft exists - create new RFQ
             RFQData data = buildRFQFromRequest(request, customer);
             RFQ rfq = data.getRfq();
             List<RFQItem> items = data.getItems();
             
-            System.out.println("[CustomerRFQ] RFQ Data:");
+            System.out.println("[CustomerRFQ] Creating new RFQ");
             System.out.println("  - CustomerID: " + rfq.getCustomerID());
-            System.out.println("  - CompanyName: " + rfq.getCompanyName());
-            System.out.println("  - ContactPerson: " + rfq.getContactPerson());
-            System.out.println("  - DeliveryAddress: " + rfq.getDeliveryAddress());
-            System.out.println("  - PaymentMethod: " + rfq.getPaymentMethod());
-            System.out.println("  - ShippingCarrierId: " + rfq.getShippingCarrierId());
             System.out.println("  - Items count: " + items.size());
             
             int rfqID = rfqDAO.createRFQ(rfq, items);

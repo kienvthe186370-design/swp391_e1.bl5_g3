@@ -73,17 +73,36 @@ public class RFQPaymentCallbackServlet extends HttpServlet {
         session.removeAttribute("rfqPaymentMethod");
         session.removeAttribute("rfqPaymentAmount");
         
+        // Debug log for session data
+        StringBuilder debugLog = new StringBuilder();
+        debugLog.append("Session pendingRFQID: ").append(pendingRFQID).append("\n");
+        debugLog.append("vnp_TxnRef: ").append(vnp_TxnRef).append("\n");
+        
         if (pendingRFQID == null) {
-            // Try to find RFQ by code
-            RFQ rfq = rfqDAO.getRFQByCode(vnp_TxnRef);
+            // Try to find RFQ by code - vnp_TxnRef may contain timestamp suffix
+            String rfqCode = vnp_TxnRef;
+            if (rfqCode != null && rfqCode.contains("_")) {
+                rfqCode = rfqCode.substring(0, rfqCode.indexOf("_"));
+            }
+            debugLog.append("Extracted RFQ Code: ").append(rfqCode).append("\n");
+            
+            RFQ rfq = rfqDAO.getRFQByCode(rfqCode);
             if (rfq != null) {
                 pendingRFQID = rfq.getRfqID();
                 paymentMethod = rfq.getPaymentMethod();
+                debugLog.append("Found RFQ ID: ").append(pendingRFQID).append("\n");
+            } else {
+                debugLog.append("RFQ not found by code!\n");
             }
         }
         
+        debugLog.append("isValid: ").append(isValid).append("\n");
+        debugLog.append("isSuccess: ").append(isSuccess).append("\n");
+        debugLog.append("pendingRFQID after lookup: ").append(pendingRFQID).append("\n");
+        
         if (pendingRFQID != null && isValid && isSuccess) {
             // Payment successful
+            debugLog.append("=== PAYMENT SUCCESS - Processing ===\n");
             System.out.println("[RFQ Callback] Loading RFQ ID: " + pendingRFQID);
             RFQ rfq = rfqDAO.getRFQById(pendingRFQID);
             
@@ -118,9 +137,17 @@ public class RFQPaymentCallbackServlet extends HttpServlet {
                 
                 if (orderID > 0) {
                     System.out.println("[RFQ Callback] Created Order ID: " + orderID + " from RFQ: " + rfq.getRfqCode());
+                    debugLog.append("Created Order ID: ").append(orderID).append("\n");
                     
-                    // 3. Update RFQ status to Completed với Order ID
-                    rfqDAO.completeRFQ(pendingRFQID, orderID);
+                    // 3. Update RFQ status to Completed với Order ID và ghi lại số tiền thanh toán
+                    BigDecimal actualPaymentAmount = paymentAmount != null ? paymentAmount : rfq.getTotalAmount();
+                    boolean statusUpdated = rfqDAO.completeRFQ(pendingRFQID, orderID, actualPaymentAmount, vnp_TransactionNo);
+                    debugLog.append("Status update result: ").append(statusUpdated).append("\n");
+                    if (!statusUpdated) {
+                        String error = rfqDAO.getLastCompleteError();
+                        debugLog.append("Status update ERROR: ").append(error != null ? error : "Unknown").append("\n");
+                    }
+                    System.out.println("[RFQ Callback] Status update result: " + statusUpdated);
                     
                     // Set success attributes
                     request.setAttribute("success", true);
@@ -130,12 +157,16 @@ public class RFQPaymentCallbackServlet extends HttpServlet {
                     request.setAttribute("paymentAmount", paymentAmount);
                     request.setAttribute("transactionNo", vnp_TransactionNo);
                     request.setAttribute("message", "Thanh toán thành công! Đơn hàng đã được tạo.");
+                    request.setAttribute("debugLog", debugLog.toString());
                     
                     // Payment method is always BankTransfer (full payment via VNPay)
                 } else {
                     // Order creation failed but payment succeeded
                     System.err.println("[RFQ Callback] Failed to create order from RFQ: " + rfq.getRfqCode());
-                    rfqDAO.completeRFQ(pendingRFQID, vnp_TransactionNo);
+                    debugLog.append("Order creation FAILED!\n");
+                    
+                    boolean statusUpdated = rfqDAO.completeRFQ(pendingRFQID, vnp_TransactionNo);
+                    debugLog.append("Status update (no order) result: ").append(statusUpdated).append("\n");
                     
                     request.setAttribute("success", true);
                     request.setAttribute("rfq", rfq);
@@ -143,19 +174,25 @@ public class RFQPaymentCallbackServlet extends HttpServlet {
                     request.setAttribute("paymentAmount", paymentAmount);
                     request.setAttribute("transactionNo", vnp_TransactionNo);
                     request.setAttribute("message", "Thanh toán thành công! Vui lòng liên hệ hỗ trợ để hoàn tất đơn hàng.");
+                    request.setAttribute("debugLog", debugLog.toString());
                 }
+            } else {
+                debugLog.append("RFQ object is NULL after loading!\n");
+                request.setAttribute("success", false);
+                request.setAttribute("message", "Không tìm thấy thông tin RFQ");
+                request.setAttribute("debugLog", debugLog.toString());
             }
         } else {
-            // Payment failed
+            // Payment failed or invalid
+            debugLog.append("=== PAYMENT FAILED or INVALID ===\n");
+            debugLog.append("Reason: pendingRFQID=").append(pendingRFQID)
+                    .append(", isValid=").append(isValid)
+                    .append(", isSuccess=").append(isSuccess).append("\n");
+            
             request.setAttribute("success", false);
             request.setAttribute("message", message != null ? message : "Thanh toán thất bại");
             request.setAttribute("errorCode", vnp_ResponseCode);
-            
-            // Revert RFQ status if needed
-            if (pendingRFQID != null) {
-                // Optionally revert status back to Quoted
-                // rfqDAO.revertToQuoted(pendingRFQID);
-            }
+            request.setAttribute("debugLog", debugLog.toString());
         }
         
         request.setAttribute("rfqCode", vnp_TxnRef);
