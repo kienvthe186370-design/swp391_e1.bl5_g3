@@ -211,7 +211,7 @@
                 <ul class="pl-3">
                   <li>Hình ảnh nên có kích thước <strong>1920x600px</strong></li>
                   <li>Định dạng: <strong>JPG, PNG</strong></li>
-                  <li>Dung lượng tối đa: <strong>2MB</strong></li>
+                  <li>Dung lượng tối đa: <strong>5MB</strong></li>
                   <li>Thứ tự nhỏ hơn hiển thị trước</li>
                 </ul>
 
