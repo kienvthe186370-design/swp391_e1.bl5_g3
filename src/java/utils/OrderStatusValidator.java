@@ -30,6 +30,11 @@ public class OrderStatusValidator {
      * Kiểm tra có thể chuyển status không
      */
     public static boolean canTransition(String fromStatus, String toStatus, String role, boolean isCustomer) {
+        // Trim role để tránh lỗi khoảng trắng
+        if (role != null) {
+            role = role.trim();
+        }
+        
         // Customer chỉ có thể hủy đơn Pending
         if (isCustomer) {
             return "Pending".equals(fromStatus) && "Cancelled".equals(toStatus);
@@ -51,6 +56,10 @@ public class OrderStatusValidator {
             return false;
         }
         
+        // Seller được phép chuyển: Pending->Confirmed, Confirmed->Processing, Processing->Shipping
+        // SellerManager được phép tất cả trừ Delivered (chỉ Shipper)
+        // Admin được phép tất cả trừ Delivered (chỉ Shipper)
+        
         return RolePermission.canUpdateOrderStatus(role);
     }
     
@@ -59,16 +68,34 @@ public class OrderStatusValidator {
      */
     public static Map<String, String> getAvailableTransitions(String currentStatus, String role) {
         Map<String, String> result = new LinkedHashMap<>();
+        
+        // Trim để tránh lỗi khoảng trắng
+        if (currentStatus != null) {
+            currentStatus = currentStatus.trim();
+        }
+        if (role != null) {
+            role = role.trim();
+        }
+        
         List<String> allowed = TRANSITIONS.get(currentStatus);
         
-        if (allowed == null) return result;
+        System.out.println("[OrderStatusValidator] getAvailableTransitions - currentStatus: '" + currentStatus + "', role: '" + role + "'");
+        System.out.println("[OrderStatusValidator] allowed transitions: " + allowed);
+        
+        if (allowed == null) {
+            System.out.println("[OrderStatusValidator] No transitions found for status: " + currentStatus);
+            return result;
+        }
         
         for (String status : allowed) {
-            if (canTransition(currentStatus, status, role, false)) {
+            boolean canTrans = canTransition(currentStatus, status, role, false);
+            System.out.println("[OrderStatusValidator] canTransition to " + status + ": " + canTrans);
+            if (canTrans) {
                 result.put(status, getStatusDisplayName(status));
             }
         }
         
+        System.out.println("[OrderStatusValidator] result: " + result);
         return result;
     }
     

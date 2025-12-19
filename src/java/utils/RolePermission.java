@@ -50,12 +50,12 @@ public class RolePermission {
     public static boolean isSeller(String role) {
         return SELLER.equalsIgnoreCase(role);
     }
-
+    
+    
+    
     public static boolean canViewSalesReports(String role) {
         return SELLER_MANAGER.equalsIgnoreCase(role);
     }
-
-    // --- ORDER ACTIONS ---
 
     // Admin KHÔNG phân công đơn hàng
     public static boolean canAssignOrders(String role) {
@@ -67,7 +67,12 @@ public class RolePermission {
     }
 
     public static boolean canUpdateOrderStatus(String role) {
-        return SELLER_MANAGER.equalsIgnoreCase(role) || SELLER.equalsIgnoreCase(role);
+        if (role != null) {
+            role = role.trim();
+        }
+        boolean result = SELLER_MANAGER.equalsIgnoreCase(role) || SELLER.equalsIgnoreCase(role) || ADMIN.equalsIgnoreCase(role);
+        System.out.println("[RolePermission] canUpdateOrderStatus - role: '" + role + "', result: " + result);
+        return result;
     }
 
     // ==================== SHIPPER ====================
@@ -175,10 +180,14 @@ public class RolePermission {
 
         // 3. SELLER
         if (SELLER.equalsIgnoreCase(role)) {
+            // Đơn hàng - list, detail và updateStatus
             if (path.startsWith("/orders")) {
                 if (action == null || action.isEmpty()) return true;
                 if ("list".equals(action)) return true;
                 if ("detail".equals(action)) return true;
+                if ("updateStatus".equals(action)) return true;  // Cho phép Seller cập nhật trạng thái
+                if ("updateNote".equals(action)) return true;    // Cho phép Seller cập nhật ghi chú
+                // Không cho phép: assignment, shipperAssignment, shipperOrders
                 return false;
             }
             return false;
@@ -200,9 +209,12 @@ public class RolePermission {
 
         // 5. SHIPPER
         if (SHIPPER.equalsIgnoreCase(role)) {
+            // Đơn hàng - shipperOrders, shipperDetail và updateShippingStatus
             if (path.startsWith("/orders")) {
                 if ("shipperOrders".equals(action)) return true;
                 if ("shipperDetail".equals(action)) return true;
+                if ("updateShippingStatus".equals(action)) return true;  // Cho phép Shipper cập nhật trạng thái giao hàng
+                // Không cho phép các action khác
                 return false;
             }
             return false;
