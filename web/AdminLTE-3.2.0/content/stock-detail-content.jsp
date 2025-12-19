@@ -21,13 +21,13 @@
     <div class="container-fluid">
         <div class="row mb-2">
             <div class="col-sm-6">
-                <h1 class="m-0"><i class="fas fa-boxes mr-2"></i>Nhập kho sản phẩm</h1>
+                <h1 class="m-0"><i class="fas fa-boxes mr-2"></i>Thêm số lượng sản phẩm</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
                     <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/stock">Quản lý kho</a></li>
-                    <li class="breadcrumb-item active">Nhập kho</li>
+                    <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/stock">Quản lý số lượng sản phẩm</a></li>
+                    <li class="breadcrumb-item active">Thêm số lượng sản phẩm</li>
                 </ol>
             </div>
         </div>
@@ -82,7 +82,7 @@
                         <div class="row mt-4">
                             <div class="col mb-3">
                                 <div class="stat-box stock">
-                                    <div class="label"><i class="fas fa-cubes mr-1"></i>Tồn kho</div>
+                                    <div class="label"><i class="fas fa-cubes mr-1"></i>Số lượng sản phẩm</div>
                                     <div class="value text-info" id="currentStockDisplay">${stockDetail.currentStock}</div>
                                 </div>
                             </div>
@@ -114,10 +114,11 @@
                     </div>
                 </div>
 
+
                 <!-- Stock History Card -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-history mr-2"></i>Lịch sử nhập kho</h3>
+                        <h3 class="card-title"><i class="fas fa-history mr-2"></i>Lịch sử thêm</h3>
                     </div>
                     <div class="card-body table-responsive p-0">
                         <table class="table table-hover">
@@ -149,7 +150,7 @@
                                         <tr>
                                             <td colspan="6" class="text-center py-4 text-muted">
                                                 <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                                                Chưa có lịch sử nhập kho
+                                                Chưa có lịch sử thêm số lượng
                                             </td>
                                         </tr>
                                     </c:otherwise>
@@ -175,7 +176,7 @@
             <div class="col-lg-4">
                 <div class="card card-success">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>Nhập kho mới</h3>
+                        <h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>Số lượng thêm mới</h3>
                     </div>
                     <div class="card-body">
                         <form method="post" action="${pageContext.request.contextPath}/admin/stock/detail" id="stockForm">
@@ -242,7 +243,7 @@
                     <div class="card-body">
                         <div class="row text-center">
                             <div class="col-6">
-                                <div class="text-muted small mb-1">Tồn kho mới</div>
+                                <div class="text-muted small mb-1">Số lượng sản phẩm mới</div>
                                 <div class="h4 text-info mb-0" id="newStockPreview">${stockDetail.currentStock}</div>
                                 <small class="text-success" id="stockChangePreview"></small>
                             </div>

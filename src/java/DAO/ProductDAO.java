@@ -45,6 +45,7 @@ public class ProductDAO extends DBContext {
             sql.append("(SELECT COUNT(*) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS VariantCount, ");
             sql.append("(SELECT MIN(SellingPrice) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS MinPrice, ");
             sql.append("(SELECT MAX(SellingPrice) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS MaxPrice, ");
+            sql.append("(SELECT AVG(CostPrice) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS AvgCostPrice, ");
             sql.append("(SELECT ISNULL(SUM(Stock), 0) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS TotalStock, ");
             sql.append("(SELECT ISNULL(SUM(ReservedStock), 0) FROM ProductVariants WHERE ProductID = p.ProductID AND IsActive = 1) AS ReservedStock ");
             sql.append("FROM Products p ");
@@ -116,6 +117,7 @@ public class ProductDAO extends DBContext {
                 product.put("variantCount", rs.getInt("VariantCount"));
                 product.put("minPrice", rs.getBigDecimal("MinPrice"));
                 product.put("maxPrice", rs.getBigDecimal("MaxPrice"));
+                product.put("avgCostPrice", rs.getBigDecimal("AvgCostPrice"));
                 product.put("totalStock", rs.getInt("TotalStock"));
                 product.put("reservedStock", rs.getInt("ReservedStock"));
                 

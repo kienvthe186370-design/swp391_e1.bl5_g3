@@ -11,20 +11,17 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/bootstrap.min.css" type="text/css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/font-awesome.min.css" type="text/css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
     <style>
         .status-badge { font-size: 1rem; padding: 8px 16px; border-radius: 4px; }
         .bg-pending { background: #ffc107 !important; color: #000 !important; }
         .bg-reviewing { background: #17a2b8 !important; color: #fff !important; }
         .bg-dateproposed { background: #fd7e14 !important; color: #fff !important; }
+        .bg-datecountered { background: #e83e8c !important; color: #fff !important; }
         .bg-dateaccepted { background: #20c997 !important; color: #fff !important; }
-        .bg-daterejected { background: #dc3545 !important; color: #fff !important; }
-        .bg-quoted { background: #007bff !important; color: #fff !important; }
-        .bg-quoteaccepted { background: #6f42c1 !important; color: #fff !important; }
-        .bg-quoterejected { background: #dc3545 !important; color: #fff !important; }
+        .bg-quotationcreated { background: #007bff !important; color: #fff !important; }
         .bg-completed { background: #28a745 !important; color: #fff !important; }
         .bg-cancelled { background: #6c757d !important; color: #fff !important; }
-        .bg-draft { background: #adb5bd !important; color: #fff !important; }
-        .bg-quoteexpired { background: #fd7e14 !important; color: #fff !important; }
         .history-list { padding-left: 0; margin-left: 0; list-style: none; }
         .history-item { position: relative; padding: 10px 0 15px 30px; border-bottom: 1px solid #eee; }
         .history-item:last-child { border-bottom: none; }
@@ -32,6 +29,7 @@
         .history-item.rejected::before { background: #dc3545; }
         .history-item.completed::before { background: #28a745; }
         .info-label { font-weight: 600; color: #666; }
+        .negotiation-info { background: #f8f9fa; border-radius: 8px; padding: 15px; }
     </style>
 </head>
 <body>
@@ -56,10 +54,29 @@
 
     <section class="spad">
         <div class="container">
+            <!-- Success/Error Messages -->
             <c:if test="${param.success == 'created'}">
-                <div class="alert alert-success alert-dismissible fade show auto-dismiss" role="alert">
-                    <i class="fa fa-check-circle"></i> Yêu cầu báo giá đã được gửi thành công!
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fa fa-check-circle"></i> Yêu cầu báo giá đã được gửi thành công! Seller sẽ xử lý trong thời gian sớm nhất.
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            </c:if>
+            <c:if test="${param.success == 'date_accepted'}">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fa fa-check-circle"></i> Bạn đã chấp nhận ngày giao hàng. Seller sẽ tạo báo giá cho bạn.
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            </c:if>
+            <c:if test="${param.success == 'date_countered'}">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fa fa-check-circle"></i> Đã gửi đề xuất ngày giao mới cho Seller.
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            </c:if>
+            <c:if test="${param.success == 'cancelled'}">
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="fa fa-info-circle"></i> Yêu cầu báo giá đã được hủy.
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
                 </div>
             </c:if>
 
@@ -89,112 +106,120 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <p><span class="info-label">Công ty:</span> ${rfq.companyName}</p>
-                                    <p><span class="info-label">Mã số thuế:</span> ${rfq.taxID != null ? rfq.taxID : 'N/A'}</p>
-                                    <p><span class="info-label">Loại hình:</span> 
-                                        <c:choose>
-                                            <c:when test="${rfq.businessType == 'Retailer'}">Bán lẻ</c:when>
-                                            <c:when test="${rfq.businessType == 'Distributor'}">Nhà phân phối</c:when>
-                                            <c:when test="${rfq.businessType == 'Other'}">Khác</c:when>
-                                            <c:otherwise>${rfq.businessType != null ? rfq.businessType : 'N/A'}</c:otherwise>
-                                        </c:choose>
-                                    </p>
+                                    <c:if test="${not empty rfq.companyName}">
+                                        <p><span class="info-label">Công ty:</span> ${rfq.companyName}</p>
+                                    </c:if>
+                                    <c:if test="${not empty rfq.taxID}">
+                                        <p><span class="info-label">Mã số thuế:</span> ${rfq.taxID}</p>
+                                    </c:if>
+                                    <c:if test="${not empty rfq.businessType}">
+                                        <p><span class="info-label">Loại hình:</span> 
+                                            <c:choose>
+                                                <c:when test="${rfq.businessType == 'Retailer'}">Bán lẻ</c:when>
+                                                <c:when test="${rfq.businessType == 'Distributor'}">Nhà phân phối</c:when>
+                                                <c:otherwise>${rfq.businessType}</c:otherwise>
+                                            </c:choose>
+                                        </p>
+                                    </c:if>
                                     <p><span class="info-label">Người liên hệ:</span> ${rfq.contactPerson}</p>
                                     <p><span class="info-label">Điện thoại:</span> ${rfq.contactPhone}</p>
-                                    <p><span class="info-label">Email:</span> ${not empty rfq.contactEmail ? rfq.contactEmail : 'N/A'}</p>
-                                    <c:if test="${not empty rfq.alternativeContact}">
-                                        <p><span class="info-label">Liên hệ dự phòng:</span> ${rfq.alternativeContact}</p>
-                                    </c:if>
+                                    <p><span class="info-label">Email:</span> ${rfq.contactEmail}</p>
                                 </div>
                                 <div class="col-md-6">
                                     <p><span class="info-label">Ngày tạo:</span> <fmt:formatDate value="${rfq.createdDate}" pattern="dd/MM/yyyy HH:mm"/></p>
                                     <p><span class="info-label">Ngày yêu cầu giao:</span> <fmt:formatDate value="${rfq.requestedDeliveryDate}" pattern="dd/MM/yyyy"/></p>
-                                    <c:if test="${rfq.proposedDeliveryDate != null}">
-                                        <p><span class="info-label">Ngày đề xuất:</span> <fmt:formatDate value="${rfq.proposedDeliveryDate}" pattern="dd/MM/yyyy"/></p>
-                                    </c:if>
                                     <p><span class="info-label">Địa chỉ giao:</span> ${rfq.deliveryAddress}</p>
-                                    <p><span class="info-label">Hình thức thanh toán:</span> Chuyển khoản ngân hàng (VNPay)</p>
+                                    <c:if test="${not empty rfq.assignedName}">
+                                        <p><span class="info-label">Người xử lý:</span> ${rfq.assignedName}</p>
+                                    </c:if>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Shipping Carrier Info -->
-                    <c:if test="${not empty rfq.shippingCarrierName}">
-                    <div class="card mb-4">
-                        <div class="card-header"><h5 class="mb-0"><i class="fa fa-truck"></i> Đơn Vị Vận Chuyển</h5></div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><span class="info-label">Đơn vị vận chuyển:</span> <strong>${rfq.shippingCarrierName}</strong></p>
-                                    <p><span class="info-label">Dịch vụ:</span> ${rfq.shippingServiceName}</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p><span class="info-label">Phí vận chuyển (dự kiến):</span> 
-                                        <span class="text-primary"><fmt:formatNumber value="${rfq.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></span>
-                                    </p>
-                                    <p><span class="info-label">Thời gian giao hàng:</span> 
-                                        <span class="badge badge-success">${rfq.estimatedDeliveryDays} ngày</span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    </c:if>
-
-                    <!-- Action Required -->
-                    <c:if test="${rfq.status == 'DateProposed'}">
-                        <div class="card mb-4 border-warning">
-                            <div class="card-header bg-warning text-dark">
-                                <i class="fa fa-exclamation-triangle"></i> Yêu Cầu Phản Hồi
+                    <!-- Date Negotiation Section -->
+                    <c:if test="${rfq.status == 'DateProposed' || rfq.status == 'DateCountered' || rfq.status == 'DateAccepted'}">
+                        <div class="card mb-4 border-${rfq.status == 'DateProposed' ? 'warning' : (rfq.status == 'DateAccepted' ? 'success' : 'info')}">
+                            <div class="card-header bg-${rfq.status == 'DateProposed' ? 'warning text-dark' : (rfq.status == 'DateAccepted' ? 'success text-white' : 'info text-white')}">
+                                <i class="fa fa-calendar"></i> Thương Lượng Ngày Giao
+                                <span class="badge badge-light float-right">${rfq.dateNegotiationCount}/${rfq.maxDateNegotiationCount} lần</span>
                             </div>
                             <div class="card-body">
-                                <p>Seller đề xuất thay đổi ngày giao hàng:</p>
-                                <p><strong>Ngày mới: <fmt:formatDate value="${rfq.proposedDeliveryDate}" pattern="dd/MM/yyyy"/></strong></p>
-                                <c:if test="${not empty rfq.dateChangeReason}">
-                                    <p>Lý do: ${rfq.dateChangeReason}</p>
-                                </c:if>
-                                <div class="d-flex gap-2">
-                                    <form action="${pageContext.request.contextPath}/rfq/accept-date" method="POST" class="mr-2">
-                                        <input type="hidden" name="rfqId" value="${rfq.rfqID}">
-                                        <button type="submit" class="btn btn-success"><i class="fa fa-check"></i> Chấp Nhận</button>
-                                    </form>
-                                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#rejectDateModal">
-                                        <i class="fa fa-times"></i> Từ Chối
-                                    </button>
+                                <div class="negotiation-info mb-3">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Ngày bạn yêu cầu:</strong></p>
+                                            <p class="text-primary"><fmt:formatDate value="${rfq.requestedDeliveryDate}" pattern="dd/MM/yyyy"/></p>
+                                        </div>
+                                        <c:if test="${rfq.proposedDeliveryDate != null}">
+                                            <div class="col-md-6">
+                                                <p class="mb-1"><strong>Ngày Seller đề xuất:</strong></p>
+                                                <p class="text-warning"><fmt:formatDate value="${rfq.proposedDeliveryDate}" pattern="dd/MM/yyyy"/></p>
+                                                <c:if test="${not empty rfq.dateChangeReason}">
+                                                    <small class="text-muted">Lý do: ${rfq.dateChangeReason}</small>
+                                                </c:if>
+                                            </div>
+                                        </c:if>
+                                    </div>
+                                    <c:if test="${rfq.customerCounterDate != null}">
+                                        <hr>
+                                        <p class="mb-1"><strong>Ngày bạn đề xuất:</strong></p>
+                                        <p class="text-info"><fmt:formatDate value="${rfq.customerCounterDate}" pattern="dd/MM/yyyy"/></p>
+                                        <c:if test="${not empty rfq.customerCounterDateNote}">
+                                            <small class="text-muted">Ghi chú: ${rfq.customerCounterDateNote}</small>
+                                        </c:if>
+                                    </c:if>
                                 </div>
+
+                                <!-- Actions for DateProposed -->
+                                <c:if test="${rfq.status == 'DateProposed'}">
+                                    <div class="alert alert-warning">
+                                        <i class="fa fa-exclamation-triangle"></i> Seller đề xuất ngày giao mới. Vui lòng phản hồi.
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <form action="${pageContext.request.contextPath}/rfq/accept-date" method="POST" class="mr-2 mb-2">
+                                            <input type="hidden" name="rfqId" value="${rfq.rfqID}">
+                                            <button type="submit" class="btn btn-success"><i class="fa fa-check"></i> Chấp Nhận Ngày Này</button>
+                                        </form>
+                                        <c:if test="${rfq.canCustomerCounterDate()}">
+                                            <button type="button" class="btn btn-info mr-2 mb-2" data-toggle="modal" data-target="#counterDateModal">
+                                                <i class="fa fa-calendar-plus-o"></i> Đề Xuất Ngày Khác
+                                            </button>
+                                        </c:if>
+                                        <button type="button" class="btn btn-outline-danger mb-2" data-toggle="modal" data-target="#cancelRFQModal">
+                                            <i class="fa fa-times"></i> Hủy RFQ
+                                        </button>
+                                    </div>
+                                    <c:if test="${rfq.remainingDateNegotiations == 0}">
+                                        <div class="alert alert-danger mt-2">
+                                            <i class="fa fa-warning"></i> Đã hết lượt thương lượng. Vui lòng chấp nhận hoặc hủy RFQ.
+                                        </div>
+                                    </c:if>
+                                </c:if>
+
+                                <!-- Info for DateAccepted -->
+                                <c:if test="${rfq.status == 'DateAccepted'}">
+                                    <div class="alert alert-success">
+                                        <i class="fa fa-check-circle"></i> Ngày giao đã được thống nhất: <strong><fmt:formatDate value="${rfq.finalDeliveryDate}" pattern="dd/MM/yyyy"/></strong>
+                                        <br><small>Seller sẽ tạo báo giá cho bạn.</small>
+                                    </div>
+                                </c:if>
                             </div>
                         </div>
                     </c:if>
 
-                    <c:if test="${rfq.status == 'Quoted'}">
+                    <!-- Quotation Created Alert -->
+                    <c:if test="${rfq.status == 'QuotationCreated' && not empty rfq.quotation}">
                         <div class="card mb-4 border-primary">
                             <div class="card-header bg-primary text-white">
-                                <i class="fa fa-file-text-o"></i> Báo Giá Đã Nhận
+                                <i class="fa fa-file-invoice-dollar"></i> Đã Có Báo Giá
                             </div>
                             <div class="card-body">
-                                <p>Báo giá có hiệu lực đến: <strong><fmt:formatDate value="${rfq.quotationValidUntil}" pattern="dd/MM/yyyy"/></strong></p>
-                                <p>Phương thức thanh toán: <strong>Chuyển khoản ngân hàng (VNPay)</strong></p>
-                                <c:if test="${not empty rfq.warrantyTerms}">
-                                    <p>Bảo hành: ${rfq.warrantyTerms}</p>
-                                </c:if>
-                                <div class="alert alert-info mt-2">
-                                    <i class="fa fa-info-circle"></i> Vui lòng vào mục <a href="${pageContext.request.contextPath}/quotation/detail?id=${rfq.rfqID}" class="alert-link"><strong>Đơn Báo Giá</strong></a> để xem chi tiết và thanh toán.
-                                </div>
-                            </div>
-                        </div>
-                    </c:if>
-
-                    <c:if test="${rfq.status == 'QuoteExpired'}">
-                        <div class="card mb-4 border-warning">
-                            <div class="card-header bg-warning text-dark">
-                                <i class="fa fa-clock-o"></i> Báo Giá Đã Hết Hạn
-                            </div>
-                            <div class="card-body">
-                                <p class="text-danger mb-2"><i class="fa fa-exclamation-circle"></i> Báo giá này đã hết hạn vào ngày <strong><fmt:formatDate value="${rfq.quotationValidUntil}" pattern="dd/MM/yyyy"/></strong></p>
-                                <p class="text-muted">Bạn không thể thanh toán cho báo giá này nữa. Vui lòng liên hệ với chúng tôi để được hỗ trợ hoặc tạo yêu cầu báo giá mới.</p>
-                                <a href="${pageContext.request.contextPath}/rfq/form" class="btn btn-primary">
-                                    <i class="fa fa-plus"></i> Tạo Yêu Cầu Báo Giá Mới
+                                <p>Seller đã tạo báo giá cho yêu cầu của bạn.</p>
+                                <p><strong>Mã báo giá:</strong> ${rfq.quotation.quotationCode}</p>
+                                <p><strong>Tổng tiền:</strong> <span class="text-primary h5"><fmt:formatNumber value="${rfq.quotation.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></span></p>
+                                <a href="${pageContext.request.contextPath}/quotation/detail?id=${rfq.quotation.quotationID}" class="btn btn-primary">
+                                    <i class="fa fa-eye"></i> Xem Chi Tiết Báo Giá
                                 </a>
                             </div>
                         </div>
@@ -202,17 +227,13 @@
 
                     <!-- Products -->
                     <div class="card mb-4">
-                        <div class="card-header"><h5 class="mb-0"><i class="fa fa-cube"></i> Sản Phẩm</h5></div>
+                        <div class="card-header"><h5 class="mb-0"><i class="fa fa-cube"></i> Sản Phẩm Yêu Cầu</h5></div>
                         <div class="card-body p-0">
                             <table class="table table-striped mb-0">
                                 <thead>
                                     <tr>
                                         <th>Sản phẩm</th>
                                         <th class="text-center">Số lượng</th>
-                                        <c:if test="${rfq.status == 'Quoted' || rfq.status == 'QuoteAccepted' || rfq.status == 'Completed'}">
-                                            <th class="text-right">Đơn giá</th>
-                                            <th class="text-right">Thành tiền</th>
-                                        </c:if>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -227,112 +248,37 @@
                                                     <div>
                                                         <strong>${item.productName}</strong>
                                                         <c:if test="${not empty item.sku}"><br><small class="text-muted">SKU: ${item.sku}</small></c:if>
-                                                        <c:if test="${not empty item.specialRequirements}"><br><small class="text-info">${item.specialRequirements}</small></c:if>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td class="text-center">${item.quantity}</td>
-                                            <c:if test="${rfq.status == 'Quoted' || rfq.status == 'QuoteAccepted' || rfq.status == 'Completed'}">
-                                                <td class="text-right"><fmt:formatNumber value="${item.unitPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
-                                                <td class="text-right"><fmt:formatNumber value="${item.subtotal}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
-                                            </c:if>
                                         </tr>
                                     </c:forEach>
                                 </tbody>
-                                <c:if test="${rfq.totalAmount != null && rfq.totalAmount > 0}">
-                                    <c:set var="colSpan" value="${(rfq.status == 'Quoted' || rfq.status == 'QuoteAccepted' || rfq.status == 'Completed') ? 3 : 1}" />
-                                    <tfoot>
-                                        <tr>
-                                            <td colspan="${colSpan}" class="text-right"><strong>Tạm tính:</strong></td>
-                                            <td class="text-right"><fmt:formatNumber value="${rfq.subtotalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="${colSpan}" class="text-right">Phí vận chuyển:</td>
-                                            <td class="text-right"><fmt:formatNumber value="${rfq.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="${colSpan}" class="text-right">Thuế:</td>
-                                            <td class="text-right"><fmt:formatNumber value="${rfq.taxAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td>
-                                        </tr>
-                                        <tr class="table-primary">
-                                            <td colspan="${colSpan}" class="text-right"><strong>TỔNG CỘNG:</strong></td>
-                                            <td class="text-right"><strong><fmt:formatNumber value="${rfq.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></strong></td>
-                                        </tr>
-                                    </tfoot>
-                                </c:if>
                             </table>
                         </div>
                     </div>
+
+                    <!-- Customer Notes -->
+                    <c:if test="${not empty rfq.customerNotes}">
+                        <div class="card mb-4">
+                            <div class="card-header"><h5 class="mb-0"><i class="fa fa-sticky-note"></i> Ghi Chú Của Bạn</h5></div>
+                            <div class="card-body">
+                                <p class="mb-0">${rfq.customerNotes}</p>
+                            </div>
+                        </div>
+                    </c:if>
                 </div>
 
                 <!-- Sidebar -->
                 <div class="col-lg-4">
-                    <!-- Timeline -->
-                    <c:if test="${not empty rfq.history}">
-                        <div class="card">
-                            <div class="card-header"><h5 class="mb-0"><i class="fa fa-history"></i> Lịch Sử</h5></div>
-                            <div class="card-body">
-                                <div class="history-list">
-                                    <c:forEach var="h" items="${rfq.history}">
-                                        <div class="history-item ${h.newStatus == 'QuoteRejected' || h.newStatus == 'DateRejected' || h.newStatus == 'Cancelled' ? 'rejected' : ''} ${h.newStatus == 'Completed' ? 'completed' : ''}">
-                                            <strong>${h.action}</strong>
-                                            <p class="mb-1 small">${h.notes}</p>
-                                            <small class="text-muted"><fmt:formatDate value="${h.changedDate}" pattern="dd/MM/yyyy HH:mm"/></small>
-                                        </div>
-                                    </c:forEach>
-                                </div>
-                            </div>
-                        </div>
-                    </c:if>
-
-                    <!-- Draft action: gửi đơn yêu cầu báo giá -->
+                    <!-- Draft Actions -->
                     <c:if test="${isDraft}">
                         <div class="card mt-3">
                             <div class="card-body">
                                 <h5 class="mb-3"><i class="fa fa-paper-plane"></i> Gửi yêu cầu báo giá</h5>
                                 
-                                <!-- Form chỉnh sửa - quay lại rfq-form với dữ liệu cũ -->
-                                <form action="${pageContext.request.contextPath}/rfq/edit-draft" method="POST" id="editDraftForm" class="mb-2">
-                                    <input type="hidden" name="companyName" value="${rfq.companyName}"/>
-                                    <input type="hidden" name="taxID" value="${rfq.taxID}"/>
-                                    <input type="hidden" name="businessType" value="${rfq.businessType}"/>
-                                    <input type="hidden" name="contactPerson" value="${rfq.contactPerson}"/>
-                                    <input type="hidden" name="contactPhone" value="${rfq.contactPhone}"/>
-                                    <input type="hidden" name="contactEmail" value="${rfq.contactEmail}"/>
-                                    <input type="hidden" name="alternativeContact" value="${rfq.alternativeContact}"/>
-                                    <input type="hidden" name="deliveryAddress" value="${rfq.deliveryAddress}"/>
-                                    <input type="hidden" name="deliveryCity" value="${rfq.deliveryCity}"/>
-                                    <input type="hidden" name="deliveryCityId" value="${rfq.deliveryCityId}"/>
-                                    <input type="hidden" name="deliveryDistrict" value="${rfq.deliveryDistrict}"/>
-                                    <input type="hidden" name="deliveryDistrictId" value="${rfq.deliveryDistrictId}"/>
-                                    <input type="hidden" name="deliveryWard" value="${rfq.deliveryWard}"/>
-                                    <input type="hidden" name="deliveryWardId" value="${rfq.deliveryWardId}"/>
-                                    <input type="hidden" name="deliveryStreet" value="${rfq.deliveryStreet}"/>
-                                    <input type="hidden" name="deliveryInstructions" value="${rfq.deliveryInstructions}"/>
-                                    <input type="hidden" name="customerNotes" value="${rfq.customerNotes}"/>
-                                    <input type="hidden" name="preferredPaymentMethod" value="${rfq.paymentMethod}"/>
-                                    <input type="hidden" name="requestedDeliveryDate"
-                                           value="<fmt:formatDate value='${rfq.requestedDeliveryDate}' pattern='yyyy-MM-dd'/>"/>
-                                    <input type="hidden" name="shippingCarrierId" value="${rfq.shippingCarrierId}"/>
-                                    <input type="hidden" name="shippingCarrierName" value="${rfq.shippingCarrierName}"/>
-                                    <input type="hidden" name="shippingServiceName" value="${rfq.shippingServiceName}"/>
-                                    <input type="hidden" name="shippingFee" value="${rfq.shippingFee}"/>
-                                    <input type="hidden" name="estimatedDeliveryDays" value="${rfq.estimatedDeliveryDays}"/>
-                                    <c:forEach var="item" items="${rfq.items}">
-                                        <input type="hidden" name="productId" value="${item.productID}"/>
-                                        <input type="hidden" name="variantId" value="${item.variantID}"/>
-                                        <input type="hidden" name="quantity" value="${item.quantity}"/>
-                                        <input type="hidden" name="specialRequirements" value="${item.specialRequirements}"/>
-                                    </c:forEach>
-                                    <c:if test="${not empty rfq.rfqID}">
-                                        <input type="hidden" name="draftRfqId" value="${rfq.rfqID}"/>
-                                    </c:if>
-                                    <button type="submit" class="btn btn-outline-secondary btn-block">
-                                        <i class="fa fa-edit"></i> Chỉnh sửa
-                                    </button>
-                                </form>
-                                
-                                <!-- Form gửi đơn -->
+                                <!-- Form gửi yêu cầu -->
                                 <form action="${pageContext.request.contextPath}/rfq/submit" method="POST" id="submitRfqForm">
                                     <input type="hidden" name="companyName" value="${rfq.companyName}"/>
                                     <input type="hidden" name="taxID" value="${rfq.taxID}"/>
@@ -342,51 +288,52 @@
                                     <input type="hidden" name="contactEmail" value="${rfq.contactEmail}"/>
                                     <input type="hidden" name="alternativeContact" value="${rfq.alternativeContact}"/>
                                     <input type="hidden" name="deliveryAddress" value="${rfq.deliveryAddress}"/>
+                                    <input type="hidden" name="deliveryStreet" value="${rfq.deliveryStreet}"/>
+                                    <input type="hidden" name="deliveryCity" value="${rfq.deliveryCity}"/>
                                     <input type="hidden" name="deliveryCityId" value="${rfq.deliveryCityId}"/>
+                                    <input type="hidden" name="deliveryDistrict" value="${rfq.deliveryDistrict}"/>
                                     <input type="hidden" name="deliveryDistrictId" value="${rfq.deliveryDistrictId}"/>
+                                    <input type="hidden" name="deliveryWard" value="${rfq.deliveryWard}"/>
                                     <input type="hidden" name="deliveryWardId" value="${rfq.deliveryWardId}"/>
-                                    <input type="hidden" name="deliveryInstructions" value="${rfq.deliveryInstructions}"/>
-                                    <input type="hidden" name="customerNotes" value="${rfq.customerNotes}"/>
-                                    <input type="hidden" name="preferredPaymentMethod" value="${rfq.paymentMethod}"/>
-                                    <input type="hidden" name="requestedDeliveryDate"
-                                           value="<fmt:formatDate value='${rfq.requestedDeliveryDate}' pattern='yyyy-MM-dd'/>"/>
-                                    <input type="hidden" name="shippingCarrierId" value="${rfq.shippingCarrierId}"/>
-                                    <input type="hidden" name="shippingCarrierName" value="${rfq.shippingCarrierName}"/>
-                                    <input type="hidden" name="shippingServiceName" value="${rfq.shippingServiceName}"/>
-                                    <input type="hidden" name="shippingFee" value="${rfq.shippingFee}"/>
-                                    <input type="hidden" name="estimatedDeliveryDays" value="${rfq.estimatedDeliveryDays}"/>
+                                    <input type="hidden" name="paymentTermsPreference" value="${rfq.paymentTermsPreference}"/>
+                                    <input type="hidden" name="requestedDeliveryDate" value="<fmt:formatDate value='${rfq.requestedDeliveryDate}' pattern='yyyy-MM-dd'/>"/>
                                     <c:forEach var="item" items="${rfq.items}">
                                         <input type="hidden" name="productId" value="${item.productID}"/>
                                         <input type="hidden" name="variantId" value="${item.variantID}"/>
                                         <input type="hidden" name="quantity" value="${item.quantity}"/>
-                                        <input type="hidden" name="specialRequirements" value="${item.specialRequirements}"/>
                                     </c:forEach>
-                                    <c:if test="${not empty rfq.rfqID}">
-                                        <input type="hidden" name="draftRfqId" value="${rfq.rfqID}"/>
-                                    </c:if>
-                                    <button type="submit" class="btn btn-primary btn-block">
-                                        <i class="fa fa-paper-plane"></i> Gửi đơn yêu cầu báo giá
+                                    <button type="submit" class="btn btn-primary btn-block mb-2">
+                                        <i class="fa fa-paper-plane"></i> Gửi Yêu Cầu
                                     </button>
                                 </form>
-                            </div>
-                        </div>
-                    </c:if>
-                    
-                    <!-- Draft status: hiển thị cho đơn đã lưu với status Draft -->
-                    <c:if test="${rfq.status == 'Draft' && not isDraft}">
-                        <div class="card mt-3">
-                            <div class="card-body">
-                                <h5 class="mb-3"><i class="fa fa-file-o"></i> Đơn chờ xác nhận</h5>
-                                <p class="text-muted small">Đơn này đang ở trạng thái nháp. Bạn có thể chỉnh sửa hoặc gửi đơn.</p>
                                 
-                                <a href="${pageContext.request.contextPath}/rfq/edit?id=${rfq.rfqID}" class="btn btn-outline-secondary btn-block mb-2">
-                                    <i class="fa fa-edit"></i> Chỉnh sửa
-                                </a>
-                                
-                                <form action="${pageContext.request.contextPath}/rfq/submit-draft" method="POST">
-                                    <input type="hidden" name="rfqId" value="${rfq.rfqID}"/>
-                                    <button type="submit" class="btn btn-primary btn-block">
-                                        <i class="fa fa-paper-plane"></i> Gửi đơn yêu cầu báo giá
+                                <!-- Form chỉnh sửa - quay lại form với dữ liệu đã nhập -->
+                                <form action="${pageContext.request.contextPath}/rfq/form" method="POST" id="editRfqForm">
+                                    <input type="hidden" name="companyName" value="${rfq.companyName}"/>
+                                    <input type="hidden" name="taxID" value="${rfq.taxID}"/>
+                                    <input type="hidden" name="businessType" value="${rfq.businessType}"/>
+                                    <input type="hidden" name="contactPerson" value="${rfq.contactPerson}"/>
+                                    <input type="hidden" name="contactPhone" value="${rfq.contactPhone}"/>
+                                    <input type="hidden" name="contactEmail" value="${rfq.contactEmail}"/>
+                                    <input type="hidden" name="alternativeContact" value="${rfq.alternativeContact}"/>
+                                    <input type="hidden" name="deliveryAddress" value="${rfq.deliveryAddress}"/>
+                                    <input type="hidden" name="deliveryStreet" value="${rfq.deliveryStreet}"/>
+                                    <input type="hidden" name="deliveryCity" value="${rfq.deliveryCity}"/>
+                                    <input type="hidden" name="deliveryCityId" value="${rfq.deliveryCityId}"/>
+                                    <input type="hidden" name="deliveryDistrict" value="${rfq.deliveryDistrict}"/>
+                                    <input type="hidden" name="deliveryDistrictId" value="${rfq.deliveryDistrictId}"/>
+                                    <input type="hidden" name="deliveryWard" value="${rfq.deliveryWard}"/>
+                                    <input type="hidden" name="deliveryWardId" value="${rfq.deliveryWardId}"/>
+                                    <input type="hidden" name="paymentTermsPreference" value="${rfq.paymentTermsPreference}"/>
+                                    <input type="hidden" name="requestedDeliveryDate" value="<fmt:formatDate value='${rfq.requestedDeliveryDate}' pattern='yyyy-MM-dd'/>"/>
+                                    <c:forEach var="item" items="${rfq.items}">
+                                        <input type="hidden" name="productId" value="${item.productID}"/>
+                                        <input type="hidden" name="variantId" value="${item.variantID}"/>
+                                        <input type="hidden" name="quantity" value="${item.quantity}"/>
+                                    </c:forEach>
+                                    <input type="hidden" name="editDraft" value="true"/>
+                                    <button type="submit" class="btn btn-outline-secondary btn-block">
+                                        <i class="fa fa-edit"></i> Chỉnh Sửa
                                     </button>
                                 </form>
                             </div>
@@ -397,51 +344,65 @@
         </div>
     </section>
 
-    <!-- Reject Date Modal -->
-    <div class="modal fade" id="rejectDateModal" tabindex="-1">
+    <!-- Counter Date Modal -->
+    <div class="modal fade" id="counterDateModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form action="${pageContext.request.contextPath}/rfq/reject-date" method="POST">
+                <form action="${pageContext.request.contextPath}/rfq/counter-date" method="POST" onsubmit="return validateCounterDate()">
                     <input type="hidden" name="rfqId" value="${rfq.rfqID}">
+                    <input type="hidden" id="originalRequestedDate" value="<fmt:formatDate value="${rfq.requestedDeliveryDate}" pattern="yyyy-MM-dd"/>">
                     <div class="modal-header">
-                        <h5 class="modal-title">Từ Chối Ngày Giao Mới</h5>
+                        <h5 class="modal-title">Đề Xuất Ngày Giao Khác</h5>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <p class="text-danger">Lưu ý: Từ chối sẽ hủy yêu cầu báo giá này.</p>
                         <div class="form-group">
-                            <label>Lý do từ chối</label>
-                            <textarea class="form-control" name="reason" rows="3" required></textarea>
+                            <label>Ngày yêu cầu ban đầu</label>
+                            <input type="text" class="form-control" value="<fmt:formatDate value="${rfq.requestedDeliveryDate}" pattern="dd/MM/yyyy"/>" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Ngày bạn muốn nhận hàng <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="counterDate" id="counterDateInput" required autocomplete="off">
+                            <small class="text-muted">Ngày đề xuất không được trước ngày yêu cầu ban đầu</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Ghi chú</label>
+                            <textarea class="form-control" name="note" rows="2" maxlength="500" placeholder="Lý do bạn muốn ngày này..."></textarea>
+                        </div>
+                        <div class="alert alert-info">
+                            <small><i class="fa fa-info-circle"></i> Còn ${rfq.remainingDateNegotiations} lần thương lượng</small>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-danger">Xác Nhận Từ Chối</button>
+                        <button type="submit" class="btn btn-info">Gửi Đề Xuất</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Reject Quote Modal -->
-    <div class="modal fade" id="rejectQuoteModal" tabindex="-1">
+    <!-- Cancel RFQ Modal -->
+    <div class="modal fade" id="cancelRFQModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form action="${pageContext.request.contextPath}/rfq/reject-quote" method="POST">
+                <form action="${pageContext.request.contextPath}/rfq/cancel" method="POST" onsubmit="return validateCancelReason()">
                     <input type="hidden" name="rfqId" value="${rfq.rfqID}">
                     <div class="modal-header">
-                        <h5 class="modal-title">Từ Chối Báo Giá</h5>
+                        <h5 class="modal-title">Hủy Yêu Cầu Báo Giá</h5>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
                     <div class="modal-body">
+                        <p class="text-danger"><i class="fa fa-warning"></i> Bạn có chắc muốn hủy yêu cầu này?</p>
                         <div class="form-group">
-                            <label>Lý do từ chối</label>
-                            <textarea class="form-control" name="reason" rows="3" required></textarea>
+                            <label>Lý do hủy <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="reason" id="cancelReason" rows="3" maxlength="200" placeholder="Vui lòng cho biết lý do..."></textarea>
+                            <small id="cancelReasonError" class="text-danger" style="display:none;"></small>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-danger">Xác Nhận Từ Chối</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-danger">Xác Nhận Hủy</button>
                     </div>
                 </form>
             </div>
@@ -451,114 +412,93 @@
     <%@include file="../footer.jsp"%>
     <script src="${pageContext.request.contextPath}/js/jquery-3.3.1.min.js"></script>
     <script src="${pageContext.request.contextPath}/js/bootstrap.min.js"></script>
-    
-    <c:if test="${isDraft}">
+    <script src="${pageContext.request.contextPath}/js/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.vi.min.js"></script>
     <script>
-        var contextPath = '${pageContext.request.contextPath}';
-        var draftSaved = false;
-        var isSubmitting = false;
-        var savedRfqId = null;
-        
-        // DO NOT auto-save draft immediately - only save when user leaves page
-        // This prevents creating duplicate RFQs (one draft + one submitted)
         $(document).ready(function() {
-            // Auto-dismiss alerts after 5 seconds
-            setTimeout(function() {
-                $('.auto-dismiss').fadeOut('slow', function() {
-                    $(this).remove();
-                });
-            }, 5000);
+            // Lấy ngày yêu cầu ban đầu
+            var originalDateStr = $('#originalRequestedDate').val();
+            var minDate = new Date();
+            minDate.setDate(minDate.getDate() + 1); // Mặc định là ngày mai
             
-            // Intercept all link clicks to show confirmation
-            $('a').not('[data-no-confirm]').on('click', function(e) {
-                if (!isSubmitting) {
-                    var href = $(this).attr('href');
-                    // Skip if it's a hash link, javascript, or modal trigger
-                    if (!href || href === '#' || href.startsWith('javascript:') || $(this).data('toggle') === 'modal') {
-                        return true;
-                    }
-                    
-                    e.preventDefault();
-                    if (confirm('Bạn có chắc muốn rời khỏi trang?\n\nThông tin đơn hàng sẽ được lưu dưới dạng nháp trong danh sách yêu cầu báo giá của bạn.')) {
-                        isSubmitting = true; // Prevent beforeunload from showing again
-                        if (!draftSaved) {
-                            saveDraftSync();
-                        }
-                        window.location.href = href;
-                    }
+            if (originalDateStr) {
+                var originalDate = new Date(originalDateStr);
+                // Ngày đề xuất phải >= ngày yêu cầu ban đầu
+                if (originalDate > minDate) {
+                    minDate = originalDate;
                 }
+            }
+            
+            // Initialize datepicker for counter date
+            $('#counterDateInput').datepicker({
+                format: 'dd/mm/yyyy',
+                language: 'vi',
+                autoclose: true,
+                startDate: minDate,
+                todayHighlight: true
             });
         });
         
-        // Mark as submitting when form is submitted
-        $('#submitRfqForm').on('submit', function() {
-            isSubmitting = true;
-        });
-        $('#editDraftForm').on('submit', function() {
-            isSubmitting = true;
-        });
-        
-        // Warning when leaving page and auto-save draft
-        $(window).on('beforeunload', function(e) {
-            if (!isSubmitting) {
-                // Save draft before leaving
-                if (!draftSaved) {
-                    saveDraftSync();
-                }
-                // Show confirmation dialog
-                var message = 'Bạn có chắc muốn rời khỏi trang? Thông tin đơn hàng sẽ được lưu dưới dạng nháp.';
-                e.returnValue = message;
-                return message;
+        // Validate cancel reason
+        function validateCancelReason() {
+            var reason = $('#cancelReason').val();
+            var errorEl = $('#cancelReasonError');
+            
+            // Trim và kiểm tra
+            var trimmedReason = reason.trim();
+            
+            if (!trimmedReason || trimmedReason.length === 0) {
+                errorEl.text('Vui lòng nhập lý do hủy').show();
+                $('#cancelReason').focus();
+                return false;
             }
-        });
-        
-        // Also save when visibility changes (tab switch)
-        document.addEventListener('visibilitychange', function() {
-            if (document.visibilityState === 'hidden' && !isSubmitting && !draftSaved) {
-                saveDraftSync();
+            
+            if (trimmedReason.length < 10) {
+                errorEl.text('Lý do hủy phải có ít nhất 10 ký tự').show();
+                $('#cancelReason').focus();
+                return false;
             }
-        });
-        
-        function saveDraftAsync() {
-            var formData = $('#submitRfqForm').serialize();
-            $.ajax({
-                url: contextPath + '/rfq/save-draft',
-                type: 'POST',
-                data: formData,
-                async: true,
-                success: function(response) {
-                    draftSaved = true;
-                    if (response.rfqId) {
-                        savedRfqId = response.rfqId;
-                        // Update hidden field with new rfqId
-                        if ($('input[name="draftRfqId"]').length === 0) {
-                            $('#submitRfqForm').append('<input type="hidden" name="draftRfqId" value="' + response.rfqId + '"/>');
-                            $('#editDraftForm').append('<input type="hidden" name="draftRfqId" value="' + response.rfqId + '"/>');
-                        }
-                    }
-                }
-            });
+            
+            if (trimmedReason.length > 200) {
+                errorEl.text('Lý do hủy không được quá 200 ký tự').show();
+                $('#cancelReason').focus();
+                return false;
+            }
+            
+            // Cập nhật giá trị đã trim
+            $('#cancelReason').val(trimmedReason);
+            errorEl.hide();
+            return true;
         }
         
-        function saveDraftSync() {
-            var formData = $('#submitRfqForm').serialize();
-            // Use sendBeacon for reliable delivery when page is closing
-            if (navigator.sendBeacon) {
-                var blob = new Blob([formData], {type: 'application/x-www-form-urlencoded'});
-                navigator.sendBeacon(contextPath + '/rfq/save-draft', blob);
-                draftSaved = true;
-            } else {
-                // Fallback to sync ajax
-                $.ajax({
-                    url: contextPath + '/rfq/save-draft',
-                    type: 'POST',
-                    data: formData,
-                    async: false
-                });
-                draftSaved = true;
+        // Validate counter date before submit
+        function validateCounterDate() {
+            var counterDateStr = $('#counterDateInput').val();
+            var originalDateStr = $('#originalRequestedDate').val();
+            
+            if (!counterDateStr) {
+                alert('Vui lòng chọn ngày đề xuất');
+                return false;
             }
+            
+            // Parse dd/mm/yyyy to Date
+            var parts = counterDateStr.split('/');
+            var counterDate = new Date(parts[2], parts[1] - 1, parts[0]);
+            var originalDate = new Date(originalDateStr);
+            
+            // Reset time to compare dates only
+            counterDate.setHours(0, 0, 0, 0);
+            originalDate.setHours(0, 0, 0, 0);
+            
+            if (counterDate < originalDate) {
+                alert('Ngày đề xuất không được trước ngày yêu cầu ban đầu (' + 
+                      originalDate.getDate() + '/' + (originalDate.getMonth() + 1) + '/' + originalDate.getFullYear() + ')');
+                return false;
+            }
+            
+            return true;
         }
     </script>
-    </c:if>
 </body>
 </html>

@@ -217,7 +217,7 @@
                                             <i class="fa fa-list-alt"></i> Đơn hàng
                                         </a>
                                         <a href="<%= request.getContextPath() %>/rfq/list" style="color: #ffc107;">
-                                            <i class="fa fa-file-text"></i> Mua Buôn
+                                            <i class="fa fa-file-text"></i> Yêu cầu báo giá
                                         </a>
                                         <a href="<%= request.getContextPath() %>/quotation/list" style="color: #17a2b8;">
                                             <i class="fa fa-file-invoice-dollar"></i> Đơn Báo Giá
@@ -261,7 +261,7 @@
                         <li class="${currentURI.contains('about') ? 'active' : ''}"><a href="<%= request.getContextPath() %>/about.jsp">Giới thiệu</a></li>
                         <li class="${currentURI.contains('contact') ? 'active' : ''}"><a href="<%= request.getContextPath() %>/contact.jsp">Liên hệ</a></li>
                         <c:if test="${isLoggedIn && userRole == 'customer'}">
-                            <li class="${currentURI.contains('/rfq/') ? 'active' : ''}"><a href="<%= request.getContextPath() %>/rfq/form" style="color: #e53637;"><i class="fa fa-file-text"></i> Mua Buôn</a></li>
+                            <li class="${currentURI.contains('/rfq/') ? 'active' : ''}"><a href="<%= request.getContextPath() %>/rfq/form" style="color: #e53637;"><i class="fa fa-file-text"></i> Yêu cầu báo giá</a></li>
                         </c:if>
                     </ul>
                 </nav>

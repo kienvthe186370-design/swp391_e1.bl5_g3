@@ -306,47 +306,192 @@ function setupQuantityInputs() {
     const quantityInputs = document.querySelectorAll('.cart-quantity-input');
     
     quantityInputs.forEach(input => {
-        // Validate on input (real-time)
-        input.addEventListener('input', function() {
-            const maxStock = parseInt(this.getAttribute('max'));
-            const currentValue = parseInt(this.value);
-            
-            if (currentValue > maxStock) {
-                this.value = maxStock;
-                showNotification(`Chỉ còn ${maxStock} sản phẩm trong kho`, 'warning');
+        // Prevent non-numeric input (including 'e', '+', '-', '.')
+        input.addEventListener('keydown', function(e) {
+            // Allow: backspace, delete, tab, escape, enter
+            if ([8, 9, 27, 13, 46].indexOf(e.keyCode) !== -1 ||
+                // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                (e.keyCode === 65 && e.ctrlKey === true) ||
+                (e.keyCode === 67 && e.ctrlKey === true) ||
+                (e.keyCode === 86 && e.ctrlKey === true) ||
+                (e.keyCode === 88 && e.ctrlKey === true) ||
+                // Allow: home, end, left, right
+                (e.keyCode >= 35 && e.keyCode <= 39)) {
+                return;
             }
-            
-            if (currentValue < 1) {
-                this.value = 1;
+            // Prevent: e, E, +, -, .
+            if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-' || e.key === '.') {
+                e.preventDefault();
+                return;
+            }
+            // Ensure that it is a number and stop the keypress if not
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
             }
         });
         
-        // Update cart on change
-        input.addEventListener('change', function() {
+        // Prevent paste of non-numeric content
+        input.addEventListener('paste', function(e) {
+            const pastedData = e.clipboardData.getData('text');
+            if (!/^\d+$/.test(pastedData)) {
+                e.preventDefault();
+                showNotification('Chỉ được nhập số', 'error');
+            }
+        });
+        
+        // Validate on input (real-time)
+        input.addEventListener('input', function() {
+            // Remove any non-digit characters
+            this.value = this.value.replace(/[^\d]/g, '');
+            
+            const maxStock = parseInt(this.getAttribute('data-max'));
+            const minStock = parseInt(this.getAttribute('data-min')) || 1;
+            const currentValue = parseInt(this.value);
             const cartItemId = this.getAttribute('data-cart-item-id');
-            const quantity = parseInt(this.value);
-            const maxStock = parseInt(this.getAttribute('max'));
+            
+            // Check if exceeds stock
+            if (currentValue > maxStock) {
+                // Show warning below product
+                showStockExceededWarning(cartItemId, maxStock);
+                disableCheckoutButton(true);
+            } else {
+                // Hide warning
+                hideStockExceededWarning(cartItemId);
+                checkAndEnableCheckout();
+            }
+        });
+        
+        // Update cart on blur (when user finishes editing)
+        input.addEventListener('blur', function() {
+            const cartItemId = this.getAttribute('data-cart-item-id');
+            const maxStock = parseInt(this.getAttribute('data-max'));
+            const minStock = parseInt(this.getAttribute('data-min')) || 1;
+            let quantity = parseInt(this.value);
             
             // Validate quantity
-            if (isNaN(quantity) || quantity < 1) {
-                if (confirm('Xóa sản phẩm này khỏi giỏ hàng?')) {
-                    removeCartItem(cartItemId);
-                } else {
-                    this.value = 1;
-                }
-                return;
+            if (isNaN(quantity) || this.value === '' || quantity < minStock) {
+                this.value = minStock;
+                quantity = minStock;
             }
             
             if (quantity > maxStock) {
-                showNotification(`Chỉ còn ${maxStock} sản phẩm trong kho`, 'error');
+                showNotification(`Chỉ còn ${maxStock} sản phẩm trong kho. Đã điều chỉnh số lượng.`, 'warning');
                 this.value = maxStock;
-                updateCartQuantity(cartItemId, maxStock);
-                return;
+                quantity = maxStock;
             }
             
+            // Update cart
             updateCartQuantity(cartItemId, quantity);
         });
     });
+}
+
+/**
+ * Show stock exceeded warning for a specific cart item
+ */
+function showStockExceededWarning(cartItemId, maxStock) {
+    // Check if warning already exists
+    let warning = document.querySelector(`.stock-exceeded-warning[data-cart-item-id="${cartItemId}"]`);
+    
+    if (!warning) {
+        // Find the product text div
+        const input = document.querySelector(`input[data-cart-item-id="${cartItemId}"]`);
+        const productTextDiv = input.closest('tr').querySelector('.product__cart__item__text');
+        
+        // Create warning
+        warning = document.createElement('div');
+        warning.className = 'alert alert-danger p-2 mt-2 stock-exceeded-warning';
+        warning.style.fontSize = '13px';
+        warning.setAttribute('data-cart-item-id', cartItemId);
+        warning.innerHTML = `
+            <i class="fa fa-exclamation-triangle"></i> <strong>Vượt quá tồn kho!</strong><br>
+            <small>Chỉ còn ${maxStock} sản phẩm. Vui lòng giảm số lượng.</small>
+        `;
+        
+        productTextDiv.appendChild(warning);
+    } else {
+        // Update existing warning
+        warning.innerHTML = `
+            <i class="fa fa-exclamation-triangle"></i> <strong>Vượt quá tồn kho!</strong><br>
+            <small>Chỉ còn ${maxStock} sản phẩm. Vui lòng giảm số lượng.</small>
+        `;
+    }
+}
+
+/**
+ * Hide stock exceeded warning for a specific cart item
+ */
+function hideStockExceededWarning(cartItemId) {
+    const warning = document.querySelector(`.stock-exceeded-warning[data-cart-item-id="${cartItemId}"]`);
+    if (warning) {
+        warning.remove();
+    }
+}
+
+/**
+ * Disable/enable checkout button
+ */
+function disableCheckoutButton(disable) {
+    const checkoutBtn = document.querySelector('.primary-btn.checkout-btn-enabled, .primary-btn.checkout-btn-disabled');
+    const checkoutWarning = document.querySelector('.stock-exceeded-checkout-warning');
+    
+    if (checkoutBtn) {
+        if (disable) {
+            checkoutBtn.classList.remove('checkout-btn-enabled');
+            checkoutBtn.classList.add('checkout-btn-disabled');
+            checkoutBtn.style.backgroundColor = '#ccc';
+            checkoutBtn.style.cursor = 'not-allowed';
+            checkoutBtn.style.pointerEvents = 'none';
+            checkoutBtn.onclick = function() { return false; };
+            
+            // Show warning if not exists
+            if (!checkoutWarning) {
+                const cartTotal = document.querySelector('.cart__total ul');
+                const warning = document.createElement('div');
+                warning.className = 'alert alert-danger mb-3 stock-exceeded-checkout-warning';
+                warning.style.fontSize = '14px';
+                warning.innerHTML = `
+                    <i class="fa fa-exclamation-triangle"></i> 
+                    <strong>Không thể thanh toán</strong><br>
+                    Có sản phẩm vượt quá số lượng tồn kho. Vui lòng điều chỉnh số lượng.
+                `;
+                cartTotal.parentNode.insertBefore(warning, cartTotal.nextSibling);
+            }
+        } else {
+            checkoutBtn.classList.remove('checkout-btn-disabled');
+            checkoutBtn.classList.add('checkout-btn-enabled');
+            checkoutBtn.style.backgroundColor = '';
+            checkoutBtn.style.cursor = '';
+            checkoutBtn.style.pointerEvents = '';
+            checkoutBtn.onclick = null;
+            
+            // Hide warning
+            if (checkoutWarning) {
+                checkoutWarning.remove();
+            }
+        }
+    }
+}
+
+/**
+ * Check if any item exceeds stock and enable/disable checkout accordingly
+ */
+function checkAndEnableCheckout() {
+    const allInputs = document.querySelectorAll('.cart-quantity-input');
+    let hasExceeded = false;
+    
+    allInputs.forEach(input => {
+        const currentValue = parseInt(input.value);
+        const maxStock = parseInt(input.getAttribute('data-max'));
+        
+        if (currentValue > maxStock) {
+            hasExceeded = true;
+        }
+    });
+    
+    if (!hasExceeded) {
+        disableCheckoutButton(false);
+    }
 }
 
 /**

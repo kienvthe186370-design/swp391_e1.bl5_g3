@@ -36,8 +36,9 @@ public class Order {
     private String notes;
     private String cancelReason;
     
-    // RFQ Reference
+    // RFQ/Quotation Reference
     private Integer rfqID;
+    private Integer quotationID;
     
     // Timestamps
     private Timestamp orderDate;
@@ -241,6 +242,14 @@ public class Order {
         this.rfqID = rfqID;
     }
 
+    public Integer getQuotationID() {
+        return quotationID;
+    }
+
+    public void setQuotationID(Integer quotationID) {
+        this.quotationID = quotationID;
+    }
+
     public Timestamp getOrderDate() {
         return orderDate;
     }
@@ -319,5 +328,37 @@ public class Order {
 
     public void setRfq(RFQ rfq) {
         this.rfq = rfq;
+    }
+    
+    /**
+     * Kiểm tra tất cả sản phẩm trong đơn hàng đã được đánh giá chưa
+     * @return true nếu tất cả đã được đánh giá, false nếu còn sản phẩm chưa đánh giá
+     */
+    public boolean isAllReviewed() {
+        if (orderDetails == null || orderDetails.isEmpty()) {
+            return true;
+        }
+        for (OrderDetail detail : orderDetails) {
+            if (!detail.isReviewed()) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Kiểm tra có sản phẩm nào chưa được đánh giá không
+     * @return true nếu có ít nhất 1 sản phẩm chưa đánh giá
+     */
+    public boolean hasPendingReview() {
+        if (orderDetails == null || orderDetails.isEmpty()) {
+            return false;
+        }
+        for (OrderDetail detail : orderDetails) {
+            if (!detail.isReviewed()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

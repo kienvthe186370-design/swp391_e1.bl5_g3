@@ -273,7 +273,7 @@
                                         <th>SKU</th>
                                         <th class="text-right">Giá vốn</th>
                                         <th class="text-right">Giá bán</th>
-                                        <th class="text-center">Tồn kho</th>
+                                        <th class="text-center">Số lượng</th>
                                         <th class="text-center">Đã giữ</th>
                                         <th class="text-right">Lợi nhuận</th>
                                         <th class="text-center">Trạng thái</th>
@@ -330,8 +330,8 @@
                                             </td>
                                             <td class="text-center">
                                                 <a href="${pageContext.request.contextPath}/admin/stock/detail?id=${variant.variantID}" 
-                                                   class="btn btn-success btn-sm" title="Nhập kho">
-                                                    <i class="fas fa-plus-circle"></i> Nhập
+                                                   class="btn btn-success btn-sm" title="Thêm số lượng sản phẩm">
+                                                    <i class="fas fa-plus-circle"></i> Thêm
                                                 </a>
                                             </td>
                                         </tr>

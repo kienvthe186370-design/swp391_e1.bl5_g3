@@ -78,7 +78,7 @@ gradle-app.setting
 # Sensitive data (IMPORTANT!)
 **/private.properties
 **/database.properties
-**/*password*
+
 **/*secret*
 **/*key*.properties
 

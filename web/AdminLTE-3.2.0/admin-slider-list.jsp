@@ -209,11 +209,15 @@
                         </c:otherwise>
                       </c:choose>
                     </td>
-                    <td><strong>${slider.title}</strong></td>
+                    <td>
+                      <strong style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px;" title="${slider.title}">
+                        ${slider.title}
+                      </strong>
+                    </td>
                     <td>
                       <c:choose>
                         <c:when test="${not empty slider.linkURL}">
-                          <a href="${slider.linkURL}" target="_blank" class="text-primary">
+                          <a href="${slider.linkURL}" target="_blank" class="text-primary" style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;" title="${slider.linkURL}">
                             <i class="fas fa-external-link-alt"></i> ${slider.linkURL}
                           </a>
                         </c:when>

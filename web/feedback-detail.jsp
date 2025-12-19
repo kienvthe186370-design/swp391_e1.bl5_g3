@@ -171,12 +171,14 @@
                                     <!-- Reply Form -->
                                     <div class="mt-4">
                                         <h6><i class="fas fa-reply"></i> Gửi phản hồi</h6>
-                                        <form method="post" action="${pageContext.request.contextPath}/feedback-detail">
+                                        <form method="post" action="${pageContext.request.contextPath}/feedback-detail" id="replyForm">
                                             <input type="hidden" name="action" value="reply">
                                             <input type="hidden" name="reviewId" value="${review.reviewId}">
                                             <div class="form-group">
-                                                <textarea name="replyContent" class="form-control" rows="4" 
-                                                          placeholder="Nhập nội dung phản hồi..." required></textarea>
+                                                <textarea name="replyContent" id="replyContent" class="form-control" rows="4" 
+                                                          maxlength="1000" placeholder="Nhập nội dung phản hồi..."></textarea>
+                                                <small class="text-muted"><span id="replyCharCount">0</span>/1000 ký tự</small>
+                                                <div id="replyError" class="text-danger" style="display: none;"></div>
                                             </div>
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="fas fa-paper-plane"></i> Gửi phản hồi
@@ -322,6 +324,96 @@
     
     $(function () {
         $('[data-toggle="tooltip"]').tooltip();
+    });
+    
+    // ========== REPLY VALIDATION ==========
+    var REPLY_MAX_LENGTH = 1000;
+    
+    // Update character count
+    function updateReplyCharCount() {
+        var textarea = document.getElementById('replyContent');
+        if (!textarea) return;
+        
+        var counter = document.getElementById('replyCharCount');
+        var length = textarea.value.length;
+        counter.textContent = length;
+        
+        if (length > REPLY_MAX_LENGTH) {
+            counter.parentElement.classList.remove('text-muted');
+            counter.parentElement.classList.add('text-danger');
+        } else {
+            counter.parentElement.classList.remove('text-danger');
+            counter.parentElement.classList.add('text-muted');
+        }
+    }
+    
+    // Show error
+    function showReplyError(message) {
+        var errorDiv = document.getElementById('replyError');
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        document.getElementById('replyContent').classList.add('is-invalid');
+    }
+    
+    // Hide error
+    function hideReplyError() {
+        var errorDiv = document.getElementById('replyError');
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+        }
+        var textarea = document.getElementById('replyContent');
+        if (textarea) {
+            textarea.classList.remove('is-invalid');
+        }
+    }
+    
+    // Validate reply content
+    function validateReplyContent() {
+        var textarea = document.getElementById('replyContent');
+        if (!textarea) return true;
+        
+        var value = textarea.value.trim();
+        textarea.value = value; // Auto trim
+        
+        hideReplyError();
+        
+        if (value.length > REPLY_MAX_LENGTH) {
+            showReplyError('Nội dung phản hồi không được vượt quá ' + REPLY_MAX_LENGTH + ' ký tự (hiện tại: ' + value.length + ')');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        var replyTextarea = document.getElementById('replyContent');
+        if (replyTextarea) {
+            replyTextarea.addEventListener('input', function() {
+                updateReplyCharCount();
+                hideReplyError();
+            });
+            
+            replyTextarea.addEventListener('blur', function() {
+                this.value = this.value.trim();
+                updateReplyCharCount();
+                validateReplyContent();
+            });
+            
+            // Initialize char count
+            updateReplyCharCount();
+        }
+        
+        // Form submit validation
+        var replyForm = document.getElementById('replyForm');
+        if (replyForm) {
+            replyForm.addEventListener('submit', function(e) {
+                if (!validateReplyContent()) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
     });
 </script>
 </body>

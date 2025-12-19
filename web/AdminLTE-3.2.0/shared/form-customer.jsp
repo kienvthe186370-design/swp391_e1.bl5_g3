@@ -41,15 +41,6 @@
         <% } %>
       </div>
       
-      <% if (!isEditMode) { %>
-      <div class="form-group">
-        <label for="password">Mật khẩu <span class="text-danger">*</span></label>
-        <input type="password" class="form-control" id="password" name="password" 
-               required placeholder="Nhập mật khẩu" minlength="6">
-        <small class="form-text text-muted">Mật khẩu tối thiểu 6 ký tự</small>
-      </div>
-      <% } %>
-      
       <div class="form-group">
         <label for="phone">Số điện thoại <span class="text-danger">*</span></label>
         <input type="text" class="form-control" id="phone" name="phone" 
@@ -57,7 +48,12 @@
                required placeholder="Nhập số điện thoại">
       </div>
       
-     
+      <% if (!isEditMode) { %>
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Mật khẩu sẽ được tự động tạo và gửi qua email cho khách hàng. 
+        Khách hàng sẽ được yêu cầu đổi mật khẩu khi đăng nhập lần đầu.
+      </div>
+      <% } %>
       
     </div>
     <div class="card-footer">
@@ -72,16 +68,31 @@
 </div>
 
 <script>
-// Client-side validation: kiểm tra độ dài mật khẩu (chỉ cho create mode)
-<c:if test="${!isEditMode}">
+// Client-side validation
 document.getElementById('customerForm').addEventListener('submit', function(e) {
-    var password = document.getElementById('password').value;
-    if (password.length < 6) {
+    var fullName = document.getElementById('fullName').value.trim();
+    var phone = document.getElementById('phone').value.trim();
+    
+    // Validate họ tên
+    var nameRegex = /^[a-zA-ZÀ-ỹ0-9\s]+$/;
+    var hasLetter = /[a-zA-ZÀ-ỹ]/;
+    if (!nameRegex.test(fullName) || !hasLetter.test(fullName)) {
         e.preventDefault();
-        alert('Mật khẩu phải có ít nhất 6 ký tự!');
+        alert('Họ tên không hợp lệ! Chỉ được chứa chữ cái, số và khoảng trắng, phải có ít nhất 1 chữ cái.');
         return false;
     }
+    
+    // Validate phone
+    if (phone.length > 0) {
+        var phoneRegex = /^0[0-9]{9,10}$/;
+        if (!phoneRegex.test(phone)) {
+            e.preventDefault();
+            alert('Số điện thoại không hợp lệ! Phải có 10-11 số và bắt đầu bằng 0.');
+            return false;
+        }
+    }
+    
+    return true;
 });
-</c:if>
 </script>
 

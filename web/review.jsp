@@ -261,13 +261,113 @@
             });
         });
 
-        // Character count
-        document.getElementById('titleInput').addEventListener('input', function() {
-            document.getElementById('titleCount').textContent = this.value.length;
+        // ========== TEXT VALIDATION ==========
+        var TITLE_MAX_LENGTH = 100;
+        var CONTENT_MAX_LENGTH = 1000;
+        
+        // Update character count with color change
+        function updateCharCount(input, countEl, maxLength) {
+            var length = input.value.length;
+            countEl.textContent = length;
+            
+            var parent = countEl.parentElement;
+            if (length > maxLength) {
+                parent.style.color = '#E85A4F';
+            } else {
+                parent.style.color = '#6B7280';
+            }
+        }
+        
+        // Show field error
+        function showFieldError(input, message) {
+            input.style.borderColor = '#E85A4F';
+            var errorDiv = input.parentElement.querySelector('.field-error');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'field-error';
+                errorDiv.style.color = '#E85A4F';
+                errorDiv.style.fontSize = '13px';
+                errorDiv.style.marginTop = '4px';
+                input.parentElement.insertBefore(errorDiv, input.nextSibling);
+            }
+            errorDiv.textContent = message;
+        }
+        
+        // Clear field error
+        function clearFieldError(input) {
+            input.style.borderColor = '#E5E7EB';
+            var errorDiv = input.parentElement.querySelector('.field-error');
+            if (errorDiv) errorDiv.remove();
+        }
+        
+        // Validate text field
+        function validateTextField(input, maxLength, fieldName) {
+            var value = input.value.trim();
+            input.value = value; // Auto trim
+            
+            clearFieldError(input);
+            
+            if (value.length > maxLength) {
+                showFieldError(input, fieldName + ' không được vượt quá ' + maxLength + ' ký tự (hiện tại: ' + value.length + ')');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // Title input events
+        var titleInput = document.getElementById('titleInput');
+        var titleCount = document.getElementById('titleCount');
+        
+        titleInput.addEventListener('input', function() {
+            updateCharCount(this, titleCount, TITLE_MAX_LENGTH);
+            clearFieldError(this);
         });
-
-        document.getElementById('contentInput').addEventListener('input', function() {
-            document.getElementById('contentCount').textContent = this.value.length;
+        
+        titleInput.addEventListener('blur', function() {
+            this.value = this.value.trim();
+            updateCharCount(this, titleCount, TITLE_MAX_LENGTH);
+            validateTextField(this, TITLE_MAX_LENGTH, 'Tiêu đề');
+        });
+        
+        // Content input events
+        var contentInput = document.getElementById('contentInput');
+        var contentCount = document.getElementById('contentCount');
+        
+        contentInput.addEventListener('input', function() {
+            updateCharCount(this, contentCount, CONTENT_MAX_LENGTH);
+            clearFieldError(this);
+        });
+        
+        contentInput.addEventListener('blur', function() {
+            this.value = this.value.trim();
+            updateCharCount(this, contentCount, CONTENT_MAX_LENGTH);
+            validateTextField(this, CONTENT_MAX_LENGTH, 'Nội dung đánh giá');
+        });
+        
+        // Form submit validation
+        document.querySelector('.review-form').addEventListener('submit', function(e) {
+            var isValid = true;
+            
+            // Trim all text fields
+            titleInput.value = titleInput.value.trim();
+            contentInput.value = contentInput.value.trim();
+            
+            // Validate title
+            if (!validateTextField(titleInput, TITLE_MAX_LENGTH, 'Tiêu đề')) {
+                isValid = false;
+            }
+            
+            // Validate content
+            if (!validateTextField(contentInput, CONTENT_MAX_LENGTH, 'Nội dung đánh giá')) {
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Vui lòng kiểm tra lại thông tin đánh giá');
+                return false;
+            }
         });
 
         // Image upload preview

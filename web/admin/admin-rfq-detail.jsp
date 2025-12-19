@@ -237,7 +237,7 @@
     <div class="modal fade" id="proposeDateModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form action="${pageContext.request.contextPath}/admin/rfq/propose-date" method="POST">
+                <form action="${pageContext.request.contextPath}/admin/rfq/propose-date" method="POST" id="proposeDateForm">
                     <input type="hidden" name="rfqId" value="${rfq.rfqID}">
                     <div class="modal-header">
                         <h5 class="modal-title">Đề Xuất Ngày Giao Hàng Mới</h5>
@@ -254,7 +254,9 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Lý do <span class="text-danger">*</span></label>
-                            <textarea class="form-control" name="reason" rows="3" required placeholder="VD: Số lượng lớn, cần thời gian chuẩn bị..."></textarea>
+                            <textarea class="form-control" name="reason" id="reasonInput" rows="3" maxlength="500" required placeholder="VD: Số lượng lớn, cần thời gian chuẩn bị..."></textarea>
+                            <small class="text-muted"><span id="reasonCharCount">0</span>/500 ký tự</small>
+                            <div class="invalid-feedback" id="reasonError"></div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -280,6 +282,62 @@
                     }, 500);
                 });
             }, 5000);
+            
+            // Reason validation
+            var reasonInput = document.getElementById('reasonInput');
+            var reasonCharCount = document.getElementById('reasonCharCount');
+            var reasonError = document.getElementById('reasonError');
+            var proposeDateForm = document.getElementById('proposeDateForm');
+            
+            if (reasonInput) {
+                // Update character count
+                reasonInput.addEventListener('input', function() {
+                    reasonCharCount.textContent = this.value.length;
+                });
+                
+                // Validate on blur
+                reasonInput.addEventListener('blur', function() {
+                    validateReason();
+                });
+            }
+            
+            function validateReason() {
+                var value = reasonInput.value;
+                var trimmed = value.trim();
+                
+                // Remove extra spaces
+                if (value !== trimmed) {
+                    reasonInput.value = trimmed;
+                    reasonCharCount.textContent = trimmed.length;
+                }
+                
+                if (!trimmed) {
+                    reasonInput.classList.add('is-invalid');
+                    reasonError.textContent = 'Vui lòng nhập lý do';
+                    return false;
+                }
+                
+                if (trimmed.length < 10) {
+                    reasonInput.classList.add('is-invalid');
+                    reasonError.textContent = 'Lý do phải có ít nhất 10 ký tự';
+                    return false;
+                }
+                
+                reasonInput.classList.remove('is-invalid');
+                reasonError.textContent = '';
+                return true;
+            }
+            
+            // Form submit validation
+            if (proposeDateForm) {
+                proposeDateForm.addEventListener('submit', function(e) {
+                    if (!validateReason()) {
+                        e.preventDefault();
+                        reasonInput.focus();
+                        return false;
+                    }
+                });
+            }
         });
     </script>
 </body>

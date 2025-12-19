@@ -67,6 +67,16 @@ public class LoginServlet extends HttpServlet {
                     response.sendRedirect("verify-otp");
                     return;
                 }
+                
+                // Kiểm tra nếu cần đổi mật khẩu lần đầu
+                if (customer.isMustChangePassword()) {
+                    session.setAttribute("pendingPasswordChange", true);
+                    session.setAttribute("pendingCustomerID", customer.getCustomerID());
+                    session.setAttribute("pendingUserType", "customer");
+                    response.sendRedirect("force-change-password");
+                    return;
+                }
+                
                 session.setAttribute("customer", customer);
                 session.setAttribute("userID", customer.getCustomerID());
                 session.setAttribute("userName", customer.getFullName());
@@ -98,6 +108,15 @@ public class LoginServlet extends HttpServlet {
         Employee employee = employeeDAO.login(email, password);
 
         if (employee != null) {
+            // Kiểm tra nếu cần đổi mật khẩu lần đầu
+            if (employee.isMustChangePassword()) {
+                session.setAttribute("pendingPasswordChange", true);
+                session.setAttribute("pendingEmployeeID", employee.getEmployeeID());
+                session.setAttribute("pendingUserType", "employee");
+                response.sendRedirect("force-change-password");
+                return;
+            }
+            
             session.setAttribute("employee", employee);
             session.setAttribute("userID", employee.getEmployeeID());
             session.setAttribute("userName", employee.getFullName());

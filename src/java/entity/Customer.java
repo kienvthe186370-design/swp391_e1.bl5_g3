@@ -23,6 +23,7 @@ public class Customer {
     // Google OAuth fields
     private String googleId;
     private String loginProvider; // 'local', 'google'
+    private boolean mustChangePassword; // Bắt buộc đổi mật khẩu lần đầu
 
     public Customer() {
     }
@@ -173,5 +174,13 @@ public class Customer {
      */
     public boolean isGoogleUser() {
         return "google".equals(loginProvider) || (googleId != null && !googleId.isEmpty());
+    }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
     }
 }

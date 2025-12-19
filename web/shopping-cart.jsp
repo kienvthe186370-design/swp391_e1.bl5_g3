@@ -79,7 +79,7 @@
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
                 <i class="fa fa-exclamation-circle"></i> 
                 <c:choose>
-                    <c:when test="${param.error == 'insufficient_stock'}">Sản phẩm không đủ số lượng trong kho!</c:when>
+                    <c:when test="${param.error == 'insufficient_stock'}">Sản phẩm không đủ số lượng!</c:when>
                     <c:when test="${param.error == 'product_not_found'}">Không tìm thấy sản phẩm!</c:when>
                     <c:when test="${param.error == 'invalid_quantity'}">Số lượng không hợp lệ!</c:when>
                     <c:when test="${param.error == 'no_price'}">Sản phẩm chưa có giá bán!</c:when>
@@ -116,11 +116,15 @@
                 </c:when>
                 <c:otherwise>
                     <!-- Cart with Items -->
-                    <!-- Check if there are unavailable items -->
+                    <!-- Check if there are unavailable items or items exceeding stock -->
                     <c:set var="hasUnavailableItems" value="false" />
+                    <c:set var="hasExceededStock" value="false" />
                     <c:forEach var="item" items="${cartItems}">
                         <c:if test="${!item.available}">
                             <c:set var="hasUnavailableItems" value="true" />
+                        </c:if>
+                        <c:if test="${item.available && item.quantity > item.availableStock}">
+                            <c:set var="hasExceededStock" value="true" />
                         </c:if>
                     </c:forEach>
                     
@@ -175,6 +179,13 @@
                                                             <c:if test="${item.availableStock > 0 && item.availableStock < 10}">
                                                                 <small class="text-warning"><i class="fa fa-exclamation-circle"></i> Chỉ còn ${item.availableStock} sản phẩm</small>
                                                             </c:if>
+                                                            <!-- Quantity exceeds stock warning -->
+                                                            <c:if test="${item.quantity > item.availableStock}">
+                                                                <div class="alert alert-danger p-2 mt-2 stock-exceeded-warning" style="font-size: 13px;" data-cart-item-id="${item.cartItemID}">
+                                                                    <i class="fa fa-exclamation-triangle"></i> <strong>Vượt quá số lượng còn lại!</strong><br>
+                                                                    <small>Chỉ còn ${item.availableStock} sản phẩm. Vui lòng giảm số lượng.</small>
+                                                                </div>
+                                                            </c:if>
                                                         </c:if>
                                                     </div>
                                                 </td>
@@ -186,12 +197,14 @@
                                                         <c:otherwise>
                                                             <div class="quantity">
                                                                 <div class="pro-qty-2">
-                                                                    <input type="number" 
+                                                                    <input type="text" 
                                                                            class="cart-quantity-input"
                                                                            value="${item.quantity}" 
-                                                                           min="1" 
-                                                                           max="${item.availableStock}"
+                                                                           data-min="1" 
+                                                                           data-max="${item.availableStock}"
                                                                            data-cart-item-id="${item.cartItemID}"
+                                                                           pattern="[0-9]*"
+                                                                           inputmode="numeric"
                                                                            ${item.availableStock == 0 ? 'disabled' : ''}>
                                                                 </div>
                                                             </div>
@@ -277,16 +290,25 @@
                                     </div>
                                 </c:if>
                                 
-                                <!-- Checkout button - disabled if there are unavailable items -->
+                                <!-- Warning if there are items exceeding stock -->
+                                <c:if test="${!hasUnavailableItems && hasExceededStock}">
+                                    <div class="alert alert-danger mb-3 stock-exceeded-checkout-warning" style="font-size: 14px;">
+                                        <i class="fa fa-exclamation-triangle"></i> 
+                                        <strong>Không thể thanh toán</strong><br>
+                                        Có sản phẩm vượt quá số lượng còn lại. Vui lòng điều chỉnh số lượng.
+                                    </div>
+                                </c:if>
+                                
+                                <!-- Checkout button - disabled if there are unavailable items or exceeded stock -->
                                 <c:choose>
-                                    <c:when test="${hasUnavailableItems}">
-                                        <a href="#" class="primary-btn" style="background-color: #ccc; cursor: not-allowed; pointer-events: none;" onclick="return false;">
+                                    <c:when test="${hasUnavailableItems || hasExceededStock}">
+                                        <a href="#" class="primary-btn checkout-btn-disabled" style="background-color: #ccc; cursor: not-allowed; pointer-events: none;" onclick="return false;">
                                             Thanh toán
                                             <span class="arrow_right"></span>
                                         </a>
                                     </c:when>
                                     <c:otherwise>
-                                        <a href="<%= request.getContextPath() %>/checkout" class="primary-btn">
+                                        <a href="<%= request.getContextPath() %>/checkout" class="primary-btn checkout-btn-enabled">
                                             Thanh toán
                                             <span class="arrow_right"></span>
                                         </a>

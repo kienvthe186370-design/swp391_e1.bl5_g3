@@ -124,15 +124,20 @@ public class AdminOrderServlet extends HttpServlet {
             filter.setAssignedTo(employee.getEmployeeID());
         }
         
-        // SellerManager thấy tất cả
-        // Tab: all, unassigned, assigned
+        // Tab filter cho trạng thái
         String tab = request.getParameter("tab");
-        if ("unassigned".equals(tab)) {
-            filter.setUnassignedOnly(true);
+        if (tab != null && !tab.isEmpty() && !"all".equals(tab)) {
+            if ("unassigned".equals(tab)) {
+                filter.setUnassignedOnly(true);
+            } else {
+                // Tab là trạng thái đơn hàng
+                filter.setOrderStatus(tab);
+            }
         }
         
         int page = getPageParam(request);
-        int pageSize = getPageSizeParam(request);
+        // Admin, Seller và SellerManager mặc định 5 đơn/trang
+        int pageSize = ("Admin".equalsIgnoreCase(role) || "Seller".equalsIgnoreCase(role) || "SellerManager".equalsIgnoreCase(role)) ? 5 : getPageSizeParam(request);
         
         List<Order> orders = orderDAO.getOrders(filter, page, pageSize);
         int totalOrders = orderDAO.countOrders(filter);
@@ -143,6 +148,39 @@ public class AdminOrderServlet extends HttpServlet {
         if (RolePermission.canAssignOrders(role)) {
             List<Object[]> sellers = orderDAO.getSellersWithActiveOrderCount();
             request.setAttribute("sellers", sellers);
+        }
+        
+        // Đếm số đơn theo từng trạng thái cho Seller và SellerManager
+        if ("Seller".equalsIgnoreCase(role) || "SellerManager".equalsIgnoreCase(role)) {
+            OrderFilter countFilter = new OrderFilter();
+            
+            // Seller chỉ đếm đơn của mình
+            if ("Seller".equalsIgnoreCase(role)) {
+                countFilter.setAssignedTo(employee.getEmployeeID());
+            }
+            
+            // Đếm tất cả
+            int allCount = orderDAO.countOrders(countFilter);
+            request.setAttribute("allCount", allCount);
+            
+            // Đếm theo từng trạng thái
+            countFilter.setOrderStatus("Pending");
+            request.setAttribute("pendingCount", orderDAO.countOrders(countFilter));
+            
+            countFilter.setOrderStatus("Confirmed");
+            request.setAttribute("confirmedCount", orderDAO.countOrders(countFilter));
+            
+            countFilter.setOrderStatus("Processing");
+            request.setAttribute("processingCount", orderDAO.countOrders(countFilter));
+            
+            countFilter.setOrderStatus("Shipping");
+            request.setAttribute("shippingCount", orderDAO.countOrders(countFilter));
+            
+            countFilter.setOrderStatus("Delivered");
+            request.setAttribute("deliveredCount", orderDAO.countOrders(countFilter));
+            
+            countFilter.setOrderStatus("Cancelled");
+            request.setAttribute("cancelledCount", orderDAO.countOrders(countFilter));
         }
         
         request.setAttribute("orders", orders);
@@ -306,23 +344,31 @@ public class AdminOrderServlet extends HttpServlet {
         String newStatus = request.getParameter("newStatus");
         String note = request.getParameter("note");
         
-        if (orderIdParam == null || orderIdParam.isEmpty() || newStatus == null || newStatus.isEmpty()) {
-            request.getSession().setAttribute("error", "Thiếu thông tin đơn hàng hoặc trạng thái");
-            response.sendRedirect(request.getContextPath() + "/admin/orders");
-            return;
+        System.out.println("[AdminOrder] updateOrderStatus called - orderId: " + orderIdParam + ", newStatus: " + newStatus);
+        System.out.println("[AdminOrder] Employee: " + employee.getFullName() + ", Role: " + employee.getRole());
+        
+        // Parse orderId trước để có thể redirect về đúng trang detail
+        int orderId = 0;
+        if (orderIdParam != null && !orderIdParam.isEmpty()) {
+            try {
+                orderId = Integer.parseInt(orderIdParam);
+            } catch (NumberFormatException e) {
+                // orderId không hợp lệ
+            }
         }
         
-        int orderId = 0;
-        try {
-            orderId = Integer.parseInt(orderIdParam);
-        } catch (NumberFormatException e) {
-            request.getSession().setAttribute("error", "ID đơn hàng không hợp lệ: " + orderIdParam);
-            response.sendRedirect(request.getContextPath() + "/admin/orders");
+        if (orderIdParam == null || orderIdParam.isEmpty() || newStatus == null || newStatus.isEmpty()) {
+            request.getSession().setAttribute("error", "Thiếu thông tin đơn hàng hoặc trạng thái");
+            if (orderId > 0) {
+                response.sendRedirect(request.getContextPath() + "/admin/orders?action=detail&id=" + orderId);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/admin/orders");
+            }
             return;
         }
         
         if (orderId <= 0) {
-            request.getSession().setAttribute("error", "ID đơn hàng không hợp lệ: " + orderId);
+            request.getSession().setAttribute("error", "ID đơn hàng không hợp lệ: " + orderIdParam);
             response.sendRedirect(request.getContextPath() + "/admin/orders");
             return;
         }
@@ -332,19 +378,32 @@ public class AdminOrderServlet extends HttpServlet {
             
             if (order == null) {
                 request.getSession().setAttribute("error", "Không tìm thấy đơn hàng ID: " + orderId);
-                response.sendRedirect(request.getContextPath() + "/admin/orders");
+                response.sendRedirect(request.getContextPath() + "/admin/orders?action=detail&id=" + orderId);
                 return;
             }
             
-            // Validate transition
             String role = employee.getRole();
+            
+            // Seller chỉ được cập nhật đơn được phân công cho mình
+            if ("Seller".equalsIgnoreCase(role)) {
+                if (order.getAssignedTo() == null || order.getAssignedTo() != employee.getEmployeeID()) {
+                    request.getSession().setAttribute("error", "Bạn không có quyền cập nhật đơn hàng này");
+                    response.sendRedirect(request.getContextPath() + "/admin/orders?action=detail&id=" + orderId);
+                    return;
+                }
+            }
+            
+            // Validate transition
+            System.out.println("[AdminOrder] Checking canTransition: from=" + order.getOrderStatus() + ", to=" + newStatus + ", role=" + role);
             if (!OrderStatusValidator.canTransition(order.getOrderStatus(), newStatus, role, false)) {
                 request.getSession().setAttribute("error", "Không thể chuyển từ '" + order.getOrderStatus() + "' sang '" + newStatus + "'");
                 response.sendRedirect(request.getContextPath() + "/admin/orders?action=detail&id=" + orderId);
                 return;
             }
             
+            System.out.println("[AdminOrder] Calling orderDAO.updateOrderStatus...");
             boolean success = orderDAO.updateOrderStatus(orderId, newStatus, employee.getEmployeeID(), note);
+            System.out.println("[AdminOrder] updateOrderStatus result: " + success);
             
             if (success) {
                 request.getSession().setAttribute("success", "Cập nhật trạng thái thành công: " + newStatus);
@@ -359,7 +418,8 @@ public class AdminOrderServlet extends HttpServlet {
             System.err.println("[AdminOrder] Error updating status: " + e.getMessage());
             e.printStackTrace();
             request.getSession().setAttribute("error", "Lỗi hệ thống: " + e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/admin/orders");
+            // Redirect về trang detail thay vì dashboard
+            response.sendRedirect(request.getContextPath() + "/admin/orders?action=detail&id=" + orderId);
         }
     }
     
@@ -558,14 +618,59 @@ public class AdminOrderServlet extends HttpServlet {
     private void showShipperAssignmentPage(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // Lấy đơn đã phân shipper (đang vận chuyển)
-        List<Shipping> assignedShippings = shippingDAO.getAssignedShippings();
-        
         // Lấy danh sách shipper với số đơn đang giao
         List<Object[]> shippers = orderDAO.getShippersWithActiveOrderCount();
         
-        request.setAttribute("assignedShippings", assignedShippings);
+        // Lấy tab shipper được chọn (mặc định là "all")
+        String selectedShipper = request.getParameter("shipper");
+        
+        // Lấy tất cả đơn đã phân shipper
+        List<Shipping> allShippings = shippingDAO.getAssignedShippings();
+        
+        // Filter theo shipper nếu có
+        List<Shipping> filteredShippings = new java.util.ArrayList<>();
+        if (selectedShipper != null && !selectedShipper.isEmpty() && !"all".equals(selectedShipper)) {
+            try {
+                int shipperId = Integer.parseInt(selectedShipper);
+                for (Shipping s : allShippings) {
+                    if (s.getShipperID() != null && s.getShipperID() == shipperId) {
+                        filteredShippings.add(s);
+                    }
+                }
+            } catch (NumberFormatException e) {
+                filteredShippings = allShippings;
+            }
+        } else {
+            filteredShippings = allShippings;
+        }
+        
+        // Phân trang - 5 đơn/trang
+        int page = getPageParam(request);
+        int pageSize = 5;
+        int totalOrders = filteredShippings.size();
+        int totalPages = (int) Math.ceil((double) totalOrders / pageSize);
+        
+        if (page > totalPages && totalPages > 0) page = totalPages;
+        
+        int fromIndex = (page - 1) * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, totalOrders);
+        
+        List<Shipping> pagedShippings = filteredShippings.subList(
+            Math.min(fromIndex, totalOrders), 
+            Math.min(toIndex, totalOrders)
+        );
+        
+        // Đếm tổng tất cả đơn
+        int allCount = allShippings.size();
+        
+        request.setAttribute("assignedShippings", pagedShippings);
         request.setAttribute("shippers", shippers);
+        request.setAttribute("selectedShipper", selectedShipper);
+        request.setAttribute("allCount", allCount);
+        request.setAttribute("totalOrders", totalOrders);
+        request.setAttribute("currentPage", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("pageSize", pageSize);
         request.setAttribute("pageTitle", "Giám sát Shipper");
         
         request.getRequestDispatcher("/AdminLTE-3.2.0/orders/shipper-assignment.jsp")
@@ -810,24 +915,98 @@ public class AdminOrderServlet extends HttpServlet {
     private void listShipperOrders(HttpServletRequest request, HttpServletResponse response,
                                    Employee shipper) throws ServletException, IOException {
         
-        // Lấy đơn hàng được phân công cho shipper này
-        List<Order> orders = orderDAO.getOrdersByShipperId(shipper.getEmployeeID());
+        // Lấy filter parameters
+        String statusFilter = request.getParameter("status");
+        String searchKeyword = request.getParameter("search");
+        int page = 1;
+        int pageSize = 5;
+        
+        try {
+            String pageParam = request.getParameter("page");
+            if (pageParam != null && !pageParam.isEmpty()) {
+                page = Integer.parseInt(pageParam);
+                if (page < 1) page = 1;
+            }
+        } catch (NumberFormatException e) {
+            page = 1;
+        }
+        
+        // Lấy tất cả đơn hàng của shipper
+        List<Order> allOrders = orderDAO.getOrdersByShipperId(shipper.getEmployeeID());
+        
+        // Filter theo status
+        List<Order> filteredOrders = new java.util.ArrayList<>();
+        for (Order order : allOrders) {
+            boolean matchStatus = true;
+            boolean matchSearch = true;
+            
+            // Filter theo trạng thái giao hàng
+            if (statusFilter != null && !statusFilter.isEmpty()) {
+                String goshipStatus = order.getShipping() != null ? order.getShipping().getGoshipStatus() : null;
+                if ("pending".equals(statusFilter)) {
+                    matchStatus = goshipStatus == null || "picking".equals(goshipStatus);
+                } else if ("delivering".equals(statusFilter)) {
+                    matchStatus = "picked".equals(goshipStatus) || "delivering".equals(goshipStatus);
+                } else if ("delivered".equals(statusFilter)) {
+                    matchStatus = "delivered".equals(goshipStatus);
+                } else if ("failed".equals(statusFilter)) {
+                    matchStatus = "failed".equals(goshipStatus) || "returned".equals(goshipStatus);
+                }
+            }
+            
+            // Filter theo từ khóa tìm kiếm
+            if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+                String keyword = searchKeyword.toLowerCase().trim();
+                matchSearch = (order.getOrderCode() != null && order.getOrderCode().toLowerCase().contains(keyword))
+                           || (order.getCustomer() != null && order.getCustomer().getFullName() != null 
+                               && order.getCustomer().getFullName().toLowerCase().contains(keyword))
+                           || (order.getAddress() != null && order.getAddress().getPhone() != null 
+                               && order.getAddress().getPhone().contains(keyword));
+            }
+            
+            if (matchStatus && matchSearch) {
+                filteredOrders.add(order);
+            }
+        }
         
         // Thống kê
         int pendingCount = 0;
         int deliveredToday = shippingDAO.countDeliveredTodayByShipper(shipper.getEmployeeID());
         
-        for (Order order : orders) {
+        for (Order order : allOrders) {
             if ("Shipping".equals(order.getOrderStatus())) {
                 pendingCount++;
             }
         }
         
-        request.setAttribute("orders", orders);
+        // Phân trang
+        int totalOrders = filteredOrders.size();
+        int totalPages = (int) Math.ceil((double) totalOrders / pageSize);
+        if (page > totalPages && totalPages > 0) page = totalPages;
+        
+        int fromIndex = (page - 1) * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, totalOrders);
+        
+        List<Order> pagedOrders = filteredOrders.subList(
+            Math.min(fromIndex, totalOrders), 
+            Math.min(toIndex, totalOrders)
+        );
+        
+        request.setAttribute("orders", pagedOrders);
         request.setAttribute("pendingCount", pendingCount);
         request.setAttribute("deliveredToday", deliveredToday);
+        request.setAttribute("totalOrders", totalOrders);
         request.setAttribute("shipper", shipper);
         request.setAttribute("pageTitle", "Đơn hàng giao");
+        
+        // Pagination attributes
+        request.setAttribute("currentPage", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("pageSize", pageSize);
+        
+        // Filter attributes
+        request.setAttribute("statusFilter", statusFilter);
+        request.setAttribute("searchKeyword", searchKeyword);
         
         request.getRequestDispatcher("/AdminLTE-3.2.0/orders/shipper-order-list.jsp")
                .forward(request, response);

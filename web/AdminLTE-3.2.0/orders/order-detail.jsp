@@ -28,7 +28,12 @@
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1 class="m-0">Chi tiết đơn hàng ${order.orderCode}</h1>
+                        <h1 class="m-0">
+                            Chi tiết đơn hàng ${order.orderCode}
+                            <c:if test="${order.rfqID != null}">
+                                <span class="badge badge-danger"><i class="fas fa-building"></i> Mua Buôn</span>
+                            </c:if>
+                        </h1>
                     </div>
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
@@ -263,7 +268,13 @@
                                     </c:choose>
                                 </h3>
                                 <hr>
-                                <p><strong>Thanh toán:</strong> ${order.paymentMethod}</p>
+                                <p><strong>Thanh toán:</strong> 
+                                    <c:choose>
+                                        <c:when test="${order.paymentMethod == 'BankTransfer'}">VNPay</c:when>
+                                        <c:when test="${order.paymentMethod == 'COD'}">Thanh toán khi nhận hàng</c:when>
+                                        <c:otherwise>${order.paymentMethod}</c:otherwise>
+                                    </c:choose>
+                                </p>
                                 <p>
                                     <span class="badge badge-${order.paymentStatus == 'Paid' ? 'success' : 'warning'}">
                                         ${order.paymentStatus == 'Paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
@@ -277,7 +288,7 @@
                         </div>
 
                         <!-- Cập nhật trạng thái -->
-                        <c:if test="${canUpdateStatus && order.orderStatus != 'Delivered' && order.orderStatus != 'Cancelled'}">
+                        <c:if test="${canUpdateStatus && order.orderStatus != 'Delivered' && order.orderStatus != 'Cancelled' && not empty availableStatuses}">
                             <div class="card">
                                 <div class="card-header">
                                     <h3 class="card-title">Cập nhật trạng thái</h3>
@@ -297,10 +308,10 @@
                                         
                                         <!-- Hiển thị đơn vị vận chuyển đã chọn từ checkout -->
                                         <c:if test="${order.shipping != null && order.shipping.carrierName != null}">
-                                        <div class="alert alert-info mb-2">
-                                            <i class="fas fa-truck"></i> <strong>Đơn vị vận chuyển:</strong> ${order.shipping.carrierName}
-                                            <br><small>Dự kiến: ${order.shipping.estimatedDelivery}</small>
-                                        </div>
+                                            <div class="alert alert-info mb-2">
+                                                <i class="fas fa-truck"></i> <strong>Đơn vị vận chuyển:</strong> ${order.shipping.carrierName}
+                                                <br><small>Dự kiến: ${order.shipping.estimatedDelivery}</small>
+                                            </div>
                                         </c:if>
                                         
                                         <div class="form-group">

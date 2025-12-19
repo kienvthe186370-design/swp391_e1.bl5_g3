@@ -82,6 +82,7 @@
                   <option value="Marketer" ${role == 'Marketer' ? 'selected' : ''}>Marketer</option>
                   <option value="SellerManager" ${role == 'SellerManager' ? 'selected' : ''}>Seller Manager</option>
                   <option value="Seller" ${role == 'Seller' ? 'selected' : ''}>Seller</option>
+                  <option value="Shipper" ${role == 'Shipper' ? 'selected' : ''}>Shipper</option>
                 </select>
               </div>
               <div class="col-md-2">
@@ -100,7 +101,7 @@
             <table class="table table-bordered table-hover">
               <thead>
                 <tr>
-                  <th>ID</th>
+                  <th>Mã nhân viên</th>
                   <th>Tên</th>
                   <th>Email</th>
                   <th>Số điện thoại</th>
@@ -113,7 +114,7 @@
               <tbody>
                 <c:forEach var="employee" items="${employees}">
                   <tr>
-                    <td><strong>#${employee.employeeID}</strong></td>
+                    <td><strong>NV-${employee.employeeID}</strong></td>
                     <td>${employee.fullName}</td>
                     <td>${employee.email}</td>
                     <td>${employee.phone != null ? employee.phone : '-'}</td>

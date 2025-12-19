@@ -93,8 +93,15 @@
                     <label for="title">Tiêu đề Slider <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="title" name="title" 
                            value="${slider != null ? slider.title : ''}" 
-                           placeholder="Nhập tiêu đề slider..." required>
-                    <small class="form-text text-muted">Tiêu đề mô tả cho slider (tối đa 200 ký tự)</small>
+                           placeholder="Nhập tiêu đề slider..." 
+                           maxlength="50"
+                           required>
+                    <small class="form-text text-muted">
+                      Tiêu đề mô tả cho slider (tối đa 50 ký tự)
+                      <span id="titleCounter" class="float-right">
+                        <span id="titleCount">${slider != null ? slider.title.length() : 0}</span>/50
+                      </span>
+                    </small>
                   </div>
 
                   <!-- Image Upload Options -->
@@ -211,7 +218,7 @@
                 <ul class="pl-3">
                   <li>Hình ảnh nên có kích thước <strong>1920x600px</strong></li>
                   <li>Định dạng: <strong>JPG, PNG</strong></li>
-                  <li>Dung lượng tối đa: <strong>2MB</strong></li>
+                  <li>Dung lượng tối đa: <strong>5MB</strong></li>
                   <li>Thứ tự nhỏ hơn hiển thị trước</li>
                 </ul>
 
@@ -361,6 +368,23 @@ function previewImageURL(showAlert = true) {
     }
 }
 
+// Title character counter
+$('#title').on('input', function() {
+    const currentLength = $(this).val().length;
+    const maxLength = 50;
+    
+    $('#titleCount').text(currentLength);
+    
+    // Change color based on length
+    if (currentLength >= maxLength) {
+        $('#titleCounter').removeClass('text-muted text-warning').addClass('text-danger');
+    } else if (currentLength >= maxLength * 0.9) {
+        $('#titleCounter').removeClass('text-muted text-danger').addClass('text-warning');
+    } else {
+        $('#titleCounter').removeClass('text-warning text-danger').addClass('text-muted');
+    }
+});
+
 // Form validation
 $('#sliderForm').on('submit', function(e) {
     const title = $('#title').val().trim();
@@ -372,6 +396,13 @@ $('#sliderForm').on('submit', function(e) {
     if (!title) {
         e.preventDefault();
         alert('Vui lòng nhập tiêu đề slider!');
+        $('#title').focus();
+        return false;
+    }
+    
+    if (title.length > 50) {
+        e.preventDefault();
+        alert('Tiêu đề không được vượt quá 50 ký tự!');
         $('#title').focus();
         return false;
     }
