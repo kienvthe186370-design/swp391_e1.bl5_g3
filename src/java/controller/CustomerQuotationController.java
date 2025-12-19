@@ -1,7 +1,9 @@
 package controller;
 
-import DAO.RFQDAO;
+import DAO.QuotationDAO;
+import DAO.RFQDAONew;
 import entity.RFQ;
+import entity.Quotation;
 import entity.Customer;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -10,19 +12,24 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * CustomerQuotationController - Xử lý các request Đơn Báo Giá từ phía Customer
+ * CustomerQuotationController - Xử lý các request Quotation từ phía Customer
+ * 
  * URL Patterns:
- * - /quotation/list (GET) - Danh sách đơn báo giá của customer
- * - /quotation/detail (GET) - Chi tiết đơn báo giá
+ * - /quotation/list (GET) - Danh sách Quotation của customer
+ * - /quotation/detail (GET) - Chi tiết Quotation
+ * - /quotation/accept (POST) - Chấp nhận báo giá
  * - /quotation/reject (POST) - Từ chối báo giá
+ * - /quotation/counter (POST) - Counter giá
  */
 @WebServlet(name = "CustomerQuotationController", urlPatterns = {"/quotation/*"})
 public class CustomerQuotationController extends HttpServlet {
 
-    private RFQDAO rfqDAO = new RFQDAO();
+    private QuotationDAO quotationDAO = new QuotationDAO();
+    private RFQDAONew rfqDAO = new RFQDAONew();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -65,8 +72,14 @@ public class CustomerQuotationController extends HttpServlet {
         }
         
         switch (pathInfo) {
+            case "/accept":
+                acceptQuotation(request, response, customer);
+                break;
             case "/reject":
                 rejectQuotation(request, response, customer);
+                break;
+            case "/counter":
+                counterPrice(request, response, customer);
                 break;
             default:
                 response.sendRedirect(request.getContextPath() + "/quotation/list");
@@ -74,7 +87,7 @@ public class CustomerQuotationController extends HttpServlet {
     }
 
     /**
-     * Hiển thị danh sách đơn báo giá của customer
+     * Hiển thị danh sách Quotation của customer
      */
     private void showQuotationList(HttpServletRequest request, HttpServletResponse response, Customer customer)
             throws ServletException, IOException {
@@ -87,16 +100,27 @@ public class CustomerQuotationController extends HttpServlet {
 
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
+        String sortBy = request.getParameter("sortBy"); // price_asc, price_desc
+
+        // Lấy danh sách Quotation
+        List<Quotation> quotations = quotationDAO.getCustomerQuotationsWithSort(customer.getCustomerID(), 
+                                                                         keyword, status, sortBy, page, pageSize);
+        int totalCount = quotationDAO.countCustomerQuotations(customer.getCustomerID(), keyword, status);
+        int totalPages = (int) Math.ceil((double) totalCount / pageSize);
+        if (totalPages < 1) totalPages = 1;
+
+        // Load RFQ info for each quotation
+        for (Quotation q : quotations) {
+            RFQ rfq = rfqDAO.getRFQById(q.getRfqID());
+            q.setRfq(rfq);
+        }
 
         // Đếm số lượng theo trạng thái
-        int pendingCount = rfqDAO.countCustomerQuotations(customer.getCustomerID(), keyword, RFQ.STATUS_QUOTED);
-        int paidCount = rfqDAO.countCustomerQuotations(customer.getCustomerID(), keyword, RFQ.STATUS_COMPLETED);
-        int rejectedCount = rfqDAO.countCustomerQuotations(customer.getCustomerID(), keyword, RFQ.STATUS_QUOTE_REJECTED);
-
-        // Lấy danh sách báo giá
-        List<RFQ> quotations = rfqDAO.getCustomerQuotations(customer.getCustomerID(), keyword, status, page, pageSize);
-        int totalCount = rfqDAO.countCustomerQuotations(customer.getCustomerID(), keyword, status);
-        int totalPages = (int) Math.ceil((double) totalCount / pageSize);
+        int sentCount = quotationDAO.countCustomerQuotations(customer.getCustomerID(), null, Quotation.STATUS_SENT);
+        int negotiatingCount = quotationDAO.countCustomerQuotations(customer.getCustomerID(), null, Quotation.STATUS_CUSTOMER_COUNTERED)
+                             + quotationDAO.countCustomerQuotations(customer.getCustomerID(), null, Quotation.STATUS_SELLER_COUNTERED);
+        int acceptedCount = quotationDAO.countCustomerQuotations(customer.getCustomerID(), null, Quotation.STATUS_ACCEPTED);
+        int paidCount = quotationDAO.countCustomerQuotations(customer.getCustomerID(), null, Quotation.STATUS_PAID);
 
         request.setAttribute("quotations", quotations);
         request.setAttribute("currentPage", page);
@@ -104,46 +128,97 @@ public class CustomerQuotationController extends HttpServlet {
         request.setAttribute("totalCount", totalCount);
         request.setAttribute("keyword", keyword);
         request.setAttribute("status", status);
-        request.setAttribute("pendingCount", pendingCount);
+        request.setAttribute("sortBy", sortBy);
+        request.setAttribute("sentCount", sentCount);
+        request.setAttribute("negotiatingCount", negotiatingCount);
+        request.setAttribute("acceptedCount", acceptedCount);
         request.setAttribute("paidCount", paidCount);
-        request.setAttribute("rejectedCount", rejectedCount);
 
         request.getRequestDispatcher("/customer/quotation-list.jsp").forward(request, response);
     }
 
     /**
-     * Hiển thị chi tiết đơn báo giá
+     * Hiển thị chi tiết Quotation
      */
     private void showQuotationDetail(HttpServletRequest request, HttpServletResponse response, Customer customer)
             throws ServletException, IOException {
         
-        int rfqId = 0;
         try {
-            rfqId = Integer.parseInt(request.getParameter("id"));
+            int quotationID = 0;
+            try {
+                quotationID = Integer.parseInt(request.getParameter("id"));
+            } catch (Exception e) {
+                response.sendRedirect(request.getContextPath() + "/quotation/list");
+                return;
+            }
+
+            Quotation quotation = quotationDAO.getQuotationById(quotationID);
+            
+            if (quotation == null) {
+                response.sendRedirect(request.getContextPath() + "/quotation/list?error=not_found");
+                return;
+            }
+
+            // Load RFQ để kiểm tra quyền
+            RFQ rfq = rfqDAO.getRFQById(quotation.getRfqID());
+            if (rfq == null || rfq.getCustomerID() != customer.getCustomerID()) {
+                response.sendRedirect(request.getContextPath() + "/quotation/list?error=access_denied");
+                return;
+            }
+
+            quotation.setRfq(rfq);
+            quotation.setItems(quotationDAO.getQuotationItems(quotationID));
+            quotation.setHistory(quotationDAO.getQuotationHistory(quotationID));
+
+            request.setAttribute("quotation", quotation);
+            request.getRequestDispatcher("/customer/quotation-detail.jsp").forward(request, response);
         } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/quotation/list?error=exception&msg=" + e.getMessage());
+        }
+    }
+
+    /**
+     * Chấp nhận báo giá
+     */
+    private void acceptQuotation(HttpServletRequest request, HttpServletResponse response, Customer customer)
+            throws ServletException, IOException {
+        
+        int quotationID = Integer.parseInt(request.getParameter("quotationId"));
+        Quotation quotation = quotationDAO.getQuotationById(quotationID);
+        
+        if (quotation == null) {
             response.sendRedirect(request.getContextPath() + "/quotation/list");
             return;
         }
 
-        RFQ rfq = rfqDAO.getRFQById(rfqId);
-        
-        // Kiểm tra quyền truy cập
+        // Kiểm tra quyền
+        RFQ rfq = rfqDAO.getRFQById(quotation.getRfqID());
         if (rfq == null || rfq.getCustomerID() != customer.getCustomerID()) {
             response.sendRedirect(request.getContextPath() + "/quotation/list");
             return;
         }
-        
-        // Chỉ cho phép xem các đơn đã có báo giá
-        if (!rfq.getStatus().equals(RFQ.STATUS_QUOTED) && 
-            !rfq.getStatus().equals(RFQ.STATUS_QUOTE_ACCEPTED) &&
-            !rfq.getStatus().equals(RFQ.STATUS_QUOTE_REJECTED) &&
-            !rfq.getStatus().equals(RFQ.STATUS_COMPLETED)) {
-            response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqId);
+
+        // Kiểm tra có thể accept không
+        if (!quotation.canAccept()) {
+            response.sendRedirect(request.getContextPath() + "/quotation/detail?id=" + quotationID + "&error=cannot_accept");
             return;
         }
 
-        request.setAttribute("rfq", rfq);
-        request.getRequestDispatcher("/customer/quotation-detail.jsp").forward(request, response);
+        // Kiểm tra hết hạn
+        if (quotation.isExpired()) {
+            response.sendRedirect(request.getContextPath() + "/quotation/detail?id=" + quotationID + "&error=expired");
+            return;
+        }
+
+        boolean success = quotationDAO.acceptQuotation(quotationID, customer.getCustomerID());
+        
+        if (success) {
+            // Redirect to payment page
+            response.sendRedirect(request.getContextPath() + "/quotation/detail?id=" + quotationID + "&success=accepted");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/quotation/detail?id=" + quotationID + "&error=accept_failed");
+        }
     }
 
     /**
@@ -152,35 +227,79 @@ public class CustomerQuotationController extends HttpServlet {
     private void rejectQuotation(HttpServletRequest request, HttpServletResponse response, Customer customer)
             throws ServletException, IOException {
         
-        int rfqId = 0;
-        try {
-            rfqId = Integer.parseInt(request.getParameter("rfqId"));
-        } catch (Exception e) {
-            response.sendRedirect(request.getContextPath() + "/quotation/list");
-            return;
-        }
-
+        int quotationID = Integer.parseInt(request.getParameter("quotationId"));
         String reason = request.getParameter("reason");
+        
         if (reason == null || reason.trim().isEmpty()) {
             reason = "Khách hàng từ chối báo giá";
         }
 
-        RFQ rfq = rfqDAO.getRFQById(rfqId);
+        Quotation quotation = quotationDAO.getQuotationById(quotationID);
         
-        // Kiểm tra quyền và trạng thái
-        if (rfq == null || rfq.getCustomerID() != customer.getCustomerID() || 
-            !rfq.getStatus().equals(RFQ.STATUS_QUOTED)) {
+        if (quotation == null) {
             response.sendRedirect(request.getContextPath() + "/quotation/list");
             return;
         }
 
-        // Cập nhật trạng thái
-        boolean success = rfqDAO.rejectQuotation(rfqId, reason, customer.getCustomerID());
+        // Kiểm tra quyền
+        RFQ rfq = rfqDAO.getRFQById(quotation.getRfqID());
+        if (rfq == null || rfq.getCustomerID() != customer.getCustomerID()) {
+            response.sendRedirect(request.getContextPath() + "/quotation/list");
+            return;
+        }
+
+        boolean success = quotationDAO.rejectQuotation(quotationID, reason, customer.getCustomerID());
         
         if (success) {
-            response.sendRedirect(request.getContextPath() + "/quotation/detail?id=" + rfqId + "&success=rejected");
+            response.sendRedirect(request.getContextPath() + "/quotation/detail?id=" + quotationID + "&success=rejected");
         } else {
-            response.sendRedirect(request.getContextPath() + "/quotation/detail?id=" + rfqId + "&error=reject_failed");
+            response.sendRedirect(request.getContextPath() + "/quotation/detail?id=" + quotationID + "&error=reject_failed");
+        }
+    }
+
+    /**
+     * Counter giá
+     */
+    private void counterPrice(HttpServletRequest request, HttpServletResponse response, Customer customer)
+            throws ServletException, IOException {
+        
+        try {
+            int quotationID = Integer.parseInt(request.getParameter("quotationId"));
+            String counterPriceStr = request.getParameter("counterPrice");
+            String note = request.getParameter("note");
+
+            Quotation quotation = quotationDAO.getQuotationById(quotationID);
+            
+            if (quotation == null) {
+                response.sendRedirect(request.getContextPath() + "/quotation/list");
+                return;
+            }
+
+            // Kiểm tra quyền
+            RFQ rfq = rfqDAO.getRFQById(quotation.getRfqID());
+            if (rfq == null || rfq.getCustomerID() != customer.getCustomerID()) {
+                response.sendRedirect(request.getContextPath() + "/quotation/list");
+                return;
+            }
+
+            // Kiểm tra có thể counter không
+            if (!quotation.canCustomerCounter()) {
+                response.sendRedirect(request.getContextPath() + "/quotation/detail?id=" + quotationID + "&error=cannot_counter");
+                return;
+            }
+
+            BigDecimal counterPrice = new BigDecimal(counterPriceStr);
+            boolean success = quotationDAO.customerCounterPrice(quotationID, counterPrice, note, customer.getCustomerID());
+
+            if (success) {
+                response.sendRedirect(request.getContextPath() + "/quotation/detail?id=" + quotationID + "&success=countered");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/quotation/detail?id=" + quotationID + "&error=counter_failed");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/quotation/list?error=counter_failed");
         }
     }
 }

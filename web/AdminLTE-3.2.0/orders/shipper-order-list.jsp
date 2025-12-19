@@ -149,7 +149,11 @@
                                         <c:forEach var="order" items="${orders}">
                                             <tr>
                                                 <td>
-                                                    <strong>${order.orderCode}</strong><br>
+                                                    <strong>${order.orderCode}</strong>
+                                                    <c:if test="${order.rfqID != null}">
+                                                        <span class="badge badge-danger"><i class="fas fa-building"></i> Buôn</span>
+                                                    </c:if>
+                                                    <br>
                                                     <small class="text-muted">
                                                         <fmt:formatDate value="${order.orderDate}" pattern="dd/MM/yyyy HH:mm"/>
                                                     </small>

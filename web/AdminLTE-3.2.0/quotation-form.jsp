@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
     <link rel="stylesheet" href="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/fontawesome-free/css/all.min.css">
     <link rel="stylesheet" href="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/css/adminlte.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
     <style>
         .product-item { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
         .calculated-field { background-color: #e9ecef; font-weight: bold; }
@@ -45,7 +44,7 @@
         <section class="content">
             <div class="container-fluid py-4">
 
-        <form action="${pageContext.request.contextPath}/admin/rfq/send-quotation" method="POST" id="quotationForm">
+        <form action="${pageContext.request.contextPath}/admin/quotations/create" method="POST" id="quotationForm">
             <input type="hidden" name="rfqId" value="${rfq.rfqID}">
 
             <div class="row">
@@ -79,15 +78,28 @@
                         <div class="card-header"><h5 class="mb-0"><i class="fas fa-calculator"></i> Định Giá Sản Phẩm</h5></div>
                         <div class="card-body">
                             <c:forEach var="item" items="${rfq.items}" varStatus="loop">
-                                <div class="product-item" data-index="${loop.index}" data-cost="${item.costPrice != null ? item.costPrice : 0}" data-quantity="${item.quantity}" data-min-margin="${item.minProfitMargin != null ? item.minProfitMargin : 30}">
+                                <div class="product-item" data-index="${loop.index}" data-cost="${item.costPrice != null ? item.costPrice : 0}" data-quantity="${item.quantity}" data-max-margin="${item.minProfitMargin != null ? item.minProfitMargin : 30}">
                                     <div class="row align-items-center mb-3">
-                                        <div class="col-md-8">
+                                        <div class="col-auto">
+                                            <c:choose>
+                                                <c:when test="${not empty item.productImage}">
+                                                    <img src="${pageContext.request.contextPath}/${item.productImage}" alt="${item.productName}" 
+                                                         style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid #dee2e6;">
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div style="width:70px;height:70px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;display:flex;align-items:center;justify-content:center;">
+                                                        <i class="fas fa-image text-muted fa-2x"></i>
+                                                    </div>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                        <div class="col">
                                             <h6 class="mb-1">${item.productName}</h6>
                                             <small class="text-muted">SKU: ${item.sku != null ? item.sku : 'N/A'} | Yêu cầu: <strong>${item.quantity}</strong> cái</small>
                                         </div>
-                                        <div class="col-md-4 text-end">
+                                        <div class="col-auto text-end">
                                             <span class="badge bg-info">Giá vốn: <fmt:formatNumber value="${item.costPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></span>
-                                            <span class="badge bg-warning text-dark">Min: ${item.minProfitMargin != null ? item.minProfitMargin : 30}%</span>
+                                            <span class="badge bg-danger">Max: ${item.minProfitMargin != null ? item.minProfitMargin : 30}%</span>
                                         </div>
                                     </div>
                                     <div class="row">
@@ -102,11 +114,13 @@
                                         <div class="col-md-3">
                                             <label class="form-label">% Lợi Nhuận <span class="text-danger">*</span></label>
                                             <div class="input-group">
-                                                <input type="number" class="form-control profit-margin" name="items[${loop.index}][profitMargin]" 
-                                                       value="${item.minProfitMargin != null ? item.minProfitMargin : 30}" min="${item.minProfitMargin != null ? item.minProfitMargin : 30}" step="0.01" required onchange="validateAndCalculatePrice(${loop.index})">
+                                                <input type="text" class="form-control profit-margin" name="items[${loop.index}][profitMargin]" 
+                                                       value="0" maxlength="5" required 
+                                                       oninput="sanitizeProfitInput(this); calculatePrice(${loop.index})" 
+                                                       onblur="validateProfitOnBlur(${loop.index})">
                                                 <span class="input-group-text">%</span>
                                             </div>
-                                            <small class="text-muted">Tối thiểu: ${item.minProfitMargin != null ? item.minProfitMargin : 30}%</small>
+                                            <small class="text-muted">Tối đa: ${item.minProfitMargin != null ? item.minProfitMargin : 30}% (giá bán lẻ)</small>
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label">Đơn Giá (₫)</label>
@@ -121,7 +135,7 @@
                                             </div>
                                         </div>
                                         <div class="col-12 mt-2">
-                                            <input type="text" class="form-control" name="items[${loop.index}][notes]" placeholder="Ghi chú cho sản phẩm này...">
+                                            <input type="text" class="form-control" name="items[${loop.index}][notes]" placeholder="Ghi chú cho sản phẩm này..." maxlength="100">
                                         </div>
                                     </div>
                                 </div>
@@ -129,50 +143,55 @@
                         </div>
                     </div>
 
-                    <!-- Shipping Info (Readonly - Customer đã chọn) -->
+                    <!-- Shipping Info - Seller chọn đơn vị vận chuyển -->
                     <div class="card mb-4">
-                        <div class="card-header bg-light"><h5 class="mb-0"><i class="fas fa-truck"></i> Thông Tin Vận Chuyển (Khách Hàng Đã Chọn)</h5></div>
+                        <div class="card-header"><h5 class="mb-0"><i class="fas fa-truck"></i> Chọn Đơn Vị Vận Chuyển</h5></div>
                         <div class="card-body">
-                            <c:choose>
-                                <c:when test="${not empty rfq.shippingCarrierName}">
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <p class="mb-1"><i class="fas fa-map-marker-alt text-muted"></i> <strong>Địa chỉ giao hàng:</strong> ${rfq.deliveryAddress}</p>
+                                    <p class="mb-0"><i class="fas fa-calendar text-muted"></i> <strong>Ngày khách yêu cầu nhận:</strong> <fmt:formatDate value="${rfq.requestedDeliveryDate}" pattern="dd/MM/yyyy"/></p>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <button type="button" class="btn btn-info" id="btnCalculateShipping" onclick="calculateShippingRates()">
+                                        <i class="fas fa-calculator"></i> Tính Phí Vận Chuyển
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="shippingRatesContainer" style="display:none;">
+                                <div id="shippingRatesLoading" class="text-center py-3" style="display:none;">
+                                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                    <p class="mt-2">Đang tính phí vận chuyển...</p>
+                                </div>
+                                <div id="shippingRatesList"></div>
+                            </div>
+                            
+                            <div id="shippingError" class="alert alert-danger mt-3" style="display:none;">
+                                <i class="fas fa-exclamation-triangle"></i> <span id="shippingErrorMsg"></span>
+                            </div>
+                            
+                            <div id="selectedShippingInfo" class="mt-3" style="display:none;">
+                                <div class="alert alert-success">
+                                    <h6 class="mb-2"><i class="fas fa-check-circle"></i> Đơn Vị Vận Chuyển Đã Chọn</h6>
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Đơn Vị Vận Chuyển</label>
-                                                <input type="text" class="form-control calculated-field" value="${rfq.shippingCarrierName}" readonly>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Dịch Vụ</label>
-                                                <input type="text" class="form-control calculated-field" value="${rfq.shippingServiceName}" readonly>
-                                            </div>
+                                            <strong>Đơn vị:</strong> <span id="selectedCarrierName"></span><br>
+                                            <strong>Dịch vụ:</strong> <span id="selectedServiceName"></span>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Phí Vận Chuyển (Dự Kiến)</label>
-                                                <div class="input-group">
-                                                    <input type="text" class="form-control calculated-field text-success font-weight-bold" 
-                                                           value="<fmt:formatNumber value="${rfq.shippingFee}" maxFractionDigits="0"/>" readonly>
-                                                    <span class="input-group-text">₫</span>
-                                                </div>
-                                                <input type="hidden" name="shippingFee" id="shippingFee" value="${rfq.shippingFee != null ? rfq.shippingFee : 0}">
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Thời Gian Giao Dự Kiến</label>
-                                                <input type="text" class="form-control calculated-field" value="${rfq.estimatedDeliveryDays} ngày" readonly>
-                                            </div>
+                                            <strong>Phí ship:</strong> <span id="selectedShippingFee" class="text-primary"></span><br>
+                                            <strong>Thời gian giao:</strong> <span id="selectedDeliveryTime"></span>
                                         </div>
                                     </div>
-                                    <div class="alert alert-info mb-0">
-                                        <i class="fas fa-info-circle"></i> Thông tin vận chuyển đã được khách hàng chọn khi tạo RFQ.
-                                    </div>
-                                </c:when>
-                                <c:otherwise>
-                                    <div class="alert alert-warning mb-0">
-                                        <i class="fas fa-exclamation-triangle"></i> Khách hàng chưa chọn đơn vị vận chuyển.
-                                    </div>
-                                    <input type="hidden" name="shippingFee" id="shippingFee" value="0">
-                                </c:otherwise>
-                            </c:choose>
+                                </div>
+                            </div>
+                            
+                            <input type="hidden" name="shippingCarrierId" id="shippingCarrierId">
+                            <input type="hidden" name="shippingCarrierName" id="shippingCarrierNameInput">
+                            <input type="hidden" name="shippingServiceName" id="shippingServiceNameInput">
+                            <input type="hidden" name="shippingFee" id="shippingFee" value="0">
+                            <input type="hidden" name="estimatedDeliveryDays" id="estimatedDeliveryDays">
                         </div>
                     </div>
 
@@ -183,9 +202,8 @@
                             <div class="row mb-3">
                                 <div class="col-md-4">
                                     <label class="form-label">Phí Vận Chuyển (₫)</label>
-                                    <input type="text" class="form-control calculated-field" 
-                                           value="<fmt:formatNumber value="${rfq.shippingFee != null ? rfq.shippingFee : 0}" maxFractionDigits="0"/>" readonly>
-                                    <small class="text-muted">Phí do khách hàng đã chọn</small>
+                                    <input type="text" class="form-control calculated-field" id="shippingFeeDisplay" value="0" readonly>
+                                    <small class="text-muted">Chọn đơn vị vận chuyển ở trên</small>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Thuế VAT (%)</label>
@@ -235,11 +253,6 @@
                                     <input type="text" class="form-control calculated-field" value="Chuyển khoản ngân hàng (VNPay)" readonly>
                                     <input type="hidden" name="paymentMethod" value="BankTransfer">
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Báo Giá Có Hiệu Lực Đến <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="quotationValidUntil" id="validUntil" required placeholder="dd/mm/yyyy">
-                                    <small class="text-muted" id="minDateHint"></small>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -250,12 +263,14 @@
                         <div class="card-body">
                             <div class="mb-3">
                                 <label class="form-label">Điều Khoản Bảo Hành</label>
-                                <textarea class="form-control" name="warrantyTerms" rows="2">Bảo hành chính hãng 6 tháng cho vợt, 3 tháng cho phụ kiện</textarea>
+                                <textarea class="form-control" name="warrantyTerms" id="warrantyTerms" rows="2" maxlength="300">Bảo hành chính hãng 6 tháng cho vợt, 3 tháng cho phụ kiện</textarea>
+                                <small class="text-muted"><span id="warrantyTermsCount">0</span>/300 ký tự</small>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Điều Khoản Khác</label>
-                                <textarea class="form-control" name="additionalTerms" rows="3">1. Hàng không được đổi trả sau khi đã mở seal
+                                <textarea class="form-control" name="additionalTerms" id="additionalTerms" rows="3" maxlength="500">1. Hàng không được đổi trả sau khi đã mở seal
 2. Thời gian giao hàng có thể thay đổi tùy tình hình thực tế</textarea>
+                                <small class="text-muted"><span id="additionalTermsCount">0</span>/500 ký tự</small>
                             </div>
                         </div>
                     </div>
@@ -297,65 +312,100 @@
     <script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>
     <script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.vi.min.js"></script>
     <script>
-        // Global variables for date validation
-        var minValidDate;
-        var baseDateStr;
-        
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            // Lấy ngày yêu cầu giao hoặc ngày đề xuất (nếu có)
-            <c:choose>
-                <c:when test="${rfq.proposedDeliveryDate != null && rfq.status == 'DateAccepted'}">
-                    var baseDate = new Date('<fmt:formatDate value="${rfq.proposedDeliveryDate}" pattern="yyyy-MM-dd"/>');
-                    baseDateStr = '<fmt:formatDate value="${rfq.proposedDeliveryDate}" pattern="dd/MM/yyyy"/>';
-                </c:when>
-                <c:otherwise>
-                    var baseDate = new Date('<fmt:formatDate value="${rfq.requestedDeliveryDate}" pattern="yyyy-MM-dd"/>');
-                    baseDateStr = '<fmt:formatDate value="${rfq.requestedDeliveryDate}" pattern="dd/MM/yyyy"/>';
-                </c:otherwise>
-            </c:choose>
-            
-            // Min date = ngày sau baseDate (ngày yêu cầu/đề xuất + 1)
-            minValidDate = new Date(baseDate);
-            minValidDate.setDate(minValidDate.getDate() + 1);
-            
-            // Default date = 7 ngày sau minDate
-            var defaultDate = new Date(minValidDate);
-            defaultDate.setDate(defaultDate.getDate() + 7);
-            
-            // Show hint
-            var minDateFormatted = ('0' + minValidDate.getDate()).slice(-2) + '/' + ('0' + (minValidDate.getMonth() + 1)).slice(-2) + '/' + minValidDate.getFullYear();
-            document.getElementById('minDateHint').innerHTML = 'Tối thiểu sau 1 ngày so với ngày giao hàng (' + baseDateStr + '). Tối thiểu: ' + minDateFormatted;
-            
-            // Init Bootstrap Datepicker
-            $('#validUntil').datepicker({
-                format: 'dd/mm/yyyy',
-                language: 'vi',
-                autoclose: true,
-                todayHighlight: true,
-                startDate: minValidDate
-            }).datepicker('setDate', defaultDate);
-            
             // Calculate all prices
             document.querySelectorAll('.product-item').forEach(function(item, index) {
                 calculatePrice(index);
             });
-        });
-
-        function validateAndCalculatePrice(index) {
-            var item = document.querySelector('.product-item[data-index="' + index + '"]');
-            var minMargin = parseFloat(item.dataset.minMargin) || 30;
-            var profitInput = item.querySelector('.profit-margin');
-            var profitMargin = parseFloat(profitInput.value) || 0;
             
-            // Validate min profit margin
-            if (profitMargin < minMargin) {
-                profitInput.value = minMargin;
+            // Initialize character counts for textareas
+            updateCharCount('warrantyTerms', 'warrantyTermsCount', 300);
+            updateCharCount('additionalTerms', 'additionalTermsCount', 500);
+            
+            // Bind character count events
+            var warrantyEl = document.getElementById('warrantyTerms');
+            if (warrantyEl) {
+                warrantyEl.addEventListener('input', function() {
+                    updateCharCount('warrantyTerms', 'warrantyTermsCount', 300);
+                });
+            }
+            
+            var additionalEl = document.getElementById('additionalTerms');
+            if (additionalEl) {
+                additionalEl.addEventListener('input', function() {
+                    updateCharCount('additionalTerms', 'additionalTermsCount', 500);
+                });
+            }
+            
+            // Limit product notes length
+            document.querySelectorAll('input[name*="[notes]"]').forEach(function(input) {
+                input.addEventListener('input', function() {
+                    if (this.value.length > 100) {
+                        this.value = this.value.substring(0, 100);
+                    }
+                });
+            });
+        });
+        
+        // Character count helper
+        function updateCharCount(inputId, countId, maxLen) {
+            var input = document.getElementById(inputId);
+            var count = document.getElementById(countId);
+            if (input && count) {
+                count.textContent = input.value.length;
+            }
+        }
+
+        // Sanitize profit input - chỉ cho phép số và dấu chấm thập phân
+        function sanitizeProfitInput(input) {
+            var value = input.value;
+            // Xóa dấu cách
+            value = value.replace(/\s/g, '');
+            // Chỉ giữ số và dấu chấm
+            value = value.replace(/[^0-9.]/g, '');
+            // Chỉ cho phép 1 dấu chấm
+            var parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+            input.value = value;
+        }
+        
+        // Validate khi blur (rời khỏi input)
+        function validateProfitOnBlur(index) {
+            var item = document.querySelector('.product-item[data-index="' + index + '"]');
+            var maxMargin = parseFloat(item.dataset.maxMargin) || 30;
+            var profitInput = item.querySelector('.profit-margin');
+            
+            // Trim và xử lý
+            var value = profitInput.value.trim();
+            
+            // Nếu để trống hoặc chỉ có dấu chấm -> set về 0
+            if (value === '' || value === '.') {
+                profitInput.value = '0';
+                value = '0';
+            }
+            
+            // Xử lý số 0 ở đầu (ví dụ: 05 -> 5, nhưng 0.5 giữ nguyên)
+            if (value.length > 1 && value[0] === '0' && value[1] !== '.') {
+                value = parseFloat(value).toString();
+                profitInput.value = value;
+            }
+            
+            var profitMargin = parseFloat(value) || 0;
+            
+            // Validate max profit margin
+            if (profitMargin < 0 || isNaN(profitMargin)) {
+                profitInput.value = 0;
                 profitInput.classList.add('is-invalid');
-                alert('% Lợi nhuận không được thấp hơn ngưỡng tối thiểu ' + minMargin + '% đã thiết lập trong quản lý kho!');
+                alert('% Lợi nhuận không hợp lệ!');
+                setTimeout(function() { profitInput.classList.remove('is-invalid'); }, 2000);
+            } else if (profitMargin > maxMargin) {
+                profitInput.value = maxMargin;
+                profitInput.classList.add('is-invalid');
+                alert('% Lợi nhuận không được vượt quá ' + maxMargin + '% (giá bán lẻ)!');
                 setTimeout(function() { profitInput.classList.remove('is-invalid'); }, 2000);
             } else {
                 profitInput.classList.remove('is-invalid');
@@ -423,42 +473,31 @@
             var hasError = false;
             var errorMessages = [];
             
-            // Validate valid until date
-            var validUntilInput = document.getElementById('validUntil');
-            var validUntilStr = validUntilInput.value;
-            if (validUntilStr) {
-                var parts = validUntilStr.split('/');
-                if (parts.length === 3) {
-                    var validUntilDate = new Date(parts[2], parts[1] - 1, parts[0]);
-                    if (validUntilDate <= minValidDate) {
-                        hasError = true;
-                        validUntilInput.classList.add('is-invalid');
-                        errorMessages.push('Ngày báo giá có hiệu lực phải sau ngày giao hàng (' + baseDateStr + ') tối thiểu 1 ngày');
-                    } else {
-                        validUntilInput.classList.remove('is-invalid');
-                    }
-                }
-            } else {
-                hasError = true;
-                validUntilInput.classList.add('is-invalid');
-                errorMessages.push('Vui lòng chọn ngày báo giá có hiệu lực');
-            }
-            
-            // Validate profit margins
+            // Validate profit margins (không được vượt quá ngưỡng bán lẻ)
             document.querySelectorAll('.product-item').forEach(function(item, index) {
-                var minMargin = parseFloat(item.dataset.minMargin) || 30;
+                var maxMargin = parseFloat(item.dataset.maxMargin) || 30;
                 var profitInput = item.querySelector('.profit-margin');
                 var profitMargin = parseFloat(profitInput.value) || 0;
                 var productName = item.querySelector('h6').textContent;
                 
-                if (profitMargin < minMargin) {
+                if (profitMargin < 0) {
                     hasError = true;
                     profitInput.classList.add('is-invalid');
-                    errorMessages.push(productName + ': % lợi nhuận phải >= ' + minMargin + '%');
+                    errorMessages.push(productName + ': % lợi nhuận không được âm');
+                } else if (profitMargin > maxMargin) {
+                    hasError = true;
+                    profitInput.classList.add('is-invalid');
+                    errorMessages.push(productName + ': % lợi nhuận không được vượt quá ' + maxMargin + '% (giá bán lẻ)');
                 } else {
                     profitInput.classList.remove('is-invalid');
                 }
             });
+            
+            // Validate shipping method selected
+            if (!document.getElementById('shippingCarrierId').value) {
+                hasError = true;
+                errorMessages.push('Vui lòng chọn đơn vị vận chuyển');
+            }
             
             if (hasError) {
                 errorDiv.innerHTML = errorMessages.join('<br>');
@@ -468,6 +507,153 @@
             
             errorDiv.classList.add('d-none');
             return true;
+        }
+        
+        // ===== Shipping Rate Functions =====
+        var contextPath = '<%= request.getContextPath() %>';
+        var deliveryCityId = '${rfq.deliveryCityId}';
+        var deliveryDistrictId = '${rfq.deliveryDistrictId}';
+        
+        function calculateShippingRates() {
+            if (!deliveryCityId || !deliveryDistrictId) {
+                alert('Không có thông tin địa chỉ giao hàng từ RFQ.');
+                return;
+            }
+            
+            // Calculate total weight based on quantity (assume 500g per item)
+            var totalQuantity = 0;
+            document.querySelectorAll('.product-item').forEach(function(item) {
+                totalQuantity += parseInt(item.dataset.quantity) || 0;
+            });
+            
+            if (totalQuantity === 0) {
+                alert('Không có sản phẩm trong RFQ.');
+                return;
+            }
+            
+            var weight = totalQuantity * 500; // 500g per item
+            
+            document.getElementById('shippingRatesContainer').style.display = 'block';
+            document.getElementById('shippingRatesLoading').style.display = 'block';
+            document.getElementById('shippingRatesList').innerHTML = '';
+            document.getElementById('shippingError').style.display = 'none';
+            
+            $.ajax({
+                url: contextPath + '/api/goship/rates',
+                type: 'GET',
+                data: {
+                    toCityId: deliveryCityId,
+                    toDistrictId: deliveryDistrictId,
+                    weight: weight,
+                    cod: 0
+                },
+                dataType: 'json',
+                success: function(response) {
+                    document.getElementById('shippingRatesLoading').style.display = 'none';
+                    
+                    if (response.success && response.rates && response.rates.length > 0) {
+                        renderShippingRates(response.rates);
+                        document.getElementById('shippingError').style.display = 'none';
+                    } else {
+                        document.getElementById('shippingError').style.display = 'block';
+                        document.getElementById('shippingErrorMsg').innerHTML = '<strong>Không có đơn vị vận chuyển nào nhận địa điểm này.</strong><br>Vui lòng liên hệ khách hàng để thay đổi địa chỉ giao hàng.';
+                        document.getElementById('shippingRatesList').innerHTML = '';
+                    }
+                },
+                error: function() {
+                    document.getElementById('shippingRatesLoading').style.display = 'none';
+                    document.getElementById('shippingError').style.display = 'block';
+                    document.getElementById('shippingErrorMsg').textContent = 'Lỗi kết nối đến dịch vụ vận chuyển. Vui lòng thử lại sau.';
+                }
+            });
+        }
+        
+        function renderShippingRates(rates) {
+            var html = '<div class="list-group">';
+            
+            for (var i = 0; i < rates.length; i++) {
+                var rate = rates[i];
+                var estimatedDays = parseEstimatedDays(rate.estimatedDelivery);
+                var priceFormatted = formatCurrency(rate.price) + '₫';
+                
+                html += '<label class="list-group-item list-group-item-action d-flex align-items-center" style="cursor:pointer;">';
+                html += '<input type="radio" name="shippingRateRadio" class="me-3" ';
+                html += 'data-id="' + rate.id + '" ';
+                html += 'data-carrier="' + escapeHtml(rate.carrierName) + '" ';
+                html += 'data-service="' + escapeHtml(rate.serviceName) + '" ';
+                html += 'data-price="' + rate.price + '" ';
+                html += 'data-days="' + estimatedDays + '" ';
+                html += 'data-delivery="' + escapeHtml(rate.estimatedDelivery) + '" ';
+                html += 'onchange="selectShippingRate(this)">';
+                
+                if (rate.carrierLogo) {
+                    html += '<img src="' + rate.carrierLogo + '" alt="" style="width:50px;height:30px;object-fit:contain;" class="me-3">';
+                }
+                
+                html += '<div class="flex-grow-1">';
+                html += '<strong>' + escapeHtml(rate.carrierName) + '</strong>';
+                html += '<br><small class="text-muted">' + escapeHtml(rate.serviceName) + ' - ' + escapeHtml(rate.estimatedDelivery) + '</small>';
+                html += '</div>';
+                html += '<div class="text-end">';
+                html += '<strong class="text-primary">' + priceFormatted + '</strong>';
+                html += '</div>';
+                html += '</label>';
+            }
+            
+            html += '</div>';
+            document.getElementById('shippingRatesList').innerHTML = html;
+        }
+        
+        function parseEstimatedDays(estimatedDelivery) {
+            if (!estimatedDelivery) return 3;
+            
+            var lowerText = estimatedDelivery.toLowerCase();
+            var match = lowerText.match(/(\d+)[-–]?(\d+)?/);
+            
+            if (match) {
+                var maxValue = parseInt(match[2] || match[1]) || 3;
+                if (lowerText.indexOf('giờ') !== -1 || lowerText.indexOf('hour') !== -1) {
+                    return Math.ceil(maxValue / 24) || 1;
+                }
+                return maxValue;
+            }
+            return 3;
+        }
+        
+        function selectShippingRate(radio) {
+            var id = radio.getAttribute('data-id');
+            var carrierName = radio.getAttribute('data-carrier');
+            var serviceName = radio.getAttribute('data-service');
+            var price = parseFloat(radio.getAttribute('data-price')) || 0;
+            var days = radio.getAttribute('data-days');
+            var deliveryTime = radio.getAttribute('data-delivery');
+            
+            // Update hidden fields
+            document.getElementById('shippingCarrierId').value = id;
+            document.getElementById('shippingCarrierNameInput').value = carrierName;
+            document.getElementById('shippingServiceNameInput').value = serviceName;
+            document.getElementById('shippingFee').value = price;
+            document.getElementById('estimatedDeliveryDays').value = days;
+            
+            // Update display
+            document.getElementById('shippingFeeDisplay').value = formatCurrency(price);
+            
+            // Show selected info
+            document.getElementById('selectedShippingInfo').style.display = 'block';
+            document.getElementById('selectedCarrierName').textContent = carrierName;
+            document.getElementById('selectedServiceName').textContent = serviceName;
+            document.getElementById('selectedShippingFee').textContent = formatCurrency(price) + '₫';
+            document.getElementById('selectedDeliveryTime').textContent = deliveryTime;
+            
+            // Recalculate total
+            calculateTotal();
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(text));
+            return div.innerHTML;
         }
     </script>
 </body>

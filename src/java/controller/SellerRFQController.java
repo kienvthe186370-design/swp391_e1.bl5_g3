@@ -1,10 +1,11 @@
 package controller;
 
-import DAO.RFQDAO;
-import DAO.ProductDAO;
+import DAO.RFQDAONew;
+import DAO.QuotationDAO;
 import entity.RFQ;
-import entity.RFQItem;
+import entity.Quotation;
 import entity.Employee;
+import utils.RolePermission;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -12,26 +13,29 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
 /**
- * SellerRFQController - Xử lý các request RFQ từ phía Seller Manager
+ * SellerRFQController - Xử lý các request RFQ từ phía Seller
+ * 
+ * Luồng mới (đã tách Quotation):
+ * 1. Seller xem danh sách RFQ được assign
+ * 2. Thương lượng ngày giao (max 3 lần)
+ * 3. Tạo Quotation (chuyển sang SellerQuotationController)
+ * 
  * URL Patterns:
  * - /admin/rfq (GET) - Danh sách RFQ
  * - /admin/rfq/detail (GET) - Chi tiết RFQ
- * - /admin/rfq/assign (POST) - Phân công RFQ
  * - /admin/rfq/propose-date (POST) - Đề xuất ngày giao mới
- * - /admin/rfq/quotation-form (GET) - Form tạo báo giá
- * - /admin/rfq/send-quotation (POST) - Gửi báo giá
+ * - /admin/rfq/update-notes (POST) - Cập nhật ghi chú
  */
 @WebServlet(name = "SellerRFQController", urlPatterns = {"/admin/rfq", "/admin/rfq/*"})
 public class SellerRFQController extends HttpServlet {
 
-    private RFQDAO rfqDAO = new RFQDAO();
-    private ProductDAO productDAO = new ProductDAO();
+    private RFQDAONew rfqDAO = new RFQDAONew();
+    private QuotationDAO quotationDAO = new QuotationDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -40,11 +44,17 @@ public class SellerRFQController extends HttpServlet {
         String pathInfo = request.getPathInfo();
         if (pathInfo == null) pathInfo = "";
         
-        // Check login
+        // Check login and permission
         HttpSession session = request.getSession();
         Employee employee = (Employee) session.getAttribute("employee");
         if (employee == null) {
             response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        
+        // Check if user can process RFQ (Seller role)
+        if (!RolePermission.canProcessRFQ(employee.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/admin/dashboard?error=access_denied");
             return;
         }
         
@@ -56,9 +66,6 @@ public class SellerRFQController extends HttpServlet {
                 break;
             case "/detail":
                 showRFQDetail(request, response, employee);
-                break;
-            case "/quotation-form":
-                showQuotationForm(request, response, employee);
                 break;
             default:
                 response.sendRedirect(request.getContextPath() + "/admin/rfq");
@@ -72,7 +79,7 @@ public class SellerRFQController extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         String pathInfo = request.getPathInfo();
         
-        // Check login
+        // Check login and permission
         HttpSession session = request.getSession();
         Employee employee = (Employee) session.getAttribute("employee");
         if (employee == null) {
@@ -80,18 +87,20 @@ public class SellerRFQController extends HttpServlet {
             return;
         }
         
+        if (!RolePermission.canProcessRFQ(employee.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/admin/dashboard?error=access_denied");
+            return;
+        }
+        
         switch (pathInfo) {
-            case "/assign":
-                assignRFQ(request, response, employee);
-                break;
-            case "/assign-to-me":
-                assignToMe(request, response, employee);
-                break;
             case "/propose-date":
                 proposeDate(request, response, employee);
                 break;
-            case "/send-quotation":
-                sendQuotation(request, response, employee);
+            case "/accept-customer-date":
+                acceptCustomerDate(request, response, employee);
+                break;
+            case "/update-notes":
+                updateNotes(request, response, employee);
                 break;
             default:
                 response.sendRedirect(request.getContextPath() + "/admin/rfq");
@@ -103,8 +112,13 @@ public class SellerRFQController extends HttpServlet {
         
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
-        // Bỏ filter phân công
-        Integer assignedTo = null;
+        String negotiationCountStr = request.getParameter("negotiationCount");
+        Integer negotiationCount = null;
+        if (negotiationCountStr != null && !negotiationCountStr.isEmpty()) {
+            try {
+                negotiationCount = Integer.parseInt(negotiationCountStr);
+            } catch (NumberFormatException e) {}
+        }
         
         int page = 1;
         try {
@@ -112,26 +126,29 @@ public class SellerRFQController extends HttpServlet {
         } catch (Exception e) {}
         
         int pageSize = 5;
-        List<RFQ> rfqs = rfqDAO.searchRFQs(keyword, status, assignedTo, null, page, pageSize);
-        int totalCount = rfqDAO.countRFQs(keyword, status, assignedTo, null);
-        int totalPages = (int) Math.ceil((double) totalCount / pageSize);
         
-        // Statistics
-        int[] stats = rfqDAO.getRFQStatistics();
-        int cancelledCount = rfqDAO.countRFQs(null, RFQ.STATUS_CANCELLED, null, null);
+        // Seller chỉ xem RFQ được assign cho mình
+        List<RFQ> rfqs = rfqDAO.getSellerRFQs(employee.getEmployeeID(), keyword, status, negotiationCount, page, pageSize);
+        int totalCount = rfqDAO.countSellerRFQs(employee.getEmployeeID(), keyword, status, negotiationCount);
+        int totalPages = (int) Math.ceil((double) totalCount / pageSize);
+        if (totalPages < 1) totalPages = 1; // Luôn có ít nhất 1 trang
+        
+        // Statistics for this seller
+        int[] stats = rfqDAO.getRFQStatistics(employee.getEmployeeID());
         
         request.setAttribute("rfqs", rfqs);
         request.setAttribute("currentPage", page);
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("totalCount", totalCount);
+        request.setAttribute("pageSize", pageSize);
         request.setAttribute("keyword", keyword);
         request.setAttribute("status", status);
-        request.setAttribute("assignedTo", null);
+        request.setAttribute("negotiationCount", negotiationCountStr);
         request.setAttribute("pendingCount", stats[0]);
-        request.setAttribute("processingCount", stats[1]);
-        request.setAttribute("quotedCount", stats[2]);
-        request.setAttribute("completedCount", stats[3]);
-        request.setAttribute("cancelledCount", cancelledCount);
+        request.setAttribute("reviewingCount", stats[1]);
+        request.setAttribute("negotiatingCount", stats[2]);
+        request.setAttribute("quotationCreatedCount", stats[3]);
+        request.setAttribute("completedCount", stats[4]);
         
         request.getRequestDispatcher("/AdminLTE-3.2.0/admin-rfq-list.jsp").forward(request, response);
     }
@@ -147,73 +164,96 @@ public class SellerRFQController extends HttpServlet {
             return;
         }
         
+        // Security check - Seller chỉ xem RFQ được assign cho mình
+        if (!rfqDAO.isRFQAssignedToSeller(rfqID, employee.getEmployeeID())) {
+            response.sendRedirect(request.getContextPath() + "/admin/rfq?error=access_denied");
+            return;
+        }
+        
         rfq.setHistory(rfqDAO.getRFQHistory(rfqID));
         
-        // Load cost prices for items
-        for (RFQItem item : rfq.getItems()) {
-            if (item.getVariantID() != null && item.getCostPrice() == null) {
-                item.setCostPrice(rfqDAO.getWeightedAverageCost(item.getVariantID()));
+        // Load Quotation if exists
+        Quotation quotation = quotationDAO.getQuotationByRFQId(rfqID);
+        if (quotation != null) {
+            rfq.setQuotation(quotation);
+        }
+        
+        // Check for stock shortage and existing stock request
+        DAO.StockRequestDAO stockRequestDAO = new DAO.StockRequestDAO();
+        boolean hasStockRequest = stockRequestDAO.hasStockRequestForRFQ(rfqID);
+        request.setAttribute("hasStockRequest", hasStockRequest);
+        
+        if (hasStockRequest) {
+            entity.StockRequest stockRequest = stockRequestDAO.getStockRequestByRFQID(rfqID);
+            if (stockRequest != null) {
+                request.setAttribute("stockRequestId", stockRequest.getStockRequestID());
             }
         }
+        
+        // Load stock info for each item and check shortage
+        java.util.Map<Integer, Integer> itemStocks = getItemStocks(rfq);
+        request.setAttribute("itemStocks", itemStocks);
+        
+        // Check if any item has shortage
+        boolean hasShortage = false;
+        for (entity.RFQItem item : rfq.getItems()) {
+            int stock = itemStocks.getOrDefault(item.getRfqItemID(), 0);
+            if (item.getQuantity() > stock) {
+                hasShortage = true;
+                break;
+            }
+        }
+        request.setAttribute("hasShortage", hasShortage);
         
         request.setAttribute("rfq", rfq);
         request.getRequestDispatcher("/AdminLTE-3.2.0/admin-rfq-detail.jsp").forward(request, response);
     }
-
-    private void showQuotationForm(HttpServletRequest request, HttpServletResponse response, Employee employee)
-            throws ServletException, IOException {
-        
-        int rfqID = Integer.parseInt(request.getParameter("rfqId"));
-        RFQ rfq = rfqDAO.getRFQById(rfqID);
-        
-        if (rfq == null || !rfq.canCreateQuote()) {
-            response.sendRedirect(request.getContextPath() + "/admin/rfq");
-            return;
+    
+    /**
+     * Lấy thông tin tồn kho cho từng item trong RFQ
+     * @return Map<RFQItemID, Stock>
+     */
+    private java.util.Map<Integer, Integer> getItemStocks(RFQ rfq) {
+        java.util.Map<Integer, Integer> stockMap = new java.util.HashMap<>();
+        if (rfq.getItems() == null || rfq.getItems().isEmpty()) {
+            return stockMap;
         }
         
-        // Load cost prices and min profit margin for items, calculate total weight
-        int totalWeight = 0;
-        for (RFQItem item : rfq.getItems()) {
-            if (item.getVariantID() != null) {
-                item.setCostPrice(rfqDAO.getWeightedAverageCost(item.getVariantID()));
-                // Load min profit margin from stock management (ProfitMarginTarget)
-                item.setMinProfitMargin(rfqDAO.getProfitMarginTarget(item.getVariantID()));
+        DAO.DBContext db = new DAO.DBContext();
+        java.sql.Connection conn = null;
+        
+        try {
+            conn = db.getConnection();
+            
+            for (entity.RFQItem item : rfq.getItems()) {
+                String sql = "SELECT ISNULL(SUM(Stock), 0) as TotalStock FROM ProductVariants WHERE ProductID = ?";
+                if (item.getVariantID() != null) {
+                    sql = "SELECT ISNULL(Stock, 0) as TotalStock FROM ProductVariants WHERE VariantID = ?";
+                }
+                
+                try (java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+                    if (item.getVariantID() != null) {
+                        ps.setInt(1, item.getVariantID());
+                    } else {
+                        ps.setInt(1, item.getProductID());
+                    }
+                    java.sql.ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        stockMap.put(item.getRfqItemID(), rs.getInt("TotalStock"));
+                    }
+                }
             }
-            // Default weight: 500g per item (can be customized later)
-            totalWeight += item.getQuantity() * 500;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try { conn.close(); } catch (Exception e) { e.printStackTrace(); }
+            }
         }
         
-        // Get delivery city/district IDs from RFQ
-        String deliveryCityId = rfq.getDeliveryCityId() != null ? rfq.getDeliveryCityId() : "";
-        String deliveryDistrictId = rfq.getDeliveryDistrictId() != null ? rfq.getDeliveryDistrictId() : "";
-        
-        request.setAttribute("rfq", rfq);
-        request.setAttribute("totalWeight", totalWeight);
-        request.setAttribute("deliveryCityId", deliveryCityId);
-        request.setAttribute("deliveryDistrictId", deliveryDistrictId);
-        request.getRequestDispatcher("/AdminLTE-3.2.0/quotation-form.jsp").forward(request, response);
+        return stockMap;
     }
-
-    private void assignRFQ(HttpServletRequest request, HttpServletResponse response, Employee employee)
-            throws ServletException, IOException {
-        
-        int rfqID = Integer.parseInt(request.getParameter("rfqId"));
-        int assignTo = Integer.parseInt(request.getParameter("assignTo"));
-        
-        rfqDAO.assignRFQ(rfqID, assignTo, employee.getEmployeeID());
-        
-        response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID);
-    }
-
-    private void assignToMe(HttpServletRequest request, HttpServletResponse response, Employee employee)
-            throws ServletException, IOException {
-        
-        int rfqID = Integer.parseInt(request.getParameter("id"));
-        rfqDAO.assignRFQ(rfqID, employee.getEmployeeID(), employee.getEmployeeID());
-        
-        response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID);
-    }
-
+    
     private void proposeDate(HttpServletRequest request, HttpServletResponse response, Employee employee)
             throws ServletException, IOException {
         
@@ -222,7 +262,19 @@ public class SellerRFQController extends HttpServlet {
             String proposedDateStr = request.getParameter("proposedDate");
             String reason = request.getParameter("reason");
             
-            // Support both dd/MM/yyyy and yyyy-MM-dd formats
+            // Security check
+            if (!rfqDAO.isRFQAssignedToSeller(rfqID, employee.getEmployeeID())) {
+                response.sendRedirect(request.getContextPath() + "/admin/rfq?error=access_denied");
+                return;
+            }
+            
+            RFQ rfq = rfqDAO.getRFQById(rfqID);
+            if (rfq == null || !rfq.canSellerProposeDate()) {
+                response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID + "&error=cannot_propose");
+                return;
+            }
+            
+            // Parse date
             SimpleDateFormat sdf;
             if (proposedDateStr.contains("/")) {
                 sdf = new SimpleDateFormat("dd/MM/yyyy");
@@ -231,85 +283,66 @@ public class SellerRFQController extends HttpServlet {
             }
             Timestamp proposedDate = new Timestamp(sdf.parse(proposedDateStr).getTime());
             
-            rfqDAO.proposeDeliveryDate(rfqID, proposedDate, reason, employee.getEmployeeID());
+            boolean success = rfqDAO.proposeDeliveryDate(rfqID, proposedDate, reason, employee.getEmployeeID());
             
-            response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID + "&success=date_proposed");
+            if (success) {
+                response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID + "&success=date_proposed");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID + "&error=propose_failed");
+            }
+            
         } catch (Exception e) {
             e.printStackTrace();
             response.sendRedirect(request.getContextPath() + "/admin/rfq?error=propose_failed");
         }
     }
 
-    private void sendQuotation(HttpServletRequest request, HttpServletResponse response, Employee employee)
+    private void acceptCustomerDate(HttpServletRequest request, HttpServletResponse response, Employee employee)
             throws ServletException, IOException {
         
         try {
             int rfqID = Integer.parseInt(request.getParameter("rfqId"));
-            RFQ rfq = rfqDAO.getRFQById(rfqID);
             
-            if (rfq == null || !rfq.canCreateQuote()) {
-                response.sendRedirect(request.getContextPath() + "/admin/rfq");
+            // Security check
+            if (!rfqDAO.isRFQAssignedToSeller(rfqID, employee.getEmployeeID())) {
+                response.sendRedirect(request.getContextPath() + "/admin/rfq?error=access_denied");
                 return;
             }
             
-            // Parse quotation data
-            BigDecimal shippingFee = new BigDecimal(request.getParameter("shippingFee"));
-            BigDecimal taxPercent = new BigDecimal(request.getParameter("taxPercent"));
-            String validUntilStr = request.getParameter("quotationValidUntil");
-            String paymentMethod = request.getParameter("paymentMethod");
-            String quotationTerms = request.getParameter("additionalTerms");
-            String warrantyTerms = request.getParameter("warrantyTerms");
-            
-            // Support both dd/MM/yyyy and yyyy-MM-dd formats
-            SimpleDateFormat sdf;
-            if (validUntilStr.contains("/")) {
-                sdf = new SimpleDateFormat("dd/MM/yyyy");
-            } else {
-                sdf = new SimpleDateFormat("yyyy-MM-dd");
-            }
-            Timestamp validUntil = new Timestamp(sdf.parse(validUntilStr).getTime());
-            
-            // Parse item pricing
-            List<RFQItem> items = rfq.getItems();
-            for (int i = 0; i < items.size(); i++) {
-                RFQItem item = items.get(i);
-                String profitMarginStr = request.getParameter("items[" + i + "][profitMargin]");
-                String notesStr = request.getParameter("items[" + i + "][notes]");
-                
-                if (profitMarginStr != null && !profitMarginStr.isEmpty()) {
-                    item.setProfitMarginPercent(new BigDecimal(profitMarginStr));
-                }
-                if (notesStr != null) {
-                    item.setNotes(notesStr);
-                }
-                
-                // Get cost price if not set
-                if (item.getCostPrice() == null && item.getVariantID() != null) {
-                    item.setCostPrice(rfqDAO.getWeightedAverageCost(item.getVariantID()));
-                }
+            RFQ rfq = rfqDAO.getRFQById(rfqID);
+            if (rfq == null || !"DateCountered".equals(rfq.getStatus())) {
+                response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID + "&error=cannot_accept");
+                return;
             }
             
-            // Calculate tax amount
-            BigDecimal subtotal = BigDecimal.ZERO;
-            for (RFQItem item : items) {
-                item.calculateUnitPrice();
-                subtotal = subtotal.add(item.getSubtotal());
-            }
-            BigDecimal taxAmount = subtotal.multiply(taxPercent).divide(BigDecimal.valueOf(100));
-            
-            boolean success = rfqDAO.sendQuotation(rfqID, items, shippingFee, taxAmount, 
-                                                    validUntil, paymentMethod, quotationTerms, 
-                                                    warrantyTerms, employee.getEmployeeID());
+            // Seller chấp nhận ngày KH đề xuất -> chuyển status sang DateAccepted
+            boolean success = rfqDAO.sellerAcceptCustomerDate(rfqID, employee.getEmployeeID());
             
             if (success) {
-                response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID + "&success=quotation_sent");
+                response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID + "&success=date_accepted");
             } else {
-                response.sendRedirect(request.getContextPath() + "/admin/rfq/quotation-form?rfqId=" + rfqID + "&error=send_failed");
+                response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID + "&error=accept_failed");
             }
             
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/admin/rfq?error=quotation_failed");
+            response.sendRedirect(request.getContextPath() + "/admin/rfq?error=accept_failed");
         }
+    }
+
+    private void updateNotes(HttpServletRequest request, HttpServletResponse response, Employee employee)
+            throws ServletException, IOException {
+        
+        int rfqID = Integer.parseInt(request.getParameter("rfqId"));
+        String notes = request.getParameter("sellerNotes");
+        
+        // Security check
+        if (!rfqDAO.isRFQAssignedToSeller(rfqID, employee.getEmployeeID())) {
+            response.sendRedirect(request.getContextPath() + "/admin/rfq?error=access_denied");
+            return;
+        }
+        
+        rfqDAO.updateSellerNotes(rfqID, notes, employee.getEmployeeID());
+        response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID + "&success=notes_updated");
     }
 }

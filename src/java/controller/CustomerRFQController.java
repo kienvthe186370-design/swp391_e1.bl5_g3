@@ -1,9 +1,11 @@
 package controller;
 
-import DAO.RFQDAO;
+import DAO.RFQDAONew;
+import DAO.QuotationDAO;
 import DAO.ProductDAO;
 import entity.RFQ;
 import entity.RFQItem;
+import entity.Quotation;
 import entity.Customer;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -20,21 +22,28 @@ import java.util.Map;
 
 /**
  * CustomerRFQController - Xử lý các request RFQ từ phía Customer
+ * 
+ * Luồng mới (đã tách Quotation):
+ * 1. Customer tạo RFQ -> Auto-assign cho Seller
+ * 2. Thương lượng ngày giao (max 3 lần)
+ * 3. Seller tạo Quotation (xử lý ở SellerQuotationController)
+ * 4. Customer xem/thương lượng Quotation (xử lý ở CustomerQuotationController)
+ * 
  * URL Patterns:
  * - /rfq/form (GET) - Hiển thị form tạo RFQ
  * - /rfq/confirm (POST) - Xác nhận trước khi submit
  * - /rfq/submit (POST) - Submit RFQ mới
  * - /rfq/list (GET) - Danh sách RFQ của customer
  * - /rfq/detail (GET) - Chi tiết RFQ
- * - /rfq/accept-date (POST) - Chấp nhận ngày giao mới
- * - /rfq/reject-date (POST) - Từ chối ngày giao mới
- * - /rfq/accept-quote (POST) - Chấp nhận báo giá
- * - /rfq/reject-quote (POST) - Từ chối báo giá
+ * - /rfq/accept-date (POST) - Chấp nhận ngày giao đề xuất
+ * - /rfq/counter-date (POST) - Counter ngày giao
+ * - /rfq/cancel (POST) - Hủy RFQ
  */
 @WebServlet(name = "CustomerRFQController", urlPatterns = {"/rfq/*"})
 public class CustomerRFQController extends HttpServlet {
 
-    private RFQDAO rfqDAO = new RFQDAO();
+    private RFQDAONew rfqDAO = new RFQDAONew();
+    private QuotationDAO quotationDAO = new QuotationDAO();
     private ProductDAO productDAO = new ProductDAO();
 
     @Override
@@ -62,9 +71,6 @@ public class CustomerRFQController extends HttpServlet {
             case "/detail":
                 showRFQDetail(request, response, customer);
                 break;
-            case "/edit":
-                editDraftRFQ(request, response, customer);
-                break;
             default:
                 response.sendRedirect(request.getContextPath() + "/rfq/list");
         }
@@ -86,32 +92,24 @@ public class CustomerRFQController extends HttpServlet {
         }
         
         switch (pathInfo) {
+            case "/form":
+                // Edit draft - quay lại form với dữ liệu đã nhập
+                editDraftRFQ(request, response, customer);
+                break;
             case "/confirm":
                 confirmRFQ(request, response, customer);
                 break;
             case "/submit":
                 submitRFQ(request, response, customer);
                 break;
-            case "/save-draft":
-                saveDraft(request, response, customer);
-                break;
-            case "/edit-draft":
-                editDraftFromConfirm(request, response, customer);
-                break;
-            case "/submit-draft":
-                submitDraft(request, response, customer);
-                break;
             case "/accept-date":
                 acceptDate(request, response, customer);
                 break;
-            case "/reject-date":
-                rejectDate(request, response, customer);
+            case "/counter-date":
+                counterDate(request, response, customer);
                 break;
-            case "/accept-quote":
-                acceptQuote(request, response, customer);
-                break;
-            case "/reject-quote":
-                rejectQuote(request, response, customer);
+            case "/cancel":
+                cancelRFQ(request, response, customer);
                 break;
             default:
                 response.sendRedirect(request.getContextPath() + "/rfq/list");
@@ -126,29 +124,57 @@ public class CustomerRFQController extends HttpServlet {
         request.setAttribute("customer", customer);
         request.getRequestDispatcher("/customer/rfq-form.jsp").forward(request, response);
     }
+    
+    /**
+     * Edit draft RFQ - quay lại form với dữ liệu đã nhập trước đó
+     */
+    private void editDraftRFQ(HttpServletRequest request, HttpServletResponse response, Customer customer)
+            throws ServletException, IOException {
+        try {
+            // Build RFQ từ request parameters (dữ liệu draft)
+            RFQData data = buildRFQFromRequest(request, customer);
+            RFQ draftRfq = data.getRfq();
+            draftRfq.setItems(data.getItems());
+            
+            // Load products for selection
+            List<Map<String, Object>> products = productDAO.getProducts(null, null, null, true, "name", "asc", 1, 1000);
+            
+            request.setAttribute("products", products);
+            request.setAttribute("customer", customer);
+            request.setAttribute("draftRfq", draftRfq);
+            request.setAttribute("isEditDraft", true);
+            
+            request.getRequestDispatcher("/customer/rfq-form.jsp").forward(request, response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Nếu có lỗi, quay về form trống
+            showRFQForm(request, response, customer);
+        }
+    }
 
     private void showRFQList(HttpServletRequest request, HttpServletResponse response, Customer customer)
             throws ServletException, IOException {
         
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
-        String paymentMethod = request.getParameter("paymentMethod");
+        String sortBy = request.getParameter("sortBy");
         int page = 1;
         try {
             page = Integer.parseInt(request.getParameter("page"));
         } catch (Exception e) {}
         
         int pageSize = 5;
-        List<RFQ> rfqs = rfqDAO.searchRFQs(keyword, status, null, customer.getCustomerID(), paymentMethod, page, pageSize);
-        int totalCount = rfqDAO.countRFQs(keyword, status, null, customer.getCustomerID(), paymentMethod);
+        List<RFQ> rfqs = rfqDAO.getCustomerRFQsWithSort(customer.getCustomerID(), keyword, status, sortBy, page, pageSize);
+        int totalCount = rfqDAO.countCustomerRFQs(customer.getCustomerID(), keyword, status);
         int totalPages = (int) Math.ceil((double) totalCount / pageSize);
+        if (totalPages < 1) totalPages = 1;
         
         request.setAttribute("rfqs", rfqs);
         request.setAttribute("currentPage", page);
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("keyword", keyword);
         request.setAttribute("status", status);
-        request.setAttribute("paymentMethod", paymentMethod);
+        request.setAttribute("sortBy", sortBy);
         
         request.getRequestDispatcher("/customer/rfq-list.jsp").forward(request, response);
     }
@@ -165,13 +191,14 @@ public class CustomerRFQController extends HttpServlet {
             return;
         }
         
-        // Check and update if quotation has expired
-        if (RFQ.STATUS_QUOTED.equals(rfq.getStatus()) && rfq.isQuoteExpired()) {
-            rfqDAO.checkAndExpireQuotation(rfqID);
-            rfq = rfqDAO.getRFQById(rfqID); // Reload after update
+        rfq.setHistory(rfqDAO.getRFQHistory(rfqID));
+        
+        // Load Quotation if exists
+        Quotation quotation = quotationDAO.getQuotationByRFQId(rfqID);
+        if (quotation != null) {
+            rfq.setQuotation(quotation);
         }
         
-        rfq.setHistory(rfqDAO.getRFQHistory(rfqID));
         request.setAttribute("rfq", rfq);
         request.getRequestDispatcher("/customer/rfq-detail.jsp").forward(request, response);
     }
@@ -180,58 +207,23 @@ public class CustomerRFQController extends HttpServlet {
             throws ServletException, IOException {
         
         try {
-            System.out.println("[CustomerRFQ] === START submitRFQ ===");
-            
-            // Check if there's an existing draft to update
-            String draftRfqIdStr = request.getParameter("draftRfqId");
-            
-            if (draftRfqIdStr != null && !draftRfqIdStr.isEmpty()) {
-                // Update existing draft and submit it
-                int draftId = Integer.parseInt(draftRfqIdStr);
-                RFQ existingRfq = rfqDAO.getRFQById(draftId);
-                
-                if (existingRfq != null && existingRfq.getCustomerID() == customer.getCustomerID() 
-                    && RFQ.STATUS_DRAFT.equals(existingRfq.getStatus())) {
-                    System.out.println("[CustomerRFQ] Updating and submitting existing draft: " + draftId);
-                    
-                    RFQData data = buildRFQFromRequest(request, customer);
-                    rfqDAO.updateDraftRFQ(draftId, data.getRfq(), data.getItems());
-                    boolean success = rfqDAO.submitDraftRFQ(draftId);
-                    
-                    if (success) {
-                        response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + draftId + "&success=created");
-                    } else {
-                        request.setAttribute("error", "Có lỗi khi gửi đơn. Vui lòng thử lại.");
-                        showRFQForm(request, response, customer);
-                    }
-                    return;
-                }
-            }
-            
-            // No draft exists - create new RFQ
             RFQData data = buildRFQFromRequest(request, customer);
             RFQ rfq = data.getRfq();
             List<RFQItem> items = data.getItems();
             
-            System.out.println("[CustomerRFQ] Creating new RFQ");
-            System.out.println("  - CustomerID: " + rfq.getCustomerID());
-            System.out.println("  - Items count: " + items.size());
-            
             int rfqID = rfqDAO.createRFQ(rfq, items);
-            System.out.println("[CustomerRFQ] createRFQ result: " + rfqID);
             
             if (rfqID > 0) {
                 response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID + "&success=created");
             } else {
                 String lastError = rfqDAO.getLastError();
-                request.setAttribute("error", "Có lỗi xảy ra khi tạo RFQ. " + (lastError != null ? lastError : "Vui lòng kiểm tra log server."));
+                request.setAttribute("error", "Có lỗi xảy ra khi tạo RFQ. " + (lastError != null ? lastError : ""));
                 showRFQForm(request, response, customer);
             }
             
         } catch (Exception e) {
-            System.err.println("[CustomerRFQ] ERROR in submitRFQ: " + e.getMessage());
             e.printStackTrace();
-            request.setAttribute("error", "Lỗi: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            request.setAttribute("error", "Lỗi: " + e.getMessage());
             showRFQForm(request, response, customer);
         }
     }
@@ -275,11 +267,10 @@ public class CustomerRFQController extends HttpServlet {
         rfq.setDeliveryWardId(request.getParameter("deliveryWardId"));
         rfq.setDeliveryInstructions(request.getParameter("deliveryInstructions"));
         rfq.setCustomerNotes(request.getParameter("customerNotes"));
-        rfq.setPaymentMethod(request.getParameter("preferredPaymentMethod"));
+        rfq.setPaymentTermsPreference(request.getParameter("paymentTermsPreference"));
         
         String deliveryDateStr = request.getParameter("requestedDeliveryDate");
         if (deliveryDateStr != null && !deliveryDateStr.isEmpty()) {
-            // Support both dd/MM/yyyy and yyyy-MM-dd formats
             SimpleDateFormat sdf;
             if (deliveryDateStr.contains("/")) {
                 sdf = new SimpleDateFormat("dd/MM/yyyy");
@@ -287,29 +278,6 @@ public class CustomerRFQController extends HttpServlet {
                 sdf = new SimpleDateFormat("yyyy-MM-dd");
             }
             rfq.setRequestedDeliveryDate(new Timestamp(sdf.parse(deliveryDateStr).getTime()));
-        }
-        
-        // Shipping method info
-        rfq.setShippingCarrierId(request.getParameter("shippingCarrierId"));
-        rfq.setShippingCarrierName(request.getParameter("shippingCarrierName"));
-        rfq.setShippingServiceName(request.getParameter("shippingServiceName"));
-        
-        String shippingFeeStr = request.getParameter("shippingFee");
-        if (shippingFeeStr != null && !shippingFeeStr.isEmpty()) {
-            try {
-                rfq.setShippingFee(new java.math.BigDecimal(shippingFeeStr));
-            } catch (NumberFormatException e) {
-                // Ignore invalid shipping fee
-            }
-        }
-        
-        String estimatedDaysStr = request.getParameter("estimatedDeliveryDays");
-        if (estimatedDaysStr != null && !estimatedDaysStr.isEmpty()) {
-            try {
-                rfq.setEstimatedDeliveryDays(Integer.parseInt(estimatedDaysStr));
-            } catch (NumberFormatException e) {
-                rfq.setEstimatedDeliveryDays(3); // Default
-            }
         }
         
         List<RFQItem> items = new ArrayList<>();
@@ -331,7 +299,7 @@ public class CustomerRFQController extends HttpServlet {
                     int quantity = Integer.parseInt(quantities[i]);
                     
                     if (quantity < MIN_QUANTITY) {
-                        throw new Exception("Số lượng tối thiểu cho mỗi sản phẩm là " + MIN_QUANTITY + ". Vui lòng kiểm tra lại.");
+                        throw new Exception("Số lượng tối thiểu cho mỗi sản phẩm là " + MIN_QUANTITY);
                     }
                     
                     item.setQuantity(quantity);
@@ -363,9 +331,7 @@ public class CustomerRFQController extends HttpServlet {
             throw new Exception("Vui lòng chọn ít nhất 1 sản phẩm");
         }
 
-        // Gán danh sách item vào RFQ để JSP (rfq-detail) hiển thị được sản phẩm khi đang ở bước xác nhận
         rfq.setItems(items);
-        
         return new RFQData(rfq, items);
     }
     
@@ -378,178 +344,88 @@ public class CustomerRFQController extends HttpServlet {
             this.items = items;
         }
 
-        public RFQ getRfq() {
-            return rfq;
-        }
-
-        public List<RFQItem> getItems() {
-            return items;
-        }
+        public RFQ getRfq() { return rfq; }
+        public List<RFQItem> getItems() { return items; }
     }
 
-    private void editDraftRFQ(HttpServletRequest request, HttpServletResponse response, Customer customer)
-            throws ServletException, IOException {
-        int rfqID = Integer.parseInt(request.getParameter("id"));
-        RFQ rfq = rfqDAO.getRFQById(rfqID);
-        
-        // Security check - only owner can edit and only Draft status
-        if (rfq == null || rfq.getCustomerID() != customer.getCustomerID() || !RFQ.STATUS_DRAFT.equals(rfq.getStatus())) {
-            response.sendRedirect(request.getContextPath() + "/rfq/list");
-            return;
-        }
-        
-        // Load products for selection
-        List<Map<String, Object>> products = productDAO.getProducts(null, null, null, true, "name", "asc", 1, 1000);
-        request.setAttribute("products", products);
-        request.setAttribute("customer", customer);
-        request.setAttribute("draftRfq", rfq);
-        request.getRequestDispatcher("/customer/rfq-form.jsp").forward(request, response);
-    }
-    
-    private void editDraftFromConfirm(HttpServletRequest request, HttpServletResponse response, Customer customer)
-            throws ServletException, IOException {
-        // Lấy dữ liệu từ form confirm và chuyển về form để chỉnh sửa
-        try {
-            RFQData data = buildRFQFromRequest(request, customer);
-            RFQ rfq = data.getRfq();
-            
-            // Lấy draftRfqId nếu có
-            String draftRfqIdStr = request.getParameter("draftRfqId");
-            if (draftRfqIdStr != null && !draftRfqIdStr.isEmpty()) {
-                rfq.setRfqID(Integer.parseInt(draftRfqIdStr));
-            }
-            
-            List<Map<String, Object>> products = productDAO.getProducts(null, null, null, true, "name", "asc", 1, 1000);
-            request.setAttribute("products", products);
-            request.setAttribute("customer", customer);
-            request.setAttribute("draftRfq", rfq);
-            request.getRequestDispatcher("/customer/rfq-form.jsp").forward(request, response);
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/rfq/form");
-        }
-    }
-    
-    private void saveDraft(HttpServletRequest request, HttpServletResponse response, Customer customer)
-            throws ServletException, IOException {
-        try {
-            RFQData data = buildRFQFromRequest(request, customer);
-            RFQ rfq = data.getRfq();
-            List<RFQItem> items = data.getItems();
-            
-            // Check if updating existing draft
-            String draftRfqIdStr = request.getParameter("draftRfqId");
-            int rfqID;
-            
-            if (draftRfqIdStr != null && !draftRfqIdStr.isEmpty()) {
-                int existingId = Integer.parseInt(draftRfqIdStr);
-                RFQ existingRfq = rfqDAO.getRFQById(existingId);
-                if (existingRfq != null && existingRfq.getCustomerID() == customer.getCustomerID() 
-                    && RFQ.STATUS_DRAFT.equals(existingRfq.getStatus())) {
-                    // Update existing draft
-                    rfqDAO.updateDraftRFQ(existingId, rfq, items);
-                    rfqID = existingId;
-                } else {
-                    rfqID = rfqDAO.createDraftRFQ(rfq, items);
-                }
-            } else {
-                rfqID = rfqDAO.createDraftRFQ(rfq, items);
-            }
-            
-            response.setContentType("application/json");
-            response.getWriter().write("{\"success\":true,\"rfqId\":" + rfqID + "}");
-        } catch (Exception e) {
-            response.setContentType("application/json");
-            response.getWriter().write("{\"success\":false,\"error\":\"" + e.getMessage() + "\"}");
-        }
-    }
-    
-    private void submitDraft(HttpServletRequest request, HttpServletResponse response, Customer customer)
-            throws ServletException, IOException {
-        int rfqID = Integer.parseInt(request.getParameter("rfqId"));
-        RFQ rfq = rfqDAO.getRFQById(rfqID);
-        
-        // Security check
-        if (rfq == null || rfq.getCustomerID() != customer.getCustomerID() || !RFQ.STATUS_DRAFT.equals(rfq.getStatus())) {
-            response.sendRedirect(request.getContextPath() + "/rfq/list");
-            return;
-        }
-        
-        // Submit draft - change status to Pending
-        boolean success = rfqDAO.submitDraftRFQ(rfqID);
-        if (success) {
-            response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID + "&success=created");
-        } else {
-            response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID + "&error=submit_failed");
-        }
-    }
+    // ==================== DATE NEGOTIATION ====================
 
     private void acceptDate(HttpServletRequest request, HttpServletResponse response, Customer customer)
             throws ServletException, IOException {
         
         int rfqID = Integer.parseInt(request.getParameter("rfqId"));
-        RFQ rfq = rfqDAO.getRFQById(rfqID);
         
-        if (rfq != null && rfq.getCustomerID() == customer.getCustomerID() 
-            && RFQ.STATUS_DATE_PROPOSED.equals(rfq.getStatus())) {
-            rfqDAO.acceptProposedDate(rfqID, customer.getCustomerID());
-        }
-        
-        response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID);
-    }
-
-    private void rejectDate(HttpServletRequest request, HttpServletResponse response, Customer customer)
-            throws ServletException, IOException {
-        
-        int rfqID = Integer.parseInt(request.getParameter("rfqId"));
-        String reason = request.getParameter("reason");
-        RFQ rfq = rfqDAO.getRFQById(rfqID);
-        
-        if (rfq != null && rfq.getCustomerID() == customer.getCustomerID() 
-            && RFQ.STATUS_DATE_PROPOSED.equals(rfq.getStatus())) {
-            rfqDAO.rejectProposedDate(rfqID, reason, customer.getCustomerID());
-        }
-        
-        response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID);
-    }
-
-    private void acceptQuote(HttpServletRequest request, HttpServletResponse response, Customer customer)
-            throws ServletException, IOException {
-        
-        int rfqID = Integer.parseInt(request.getParameter("rfqId"));
-        RFQ rfq = rfqDAO.getRFQById(rfqID);
-        
-        if (rfq != null && rfq.getCustomerID() == customer.getCustomerID() 
-            && RFQ.STATUS_QUOTED.equals(rfq.getStatus())) {
-            
-            // Check if quotation has expired
-            if (rfq.isQuoteExpired()) {
-                rfqDAO.checkAndExpireQuotation(rfqID);
-                response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID + "&error=quote_expired");
-                return;
-            }
-            
-            // Redirect to RFQ detail page - customer will use the payment form there
-            // Status will only change to QuoteAccepted AFTER successful payment in RFQPaymentCallbackServlet
-            response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID);
+        // Security check
+        if (!rfqDAO.isRFQOwnedByCustomer(rfqID, customer.getCustomerID())) {
+            response.sendRedirect(request.getContextPath() + "/rfq/list");
             return;
         }
         
-        response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID);
+        RFQ rfq = rfqDAO.getRFQById(rfqID);
+        if (rfq != null && rfq.canAcceptDate()) {
+            rfqDAO.acceptProposedDate(rfqID, customer.getCustomerID());
+            response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID + "&success=date_accepted");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID + "&error=cannot_accept");
+        }
     }
 
-    private void rejectQuote(HttpServletRequest request, HttpServletResponse response, Customer customer)
+    private void counterDate(HttpServletRequest request, HttpServletResponse response, Customer customer)
+            throws ServletException, IOException {
+        
+        try {
+            int rfqID = Integer.parseInt(request.getParameter("rfqId"));
+            String counterDateStr = request.getParameter("counterDate");
+            String note = request.getParameter("note");
+            
+            // Security check
+            if (!rfqDAO.isRFQOwnedByCustomer(rfqID, customer.getCustomerID())) {
+                response.sendRedirect(request.getContextPath() + "/rfq/list");
+                return;
+            }
+            
+            RFQ rfq = rfqDAO.getRFQById(rfqID);
+            if (rfq == null || !rfq.canCustomerCounterDate()) {
+                response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID + "&error=cannot_counter");
+                return;
+            }
+            
+            // Parse date
+            SimpleDateFormat sdf;
+            if (counterDateStr.contains("/")) {
+                sdf = new SimpleDateFormat("dd/MM/yyyy");
+            } else {
+                sdf = new SimpleDateFormat("yyyy-MM-dd");
+            }
+            Timestamp counterDate = new Timestamp(sdf.parse(counterDateStr).getTime());
+            
+            boolean success = rfqDAO.customerCounterDate(rfqID, counterDate, note, customer.getCustomerID());
+            
+            if (success) {
+                response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID + "&success=date_countered");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID + "&error=counter_failed");
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/rfq/list?error=counter_failed");
+        }
+    }
+
+    private void cancelRFQ(HttpServletRequest request, HttpServletResponse response, Customer customer)
             throws ServletException, IOException {
         
         int rfqID = Integer.parseInt(request.getParameter("rfqId"));
         String reason = request.getParameter("reason");
-        RFQ rfq = rfqDAO.getRFQById(rfqID);
         
-        if (rfq != null && rfq.getCustomerID() == customer.getCustomerID() 
-            && RFQ.STATUS_QUOTED.equals(rfq.getStatus())) {
-            rfqDAO.rejectQuotation(rfqID, reason, customer.getCustomerID());
+        // Security check
+        if (!rfqDAO.isRFQOwnedByCustomer(rfqID, customer.getCustomerID())) {
+            response.sendRedirect(request.getContextPath() + "/rfq/list");
+            return;
         }
         
-        response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID);
+        rfqDAO.cancelRFQ(rfqID, reason, customer.getCustomerID(), "customer");
+        response.sendRedirect(request.getContextPath() + "/rfq/detail?id=" + rfqID + "&success=cancelled");
     }
 }

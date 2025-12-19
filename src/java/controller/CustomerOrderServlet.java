@@ -80,6 +80,9 @@ public class CustomerOrderServlet extends HttpServlet {
             Order fullOrder = orderDAO.getOrderById(order.getOrderID());
             if (fullOrder != null) {
                 order.setOrderDetails(fullOrder.getOrderDetails());
+                // Copy RFQ info for wholesale badge display
+                order.setRfqID(fullOrder.getRfqID());
+                order.setQuotationID(fullOrder.getQuotationID());
             }
         }
         

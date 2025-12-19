@@ -165,7 +165,6 @@ public class AdminEmployeeServlet extends HttpServlet {
             // Tạo mới nhân viên
             String fullName = request.getParameter("fullName");
             String email = request.getParameter("email");
-            String password = request.getParameter("password");
             String phone = request.getParameter("phone");
             String role = request.getParameter("role");
             
@@ -197,13 +196,6 @@ public class AdminEmployeeServlet extends HttpServlet {
             String emailTrimmed = email.trim().toLowerCase();
             if (!emailTrimmed.matches("^[a-z][a-z0-9._-]*@[a-z0-9.-]+\\.[a-z]{2,}$")) {
                 session.setAttribute("message", "Email không hợp lệ! Email phải bắt đầu bằng chữ cái và có định dạng đúng (Ví dụ: example@gmail.com)");
-                session.setAttribute("messageType", "danger");
-                response.sendRedirect(request.getContextPath() + "/admin/employees?action=create");
-                return;
-            }
-            
-            if (password == null || password.trim().isEmpty() || password.length() < 6) {
-                session.setAttribute("message", "Mật khẩu phải có ít nhất 6 ký tự!");
                 session.setAttribute("messageType", "danger");
                 response.sendRedirect(request.getContextPath() + "/admin/employees?action=create");
                 return;
@@ -250,17 +242,22 @@ public class AdminEmployeeServlet extends HttpServlet {
                 return;
             }
             
+            // Tự động tạo mật khẩu ngẫu nhiên
+            String randomPassword = utils.PasswordUtil.generateRandomPassword();
+            
             String phoneValue = (phone != null && !phone.trim().isEmpty()) ? phone.trim() : null;
-            boolean success = employeeDAO.createEmployee(fullNameTrimmed, emailTrimmed, password, 
-                    phoneValue, validatedRole);
+            // Tạo nhân viên với cờ mustChangePassword = true
+            boolean success = employeeDAO.createEmployee(fullNameTrimmed, emailTrimmed, randomPassword, 
+                    phoneValue, validatedRole, true);
             
             if (success) {
                 try {
-                    EmailUtil.sendEmployeeWelcome(emailTrimmed, fullNameTrimmed, password, validatedRole);
+                    // Gửi email với tài khoản và mật khẩu tự động
+                    EmailUtil.sendEmployeeWelcome(emailTrimmed, fullNameTrimmed, randomPassword, validatedRole);
                 } catch (Exception ex) {
                     System.err.println("Send employee welcome email failed: " + ex.getMessage());
                 }
-                session.setAttribute("message", "Tạo nhân viên mới thành công!");
+                session.setAttribute("message", "Tạo nhân viên mới thành công! Thông tin đăng nhập đã được gửi qua email.");
                 session.setAttribute("messageType", "success");
                 response.sendRedirect(request.getContextPath() + "/admin/employees");
             } else {
