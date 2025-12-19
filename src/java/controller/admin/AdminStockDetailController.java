@@ -84,6 +84,12 @@ public class AdminStockDetailController extends HttpServlet {
         if ("true".equals(success)) {
             request.setAttribute("successMessage", "Nhập kho thành công!");
         }
+        
+        // Hiển thị thông báo lỗi nếu có
+        String error = request.getParameter("error");
+        if (error != null && !error.isEmpty()) {
+            request.setAttribute("errorMessage", error);
+        }
 
         // Set content page for AdminLTE layout
         request.setAttribute("contentPage", "stock-detail");
@@ -133,20 +139,27 @@ public class AdminStockDetailController extends HttpServlet {
             currentProfitMargin = new BigDecimal("30");
         }
 
-        // Validate và xử lý profitMarginTarget
+        // Validate và xử lý profitMarginTarget - phải >= 30%
         BigDecimal newProfitMarginTarget = null;
         if (profitMarginTargetStr != null && !profitMarginTargetStr.trim().isEmpty()) {
             try {
                 newProfitMarginTarget = new BigDecimal(profitMarginTargetStr);
-                if (newProfitMarginTarget.compareTo(BigDecimal.ZERO) < 0 || 
-                    newProfitMarginTarget.compareTo(new BigDecimal("500")) > 0) {
-                    request.setAttribute("errorMessage", "% Lợi nhuận phải từ 0 đến 500");
-                    doGet(request, response);
+                if (newProfitMarginTarget.compareTo(new BigDecimal("30")) < 0) {
+                    response.sendRedirect(request.getContextPath() + 
+                            "/admin/stock/detail?id=" + variantId + "&error=" + 
+                            encodeURL("% Lợi nhuận mong muốn phải lớn hơn hoặc bằng 30%"));
+                    return;
+                }
+                if (newProfitMarginTarget.compareTo(new BigDecimal("500")) > 0) {
+                    response.sendRedirect(request.getContextPath() + 
+                            "/admin/stock/detail?id=" + variantId + "&error=" + 
+                            encodeURL("% Lợi nhuận không được vượt quá 500%"));
                     return;
                 }
             } catch (NumberFormatException e) {
-                request.setAttribute("errorMessage", "% Lợi nhuận không hợp lệ");
-                doGet(request, response);
+                response.sendRedirect(request.getContextPath() + 
+                        "/admin/stock/detail?id=" + variantId + "&error=" + 
+                        encodeURL("% Lợi nhuận không hợp lệ"));
                 return;
             }
         }
@@ -157,13 +170,15 @@ public class AdminStockDetailController extends HttpServlet {
             try {
                 quantity = Integer.parseInt(quantityStr);
                 if (quantity < 0) {
-                    request.setAttribute("errorMessage", "Số lượng không được âm");
-                    doGet(request, response);
+                    response.sendRedirect(request.getContextPath() + 
+                            "/admin/stock/detail?id=" + variantId + "&error=" + 
+                            encodeURL("Số lượng không được âm"));
                     return;
                 }
             } catch (NumberFormatException e) {
-                request.setAttribute("errorMessage", "Số lượng không hợp lệ");
-                doGet(request, response);
+                response.sendRedirect(request.getContextPath() + 
+                        "/admin/stock/detail?id=" + variantId + "&error=" + 
+                        encodeURL("Số lượng không hợp lệ"));
                 return;
             }
         }
@@ -174,13 +189,15 @@ public class AdminStockDetailController extends HttpServlet {
             try {
                 unitCost = new BigDecimal(unitCostStr);
                 if (unitCost.compareTo(BigDecimal.ZERO) <= 0) {
-                    request.setAttribute("errorMessage", "Giá nhập phải lớn hơn 0");
-                    doGet(request, response);
+                    response.sendRedirect(request.getContextPath() + 
+                            "/admin/stock/detail?id=" + variantId + "&error=" + 
+                            encodeURL("Giá nhập phải lớn hơn 0"));
                     return;
                 }
             } catch (NumberFormatException | NullPointerException e) {
-                request.setAttribute("errorMessage", "Giá nhập không hợp lệ");
-                doGet(request, response);
+                response.sendRedirect(request.getContextPath() + 
+                        "/admin/stock/detail?id=" + variantId + "&error=" + 
+                        encodeURL("Giá nhập không hợp lệ"));
                 return;
             }
         }
@@ -191,8 +208,9 @@ public class AdminStockDetailController extends HttpServlet {
         boolean hasStockImport = quantity > 0;
         
         if (!hasProfitMarginChange && !hasStockImport) {
-            request.setAttribute("errorMessage", "Vui lòng nhập số lượng hoặc thay đổi % lợi nhuận");
-            doGet(request, response);
+            response.sendRedirect(request.getContextPath() + 
+                    "/admin/stock/detail?id=" + variantId + "&error=" + 
+                    encodeURL("Vui lòng nhập số lượng hoặc thay đổi % lợi nhuận"));
             return;
         }
 
@@ -223,8 +241,9 @@ public class AdminStockDetailController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + 
                     "/admin/stock/detail?id=" + variantId + "&success=true");
         } else {
-            request.setAttribute("errorMessage", "Có lỗi xảy ra. Vui lòng thử lại.");
-            doGet(request, response);
+            response.sendRedirect(request.getContextPath() + 
+                    "/admin/stock/detail?id=" + variantId + "&error=" + 
+                    encodeURL("Có lỗi xảy ra. Vui lòng thử lại."));
         }
     }
 

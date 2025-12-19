@@ -34,7 +34,7 @@
         .avatar-placeholder i { font-size: 50px; color: #999; }
         
         /* Review styles */
-        .review-item { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 24px; margin-bottom: 20px; }
+        .review-item { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 24px; margin-bottom: 20px; overflow: hidden; word-wrap: break-word; overflow-wrap: break-word; }
         .review-item.hidden-review { opacity: 0.6; border: 2px dashed #dc3545; }
         .review-product { display: flex; gap: 16px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
         .review-product img { width: 80px; height: 80px; object-fit: contain; border-radius: 8px; background: #f9f9f9; }
@@ -44,7 +44,7 @@
         .review-stars { color: #FBBF24; font-size: 18px; margin-bottom: 8px; }
         .review-stars .empty { color: #D1D5DB; }
         .review-title { font-weight: 700; font-size: 16px; margin-bottom: 8px; }
-        .review-content { color: #555; line-height: 1.6; margin-bottom: 12px; }
+        .review-content { color: #555; line-height: 1.6; margin-bottom: 12px; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap; max-width: 100%; }
         .review-date { font-size: 13px; color: #999; }
         .review-reply { background: #f0f7f0; border-left: 4px solid #2D5A27; padding: 16px; margin-top: 16px; border-radius: 0 8px 8px 0; }
         .review-reply-header { font-weight: 700; color: #2D5A27; margin-bottom: 8px; font-size: 14px; }

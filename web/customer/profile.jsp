@@ -48,6 +48,16 @@
         .order-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 15px; }
         .badge-status { padding: 5px 12px; border-radius: 20px; font-size: 12px; }
         .nav-tabs .nav-link { color: #666; border: none; padding: 10px 20px; }
+        
+        /* Review content - prevent overflow */
+        .review-item { overflow: hidden; word-wrap: break-word; overflow-wrap: break-word; }
+        .review-item div { word-wrap: break-word; overflow-wrap: break-word; }
+        .review-content-text { 
+            word-wrap: break-word; 
+            overflow-wrap: break-word; 
+            white-space: pre-wrap;
+            max-width: 100%;
+        }
         .nav-tabs .nav-link.active { color: #ca1515; border-bottom: 2px solid #ca1515; background: transparent; }
         
         /* Wishlist Styles - from wishlist.jsp */
@@ -511,7 +521,7 @@
                                                 </c:if>
 
                                                 <c:if test="${not empty review.reviewContent}">
-                                                    <div style="color: #555; line-height: 1.6; margin-bottom: 12px;">${review.reviewContent}</div>
+                                                    <div class="review-content-text" style="color: #555; line-height: 1.6; margin-bottom: 12px;">${review.reviewContent}</div>
                                                 </c:if>
 
                                                 <div style="font-size: 13px; color: #999;">

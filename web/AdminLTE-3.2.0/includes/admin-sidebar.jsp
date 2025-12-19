@@ -197,12 +197,6 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
-                    <a href="<%= contextPath %>/admin/settings" class="nav-link <%= currentURI.contains("/admin/settings") ? "active" : "" %>">
-                        <i class="nav-icon fas fa-cog"></i>
-                        <p>Cài đặt</p>
-                    </a>
-                </li>
 
                 <% } else { %>
                 <%-- CHÚ Ý: ĐỂ TIẾT KIỆM DÒNG, TÔI ĐÃ RÚT GỌN PHẦN NÀY VÌ NÓ KHÔNG ĐỔI. 

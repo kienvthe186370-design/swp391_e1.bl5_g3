@@ -856,7 +856,8 @@
                     .review-item.hidden-review { opacity: 0.5; background: #fff5f5; padding: 24px; margin: 0 -24px; border-radius: var(--radius-sm); }
                     .review-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
                     .review-author { display: flex; align-items: center; gap: 12px; }
-                    .review-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
+                    .review-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; flex-shrink: 0; }
+                    .review-avatar-img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb; flex-shrink: 0; }
                     .review-author-info h4 { font-size: 15px; font-weight: 700; color: var(--text-dark); margin: 0 0 4px; }
                     .review-stars { color: #FBBF24; font-size: 14px; }
                     .review-stars .empty { color: #D1D5DB; }
@@ -933,7 +934,17 @@
                                 </c:if>
                                 <div class="review-header-row">
                                     <div class="review-author">
-                                        <div class="review-avatar">${review.customerName.substring(0,1).toUpperCase()}</div>
+                                        <c:choose>
+                                            <c:when test="${not empty review.customerAvatar}">
+                                                <c:set var="avatarUrl" value="${review.customerAvatar.startsWith('http') ? review.customerAvatar : (review.customerAvatar.startsWith('/') ? pageContext.request.contextPath.concat(review.customerAvatar) : pageContext.request.contextPath.concat('/').concat(review.customerAvatar))}" />
+                                                <img src="${avatarUrl}" alt="${review.customerName}" class="review-avatar-img" 
+                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                <div class="review-avatar" style="display:none;">${review.customerName.substring(0,1).toUpperCase()}</div>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <div class="review-avatar">${review.customerName.substring(0,1).toUpperCase()}</div>
+                                            </c:otherwise>
+                                        </c:choose>
                                         <div class="review-author-info">
                                             <h4>${review.customerName}</h4>
                                             <div class="review-stars">

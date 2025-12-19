@@ -48,7 +48,7 @@ public class AdminAuthFilter implements Filter {
         String action = httpRequest.getParameter("action");
 
         String role = employee.getRole();
-        
+  
         // Check quyền với cả path và action
         if (!RolePermission.hasPermission(role, path, action)) {
             session.setAttribute("accessDeniedMessage", "Bạn không có quyền truy cập chức năng này");

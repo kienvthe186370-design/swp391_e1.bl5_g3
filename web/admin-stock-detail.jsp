@@ -66,6 +66,8 @@
         .badge { font-weight: 600; padding: 5px 10px; border-radius: 4px; }
         .alert-info { background: #e7f3ff; border: 1px solid #b6d4fe; color: #084298; border-radius: 8px; }
         .alert-info i { margin-right: 8px; }
+        .is-invalid { border-color: #dc3545 !important; }
+        .invalid-feedback { display: block; color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; }
         .preview-box { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 2px dashed #ced4da; border-radius: 8px; padding: 20px; text-align: center; }
         .preview-box .preview-label { font-size: 0.85rem; color: #6c757d; margin-bottom: 5px; }
         .preview-box .preview-value { font-size: 1.5rem; font-weight: 700; color: var(--success); }
@@ -235,15 +237,15 @@
                             <!-- Profit Margin Target -->
                             <div class="mb-3">
                                 <label class="form-label">
-                                    <i class="fas fa-percentage me-1"></i>% Lợi nhuận mong muốn
+                                    <i class="fas fa-percentage me-1"></i>% Lợi nhuận mong muốn <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" id="profitMarginTarget" name="profitMarginTarget" 
-                                           placeholder="VD: 30" min="0" max="500" step="0.1"
+                                           placeholder="VD: 35" min="30" max="500" step="0.1"
                                            value="<fmt:formatNumber value="${stockDetail.profitMarginTarget}" type="number" maxFractionDigits="1"/>">
                                     <span class="input-group-text">%</span>
                                 </div>
-                                <div class="form-text">Giá bán = Giá vốn TB × (1 + %/100)</div>
+                                <div class="form-text text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Tối thiểu 30%</div>
                             </div>
                             
                             <hr class="my-3">
@@ -420,17 +422,114 @@
         unitCostInput.addEventListener('input', updatePreview);
         profitMarginInput.addEventListener('input', updatePreview);
 
+        // Helper function để kiểm tra giá trị có phải số hợp lệ không
+        function isValidNumber(value, allowDecimal = false) {
+            if (value === null || value === undefined || value.trim() === '') {
+                return true; // Cho phép rỗng
+            }
+            if (allowDecimal) {
+                return /^-?\d*\.?\d+$/.test(value.trim());
+            }
+            return /^\d+$/.test(value.trim());
+        }
+        
+        // Helper function để hiển thị lỗi
+        function showError(input, message) {
+            input.classList.add('is-invalid');
+            let errorDiv = input.parentElement.querySelector('.invalid-feedback');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                input.parentElement.appendChild(errorDiv);
+            }
+            errorDiv.textContent = message;
+        }
+        
+        // Helper function để xóa lỗi
+        function clearError(input) {
+            input.classList.remove('is-invalid');
+            const errorDiv = input.parentElement.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.textContent = '';
+            }
+        }
+        
+        // Validate realtime khi nhập
+        quantityInput.addEventListener('input', function() {
+            if (!isValidNumber(this.value, false)) {
+                showError(this, 'Vui lòng chỉ nhập số nguyên');
+            } else {
+                clearError(this);
+            }
+        });
+        
+        unitCostInput.addEventListener('input', function() {
+            if (!isValidNumber(this.value, false)) {
+                showError(this, 'Vui lòng chỉ nhập số nguyên');
+            } else {
+                clearError(this);
+            }
+        });
+        
+        profitMarginInput.addEventListener('input', function() {
+            if (!isValidNumber(this.value, true)) {
+                showError(this, 'Vui lòng chỉ nhập số');
+            } else {
+                clearError(this);
+            }
+        });
+
         // Form validation
         document.getElementById('stockForm').addEventListener('submit', function(e) {
+            let hasError = false;
+            
+            // Validate số lượng - phải là số nguyên
+            if (quantityInput.value.trim() !== '' && !isValidNumber(quantityInput.value, false)) {
+                e.preventDefault();
+                showError(quantityInput, 'Số lượng phải là số nguyên hợp lệ');
+                if (!hasError) {
+                    quantityInput.focus();
+                    hasError = true;
+                }
+            }
+            
+            // Validate giá nhập - phải là số nguyên
+            if (unitCostInput.value.trim() !== '' && !isValidNumber(unitCostInput.value, false)) {
+                e.preventDefault();
+                showError(unitCostInput, 'Giá nhập phải là số nguyên hợp lệ');
+                if (!hasError) {
+                    unitCostInput.focus();
+                    hasError = true;
+                }
+            }
+            
+            // Validate % lợi nhuận - phải là số (cho phép thập phân)
+            if (!isValidNumber(profitMarginInput.value, true)) {
+                e.preventDefault();
+                showError(profitMarginInput, '% Lợi nhuận phải là số hợp lệ');
+                if (!hasError) {
+                    profitMarginInput.focus();
+                    hasError = true;
+                }
+            }
+            
+            if (hasError) return;
+            
             const qty = parseInt(quantityInput.value) || 0;
             const cost = parseInt(unitCostInput.value) || 0;
             const profitMargin = parseFloat(profitMarginInput.value);
             const profitMarginChanged = Math.abs(profitMargin - currentProfitMargin) > 0.01;
             
-            // Validate profit margin
-            if (profitMargin < 0 || profitMargin > 500) {
+            // Validate profit margin - phải lớn hơn 30%
+            if (isNaN(profitMargin) || profitMargin < 30) {
                 e.preventDefault();
-                alert('% Lợi nhuận phải từ 0 đến 500');
+                showError(profitMarginInput, '% Lợi nhuận mong muốn phải lớn hơn hoặc bằng 30%');
+                profitMarginInput.focus();
+                return;
+            }
+            if (profitMargin > 500) {
+                e.preventDefault();
+                showError(profitMarginInput, '% Lợi nhuận không được vượt quá 500%');
                 profitMarginInput.focus();
                 return;
             }
@@ -446,7 +545,7 @@
             // Nếu có số lượng thì phải có giá nhập
             if (qty > 0 && cost <= 0) {
                 e.preventDefault();
-                alert('Vui lòng nhập giá nhập hợp lệ (> 0)');
+                showError(unitCostInput, 'Vui lòng nhập giá nhập hợp lệ (> 0)');
                 unitCostInput.focus();
                 return;
             }

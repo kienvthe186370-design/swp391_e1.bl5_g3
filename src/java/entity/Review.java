@@ -25,6 +25,7 @@ public class Review {
     
     // JOIN fields (không lưu DB)
     private String customerName;
+    private String customerAvatar;
     private String productName;
     private String productImage;
     private String repliedByName;
@@ -150,6 +151,14 @@ public class Review {
 
     public void setCustomerName(String customerName) {
         this.customerName = customerName;
+    }
+
+    public String getCustomerAvatar() {
+        return customerAvatar;
+    }
+
+    public void setCustomerAvatar(String customerAvatar) {
+        this.customerAvatar = customerAvatar;
     }
 
     public String getProductName() {
