@@ -10,8 +10,30 @@
 <style>
     .review-stars { color: #FBBF24; }
     .review-stars .empty { color: #D1D5DB; }
-    .review-content-cell { max-width: 300px; }
-    .review-content-preview { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .review-content-cell { 
+        max-width: 250px; 
+        min-width: 150px;
+        white-space: normal !important;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+    .review-content-preview { 
+        display: -webkit-box; 
+        -webkit-line-clamp: 2; 
+        line-clamp: 2; 
+        -webkit-box-orient: vertical; 
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-height: 3em;
+        line-height: 1.5em;
+    }
+    .review-title {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+    }
     .product-cell { display: flex; align-items: center; gap: 10px; }
     .product-cell img { width: 50px; height: 50px; object-fit: contain; border-radius: 4px; background: #f9f9f9; }
     .filter-form .form-group { margin-bottom: 10px; }
@@ -62,62 +84,45 @@
                 <div class="card-body">
                     <form method="get" action="${pageContext.request.contextPath}/feedbacks" class="filter-form">
                         <div class="row">
-                            <div class="col-md-2">
-                                <div class="form-group">
-                                    <label>Trạng thái</label>
-                                    <select name="status" class="form-control form-control-sm">
-                                        <option value="">-- Tất cả --</option>
-                                        <option value="published" ${filterStatus == 'published' ? 'selected' : ''}>Hiển thị</option>
-                                        <option value="hidden" ${filterStatus == 'hidden' ? 'selected' : ''}>Đã ẩn</option>
-                                    </select>
-                                </div>
+                            <div class="col">
+                                <select name="status" class="form-control form-control-sm">
+                                    <option value="">Trạng thái</option>
+                                    <option value="published" ${filterStatus == 'published' ? 'selected' : ''}>Hiển thị</option>
+                                    <option value="hidden" ${filterStatus == 'hidden' ? 'selected' : ''}>Đã ẩn</option>
+                                </select>
                             </div>
-                            <div class="col-md-2">
-                                <div class="form-group">
-                                    <label>Số sao</label>
-                                    <select name="rating" class="form-control form-control-sm">
-                                        <option value="">-- Tất cả --</option>
-                                        <c:forEach begin="1" end="5" var="i">
-                                            <option value="${i}" ${filterRating == i ? 'selected' : ''}>${i} sao</option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
+                            <div class="col">
+                                <select name="rating" class="form-control form-control-sm">
+                                    <option value="">Số sao</option>
+                                    <c:forEach begin="1" end="5" var="i">
+                                        <option value="${i}" ${filterRating == i ? 'selected' : ''}>${i} sao</option>
+                                    </c:forEach>
+                                </select>
                             </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>Sản phẩm</label>
-                                    <select name="productId" class="form-control form-control-sm">
-                                        <option value="">-- Tất cả --</option>
-                                        <c:forEach var="p" items="${products}">
-                                            <option value="${p.productId}" ${filterProductId == p.productId ? 'selected' : ''}>${p.productName}</option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
+                            <div class="col">
+                                <select name="productId" class="form-control form-control-sm">
+                                    <option value="">Sản phẩm</option>
+                                    <c:forEach var="p" items="${products}">
+                                        <option value="${p.productId}" ${filterProductId == p.productId ? 'selected' : ''}>${p.productName}</option>
+                                    </c:forEach>
+                                </select>
                             </div>
-                            <div class="col-md-2">
-                                <div class="form-group">
-                                    <label>Phản hồi</label>
-                                    <select name="hasReply" class="form-control form-control-sm">
-                                        <option value="">-- Tất cả --</option>
-                                        <option value="yes" ${filterHasReply == 'yes' ? 'selected' : ''}>Đã phản hồi</option>
-                                        <option value="no" ${filterHasReply == 'no' ? 'selected' : ''}>Chưa phản hồi</option>
-                                    </select>
-                                </div>
+                            <div class="col">
+                                <select name="hasReply" class="form-control form-control-sm">
+                                    <option value="">Phản hồi</option>
+                                    <option value="yes" ${filterHasReply == 'yes' ? 'selected' : ''}>Đã phản hồi</option>
+                                    <option value="no" ${filterHasReply == 'no' ? 'selected' : ''}>Chưa phản hồi</option>
+                                </select>
                             </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>Ngày đánh giá</label>
-                                    <div class="input-group input-group-sm">
-                                        <input type="date" name="dateFrom" class="form-control" value="${filterDateFrom}" placeholder="Từ">
-                                        <input type="date" name="dateTo" class="form-control" value="${filterDateTo}" placeholder="Đến">
-                                    </div>
-                                </div>
+                            <div class="col">
+                                <input type="date" name="dateFrom" class="form-control form-control-sm" value="${filterDateFrom}" title="Từ ngày">
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Lọc</button>
-                                <a href="${pageContext.request.contextPath}/feedbacks" class="btn btn-secondary btn-sm"><i class="fas fa-redo"></i> Reset</a>
+                            <div class="col">
+                                <input type="date" name="dateTo" class="form-control form-control-sm" value="${filterDateTo}" title="Đến ngày">
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i></button>
+                                <a href="${pageContext.request.contextPath}/feedbacks" class="btn btn-secondary btn-sm"><i class="fas fa-redo"></i></a>
                             </div>
                         </div>
                     </form>
@@ -174,9 +179,9 @@
                                     </td>
                                     <td class="review-content-cell">
                                         <c:if test="${not empty review.reviewTitle}">
-                                            <strong>${review.reviewTitle}</strong><br>
+                                            <strong class="review-title" title="${review.reviewTitle}">${review.reviewTitle}</strong>
                                         </c:if>
-                                        <div class="review-content-preview">${review.reviewContent}</div>
+                                        <div class="review-content-preview" title="${review.reviewContent}">${review.reviewContent}</div>
                                         <c:if test="${review.hasImages()}">
                                             <span class="badge badge-info mt-1"><i class="fas fa-image"></i> ${review.images.size()} ảnh</span>
                                         </c:if>
@@ -267,12 +272,13 @@
                 <!-- Pagination -->
                 <c:if test="${totalPages > 1}">
                     <div class="card-footer clearfix">
+                        <div class="float-left">
+                            <span class="text-muted">Hiển thị trang ${currentPage} / ${totalPages} (Tổng: ${totalReviews} đánh giá)</span>
+                        </div>
                         <ul class="pagination pagination-sm m-0 float-right">
-                            <c:if test="${currentPage > 1}">
-                                <li class="page-item">
-                                    <a class="page-link" href="${pageContext.request.contextPath}/feedbacks?page=${currentPage - 1}&status=${filterStatus}&rating=${filterRating}&productId=${filterProductId}&hasReply=${filterHasReply}&dateFrom=${filterDateFrom}&dateTo=${filterDateTo}">«</a>
-                                </li>
-                            </c:if>
+                            <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                                <a class="page-link" href="${pageContext.request.contextPath}/feedbacks?page=${currentPage - 1}&status=${filterStatus}&rating=${filterRating}&productId=${filterProductId}&hasReply=${filterHasReply}&dateFrom=${filterDateFrom}&dateTo=${filterDateTo}">«</a>
+                            </li>
                             
                             <c:forEach begin="1" end="${totalPages}" var="i">
                                 <c:if test="${i >= currentPage - 2 && i <= currentPage + 2}">
@@ -282,11 +288,9 @@
                                 </c:if>
                             </c:forEach>
                             
-                            <c:if test="${currentPage < totalPages}">
-                                <li class="page-item">
-                                    <a class="page-link" href="${pageContext.request.contextPath}/feedbacks?page=${currentPage + 1}&status=${filterStatus}&rating=${filterRating}&productId=${filterProductId}&hasReply=${filterHasReply}&dateFrom=${filterDateFrom}&dateTo=${filterDateTo}">»</a>
-                                </li>
-                            </c:if>
+                            <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                                <a class="page-link" href="${pageContext.request.contextPath}/feedbacks?page=${currentPage + 1}&status=${filterStatus}&rating=${filterRating}&productId=${filterProductId}&hasReply=${filterHasReply}&dateFrom=${filterDateFrom}&dateTo=${filterDateTo}">»</a>
+                            </li>
                         </ul>
                     </div>
                 </c:if>
@@ -323,8 +327,10 @@
                         <p id="replyReviewContent" class="text-muted" style="font-style: italic;"></p>
                     </div>
                     <div class="form-group">
-                        <label>Nội dung phản hồi <span class="text-danger">*</span></label>
-                        <textarea name="replyContent" class="form-control" rows="4" required placeholder="Nhập nội dung phản hồi..."></textarea>
+                        <label>Nội dung phản hồi</label>
+                        <textarea name="replyContent" id="replyContent" class="form-control" rows="4" maxlength="1000" placeholder="Nhập nội dung phản hồi..."></textarea>
+                        <small class="text-muted"><span id="replyCharCount">0</span>/1000 ký tự</small>
+                        <div id="replyError" class="text-danger" style="display: none;"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -340,6 +346,8 @@
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="${pageContext.request.contextPath}/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
 <script>
+    var REPLY_MAX_LENGTH = 1000;
+    
     function openReplyModalFromBtn(btn) {
         var reviewId = btn.getAttribute('data-review-id');
         var customerName = btn.getAttribute('data-customer-name');
@@ -347,8 +355,88 @@
         document.getElementById('replyReviewId').value = reviewId;
         document.getElementById('replyCustomerName').textContent = customerName;
         document.getElementById('replyReviewContent').textContent = reviewContent || '(Không có nội dung)';
+        
+        // Reset form
+        document.getElementById('replyContent').value = '';
+        updateReplyCharCount();
+        hideReplyError();
+        
         $('#replyModal').modal('show');
     }
+    
+    // Update character count
+    function updateReplyCharCount() {
+        var textarea = document.getElementById('replyContent');
+        var counter = document.getElementById('replyCharCount');
+        var length = textarea.value.length;
+        counter.textContent = length;
+        
+        if (length > REPLY_MAX_LENGTH) {
+            counter.parentElement.classList.remove('text-muted');
+            counter.parentElement.classList.add('text-danger');
+        } else {
+            counter.parentElement.classList.remove('text-danger');
+            counter.parentElement.classList.add('text-muted');
+        }
+    }
+    
+    // Show error
+    function showReplyError(message) {
+        var errorDiv = document.getElementById('replyError');
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        document.getElementById('replyContent').classList.add('is-invalid');
+    }
+    
+    // Hide error
+    function hideReplyError() {
+        document.getElementById('replyError').style.display = 'none';
+        document.getElementById('replyContent').classList.remove('is-invalid');
+    }
+    
+    // Validate reply content
+    function validateReplyContent() {
+        var textarea = document.getElementById('replyContent');
+        var value = textarea.value.trim();
+        textarea.value = value; // Auto trim
+        
+        hideReplyError();
+        
+        if (value.length > REPLY_MAX_LENGTH) {
+            showReplyError('Nội dung phản hồi không được vượt quá ' + REPLY_MAX_LENGTH + ' ký tự (hiện tại: ' + value.length + ')');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        var replyTextarea = document.getElementById('replyContent');
+        if (replyTextarea) {
+            replyTextarea.addEventListener('input', function() {
+                updateReplyCharCount();
+                hideReplyError();
+            });
+            
+            replyTextarea.addEventListener('blur', function() {
+                this.value = this.value.trim();
+                updateReplyCharCount();
+                validateReplyContent();
+            });
+        }
+        
+        // Form submit validation
+        var replyForm = document.querySelector('#replyModal form');
+        if (replyForm) {
+            replyForm.addEventListener('submit', function(e) {
+                if (!validateReplyContent()) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
+    });
 </script>
 </body>
 </html>

@@ -160,12 +160,13 @@ public class RolePermission {
         // 1. ADMIN - Đã loại bỏ Orders, Marketing, Voucher, Reports
         if (ADMIN.equalsIgnoreCase(role)) {
             if (path.startsWith("/employees")) return true;
-            if (path.startsWith("/products")) return true;
+            if (path.startsWith("/products") || path.startsWith("/product-")) return true;
             if (path.startsWith("/stock")) return true;
             if (path.startsWith("/categories")) return true;
             if (path.startsWith("/brands")) return true;
             if (path.startsWith("/attributes")) return true;
             if (path.startsWith("/settings")) return true;
+            if (path.startsWith("/api/")) return true; // API endpoints cho product management
             // Admin quản lý Stock Requests (đã check ở Global block trên)
             return false;
         }
@@ -195,7 +196,7 @@ public class RolePermission {
 
         // 4. MARKETER
         if (MARKETER.equalsIgnoreCase(role)) {
-            if (path.startsWith("/products")) return true;
+            if (path.startsWith("/products") || path.startsWith("/product-")) return true;
             if (path.startsWith("/categories")) return true;
             if (path.startsWith("/brands")) return true;
             if (path.startsWith("/attributes")) return true;
@@ -204,6 +205,7 @@ public class RolePermission {
             if (path.startsWith("/discount")) return true;
             if (path.startsWith("/voucher")) return true;
             if (path.startsWith("/feedbacks")) return true;
+            if (path.startsWith("/api/")) return true; // API endpoints cho product management
             return false;
         }
 

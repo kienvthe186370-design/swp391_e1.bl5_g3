@@ -79,7 +79,7 @@
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
                 <i class="fa fa-exclamation-circle"></i> 
                 <c:choose>
-                    <c:when test="${param.error == 'insufficient_stock'}">Sản phẩm không đủ số lượng trong kho!</c:when>
+                    <c:when test="${param.error == 'insufficient_stock'}">Sản phẩm không đủ số lượng!</c:when>
                     <c:when test="${param.error == 'product_not_found'}">Không tìm thấy sản phẩm!</c:when>
                     <c:when test="${param.error == 'invalid_quantity'}">Số lượng không hợp lệ!</c:when>
                     <c:when test="${param.error == 'no_price'}">Sản phẩm chưa có giá bán!</c:when>
@@ -182,7 +182,7 @@
                                                             <!-- Quantity exceeds stock warning -->
                                                             <c:if test="${item.quantity > item.availableStock}">
                                                                 <div class="alert alert-danger p-2 mt-2 stock-exceeded-warning" style="font-size: 13px;" data-cart-item-id="${item.cartItemID}">
-                                                                    <i class="fa fa-exclamation-triangle"></i> <strong>Vượt quá tồn kho!</strong><br>
+                                                                    <i class="fa fa-exclamation-triangle"></i> <strong>Vượt quá số lượng còn lại!</strong><br>
                                                                     <small>Chỉ còn ${item.availableStock} sản phẩm. Vui lòng giảm số lượng.</small>
                                                                 </div>
                                                             </c:if>
@@ -295,7 +295,7 @@
                                     <div class="alert alert-danger mb-3 stock-exceeded-checkout-warning" style="font-size: 14px;">
                                         <i class="fa fa-exclamation-triangle"></i> 
                                         <strong>Không thể thanh toán</strong><br>
-                                        Có sản phẩm vượt quá số lượng tồn kho. Vui lòng điều chỉnh số lượng.
+                                        Có sản phẩm vượt quá số lượng còn lại. Vui lòng điều chỉnh số lượng.
                                     </div>
                                 </c:if>
                                 

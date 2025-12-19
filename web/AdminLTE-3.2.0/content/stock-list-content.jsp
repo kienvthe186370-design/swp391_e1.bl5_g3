@@ -7,12 +7,12 @@
     <div class="container-fluid">
         <div class="row mb-2">
             <div class="col-sm-6">
-                <h1 class="m-0">Quản lý kho</h1>
+                <h1 class="m-0">Quản lý số lượng sản phẩm</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
                     <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Quản lý kho</li>
+                    <li class="breadcrumb-item active">Quản lý số lượng sản phẩm</li>
                 </ol>
             </div>
         </div>
@@ -71,7 +71,7 @@
                                 <select name="sortBy" class="form-control">
                                     <option value="id" ${sortBy == 'id' ? 'selected' : ''}>ID</option>
                                     <option value="created_date" ${sortBy == 'created_date' ? 'selected' : ''}>Ngày tạo</option>
-                                    <option value="stock" ${sortBy == 'stock' ? 'selected' : ''}>Tồn kho</option>
+                                    <option value="stock" ${sortBy == 'stock' ? 'selected' : ''}>Số lượng</option>
                                     <option value="cost_price" ${sortBy == 'cost_price' ? 'selected' : ''}>Giá vốn</option>
                                 </select>
                             </div>
@@ -89,7 +89,7 @@
         <!-- Stock Table Card -->
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">Danh sách tồn kho</h3>
+                <h3 class="card-title">Danh sách số lượng sản phẩm</h3>
             </div>
             <div class="card-body table-responsive p-0">
                 <table class="table table-hover text-nowrap">
@@ -98,10 +98,10 @@
                             <th style="width: 50px;">ID</th>
                             <th style="width: 60px;">Ảnh</th>
                             <th>Sản phẩm / SKU</th>
-                            <th class="text-center">Tồn kho</th>
+                            <th class="text-center">Số lượng</th>
                             <th class="text-center">Đã giữ</th>
                             <th class="text-right">Giá vốn TB</th>
-                            <th class="text-right">Giá bán</th>
+                            <th class="text-right">Giá bán lẻ MM</th>
                             <th class="text-right">Lợi nhuận</th>
                             <th class="text-center">Tình trạng</th>
                             <th class="text-center">Thao tác</th>
@@ -174,14 +174,14 @@
                                             <span class="badge badge-danger">Hết hàng</span>
                                         </c:when>
                                         <c:otherwise>
-                                            <span class="badge badge-secondary">Chưa nhập</span>
+                                            <span class="badge badge-secondary">Chưa thêm</span>
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
                                 <td class="text-center">
                                     <a href="${pageContext.request.contextPath}/admin/stock/detail?id=${item.variantId}" 
-                                       class="btn btn-success btn-sm" title="Nhập kho">
-                                        <i class="fas fa-plus"></i> Nhập kho
+                                       class="btn btn-success btn-sm" title="Thêm số lượng sản phẩm">
+                                        <i class="fas fa-plus"></i> Thêm số lượng sản phẩm
                                     </a>
                                 </td>
                             </tr>
@@ -190,7 +190,7 @@
                             <tr>
                                 <td colspan="10" class="text-center py-4">
                                     <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted mb-0">Không có dữ liệu tồn kho.</p>
+                                    <p class="text-muted mb-0">Không có dữ liệu thêm số lượng sản phẩm.</p>
                                 </td>
                             </tr>
                         </c:if>

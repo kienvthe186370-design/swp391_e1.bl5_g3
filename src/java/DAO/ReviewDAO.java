@@ -232,7 +232,7 @@ public class ReviewDAO extends DBContext {
     public List<Review> getProductReviews(int productId, Integer currentCustomerId, Integer filterRating, int page, int pageSize) {
         List<Review> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder("""
-            SELECT r.*, c.FullName AS CustomerName, e.FullName AS RepliedByName,
+            SELECT r.*, c.FullName AS CustomerName, c.Avatar AS CustomerAvatar, e.FullName AS RepliedByName,
                    od.SKU AS VariantSKU
             FROM Reviews r
             JOIN Customers c ON r.CustomerID = c.CustomerID
@@ -670,6 +670,7 @@ public class ReviewDAO extends DBContext {
     private Review mapReviewWithCustomer(ResultSet rs) throws SQLException {
         Review r = mapReview(rs);
         try { r.setCustomerName(rs.getString("CustomerName")); } catch (SQLException ignored) {}
+        try { r.setCustomerAvatar(rs.getString("CustomerAvatar")); } catch (SQLException ignored) {}
         return r;
     }
 
