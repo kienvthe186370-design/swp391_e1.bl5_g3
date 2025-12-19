@@ -620,7 +620,9 @@
                     <div class="purchase-section">
                         <div class="quantity-selector">
                             <button class="qty-btn" onclick="updateQty(-1)">−</button>
-                            <input type="number" class="qty-input" value="1" min="1" max="99" id="qtyInput">
+                            <input type="text" class="qty-input" value="1" id="qtyInput" maxlength="4" 
+                                   oninput="validateQtyInput(this)"
+                                   onkeypress="return event.charCode >= 48 && event.charCode <= 57">
                             <button class="qty-btn" onclick="updateQty(1)">+</button>
                         </div>
                         <button class="add-to-cart-btn" onclick="addToCart()">
@@ -1141,13 +1143,45 @@
             document.body.style.overflow = '';
         }
         
+        // Biến lưu stock hiện tại của variant đang chọn
+        var currentStock = 0;
+        
         // Quantity update
         function updateQty(delta) {
             var input = document.getElementById('qtyInput');
             var val = parseInt(input.value) || 1;
-            val = Math.max(1, Math.min(99, val + delta));
+            var maxQty = currentStock > 0 ? currentStock : 1;
+            val = Math.max(1, Math.min(maxQty, val + delta));
             input.value = val;
         }
+        
+        // Validate quantity input
+        function validateQtyInput(input) {
+            // Chỉ cho phép số
+            input.value = input.value.replace(/[^0-9]/g, '');
+            
+            var val = parseInt(input.value) || 0;
+            var maxQty = currentStock > 0 ? currentStock : 1;
+            
+            // Nếu rỗng hoặc 0, để nguyên để user có thể nhập tiếp
+            if (input.value === '' || input.value === '0') {
+                return;
+            }
+            
+            // Giới hạn max
+            if (val > maxQty) {
+                input.value = maxQty;
+            }
+        }
+        
+        // Validate quantity input on blur
+        document.getElementById('qtyInput').addEventListener('blur', function() {
+            var val = parseInt(this.value) || 1;
+            var maxQty = currentStock > 0 ? currentStock : 1;
+            if (val < 1) val = 1;
+            if (val > maxQty) val = maxQty;
+            this.value = val;
+        });
         
         // Lưu trữ các thuộc tính đã chọn
         var selectedAttributes = {};
@@ -1255,10 +1289,14 @@
         
         // Cập nhật trạng thái số lượng sản phẩm
         function updateStockStatus(stock) {
+            // Lưu stock hiện tại để validate quantity
+            currentStock = stock;
+            
             var addToCartBtn = document.querySelector('.add-to-cart-btn');
             var buyNowBtn = document.querySelector('.buy-now-btn');
             var stockQuantityEl = document.getElementById('stockQuantity');
             var stockInfoEl = document.getElementById('stockInfo');
+            var qtyInput = document.getElementById('qtyInput');
             
             // Hiển thị số lượng stock
             if (stockQuantityEl) {
@@ -1271,6 +1309,14 @@
                 } else {
                     stockQuantityEl.textContent = stock + ' sản phẩm';
                     stockQuantityEl.style.color = '#28a745';
+                }
+            }
+            
+            // Cập nhật quantity input nếu vượt quá stock
+            if (qtyInput && stock > 0) {
+                var currentQty = parseInt(qtyInput.value) || 1;
+                if (currentQty > stock) {
+                    qtyInput.value = stock;
                 }
             }
             if (stockInfoEl) {

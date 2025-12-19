@@ -329,4 +329,36 @@ public class Order {
     public void setRfq(RFQ rfq) {
         this.rfq = rfq;
     }
+    
+    /**
+     * Kiểm tra tất cả sản phẩm trong đơn hàng đã được đánh giá chưa
+     * @return true nếu tất cả đã được đánh giá, false nếu còn sản phẩm chưa đánh giá
+     */
+    public boolean isAllReviewed() {
+        if (orderDetails == null || orderDetails.isEmpty()) {
+            return true;
+        }
+        for (OrderDetail detail : orderDetails) {
+            if (!detail.isReviewed()) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Kiểm tra có sản phẩm nào chưa được đánh giá không
+     * @return true nếu có ít nhất 1 sản phẩm chưa đánh giá
+     */
+    public boolean hasPendingReview() {
+        if (orderDetails == null || orderDetails.isEmpty()) {
+            return false;
+        }
+        for (OrderDetail detail : orderDetails) {
+            if (!detail.isReviewed()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

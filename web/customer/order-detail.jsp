@@ -471,12 +471,17 @@
                         </div>
                     </c:if>
                     
-                    <!-- Khi đơn hàng Completed: chỉ hiện nút đánh giá -->
-                    <c:if test="${order.orderStatus == 'Completed'}">
+                    <!-- Khi đơn hàng Completed: chỉ hiện nút đánh giá nếu còn sản phẩm chưa đánh giá -->
+                    <c:if test="${order.orderStatus == 'Completed' && order.hasPendingReview()}">
                         <a href="${pageContext.request.contextPath}/order-review?orderId=${order.orderID}" 
                            class="btn btn-success btn-block">
                             <i class="fa fa-star"></i> Đánh giá sản phẩm
                         </a>
+                    </c:if>
+                    <c:if test="${order.orderStatus == 'Completed' && order.allReviewed}">
+                        <span class="btn btn-outline-success btn-block disabled">
+                            <i class="fa fa-check"></i> Đã đánh giá tất cả sản phẩm
+                        </span>
                     </c:if>
                     
                     <!-- Khi đang Shipping và chưa có refund: cho phép yêu cầu hoàn tiền -->
