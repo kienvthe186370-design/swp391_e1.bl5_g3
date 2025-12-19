@@ -42,7 +42,7 @@
                 <!-- Alerts -->
                 <c:if test="${param.success == 'approved'}">
                     <div class="alert alert-success alert-dismissible fade show">
-                        <i class="fas fa-check-circle"></i> Đã duyệt và nhập hàng thành công! Tồn kho đã được cập nhật.
+                        <i class="fas fa-check-circle"></i> Đã duyệt và nhập hàng thành công! Số lượng đã được cập nhật.
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
                     </div>
                 </c:if>
@@ -152,7 +152,7 @@
                                                     <tr>
                                                         <th style="width: 60px">Ảnh</th>
                                                         <th>Sản phẩm</th>
-                                                        <th class="text-center">Tồn kho<br><small>(lúc tạo)</small></th>
+                                                        <th class="text-center">Số lượng<br><small>(lúc tạo)</small></th>
                                                         <th class="text-center">SL trong RFQ</th>
                                                         <th class="text-center">SL Seller<br>yêu cầu</th>
                                                         <th class="text-center" style="width: 120px">SL duyệt</th>
@@ -219,7 +219,7 @@
                                             </div>
                                             <div class="alert alert-info">
                                                 <i class="fas fa-info-circle"></i>
-                                                Khi duyệt, hệ thống sẽ <strong>tự động cộng số lượng</strong> vào tồn kho của từng sản phẩm.
+                                                Khi duyệt, hệ thống sẽ <strong>tự động cộng số lượng</strong> của từng sản phẩm.
                                             </div>
                                         </div>
                                         <div class="card-footer">
@@ -244,7 +244,7 @@
                                                 <tr>
                                                     <th style="width: 60px">Ảnh</th>
                                                     <th>Sản phẩm</th>
-                                                    <th class="text-center">Tồn kho<br><small>(lúc tạo)</small></th>
+                                                    <th class="text-center">Số lượng<br><small>(lúc tạo)</small></th>
                                                     <th class="text-center">SL trong RFQ</th>
                                                     <th class="text-center">SL yêu cầu</th>
                                                     <c:if test="${stockRequest.status == 'Completed'}">
@@ -304,7 +304,7 @@
                                 <c:if test="${stockRequest.status == 'Completed'}">
                                     <div class="alert alert-success">
                                         <i class="fas fa-check-circle"></i>
-                                        <strong>Đã nhập hàng thành công!</strong> Tồn kho đã được cập nhật vào 
+                                        <strong>Đã nhập hàng thành công!</strong> Số lượng đã được cập nhật vào 
                                         <fmt:formatDate value="${stockRequest.completedDate}" pattern="dd/MM/yyyy HH:mm"/>
                                     </div>
                                 </c:if>

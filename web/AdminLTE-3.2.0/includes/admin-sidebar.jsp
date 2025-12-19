@@ -149,7 +149,7 @@
                         <li class="nav-item">
                             <a href="<%= contextPath %>/admin/stock" class="nav-link <%= isStockPage ? "active" : "" %>">
                                 <i class="far fa-circle nav-icon"></i>
-                                <p>Quản lý tồn kho</p>
+                                <p>Quản lý số lượng</p>
                             </a>
                         </li>
                     </ul>

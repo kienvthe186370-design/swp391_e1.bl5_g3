@@ -205,7 +205,7 @@
                   <thead class="table-light">
                     <tr>
                       <th>Sản phẩm</th>
-                      <th class="text-center">Tồn kho</th>
+                      <th class="text-center">Số lượng sản phẩm</th>
                       <th class="text-center">Số lượng</th>
                       <th class="text-center">Trạng thái</th>
                     </tr>
@@ -253,7 +253,7 @@
             <c:if test="${hasShortage && rfq.canCreateQuotation()}">
               <div class="alert alert-warning mb-4">
                 <h5><i class="fas fa-exclamation-triangle"></i> Thiếu hàng!</h5>
-                <p class="mb-2">Một số sản phẩm trong RFQ này không đủ tồn kho. Bạn cần yêu cầu nhập hàng và chờ Admin duyệt trước khi có thể tạo báo giá.</p>
+                <p class="mb-2">Một số sản phẩm trong RFQ này không đủ số lượng. Bạn cần yêu cầu nhập hàng và chờ Admin duyệt trước khi có thể tạo báo giá.</p>
                 <c:choose>
                   <c:when test="${hasStockRequest}">
                     <a href="<%= request.getContextPath() %>/admin/stock-requests?action=detail&id=${stockRequestId}" class="btn btn-info btn-sm">
