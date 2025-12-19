@@ -72,11 +72,19 @@
                 </c:if>
 
                 <div class="card-body">
+                  <!-- Thông báo lỗi -->
+                  <c:if test="${not empty error}">
+                    <div class="alert alert-danger alert-dismissible">
+                      <button type="button" class="close" data-dismiss="alert">&times;</button>
+                      <i class="fas fa-exclamation-triangle"></i> ${error}
+                    </div>
+                  </c:if>
+                  
                   <!-- Attribute Name -->
                   <div class="form-group">
                     <label for="attributeName">Tên Thuộc tính <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="attributeName" name="attributeName" 
-                           value="${attribute != null ? attribute.attributeName : ''}" 
+                    <input type="text" class="form-control ${not empty error ? 'is-invalid' : ''}" id="attributeName" name="attributeName" 
+                           value="${attribute != null ? attribute.attributeName : (attributeName != null ? attributeName : '')}" 
                            placeholder="Nhập tên thuộc tính..." required>
                     <small class="form-text text-muted">Ví dụ: Màu sắc, Trọng lượng, Size tay cầm, Độ dày lõi</small>
                   </div>

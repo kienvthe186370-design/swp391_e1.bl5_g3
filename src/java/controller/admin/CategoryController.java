@@ -121,7 +121,7 @@ public class CategoryController extends HttpServlet {
         request.setAttribute("categoryAttributes", categoryDAO.getCategoryAttributes(id));
       request.getRequestDispatcher("/AdminLTE-3.2.0/admin-category-detail.jsp").forward(request, response);
     }
-        private void addCategory(HttpServletRequest request, HttpServletResponse response)
+    private void addCategory(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
         try {
             String name = request.getParameter("categoryName");
@@ -133,6 +133,19 @@ public class CategoryController extends HttpServlet {
                               ? Integer.parseInt(displayOrderStr) : 0;
             
             boolean isActive = "on".equals(request.getParameter("isActive"));
+            
+            // Kiểm tra trùng tên danh mục
+            if (categoryDAO.isCategoryNameExists(name, null)) {
+                request.setAttribute("error", "Tên danh mục đã tồn tại!");
+                request.setAttribute("categoryName", name);
+                request.setAttribute("description", desc);
+                request.setAttribute("icon", icon);
+                request.setAttribute("displayOrder", displayOrder);
+                request.setAttribute("isActive", isActive);
+                request.setAttribute("attributes", attributeDAO.getAllAttributes());
+                request.getRequestDispatcher("/AdminLTE-3.2.0/admin-category-detail.jsp").forward(request, response);
+                return;
+            }
             
             entity.Category category = new entity.Category(0, name, desc, icon, displayOrder, isActive);
             boolean success = categoryDAO.insertCategory(category);
@@ -147,7 +160,7 @@ public class CategoryController extends HttpServlet {
             response.sendRedirect("categories?msg=error");
         }
     }
-        private void updateCategory(HttpServletRequest request, HttpServletResponse response)
+    private void updateCategory(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
         try {
             int id = Integer.parseInt(request.getParameter("categoryID"));
@@ -160,6 +173,17 @@ public class CategoryController extends HttpServlet {
                               ? Integer.parseInt(displayOrderStr) : 0;
             
             boolean isActive = "on".equals(request.getParameter("isActive"));
+            
+            // Kiểm tra trùng tên danh mục (loại trừ chính nó)
+            if (categoryDAO.isCategoryNameExists(name, id)) {
+                entity.Category category = new entity.Category(id, name, desc, icon, displayOrder, isActive);
+                request.setAttribute("error", "Tên danh mục đã tồn tại!");
+                request.setAttribute("category", category);
+                request.setAttribute("attributes", attributeDAO.getAllAttributes());
+                request.setAttribute("categoryAttributes", categoryDAO.getCategoryAttributes(id));
+                request.getRequestDispatcher("/AdminLTE-3.2.0/admin-category-detail.jsp").forward(request, response);
+                return;
+            }
             
             entity.Category category = new entity.Category(id, name, desc, icon, displayOrder, isActive);
             boolean success = categoryDAO.updateCategory(category);

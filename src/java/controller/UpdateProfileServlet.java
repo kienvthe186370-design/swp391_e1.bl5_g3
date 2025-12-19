@@ -56,27 +56,66 @@ public class UpdateProfileServlet extends HttpServlet {
         String gender = request.getParameter("gender");
         String dobStr = request.getParameter("dateOfBirth");
         
+        // Validate fullName
+        if (fullName == null || fullName.trim().isEmpty()) {
+            response.sendRedirect("profile?tab=profile&error=" + java.net.URLEncoder.encode("Vui lòng nhập họ tên!", "UTF-8"));
+            return;
+        }
+        
+        if (fullName.trim().length() < 2) {
+            response.sendRedirect("profile?tab=profile&error=" + java.net.URLEncoder.encode("Họ tên phải có ít nhất 2 ký tự!", "UTF-8"));
+            return;
+        }
+        
+        if (fullName.trim().length() > 100) {
+            response.sendRedirect("profile?tab=profile&error=" + java.net.URLEncoder.encode("Họ tên không được quá 100 ký tự!", "UTF-8"));
+            return;
+        }
+        
+        // Validate phone
+        if (phone != null && !phone.trim().isEmpty()) {
+            String phoneRegex = "^(0|\\+84)[0-9]{9,10}$";
+            if (!phone.trim().matches(phoneRegex)) {
+                response.sendRedirect("profile?tab=profile&error=" + java.net.URLEncoder.encode("Số điện thoại không hợp lệ! (VD: 0912345678)", "UTF-8"));
+                return;
+            }
+        }
+        
+        // Validate gender
+        if (gender != null && !gender.isEmpty()) {
+            if (!gender.equals("Male") && !gender.equals("Female") && !gender.equals("Other")) {
+                response.sendRedirect("profile?tab=profile&error=" + java.net.URLEncoder.encode("Giới tính không hợp lệ!", "UTF-8"));
+                return;
+            }
+        }
+        
         Date dateOfBirth = null;
         if (dobStr != null && !dobStr.trim().isEmpty()) {
             try {
                 dateOfBirth = Date.valueOf(dobStr);
+                // Validate date of birth is not in the future
+                if (dateOfBirth.after(new Date(System.currentTimeMillis()))) {
+                    response.sendRedirect("profile?tab=profile&error=" + java.net.URLEncoder.encode("Ngày sinh không thể là ngày trong tương lai!", "UTF-8"));
+                    return;
+                }
             } catch (IllegalArgumentException e) {
-                // Invalid date format
+                response.sendRedirect("profile?tab=profile&error=" + java.net.URLEncoder.encode("Định dạng ngày sinh không hợp lệ!", "UTF-8"));
+                return;
             }
         }
         
         boolean success = customerDAO.updateProfile(
             customer.getCustomerID(),
-            fullName,
-            phone,
+            fullName.trim(),
+            phone != null ? phone.trim() : null,
             gender,
             dateOfBirth
         );
         
         if (success) {
             // Update session
-            customer.setFullName(fullName);
-            customer.setPhone(phone);
+            customer.setFullName(fullName.trim());
+            customer.setPhone(phone != null ? phone.trim() : null);
             customer.setGender(gender);
             customer.setDateOfBirth(dateOfBirth);
             request.getSession().setAttribute("customer", customer);

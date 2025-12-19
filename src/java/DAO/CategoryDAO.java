@@ -275,4 +275,26 @@ public class CategoryDAO extends DBContext {
         }
         return list;
     }
+    
+    public boolean isCategoryNameExists(String categoryName, Integer excludeId) {
+        String sql = "SELECT COUNT(*) FROM Categories WHERE CategoryName = ?";
+        if (excludeId != null) {
+            sql += " AND CategoryID != ?";
+        }
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, categoryName);
+            if (excludeId != null) {
+                ps.setInt(2, excludeId);
+            }
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
 }

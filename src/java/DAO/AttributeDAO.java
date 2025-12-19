@@ -128,6 +128,51 @@ public class AttributeDAO extends DBContext {
         return 0;
     }
     
+    // Check if attribute name already exists
+    public boolean isAttributeNameExists(String attributeName, Integer excludeId) {
+        String sql = "SELECT COUNT(*) FROM ProductAttributes WHERE AttributeName = ?";
+        if (excludeId != null) {
+            sql += " AND AttributeID != ?";
+        }
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, attributeName);
+            if (excludeId != null) {
+                ps.setInt(2, excludeId);
+            }
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    // Check if attribute value name already exists for an attribute
+    public boolean isAttributeValueExists(String valueName, int attributeId, Integer excludeValueId) {
+        String sql = "SELECT COUNT(*) FROM AttributeValues WHERE ValueName = ? AND AttributeID = ?";
+        if (excludeValueId != null) {
+            sql += " AND ValueID != ?";
+        }
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, valueName);
+            ps.setInt(2, attributeId);
+            if (excludeValueId != null) {
+                ps.setInt(3, excludeValueId);
+            }
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
     // Get attribute by ID
     public ProductAttribute getAttributeByID(int id) {
         String sql = "SELECT * FROM ProductAttributes WHERE AttributeID = ?";

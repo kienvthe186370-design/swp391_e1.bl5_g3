@@ -72,11 +72,19 @@
                 </c:if>
 
                 <div class="card-body">
+                  <!-- Thông báo lỗi -->
+                  <c:if test="${not empty error}">
+                    <div class="alert alert-danger alert-dismissible">
+                      <button type="button" class="close" data-dismiss="alert">&times;</button>
+                      <i class="fas fa-exclamation-triangle"></i> ${error}
+                    </div>
+                  </c:if>
+                  
                   <!-- Category Name -->
                   <div class="form-group">
                     <label for="categoryName">Tên Danh mục <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="categoryName" name="categoryName" 
-                           value="${category != null ? category.categoryName : ''}" 
+                    <input type="text" class="form-control ${not empty error ? 'is-invalid' : ''}" id="categoryName" name="categoryName" 
+                           value="${category != null ? category.categoryName : (categoryName != null ? categoryName : '')}" 
                            placeholder="Nhập tên danh mục..." required>
                     <small class="form-text text-muted">Ví dụ: Vợt Pickleball, Bóng Pickleball</small>
                   </div>
