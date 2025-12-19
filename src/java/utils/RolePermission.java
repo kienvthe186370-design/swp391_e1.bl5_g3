@@ -50,9 +50,6 @@ public class RolePermission {
     public static boolean isSeller(String role) {
         return SELLER.equalsIgnoreCase(role);
     }
-
-    
-    
     
     
     
