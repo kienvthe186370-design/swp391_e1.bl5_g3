@@ -70,7 +70,12 @@ public class RolePermission {
      * Quyền cập nhật trạng thái đơn hàng
      */
     public static boolean canUpdateOrderStatus(String role) {
-        return SELLER_MANAGER.equalsIgnoreCase(role) || SELLER.equalsIgnoreCase(role) || ADMIN.equalsIgnoreCase(role);
+        if (role != null) {
+            role = role.trim();
+        }
+        boolean result = SELLER_MANAGER.equalsIgnoreCase(role) || SELLER.equalsIgnoreCase(role) || ADMIN.equalsIgnoreCase(role);
+        System.out.println("[RolePermission] canUpdateOrderStatus - role: '" + role + "', result: " + result);
+        return result;
     }
     
     // ==================== SHIPPER PERMISSIONS ====================
@@ -182,11 +187,13 @@ public class RolePermission {
 
         // ==================== SELLER PERMISSIONS ====================
         if (SELLER.equalsIgnoreCase(role)) {
-            // Đơn hàng - chỉ list và detail, KHÔNG được assignment
+            // Đơn hàng - list, detail và updateStatus
             if (path.startsWith("/orders")) {
                 if (action == null || action.isEmpty()) return true;
                 if ("list".equals(action)) return true;
                 if ("detail".equals(action)) return true;
+                if ("updateStatus".equals(action)) return true;  // Cho phép Seller cập nhật trạng thái
+                if ("updateNote".equals(action)) return true;    // Cho phép Seller cập nhật ghi chú
                 // Không cho phép: assignment, shipperAssignment, shipperOrders
                 return false;
             }
@@ -222,11 +229,12 @@ public class RolePermission {
 
         // ==================== SHIPPER PERMISSIONS ====================
         if (SHIPPER.equalsIgnoreCase(role)) {
-            // Đơn hàng - chỉ shipperOrders và shipperDetail
+            // Đơn hàng - shipperOrders, shipperDetail và updateShippingStatus
             if (path.startsWith("/orders")) {
                 if (action == null || action.isEmpty()) return true; // Default sẽ redirect trong servlet
                 if ("shipperOrders".equals(action)) return true;
                 if ("shipperDetail".equals(action)) return true;
+                if ("updateShippingStatus".equals(action)) return true;  // Cho phép Shipper cập nhật trạng thái giao hàng
                 // Không cho phép các action khác
                 return false;
             }
