@@ -20,7 +20,7 @@
     .history-item.accepted::before, .history-item.paid::before { background: #28a745; }
     .history-item.rejected::before { background: #dc3545; }
     .price-display { font-size: 1.5rem; font-weight: bold; }
-    .negotiation-box { background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; }
+
   </style>
 </head>
 <body class="hold-transition sidebar-mini">
@@ -124,118 +124,11 @@
                         <c:otherwise>${quotation.paymentMethod}</c:otherwise>
                       </c:choose>
                     </p>
-                    <p><span class="info-label">Thương lượng:</span> 
-                      <span class="badge ${quotation.negotiationCount >= quotation.maxNegotiationCount ? 'badge-danger' : 'badge-info'}">
-                        ${quotation.negotiationCount}/${quotation.maxNegotiationCount} lần
-                      </span>
-                    </p>
+
                   </div>
                 </div>
               </div>
             </div>
-
-            <!-- Customer Counter - Need Response -->
-            <c:if test="${quotation.status == 'CustomerCountered'}">
-              <div class="card border-warning">
-                <div class="card-header bg-warning text-dark">
-                  <i class="fas fa-exclamation-triangle"></i> Khách Hàng Đề Xuất Giá Mới - Cần Phản Hồi
-                </div>
-                <div class="card-body">
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <p class="mb-1">Giá báo giá ban đầu:</p>
-                      <h4 class="text-muted"><fmt:formatNumber value="${quotation.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></h4>
-                    </div>
-                    <div class="col-md-6">
-                      <p class="mb-1">Giá khách hàng đề xuất:</p>
-                      <h4 class="text-warning price-display"><fmt:formatNumber value="${quotation.customerCounterPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></h4>
-                    </div>
-                  </div>
-                  <c:if test="${not empty quotation.customerCounterNote}">
-                    <p><i class="fas fa-comment"></i> <strong>Ghi chú từ KH:</strong> ${quotation.customerCounterNote}</p>
-                  </c:if>
-
-                  <c:if test="${quotation.canSellerCounter()}">
-                    <hr>
-                    <!-- Nút chấp nhận giá KH đề xuất -->
-                    <div class="mb-3">
-                      <form action="<%= request.getContextPath() %>/admin/quotations/accept-customer-price" method="POST" 
-                            style="display: inline-block;" onsubmit="return confirm('Bạn có chắc muốn chấp nhận giá khách hàng đề xuất?');">
-                        <input type="hidden" name="quotationId" value="${quotation.quotationID}">
-                        <button type="submit" class="btn btn-success btn-lg">
-                          <i class="fas fa-check"></i> Chấp Nhận Giá KH Đề Xuất
-                        </button>
-                      </form>
-                    </div>
-                    
-                    <div class="negotiation-box">
-                      <h6><i class="fas fa-reply"></i> Hoặc Đề Xuất Giá Mới (còn ${quotation.remainingNegotiations} lần thương lượng)</h6>
-                      <form action="<%= request.getContextPath() %>/admin/quotations/counter" method="POST" onsubmit="return validateCounterForm()">
-                        <input type="hidden" name="quotationId" value="${quotation.quotationID}">
-                        <div class="row">
-                          <div class="col-md-5 mb-3">
-                            <label>Giá đề xuất mới (₫) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" name="counterPrice" id="counterPrice" min="1" required 
-                                   value="${quotation.customerCounterPrice}" placeholder="Nhập giá đề xuất">
-                          </div>
-                          <div class="col-md-5 mb-3">
-                            <label>Ghi chú</label>
-                            <input type="text" class="form-control" name="note" maxlength="100" placeholder="Lý do đề xuất giá này...">
-                          </div>
-                          <div class="col-md-2 mb-3 d-flex align-items-end">
-                            <button type="submit" class="btn btn-warning w-100">
-                              <i class="fas fa-paper-plane"></i> Gửi
-                            </button>
-                          </div>
-                        </div>
-                      </form>
-                    </div>
-                  </c:if>
-                  <c:if test="${!quotation.canSellerCounter()}">
-                    <hr>
-                    <div class="alert alert-info mb-3">
-                      <i class="fas fa-info-circle"></i> Đã hết số lần thương lượng. Vui lòng chọn một trong hai hành động bên dưới:
-                    </div>
-                    <div class="row">
-                      <div class="col-md-6 mb-2">
-                        <form action="<%= request.getContextPath() %>/admin/quotations/accept-customer-price" method="POST" 
-                              onsubmit="return confirm('Bạn có chắc muốn chấp nhận giá khách hàng đề xuất?');">
-                          <input type="hidden" name="quotationId" value="${quotation.quotationID}">
-                          <button type="submit" class="btn btn-success btn-lg btn-block">
-                            <i class="fas fa-check"></i> Chấp Nhận Giá KH Đề Xuất
-                          </button>
-                          <small class="text-muted">Chấp nhận giá <fmt:formatNumber value="${quotation.customerCounterPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/> và chờ thanh toán</small>
-                        </form>
-                      </div>
-                      <div class="col-md-6 mb-2">
-                        <button type="button" class="btn btn-danger btn-lg btn-block" data-toggle="modal" data-target="#rejectModal">
-                          <i class="fas fa-times"></i> Từ Chối Báo Giá
-                        </button>
-                        <small class="text-muted">Kết thúc đơn báo giá này</small>
-                      </div>
-                    </div>
-                  </c:if>
-                </div>
-              </div>
-            </c:if>
-
-            <!-- Seller Countered - Waiting -->
-            <c:if test="${quotation.status == 'SellerCountered'}">
-              <div class="card border-info">
-                <div class="card-header bg-info text-white">
-                  <i class="fas fa-hourglass-half"></i> Chờ Khách Hàng Phản Hồi
-                </div>
-                <div class="card-body">
-                  <p>Bạn đã đề xuất giá: <strong class="text-info price-display">
-                    <fmt:formatNumber value="${quotation.sellerCounterPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
-                  </strong></p>
-                  <c:if test="${not empty quotation.sellerCounterNote}">
-                    <p><i class="fas fa-comment"></i> Ghi chú: ${quotation.sellerCounterNote}</p>
-                  </c:if>
-                  <p class="text-muted mb-0">Vui lòng chờ khách hàng xem xét và phản hồi.</p>
-                </div>
-              </div>
-            </c:if>
 
             <!-- Accepted -->
             <c:if test="${quotation.status == 'Accepted'}">
@@ -388,15 +281,7 @@
                   <tr><td>Thuế VAT:</td><td class="text-right"><fmt:formatNumber value="${quotation.taxAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></td></tr>
                   <tr class="table-primary"><td><strong>TỔNG:</strong></td><td class="text-right"><strong><fmt:formatNumber value="${quotation.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></strong></td></tr>
                 </table>
-                <c:if test="${quotation.customerCounterPrice != null}">
-                  <hr>
-                  <p class="mb-1 small text-muted">Giá KH đề xuất:</p>
-                  <h5 class="text-warning"><fmt:formatNumber value="${quotation.customerCounterPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></h5>
-                </c:if>
-                <c:if test="${quotation.sellerCounterPrice != null}">
-                  <p class="mb-1 small text-muted">Giá Seller đề xuất:</p>
-                  <h5 class="text-info"><fmt:formatNumber value="${quotation.sellerCounterPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></h5>
-                </c:if>
+
               </div>
             </div>
 

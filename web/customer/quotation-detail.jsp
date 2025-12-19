@@ -28,7 +28,7 @@
         .history-item.rejected::before { background: #dc3545; }
         .history-item.accepted::before, .history-item.paid::before { background: #28a745; }
         .history-item.counter::before { background: #ffc107; }
-        .negotiation-box { background: #f8f9fa; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; }
+
         .price-display { font-size: 1.5rem; font-weight: bold; }
     </style>
 </head>
@@ -79,12 +79,7 @@
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
                 </div>
             </c:if>
-            <c:if test="${param.error == 'cannot_counter'}">
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fa fa-exclamation-circle"></i> Không thể thương lượng giá. Đã hết số lần thương lượng hoặc trạng thái không phù hợp.
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                </div>
-            </c:if>
+
             <c:if test="${param.error == 'expired'}">
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <i class="fa fa-exclamation-circle"></i> Báo giá đã hết hạn.
@@ -123,7 +118,7 @@
                                             <c:otherwise>${quotation.paymentMethod}</c:otherwise>
                                         </c:choose>
                                     </p>
-                                    <p><span class="info-label">Thương lượng:</span> ${quotation.negotiationCount}/${quotation.maxNegotiationCount} lần</p>
+
                                 </div>
                             </div>
                         </div>
@@ -197,53 +192,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Counter Price Option -->
-                                <c:if test="${quotation.canCustomerCounter()}">
-                                    <hr>
-                                    <div class="negotiation-box">
-                                        <h6><i class="fa fa-comments"></i> Thương Lượng Giá (còn ${quotation.remainingNegotiations} lần)</h6>
-                                        <form action="${pageContext.request.contextPath}/quotation/counter" method="POST" onsubmit="return validateCounterForm()">
-                                            <input type="hidden" name="quotationId" value="${quotation.quotationID}">
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label>Giá bạn đề xuất (₫) <span class="text-danger">*</span></label>
-                                                    <input type="number" class="form-control" name="counterPrice" id="counterPrice" 
-                                                           min="1" required placeholder="Nhập giá đề xuất">
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label>Ghi chú</label>
-                                                    <input type="text" class="form-control" name="note" maxlength="100" placeholder="Lý do đề xuất giá này...">
-                                                </div>
-                                            </div>
-                                            <button type="submit" class="btn btn-warning">
-                                                <i class="fa fa-paper-plane"></i> Gửi Đề Xuất Giá
-                                            </button>
-                                        </form>
-                                    </div>
-                                </c:if>
-                                <c:if test="${!quotation.canCustomerCounter() && quotation.negotiationCount >= quotation.maxNegotiationCount}">
-                                    <div class="alert alert-warning mt-3">
-                                        <i class="fa fa-exclamation-triangle"></i> Đã hết số lần thương lượng. Vui lòng chấp nhận hoặc từ chối báo giá.
-                                    </div>
-                                </c:if>
-                            </div>
-                        </div>
-                    </c:if>
 
-                    <!-- Customer Countered - Waiting for Seller -->
-                    <c:if test="${quotation.status == 'CustomerCountered'}">
-                        <div class="card mb-4 border-warning">
-                            <div class="card-header bg-warning text-dark">
-                                <i class="fa fa-hourglass-half"></i> Chờ Seller Phản Hồi
-                            </div>
-                            <div class="card-body">
-                                <p>Bạn đã đề xuất giá: <strong class="text-primary price-display">
-                                    <fmt:formatNumber value="${quotation.customerCounterPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
-                                </strong></p>
-                                <c:if test="${not empty quotation.customerCounterNote}">
-                                    <p><i class="fa fa-comment"></i> Ghi chú: ${quotation.customerCounterNote}</p>
-                                </c:if>
-                                <p class="text-muted mb-0">Vui lòng chờ Seller xem xét và phản hồi đề xuất của bạn.</p>
                             </div>
                         </div>
                     </c:if>

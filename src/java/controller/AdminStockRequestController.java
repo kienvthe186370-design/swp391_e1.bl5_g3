@@ -17,6 +17,7 @@ import java.util.Map;
 
 /**
  * Controller xử lý approve yêu cầu nhập kho cho Admin
+ * Giá nhập sẽ tự động lấy từ CostPrice của ProductVariants
  */
 @WebServlet(name = "AdminStockRequestController", urlPatterns = {"/admin/stock-requests/approve"})
 public class AdminStockRequestController extends HttpServlet {
@@ -57,13 +58,15 @@ public class AdminStockRequestController extends HttpServlet {
         
         if (stockRequest != null && stockRequest.getItems() != null) {
             for (StockRequestItem item : stockRequest.getItems()) {
-                String paramName = "approvedQuantity_" + item.getStockRequestItemID();
-                String quantityStr = request.getParameter(paramName);
+                int itemId = item.getStockRequestItemID();
+                
+                // Lấy số lượng
+                String quantityStr = request.getParameter("approvedQuantity_" + itemId);
                 if (quantityStr != null && !quantityStr.trim().isEmpty()) {
                     try {
                         int quantity = Integer.parseInt(quantityStr.trim());
                         if (quantity >= 0) {
-                            approvedQuantities.put(item.getStockRequestItemID(), quantity);
+                            approvedQuantities.put(itemId, quantity);
                         }
                     } catch (NumberFormatException e) {
                         // Bỏ qua, dùng số lượng seller yêu cầu
@@ -72,6 +75,7 @@ public class AdminStockRequestController extends HttpServlet {
             }
         }
         
+        // Giá nhập sẽ tự động lấy từ CostPrice của ProductVariants trong DAO
         boolean success = stockRequestDAO.approveStockRequest(requestID, employee.getEmployeeID(), adminNotes, approvedQuantities);
         
         if (success) {

@@ -157,7 +157,7 @@
                     <th>Công Ty</th>
                     <th>Ngày Tạo</th>
                     <th>Ngày Giao</th>
-                    <th>Thương Lượng</th>
+                    <th>Thương Lượng Ngày</th>
                     <th>Trạng Thái</th>
                     <th>Hành Động</th>
                   </tr>

@@ -147,8 +147,10 @@
                                                     <td class="text-center">
                                                         <input type="number" name="requestedQuantity_${status.index}" 
                                                                class="form-control form-control-sm text-center quantity-input"
-                                                               value="${shortage}" min="1" required
-                                                               data-shortage="${shortage}">
+                                                               value="${shortage}" min="1" max="10000" required
+                                                               data-shortage="${shortage}"
+                                                               onchange="validateQuantity(this)"
+                                                               onkeyup="validateQuantity(this)">
                                                     </td>
                                                 </tr>
                                             </c:forEach>
@@ -171,3 +173,105 @@
     </div>
     
     <jsp:include page="includes/admin-footer.jsp"/>
+    
+<script>
+// Chặn nhập ký tự không phải số
+document.querySelectorAll('.quantity-input').forEach(function(input) {
+    input.addEventListener('keypress', function(e) {
+        // Chỉ cho phép số (0-9)
+        if (!/[0-9]/.test(e.key)) {
+            e.preventDefault();
+            alert('Chỉ được nhập số!');
+        }
+    });
+    
+    input.addEventListener('paste', function(e) {
+        var pasteData = (e.clipboardData || window.clipboardData).getData('text');
+        if (!/^\d+$/.test(pasteData)) {
+            e.preventDefault();
+            alert('Chỉ được nhập số!');
+        }
+    });
+});
+
+function validateQuantity(input) {
+    var rawValue = input.value.toString().trim();
+    
+    // Nếu rỗng, không làm gì (sẽ validate khi submit)
+    if (rawValue === '') {
+        input.classList.add('is-invalid');
+        return;
+    }
+    
+    // Kiểm tra chỉ chứa số
+    if (!/^\d+$/.test(rawValue)) {
+        alert('Chỉ được nhập số!');
+        input.value = '';
+        input.classList.add('is-invalid');
+        return;
+    }
+    
+    var value = parseInt(rawValue);
+    
+    // Không cho phép giá trị < 1
+    if (value < 1) {
+        alert('Số lượng phải lớn hơn 0!');
+        input.value = '';
+        input.classList.add('is-invalid');
+        return;
+    }
+    
+    // Giới hạn tối đa 10000
+    if (value > 10000) {
+        alert('Số lượng tối đa là 10,000!');
+        input.value = 10000;
+    }
+    
+    input.classList.remove('is-invalid');
+}
+
+// Validate trước khi submit
+document.querySelector('form').addEventListener('submit', function(e) {
+    var inputs = document.querySelectorAll('.quantity-input');
+    var valid = true;
+    var errorMsg = '';
+    
+    inputs.forEach(function(input) {
+        var rawValue = input.value.toString().trim();
+        
+        // Kiểm tra rỗng
+        if (rawValue === '') {
+            valid = false;
+            errorMsg = 'Số lượng không được để trống!';
+            input.classList.add('is-invalid');
+            return;
+        }
+        
+        // Kiểm tra chỉ chứa số
+        if (!/^\d+$/.test(rawValue)) {
+            valid = false;
+            errorMsg = 'Chỉ được nhập số!';
+            input.classList.add('is-invalid');
+            return;
+        }
+        
+        var value = parseInt(rawValue);
+        if (value < 1) {
+            valid = false;
+            errorMsg = 'Số lượng phải lớn hơn 0!';
+            input.classList.add('is-invalid');
+        } else if (value > 10000) {
+            valid = false;
+            errorMsg = 'Số lượng tối đa là 10,000!';
+            input.classList.add('is-invalid');
+        } else {
+            input.classList.remove('is-invalid');
+        }
+    });
+    
+    if (!valid) {
+        e.preventDefault();
+        alert(errorMsg);
+    }
+});
+</script>

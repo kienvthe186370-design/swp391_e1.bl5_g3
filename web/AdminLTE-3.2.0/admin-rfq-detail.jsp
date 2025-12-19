@@ -249,6 +249,26 @@
               </div>
             </div>
 
+            <!-- Stock Warning -->
+            <c:if test="${hasShortage && rfq.canCreateQuotation()}">
+              <div class="alert alert-warning mb-4">
+                <h5><i class="fas fa-exclamation-triangle"></i> Thiếu hàng!</h5>
+                <p class="mb-2">Một số sản phẩm trong RFQ này không đủ tồn kho. Bạn cần yêu cầu nhập hàng và chờ Admin duyệt trước khi có thể tạo báo giá.</p>
+                <c:choose>
+                  <c:when test="${hasStockRequest}">
+                    <a href="<%= request.getContextPath() %>/admin/stock-requests?action=detail&id=${stockRequestId}" class="btn btn-info btn-sm">
+                      <i class="fas fa-eye"></i> Xem yêu cầu nhập hàng
+                    </a>
+                  </c:when>
+                  <c:otherwise>
+                    <a href="<%= request.getContextPath() %>/admin/stock-requests?action=create&rfqId=${rfq.rfqID}" class="btn btn-warning btn-sm">
+                      <i class="fas fa-boxes"></i> Tạo yêu cầu nhập hàng
+                    </a>
+                  </c:otherwise>
+                </c:choose>
+              </div>
+            </c:if>
+
             <!-- Actions -->
             <div class="card mb-4">
               <div class="card-header"><h5 class="mb-0"><i class="fas fa-cogs"></i> Hành Động</h5></div>
@@ -267,9 +287,20 @@
                   </button>
                 </c:if>
                 <c:if test="${rfq.canCreateQuotation()}">
-                  <a href="<%= request.getContextPath() %>/admin/quotations/form?rfqId=${rfq.rfqID}" class="btn btn-success mr-2">
-                    <i class="fas fa-file-invoice-dollar"></i> Tạo Báo Giá
-                  </a>
+                  <c:choose>
+                    <c:when test="${hasShortage}">
+                      <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Cần nhập đủ hàng trước khi tạo báo giá">
+                        <button type="button" class="btn btn-secondary mr-2" disabled style="pointer-events: none;">
+                          <i class="fas fa-file-invoice-dollar"></i> Tạo Báo Giá
+                        </button>
+                      </span>
+                    </c:when>
+                    <c:otherwise>
+                      <a href="<%= request.getContextPath() %>/admin/quotations/form?rfqId=${rfq.rfqID}" class="btn btn-success mr-2">
+                        <i class="fas fa-file-invoice-dollar"></i> Tạo Báo Giá
+                      </a>
+                    </c:otherwise>
+                  </c:choose>
                 </c:if>
                 <!-- Nút yêu cầu nhập hàng - hiển thị khi có sản phẩm thiếu hàng và chưa có yêu cầu -->
                 <c:if test="${hasShortage && !hasStockRequest && (rfq.status == 'Reviewing' || rfq.status == 'DateAccepted')}">
@@ -356,8 +387,8 @@
               <small class="text-muted">Ngày đề xuất phải sau ngày khách yêu cầu</small>
             </div>
             <div class="mb-3">
-              <label class="form-label">Lý do <span class="text-danger">*</span></label>
-              <textarea class="form-control" name="reason" rows="3" maxlength="500" required placeholder="VD: Số lượng lớn, cần thời gian chuẩn bị..."></textarea>
+              <label class="form-label">Lý do</label>
+              <textarea class="form-control" name="reason" rows="3" maxlength="500" placeholder="VD: Số lượng lớn, cần thời gian chuẩn bị... (tùy chọn)"></textarea>
             </div>
             <div class="alert alert-info">
               <small><i class="fas fa-info-circle"></i> Còn ${rfq.remainingDateNegotiations} lần thương lượng</small>

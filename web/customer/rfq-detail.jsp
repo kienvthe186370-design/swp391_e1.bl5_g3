@@ -348,16 +348,22 @@
     <div class="modal fade" id="counterDateModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form action="${pageContext.request.contextPath}/rfq/counter-date" method="POST">
+                <form action="${pageContext.request.contextPath}/rfq/counter-date" method="POST" onsubmit="return validateCounterDate()">
                     <input type="hidden" name="rfqId" value="${rfq.rfqID}">
+                    <input type="hidden" id="originalRequestedDate" value="<fmt:formatDate value="${rfq.requestedDeliveryDate}" pattern="yyyy-MM-dd"/>">
                     <div class="modal-header">
                         <h5 class="modal-title">Đề Xuất Ngày Giao Khác</h5>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
+                            <label>Ngày yêu cầu ban đầu</label>
+                            <input type="text" class="form-control" value="<fmt:formatDate value="${rfq.requestedDeliveryDate}" pattern="dd/MM/yyyy"/>" disabled>
+                        </div>
+                        <div class="form-group">
                             <label>Ngày bạn muốn nhận hàng <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="counterDate" id="counterDateInput" required autocomplete="off">
+                            <small class="text-muted">Ngày đề xuất không được trước ngày yêu cầu ban đầu</small>
                         </div>
                         <div class="form-group">
                             <label>Ghi chú</label>
@@ -380,7 +386,7 @@
     <div class="modal fade" id="cancelRFQModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form action="${pageContext.request.contextPath}/rfq/cancel" method="POST">
+                <form action="${pageContext.request.contextPath}/rfq/cancel" method="POST" onsubmit="return validateCancelReason()">
                     <input type="hidden" name="rfqId" value="${rfq.rfqID}">
                     <div class="modal-header">
                         <h5 class="modal-title">Hủy Yêu Cầu Báo Giá</h5>
@@ -390,7 +396,8 @@
                         <p class="text-danger"><i class="fa fa-warning"></i> Bạn có chắc muốn hủy yêu cầu này?</p>
                         <div class="form-group">
                             <label>Lý do hủy <span class="text-danger">*</span></label>
-                            <textarea class="form-control" name="reason" rows="3" maxlength="500" required placeholder="Vui lòng cho biết lý do..."></textarea>
+                            <textarea class="form-control" name="reason" id="cancelReason" rows="3" maxlength="200" placeholder="Vui lòng cho biết lý do..."></textarea>
+                            <small id="cancelReasonError" class="text-danger" style="display:none;"></small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -410,15 +417,88 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.vi.min.js"></script>
     <script>
         $(document).ready(function() {
+            // Lấy ngày yêu cầu ban đầu
+            var originalDateStr = $('#originalRequestedDate').val();
+            var minDate = new Date();
+            minDate.setDate(minDate.getDate() + 1); // Mặc định là ngày mai
+            
+            if (originalDateStr) {
+                var originalDate = new Date(originalDateStr);
+                // Ngày đề xuất phải >= ngày yêu cầu ban đầu
+                if (originalDate > minDate) {
+                    minDate = originalDate;
+                }
+            }
+            
             // Initialize datepicker for counter date
             $('#counterDateInput').datepicker({
                 format: 'dd/mm/yyyy',
                 language: 'vi',
                 autoclose: true,
-                startDate: '+1d',
+                startDate: minDate,
                 todayHighlight: true
             });
         });
+        
+        // Validate cancel reason
+        function validateCancelReason() {
+            var reason = $('#cancelReason').val();
+            var errorEl = $('#cancelReasonError');
+            
+            // Trim và kiểm tra
+            var trimmedReason = reason.trim();
+            
+            if (!trimmedReason || trimmedReason.length === 0) {
+                errorEl.text('Vui lòng nhập lý do hủy').show();
+                $('#cancelReason').focus();
+                return false;
+            }
+            
+            if (trimmedReason.length < 10) {
+                errorEl.text('Lý do hủy phải có ít nhất 10 ký tự').show();
+                $('#cancelReason').focus();
+                return false;
+            }
+            
+            if (trimmedReason.length > 200) {
+                errorEl.text('Lý do hủy không được quá 200 ký tự').show();
+                $('#cancelReason').focus();
+                return false;
+            }
+            
+            // Cập nhật giá trị đã trim
+            $('#cancelReason').val(trimmedReason);
+            errorEl.hide();
+            return true;
+        }
+        
+        // Validate counter date before submit
+        function validateCounterDate() {
+            var counterDateStr = $('#counterDateInput').val();
+            var originalDateStr = $('#originalRequestedDate').val();
+            
+            if (!counterDateStr) {
+                alert('Vui lòng chọn ngày đề xuất');
+                return false;
+            }
+            
+            // Parse dd/mm/yyyy to Date
+            var parts = counterDateStr.split('/');
+            var counterDate = new Date(parts[2], parts[1] - 1, parts[0]);
+            var originalDate = new Date(originalDateStr);
+            
+            // Reset time to compare dates only
+            counterDate.setHours(0, 0, 0, 0);
+            originalDate.setHours(0, 0, 0, 0);
+            
+            if (counterDate < originalDate) {
+                alert('Ngày đề xuất không được trước ngày yêu cầu ban đầu (' + 
+                      originalDate.getDate() + '/' + (originalDate.getMonth() + 1) + '/' + originalDate.getFullYear() + ')');
+                return false;
+            }
+            
+            return true;
+        }
     </script>
 </body>
 </html>

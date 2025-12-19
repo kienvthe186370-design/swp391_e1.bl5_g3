@@ -15,17 +15,17 @@ public class OTPUtil {
 
     public static Timestamp calculateExpiry(String otpType) {
         long currentTime = System.currentTimeMillis();
-        int minutes;
+        int seconds;
 
         if (OTPCode.TYPE_VERIFY_EMAIL.equals(otpType)) {
-            minutes = OTPCode.VERIFY_EMAIL_EXPIRY_MINUTES; // 10 phút
+            seconds = OTPCode.VERIFY_EMAIL_EXPIRY_SECONDS; // 200 giây
         } else if (OTPCode.TYPE_RESET_PASSWORD.equals(otpType)) {
-            minutes = OTPCode.RESET_PASSWORD_EXPIRY_MINUTES; // 5 phút
+            seconds = OTPCode.RESET_PASSWORD_EXPIRY_SECONDS; // 200 giây
         } else {
-            minutes = 5; // Default 5 phút
+            seconds = 200; // Default 200 giây
         }
 
-        return new Timestamp(currentTime + (minutes * 60 * 1000));
+        return new Timestamp(currentTime + (seconds * 1000));
     }
 
     public static boolean isValidOTPFormat(String otp) {

@@ -25,7 +25,7 @@
         .stat-card { border-radius: 8px; padding: 15px; text-align: center; }
         .stat-card h3 { margin: 0; font-size: 1.8rem; }
         .stat-card p { margin: 5px 0 0; font-size: 0.9rem; }
-        .negotiation-badge { font-size: 0.75rem; padding: 3px 8px; border-radius: 10px; }
+
     </style>
 </head>
 <body>
@@ -116,33 +116,13 @@
                                         <span class="badge status-badge status-${q.status.toLowerCase()}">
                                             ${q.statusDisplayName}
                                         </span>
-                                        <c:if test="${q.negotiationCount > 0}">
-                                            <br><small class="badge badge-light negotiation-badge mt-1">
-                                                <i class="fa fa-exchange"></i> Thương lượng: ${q.negotiationCount}/${q.maxNegotiationCount}
-                                            </small>
-                                        </c:if>
                                     </div>
                                 </div>
-
-                                <!-- Negotiation Info -->
-                                <c:if test="${q.status == 'CustomerCountered' || q.status == 'SellerCountered'}">
-                                    <div class="alert alert-warning mb-2 py-2">
-                                        <i class="fa fa-comments"></i>
-                                        <strong>Đang thương lượng:</strong> 
-                                        Lần ${q.negotiationCount}/${q.maxNegotiationCount}
-                                        <c:if test="${q.status == 'CustomerCountered'}">
-                                            - Chờ Seller phản hồi
-                                        </c:if>
-                                        <c:if test="${q.status == 'SellerCountered'}">
-                                            - Seller đã đề xuất giá mới
-                                        </c:if>
-                                    </div>
-                                </c:if>
 
                                 <c:if test="${q.status == 'Sent'}">
                                     <div class="alert alert-info mb-2 py-2">
                                         <i class="fa fa-clock-o"></i>
-                                        <strong>Chờ xử lý:</strong> Vui lòng xem chi tiết để chấp nhận hoặc thương lượng giá
+                                        <strong>Chờ xử lý:</strong> Vui lòng xem chi tiết để chấp nhận hoặc từ chối báo giá
                                     </div>
                                 </c:if>
 
@@ -169,20 +149,6 @@
                                     <h4 class="text-primary mb-2">
                                         <fmt:formatNumber value="${q.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
                                     </h4>
-                                </c:if>
-
-                                <c:if test="${q.customerCounterPrice != null && q.status == 'CustomerCountered'}">
-                                    <small class="text-muted">Giá bạn đề xuất:</small>
-                                    <span class="text-warning mb-2">
-                                        <fmt:formatNumber value="${q.customerCounterPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
-                                    </span>
-                                </c:if>
-
-                                <c:if test="${q.sellerCounterPrice != null && q.status == 'SellerCountered'}">
-                                    <small class="text-muted">Giá Seller đề xuất:</small>
-                                    <span class="text-info mb-2">
-                                        <fmt:formatNumber value="${q.sellerCounterPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
-                                    </span>
                                 </c:if>
 
                                 <a href="${pageContext.request.contextPath}/quotation/detail?id=${q.quotationID}" class="btn btn-outline-primary btn-sm">

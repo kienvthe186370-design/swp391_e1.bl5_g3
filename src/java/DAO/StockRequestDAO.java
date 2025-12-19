@@ -351,6 +351,7 @@ public class StockRequestDAO extends DBContext {
     /**
      * Admin approve yêu cầu nhập kho với số lượng có thể chỉnh sửa
      * Tự động cập nhật Stock của các sản phẩm
+     * Giá nhập sẽ lấy từ CostPrice của ProductVariants
      * @param approvedQuantities Map<StockRequestItemID, ApprovedQuantity> - số lượng admin duyệt cho từng item
      */
     public boolean approveStockRequest(int requestID, int adminID, String adminNotes, 
@@ -381,10 +382,16 @@ public class StockRequestDAO extends DBContext {
             String updateStockByProductSql = "UPDATE ProductVariants SET Stock = Stock + ? " +
                                              "WHERE ProductID = ? AND VariantID = (SELECT MIN(VariantID) FROM ProductVariants WHERE ProductID = ?)";
             String updateItemSql = "UPDATE StockRequestItems SET ApprovedQuantity = ? WHERE StockRequestItemID = ?";
+            String insertReceiptSql = "INSERT INTO StockReceipts (VariantID, Quantity, UnitCost, ReceiptDate, CreatedBy) VALUES (?, ?, ?, GETDATE(), ?)";
+            String getVariantIdSql = "SELECT MIN(VariantID) FROM ProductVariants WHERE ProductID = ?";
+            String getCostPriceSql = "SELECT ISNULL(CostPrice, 1) FROM ProductVariants WHERE VariantID = ?";
             
             try (PreparedStatement ps1 = conn.prepareStatement(updateStockSql);
                  PreparedStatement ps2 = conn.prepareStatement(updateStockByProductSql);
-                 PreparedStatement ps3 = conn.prepareStatement(updateItemSql)) {
+                 PreparedStatement ps3 = conn.prepareStatement(updateItemSql);
+                 PreparedStatement ps4 = conn.prepareStatement(insertReceiptSql);
+                 PreparedStatement ps5 = conn.prepareStatement(getVariantIdSql);
+                 PreparedStatement ps6 = conn.prepareStatement(getCostPriceSql)) {
                 
                 for (StockRequestItem item : request.getItems()) {
                     // Lấy số lượng admin duyệt (nếu không có thì dùng số lượng seller yêu cầu)
@@ -398,17 +405,48 @@ public class StockRequestDAO extends DBContext {
                     ps3.setInt(2, item.getStockRequestItemID());
                     ps3.executeUpdate();
                     
+                    // Xác định VariantID để cập nhật
+                    Integer variantIdToUpdate = item.getVariantID();
+                    
                     // Cập nhật Stock
-                    if (item.getVariantID() != null) {
+                    if (variantIdToUpdate != null) {
                         ps1.setInt(1, quantityToImport);
-                        ps1.setInt(2, item.getVariantID());
+                        ps1.setInt(2, variantIdToUpdate);
                         ps1.executeUpdate();
                     } else {
-                        // Nếu không có VariantID, cập nhật variant đầu tiên của product
+                        // Nếu không có VariantID, lấy variant đầu tiên của product
+                        ps5.setInt(1, item.getProductID());
+                        ResultSet rs = ps5.executeQuery();
+                        if (rs.next()) {
+                            variantIdToUpdate = rs.getInt(1);
+                        }
+                        
                         ps2.setInt(1, quantityToImport);
                         ps2.setInt(2, item.getProductID());
                         ps2.setInt(3, item.getProductID());
                         ps2.executeUpdate();
+                    }
+                    
+                    // Lấy CostPrice từ ProductVariants
+                    java.math.BigDecimal unitCost = java.math.BigDecimal.ONE;
+                    if (variantIdToUpdate != null) {
+                        ps6.setInt(1, variantIdToUpdate);
+                        ResultSet rsPrice = ps6.executeQuery();
+                        if (rsPrice.next()) {
+                            unitCost = rsPrice.getBigDecimal(1);
+                            if (unitCost == null || unitCost.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                                unitCost = java.math.BigDecimal.ONE;
+                            }
+                        }
+                    }
+                    
+                    // Ghi vào lịch sử nhập kho (StockReceipts) với giá vốn từ ProductVariants
+                    if (variantIdToUpdate != null && quantityToImport > 0) {
+                        ps4.setInt(1, variantIdToUpdate);
+                        ps4.setInt(2, quantityToImport);
+                        ps4.setBigDecimal(3, unitCost);
+                        ps4.setInt(4, adminID);
+                        ps4.executeUpdate();
                     }
                 }
             }

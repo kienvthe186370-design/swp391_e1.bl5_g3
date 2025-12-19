@@ -118,52 +118,29 @@
                     </div>
                 </div>
 
-                <div class="row">
-                    <!-- Danh sách Shipper -->
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-header bg-info">
-                                <h3 class="card-title">
-                                    <i class="fas fa-users"></i> Danh sách Shipper
-                                </h3>
-                            </div>
-                            <div class="card-body p-0">
-                                <c:choose>
-                                    <c:when test="${empty shippers}">
-                                        <div class="p-4 text-center text-muted">
-                                            <i class="fas fa-user-slash fa-3x mb-3"></i>
-                                            <p>Chưa có shipper nào</p>
-                                        </div>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <c:forEach var="shipper" items="${shippers}">
-                                            <div class="shipper-card p-3 border-bottom">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        <i class="fas fa-user-circle fa-2x text-info mr-2"></i>
-                                                        <strong>${shipper[1]}</strong>
-                                                        <br>
-                                                        <small class="text-muted ml-4">
-                                                            <i class="fas fa-phone"></i> ${shipper[2]}
-                                                        </small>
-                                                    </div>
-                                                    <div class="text-right">
-                                                        <span class="badge badge-${shipper[3] > 5 ? 'danger' : (shipper[3] > 2 ? 'warning' : 'success')} badge-pill" style="font-size:16px">
-                                                            ${shipper[3]}
-                                                        </span>
-                                                        <br><small class="text-muted">đơn đang giao</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </c:forEach>
-                                    </c:otherwise>
-                                </c:choose>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Tabs theo Shipper -->
+                <ul class="nav nav-tabs mb-3">
+                    <li class="nav-item">
+                        <a class="nav-link ${selectedShipper == null || selectedShipper == '' || selectedShipper == 'all' ? 'active' : ''}" 
+                           href="?action=shipperAssignment&shipper=all">
+                            <i class="fas fa-list"></i> Tất cả 
+                            <span class="badge badge-primary">${allCount}</span>
+                        </a>
+                    </li>
+                    <c:forEach var="shipper" items="${shippers}">
+                        <li class="nav-item">
+                            <a class="nav-link ${selectedShipper == shipper[0].toString() ? 'active' : ''}" 
+                               href="?action=shipperAssignment&shipper=${shipper[0]}">
+                                <i class="fas fa-motorcycle"></i> ${shipper[1]}
+                                <span class="badge badge-${shipper[3] > 5 ? 'danger' : (shipper[3] > 2 ? 'warning' : 'success')}">${shipper[3]}</span>
+                            </a>
+                        </li>
+                    </c:forEach>
+                </ul>
 
+                <div class="row">
                     <!-- Đơn hàng đang giao -->
-                    <div class="col-md-8">
+                    <div class="col-md-12">
                         <div class="card">
                             <div class="card-header bg-primary">
                                 <h3 class="card-title">
@@ -273,6 +250,50 @@
                                         </div>
                                     </c:otherwise>
                                 </c:choose>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            <div class="card-footer clearfix">
+                                <div class="float-left">
+                                    <c:choose>
+                                        <c:when test="${totalOrders > 0}">
+                                            Hiển thị ${(currentPage-1)*pageSize + 1} - ${currentPage*pageSize > totalOrders ? totalOrders : currentPage*pageSize} 
+                                            / ${totalOrders} đơn hàng
+                                        </c:when>
+                                        <c:otherwise>
+                                            Không có đơn hàng nào
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                                <c:if test="${totalPages > 1}">
+                                    <ul class="pagination pagination-sm m-0 float-right">
+                                        <c:if test="${currentPage > 1}">
+                                            <li class="page-item">
+                                                <a class="page-link" href="?action=shipperAssignment&shipper=${selectedShipper}&page=${currentPage-1}">
+                                                    &laquo;
+                                                </a>
+                                            </li>
+                                        </c:if>
+                                        
+                                        <c:forEach begin="1" end="${totalPages}" var="i">
+                                            <c:if test="${i <= 3 || i > totalPages - 2 || (i >= currentPage - 1 && i <= currentPage + 1)}">
+                                                <li class="page-item ${i == currentPage ? 'active' : ''}">
+                                                    <a class="page-link" href="?action=shipperAssignment&shipper=${selectedShipper}&page=${i}">
+                                                        ${i}
+                                                    </a>
+                                                </li>
+                                            </c:if>
+                                        </c:forEach>
+                                        
+                                        <c:if test="${currentPage < totalPages}">
+                                            <li class="page-item">
+                                                <a class="page-link" href="?action=shipperAssignment&shipper=${selectedShipper}&page=${currentPage+1}">
+                                                    &raquo;
+                                                </a>
+                                            </li>
+                                        </c:if>
+                                    </ul>
+                                </c:if>
                             </div>
                         </div>
                     </div>

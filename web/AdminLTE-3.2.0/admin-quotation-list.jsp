@@ -50,8 +50,8 @@
           </div>
           <div class="col-lg-3 col-6">
             <div class="small-box bg-warning">
-              <div class="inner"><h3>${negotiatingCount}</h3><p>Đang thương lượng</p></div>
-              <div class="icon"><i class="fas fa-comments"></i></div>
+              <div class="inner"><h3>${acceptedCount}</h3><p>Đã chấp nhận</p></div>
+              <div class="icon"><i class="fas fa-handshake"></i></div>
             </div>
           </div>
           <div class="col-lg-3 col-6">
@@ -82,22 +82,12 @@
                 <select class="form-control" name="status">
                   <option value="">Tất cả trạng thái</option>
                   <option value="Sent" ${status == 'Sent' ? 'selected' : ''}>Đã gửi</option>
-                  <option value="CustomerCountered" ${status == 'CustomerCountered' ? 'selected' : ''}>KH đề xuất giá</option>
-                  <option value="SellerCountered" ${status == 'SellerCountered' ? 'selected' : ''}>Seller đề xuất giá</option>
                   <option value="Accepted" ${status == 'Accepted' ? 'selected' : ''}>Đã chấp nhận</option>
                   <option value="Paid" ${status == 'Paid' ? 'selected' : ''}>Đã thanh toán</option>
                   <option value="Rejected" ${status == 'Rejected' ? 'selected' : ''}>Từ chối</option>
                 </select>
               </div>
-              <div class="col-md-3">
-                <select class="form-control" name="negotiationCount">
-                  <option value="">Tất cả số lần TL</option>
-                  <option value="0" ${negotiationCount == '0' ? 'selected' : ''}>Chưa thương lượng (0)</option>
-                  <option value="1" ${negotiationCount == '1' ? 'selected' : ''}>1 lần</option>
-                  <option value="2" ${negotiationCount == '2' ? 'selected' : ''}>2 lần</option>
-                  <option value="3" ${negotiationCount == '3' ? 'selected' : ''}>3 lần (tối đa)</option>
-                </select>
-              </div>
+
               <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Tìm</button>
               </div>
@@ -112,7 +102,6 @@
                     <th>Khách hàng</th>
                     <th>Ngày gửi</th>
                     <th>Giá trị</th>
-                    <th>Thương lượng</th>
                     <th>Trạng thái</th>
                     <th>Hành động</th>
                   </tr>
@@ -141,14 +130,6 @@
                         <strong class="text-primary">
                           <fmt:formatNumber value="${q.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
                         </strong>
-                        <c:if test="${q.customerCounterPrice != null && q.status == 'CustomerCountered'}">
-                          <br><small class="text-warning">KH đề xuất: <fmt:formatNumber value="${q.customerCounterPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></small>
-                        </c:if>
-                      </td>
-                      <td>
-                        <span class="badge ${q.negotiationCount >= q.maxNegotiationCount ? 'badge-danger' : 'badge-info'}">
-                          ${q.negotiationCount}/${q.maxNegotiationCount}
-                        </span>
                       </td>
                       <td>
                         <span class="badge badge-${q.statusBadgeClass}">${q.statusDisplayName}</span>
@@ -169,7 +150,7 @@
                   </c:forEach>
                   <c:if test="${empty quotations}">
                     <tr>
-                      <td colspan="8" class="text-center py-4 text-muted">Chưa có báo giá nào</td>
+                      <td colspan="7" class="text-center py-4 text-muted">Chưa có báo giá nào</td>
                     </tr>
                   </c:if>
                 </tbody>
