@@ -51,11 +51,14 @@ public class RolePermission {
         return SELLER.equalsIgnoreCase(role);
     }
 
+    
+    
+    
+    
+    
     public static boolean canViewSalesReports(String role) {
         return SELLER_MANAGER.equalsIgnoreCase(role);
     }
-
-    // --- ORDER ACTIONS ---
 
     // Admin KHÔNG phân công đơn hàng
     public static boolean canAssignOrders(String role) {
