@@ -612,8 +612,10 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label>Ngày sinh</label>
+                                                <jsp:useBean id="now" class="java.util.Date"/>
                                                 <input type="date" name="dateOfBirth" class="form-control" 
-                                                       value="<fmt:formatDate value='${customer.dateOfBirth}' pattern='yyyy-MM-dd'/>">
+                                                       value="<fmt:formatDate value='${customer.dateOfBirth}' pattern='yyyy-MM-dd'/>"
+                                                       max="<fmt:formatDate value='${now}' pattern='yyyy-MM-dd'/>">
                                             </div>
                                         </div>
                                         <div class="col-md-6">

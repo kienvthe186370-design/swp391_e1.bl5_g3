@@ -82,10 +82,18 @@
                 <input type="hidden" name="attributeID" value="${attribute.attributeID}">
 
                 <div class="card-body">
+                  <!-- Thông báo lỗi -->
+                  <c:if test="${not empty error}">
+                    <div class="alert alert-danger alert-dismissible">
+                      <button type="button" class="close" data-dismiss="alert">&times;</button>
+                      <i class="fas fa-exclamation-triangle"></i> ${error}
+                    </div>
+                  </c:if>
+                  
                   <!-- Value Name -->
                   <div class="form-group">
                     <label for="valueName">Tên Giá trị <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="valueName" name="valueName" 
+                    <input type="text" class="form-control ${not empty error ? 'is-invalid' : ''}" id="valueName" name="valueName" 
                            placeholder="Nhập giá trị..." required>
                     <small class="form-text text-muted">
                       Ví dụ: 

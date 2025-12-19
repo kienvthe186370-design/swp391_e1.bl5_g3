@@ -133,6 +133,28 @@ public class BrandDAO extends DBContext {
         return 0;
     }
     
+    // Check if brand name already exists
+    public boolean isBrandNameExists(String brandName, Integer excludeId) {
+        String sql = "SELECT COUNT(*) FROM Brands WHERE BrandName = ?";
+        if (excludeId != null) {
+            sql += " AND BrandID != ?";
+        }
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, brandName);
+            if (excludeId != null) {
+                ps.setInt(2, excludeId);
+            }
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
     // Get brand by ID
     public Brand getBrandByID(int id) {
         String sql = "SELECT * FROM Brands WHERE BrandID = ?";

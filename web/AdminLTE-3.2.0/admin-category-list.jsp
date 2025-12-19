@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ page import="entity.Employee" %>
 <%
     Employee employee = (Employee) session.getAttribute("employee");
@@ -140,7 +141,16 @@
                   <tr>
                     <td><strong>#${cat.categoryID}</strong></td>
                     <td><strong>${cat.categoryName}</strong></td>
-                    <td><small>${cat.description}</small></td>
+                    <td><small>
+                        <c:choose>
+                          <c:when test="${fn:length(cat.description) > 100}">
+                            ${fn:substring(cat.description, 0, 100)}...
+                          </c:when>
+                          <c:otherwise>  ${cat.description}   </c:otherwise>
+                        </c:choose>
+                            
+                        </small>
+                    </td>
                     <td><span class="badge badge-info">${cat.displayOrder}</span></td>
                     <td>
                       <c:choose>
