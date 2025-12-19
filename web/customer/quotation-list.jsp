@@ -18,8 +18,8 @@
         .status-sent { background: #007bff; color: #fff; }
         .status-customercountered { background: #ffc107; color: #000; }
         .status-sellercountered { background: #17a2b8; color: #fff; }
-        .status-accepted { background: #28a745; color: #fff; }
-        .status-paid { background: #28a745; color: #fff; }
+        .status-accepted { background: #5dade2; color: #fff; } /* Xanh biển - chờ thanh toán */
+        .status-paid { background: #28a745; color: #fff; } /* Xanh lá - hoàn thành */
         .status-rejected { background: #dc3545; color: #fff; }
         .status-expired { background: #6c757d; color: #fff; }
         .stat-card { border-radius: 8px; padding: 15px; text-align: center; }
@@ -50,42 +50,14 @@
 
     <section class="spad">
         <div class="container">
-            <!-- Stats Cards -->
-            <div class="row mb-4">
-                <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-card bg-primary text-white">
-                        <h3>${sentCount}</h3>
-                        <p><i class="fa fa-paper-plane"></i> Chờ xử lý</p>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-card bg-warning text-dark">
-                        <h3>${negotiatingCount}</h3>
-                        <p><i class="fa fa-comments"></i> Đang thương lượng</p>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-card bg-info text-white">
-                        <h3>${acceptedCount}</h3>
-                        <p><i class="fa fa-check"></i> Đã chấp nhận</p>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-card bg-success text-white">
-                        <h3>${paidCount}</h3>
-                        <p><i class="fa fa-credit-card"></i> Đã thanh toán</p>
-                    </div>
-                </div>
-            </div>
-
             <!-- Filter -->
             <div class="card mb-4">
                 <div class="card-body">
                     <form class="row g-3" method="GET">
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <input type="text" class="form-control" name="keyword" placeholder="Tìm mã báo giá, mã RFQ..." value="${keyword}">
                         </div>
-                        <div class="col-md-5">
+                        <div class="col-md-3">
                             <select class="form-control" name="status">
                                 <option value="">Tất cả trạng thái</option>
                                 <option value="Sent" ${status == 'Sent' ? 'selected' : ''}>Chờ xử lý</option>
@@ -94,6 +66,14 @@
                                 <option value="Accepted" ${status == 'Accepted' ? 'selected' : ''}>Đã chấp nhận</option>
                                 <option value="Paid" ${status == 'Paid' ? 'selected' : ''}>Đã thanh toán</option>
                                 <option value="Rejected" ${status == 'Rejected' ? 'selected' : ''}>Đã từ chối</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-control" name="sortBy">
+                                <option value="">Mới nhất</option>
+                                <option value="oldest" ${sortBy == 'oldest' ? 'selected' : ''}>Cũ nhất</option>
+                                <option value="price_asc" ${sortBy == 'price_asc' ? 'selected' : ''}>Giá tăng dần</option>
+                                <option value="price_desc" ${sortBy == 'price_desc' ? 'selected' : ''}>Giá giảm dần</option>
                             </select>
                         </div>
                         <div class="col-md-2">
@@ -132,9 +112,16 @@
                                             <p class="text-muted mb-1"><i class="fa fa-building"></i> ${q.rfq.companyName}</p>
                                         </c:if>
                                     </div>
-                                    <span class="badge status-badge status-${q.status.toLowerCase()}">
-                                        ${q.statusDisplayName}
-                                    </span>
+                                    <div class="text-right">
+                                        <span class="badge status-badge status-${q.status.toLowerCase()}">
+                                            ${q.statusDisplayName}
+                                        </span>
+                                        <c:if test="${q.negotiationCount > 0}">
+                                            <br><small class="badge badge-light negotiation-badge mt-1">
+                                                <i class="fa fa-exchange"></i> Thương lượng: ${q.negotiationCount}/${q.maxNegotiationCount}
+                                            </small>
+                                        </c:if>
+                                    </div>
                                 </div>
 
                                 <!-- Negotiation Info -->
@@ -160,19 +147,14 @@
                                 </c:if>
 
                                 <c:if test="${q.status == 'Accepted'}">
-                                    <div class="alert alert-success mb-2 py-2">
+                                    <div class="alert mb-2 py-2" style="background-color: #d6eaf8; border-color: #5dade2; color: #1a5276;">
                                         <i class="fa fa-check-circle"></i>
                                         <strong>Đã chấp nhận:</strong> Vui lòng thanh toán để hoàn tất
                                     </div>
                                 </c:if>
 
-                                <div class="row text-muted small">
-                                    <div class="col-6">
-                                        <i class="fa fa-calendar"></i> Ngày gửi: <fmt:formatDate value="${q.quotationSentDate}" pattern="dd/MM/yyyy"/>
-                                    </div>
-                                    <div class="col-6">
-                                        <i class="fa fa-clock-o"></i> Hiệu lực đến: <fmt:formatDate value="${q.quotationValidUntil}" pattern="dd/MM/yyyy"/>
-                                    </div>
+                                <div class="text-muted small">
+                                    <i class="fa fa-calendar"></i> Ngày gửi: <fmt:formatDate value="${q.quotationSentDate}" pattern="dd/MM/yyyy"/>
                                 </div>
                                 <c:if test="${not empty q.shippingCarrierName}">
                                     <div class="mt-2 small">
@@ -213,23 +195,21 @@
             </c:forEach>
 
             <!-- Pagination -->
-            <c:if test="${totalPages > 1}">
-                <nav class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
-                            <a class="page-link" href="?page=${currentPage - 1}&keyword=${keyword}&status=${status}">«</a>
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="?page=${currentPage - 1}&keyword=${keyword}&status=${status}&sortBy=${sortBy}">«</a>
+                    </li>
+                    <c:forEach begin="1" end="${totalPages}" var="i">
+                        <li class="page-item ${currentPage == i ? 'active' : ''}">
+                            <a class="page-link" href="?page=${i}&keyword=${keyword}&status=${status}&sortBy=${sortBy}">${i}</a>
                         </li>
-                        <c:forEach begin="1" end="${totalPages}" var="i">
-                            <li class="page-item ${currentPage == i ? 'active' : ''}">
-                                <a class="page-link" href="?page=${i}&keyword=${keyword}&status=${status}">${i}</a>
-                            </li>
-                        </c:forEach>
-                        <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
-                            <a class="page-link" href="?page=${currentPage + 1}&keyword=${keyword}&status=${status}">»</a>
-                        </li>
-                    </ul>
-                </nav>
-            </c:if>
+                    </c:forEach>
+                    <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="?page=${currentPage + 1}&keyword=${keyword}&status=${status}&sortBy=${sortBy}">»</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </section>
 

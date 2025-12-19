@@ -65,10 +65,10 @@
             <div class="card mb-4">
                 <div class="card-body">
                     <form class="row g-3" method="GET">
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <input type="text" class="form-control" name="keyword" placeholder="Tìm mã RFQ, công ty..." value="${keyword}">
                         </div>
-                        <div class="col-md-5">
+                        <div class="col-md-3">
                             <select class="form-control" name="status">
                                 <option value="">Tất cả trạng thái</option>
                                 <option value="Pending" ${status == 'Pending' ? 'selected' : ''}>Chờ xử lý</option>
@@ -79,6 +79,12 @@
                                 <option value="QuotationCreated" ${status == 'QuotationCreated' ? 'selected' : ''}>Đã tạo báo giá</option>
                                 <option value="Completed" ${status == 'Completed' ? 'selected' : ''}>Hoàn thành</option>
                                 <option value="Cancelled" ${status == 'Cancelled' ? 'selected' : ''}>Đã hủy</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-control" name="sortBy">
+                                <option value="">Mới nhất</option>
+                                <option value="oldest" ${sortBy == 'oldest' ? 'selected' : ''}>Cũ nhất</option>
                             </select>
                         </div>
                         <div class="col-md-2">
@@ -188,23 +194,21 @@
             </c:forEach>
 
             <!-- Pagination -->
-            <c:if test="${totalPages > 1}">
-                <nav class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
-                            <a class="page-link" href="?page=${currentPage - 1}&keyword=${keyword}&status=${status}">«</a>
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="?page=${currentPage - 1}&keyword=${keyword}&status=${status}&sortBy=${sortBy}">«</a>
+                    </li>
+                    <c:forEach begin="1" end="${totalPages}" var="i">
+                        <li class="page-item ${currentPage == i ? 'active' : ''}">
+                            <a class="page-link" href="?page=${i}&keyword=${keyword}&status=${status}&sortBy=${sortBy}">${i}</a>
                         </li>
-                        <c:forEach begin="1" end="${totalPages}" var="i">
-                            <li class="page-item ${currentPage == i ? 'active' : ''}">
-                                <a class="page-link" href="?page=${i}&keyword=${keyword}&status=${status}">${i}</a>
-                            </li>
-                        </c:forEach>
-                        <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
-                            <a class="page-link" href="?page=${currentPage + 1}&keyword=${keyword}&status=${status}">»</a>
-                        </li>
-                    </ul>
-                </nav>
-            </c:if>
+                    </c:forEach>
+                    <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="?page=${currentPage + 1}&keyword=${keyword}&status=${status}&sortBy=${sortBy}">»</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </section>
 

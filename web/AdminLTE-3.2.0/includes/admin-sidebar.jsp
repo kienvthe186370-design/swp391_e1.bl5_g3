@@ -133,6 +133,29 @@
     if (accessDeniedMsg != null) {
         session.removeAttribute("accessDeniedMessage");
     }
+    
+    // ===== STOCK REQUEST COUNTS =====
+    // Admin: đếm số yêu cầu Pending
+    // Seller: đếm số yêu cầu Completed trong 7 ngày (thông báo đã nhập kho)
+    boolean canAccessStockRequests = RolePermission.canManageStockRequests(userRole);
+    int pendingStockRequestCount = 0;
+    int completedStockRequestCount = 0;
+    boolean isStockRequestPage = currentURI.contains("/admin/stock-request");
+    
+    if (canAccessStockRequests) {
+        try {
+            DAO.StockRequestDAO stockRequestDAO = new DAO.StockRequestDAO();
+            if (isAdmin) {
+                // Admin: đếm yêu cầu chờ duyệt
+                pendingStockRequestCount = stockRequestDAO.countPendingRequests();
+            } else if (isSeller) {
+                // Seller: đếm yêu cầu đã hoàn thành trong 7 ngày
+                completedStockRequestCount = stockRequestDAO.countCompletedRequestsBySeller(employee.getEmployeeID());
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+    }
 %>
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
   <a href="<%= request.getContextPath() %>/admin/dashboard" class="brand-link">
@@ -293,6 +316,19 @@
           </a>
         </li>
         
+        <!-- Stock Requests - Admin -->
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/stock-requests" 
+             class="nav-link <%= isStockRequestPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-boxes"></i>
+            <p>Yêu cầu nhập hàng
+              <% if (pendingStockRequestCount > 0) { %>
+                <span class="badge badge-warning right"><%= pendingStockRequestCount %></span>
+              <% } %>
+            </p>
+          </a>
+        </li>
+        
         <!-- Admin không xử lý Refund - Refund do Seller/SellerManager xử lý -->
         
         <!-- Vouchers - Admin -->
@@ -335,13 +371,13 @@
         <!-- ==================== OTHER ROLES - PHÂN QUYỀN MỚI ==================== -->
         
         <!-- ===== SELLER MANAGER SECTION ===== -->
-        <!-- Quản lý Khách hàng - SellerManager (CRUD) hoặc Seller (View only) -->
-        <% if (canViewCustomers) { %>
+        <!-- Quản lý Khách hàng - Chỉ SellerManager -->
+        <% if (canAccessCustomerManagement) { %>
         <li class="nav-item">
           <a href="<%= contextPath %>/seller-manager/customers" 
              class="nav-link <%= isSMCustomerPage ? "active" : "" %>">
             <i class="nav-icon fas fa-users"></i>
-            <p>Quản lý khách hàng<% if (!canAccessCustomerManagement) { %> <small>(Xem)</small><% } %></p>
+            <p>Quản lý khách hàng</p>
           </a>
         </li>
         <% } %>
@@ -413,6 +449,14 @@
              class="nav-link <%= currentURI.contains("/admin/quotations") ? "active" : "" %>">
             <i class="nav-icon fas fa-file-invoice-dollar"></i>
             <p>Đơn Báo Giá</p>
+          </a>
+        </li>
+        <!-- Stock Requests - Seller -->
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/stock-requests" 
+             class="nav-link <%= isStockRequestPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-boxes"></i>
+            <p>Yêu cầu nhập hàng</p>
           </a>
         </li>
         <% } %>

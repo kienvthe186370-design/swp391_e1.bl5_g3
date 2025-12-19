@@ -96,6 +96,9 @@ public class SellerRFQController extends HttpServlet {
             case "/propose-date":
                 proposeDate(request, response, employee);
                 break;
+            case "/accept-customer-date":
+                acceptCustomerDate(request, response, employee);
+                break;
             case "/update-notes":
                 updateNotes(request, response, employee);
                 break;
@@ -109,6 +112,13 @@ public class SellerRFQController extends HttpServlet {
         
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
+        String negotiationCountStr = request.getParameter("negotiationCount");
+        Integer negotiationCount = null;
+        if (negotiationCountStr != null && !negotiationCountStr.isEmpty()) {
+            try {
+                negotiationCount = Integer.parseInt(negotiationCountStr);
+            } catch (NumberFormatException e) {}
+        }
         
         int page = 1;
         try {
@@ -118,8 +128,8 @@ public class SellerRFQController extends HttpServlet {
         int pageSize = 5;
         
         // Seller chỉ xem RFQ được assign cho mình
-        List<RFQ> rfqs = rfqDAO.getSellerRFQs(employee.getEmployeeID(), keyword, status, page, pageSize);
-        int totalCount = rfqDAO.countSellerRFQs(employee.getEmployeeID(), keyword, status);
+        List<RFQ> rfqs = rfqDAO.getSellerRFQs(employee.getEmployeeID(), keyword, status, negotiationCount, page, pageSize);
+        int totalCount = rfqDAO.countSellerRFQs(employee.getEmployeeID(), keyword, status, negotiationCount);
         int totalPages = (int) Math.ceil((double) totalCount / pageSize);
         if (totalPages < 1) totalPages = 1; // Luôn có ít nhất 1 trang
         
@@ -133,6 +143,7 @@ public class SellerRFQController extends HttpServlet {
         request.setAttribute("pageSize", pageSize);
         request.setAttribute("keyword", keyword);
         request.setAttribute("status", status);
+        request.setAttribute("negotiationCount", negotiationCountStr);
         request.setAttribute("pendingCount", stats[0]);
         request.setAttribute("reviewingCount", stats[1]);
         request.setAttribute("negotiatingCount", stats[2]);
@@ -167,10 +178,82 @@ public class SellerRFQController extends HttpServlet {
             rfq.setQuotation(quotation);
         }
         
+        // Check for stock shortage and existing stock request
+        DAO.StockRequestDAO stockRequestDAO = new DAO.StockRequestDAO();
+        boolean hasStockRequest = stockRequestDAO.hasStockRequestForRFQ(rfqID);
+        request.setAttribute("hasStockRequest", hasStockRequest);
+        
+        if (hasStockRequest) {
+            entity.StockRequest stockRequest = stockRequestDAO.getStockRequestByRFQID(rfqID);
+            if (stockRequest != null) {
+                request.setAttribute("stockRequestId", stockRequest.getStockRequestID());
+            }
+        }
+        
+        // Load stock info for each item and check shortage
+        java.util.Map<Integer, Integer> itemStocks = getItemStocks(rfq);
+        request.setAttribute("itemStocks", itemStocks);
+        
+        // Check if any item has shortage
+        boolean hasShortage = false;
+        for (entity.RFQItem item : rfq.getItems()) {
+            int stock = itemStocks.getOrDefault(item.getRfqItemID(), 0);
+            if (item.getQuantity() > stock) {
+                hasShortage = true;
+                break;
+            }
+        }
+        request.setAttribute("hasShortage", hasShortage);
+        
         request.setAttribute("rfq", rfq);
         request.getRequestDispatcher("/AdminLTE-3.2.0/admin-rfq-detail.jsp").forward(request, response);
     }
-
+    
+    /**
+     * Lấy thông tin tồn kho cho từng item trong RFQ
+     * @return Map<RFQItemID, Stock>
+     */
+    private java.util.Map<Integer, Integer> getItemStocks(RFQ rfq) {
+        java.util.Map<Integer, Integer> stockMap = new java.util.HashMap<>();
+        if (rfq.getItems() == null || rfq.getItems().isEmpty()) {
+            return stockMap;
+        }
+        
+        DAO.DBContext db = new DAO.DBContext();
+        java.sql.Connection conn = null;
+        
+        try {
+            conn = db.getConnection();
+            
+            for (entity.RFQItem item : rfq.getItems()) {
+                String sql = "SELECT ISNULL(SUM(Stock), 0) as TotalStock FROM ProductVariants WHERE ProductID = ?";
+                if (item.getVariantID() != null) {
+                    sql = "SELECT ISNULL(Stock, 0) as TotalStock FROM ProductVariants WHERE VariantID = ?";
+                }
+                
+                try (java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+                    if (item.getVariantID() != null) {
+                        ps.setInt(1, item.getVariantID());
+                    } else {
+                        ps.setInt(1, item.getProductID());
+                    }
+                    java.sql.ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        stockMap.put(item.getRfqItemID(), rs.getInt("TotalStock"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try { conn.close(); } catch (Exception e) { e.printStackTrace(); }
+            }
+        }
+        
+        return stockMap;
+    }
+    
     private void proposeDate(HttpServletRequest request, HttpServletResponse response, Employee employee)
             throws ServletException, IOException {
         
@@ -211,6 +294,39 @@ public class SellerRFQController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             response.sendRedirect(request.getContextPath() + "/admin/rfq?error=propose_failed");
+        }
+    }
+
+    private void acceptCustomerDate(HttpServletRequest request, HttpServletResponse response, Employee employee)
+            throws ServletException, IOException {
+        
+        try {
+            int rfqID = Integer.parseInt(request.getParameter("rfqId"));
+            
+            // Security check
+            if (!rfqDAO.isRFQAssignedToSeller(rfqID, employee.getEmployeeID())) {
+                response.sendRedirect(request.getContextPath() + "/admin/rfq?error=access_denied");
+                return;
+            }
+            
+            RFQ rfq = rfqDAO.getRFQById(rfqID);
+            if (rfq == null || !"DateCountered".equals(rfq.getStatus())) {
+                response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID + "&error=cannot_accept");
+                return;
+            }
+            
+            // Seller chấp nhận ngày KH đề xuất -> chuyển status sang DateAccepted
+            boolean success = rfqDAO.sellerAcceptCustomerDate(rfqID, employee.getEmployeeID());
+            
+            if (success) {
+                response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID + "&success=date_accepted");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/admin/rfq/detail?id=" + rfqID + "&error=accept_failed");
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/admin/rfq?error=accept_failed");
         }
     }
 

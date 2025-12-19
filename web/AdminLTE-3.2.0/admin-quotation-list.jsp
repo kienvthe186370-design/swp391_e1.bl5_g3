@@ -75,10 +75,10 @@
           <div class="card-body">
             <!-- Filters -->
             <form class="row g-3 align-items-end mb-3" method="GET" action="<%= request.getContextPath() %>/admin/quotations">
-              <div class="col-md-5">
+              <div class="col-md-4">
                 <input type="text" class="form-control" name="keyword" placeholder="Tìm theo mã báo giá, mã RFQ..." value="${keyword}">
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <select class="form-control" name="status">
                   <option value="">Tất cả trạng thái</option>
                   <option value="Sent" ${status == 'Sent' ? 'selected' : ''}>Đã gửi</option>
@@ -90,7 +90,16 @@
                 </select>
               </div>
               <div class="col-md-3">
-                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Tìm kiếm</button>
+                <select class="form-control" name="negotiationCount">
+                  <option value="">Tất cả số lần TL</option>
+                  <option value="0" ${negotiationCount == '0' ? 'selected' : ''}>Chưa thương lượng (0)</option>
+                  <option value="1" ${negotiationCount == '1' ? 'selected' : ''}>1 lần</option>
+                  <option value="2" ${negotiationCount == '2' ? 'selected' : ''}>2 lần</option>
+                  <option value="3" ${negotiationCount == '3' ? 'selected' : ''}>3 lần (tối đa)</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Tìm</button>
               </div>
             </form>
 

@@ -135,7 +135,7 @@
                                             </div>
                                         </div>
                                         <div class="col-12 mt-2">
-                                            <input type="text" class="form-control" name="items[${loop.index}][notes]" placeholder="Ghi chú cho sản phẩm này..." maxlength="200">
+                                            <input type="text" class="form-control" name="items[${loop.index}][notes]" placeholder="Ghi chú cho sản phẩm này..." maxlength="100">
                                         </div>
                                     </div>
                                 </div>
@@ -263,12 +263,14 @@
                         <div class="card-body">
                             <div class="mb-3">
                                 <label class="form-label">Điều Khoản Bảo Hành</label>
-                                <textarea class="form-control" name="warrantyTerms" rows="2">Bảo hành chính hãng 6 tháng cho vợt, 3 tháng cho phụ kiện</textarea>
+                                <textarea class="form-control" name="warrantyTerms" id="warrantyTerms" rows="2" maxlength="300">Bảo hành chính hãng 6 tháng cho vợt, 3 tháng cho phụ kiện</textarea>
+                                <small class="text-muted"><span id="warrantyTermsCount">0</span>/300 ký tự</small>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Điều Khoản Khác</label>
-                                <textarea class="form-control" name="additionalTerms" rows="3">1. Hàng không được đổi trả sau khi đã mở seal
+                                <textarea class="form-control" name="additionalTerms" id="additionalTerms" rows="3" maxlength="500">1. Hàng không được đổi trả sau khi đã mở seal
 2. Thời gian giao hàng có thể thay đổi tùy tình hình thực tế</textarea>
+                                <small class="text-muted"><span id="additionalTermsCount">0</span>/500 ký tự</small>
                             </div>
                         </div>
                     </div>
@@ -317,7 +319,44 @@
             document.querySelectorAll('.product-item').forEach(function(item, index) {
                 calculatePrice(index);
             });
+            
+            // Initialize character counts for textareas
+            updateCharCount('warrantyTerms', 'warrantyTermsCount', 300);
+            updateCharCount('additionalTerms', 'additionalTermsCount', 500);
+            
+            // Bind character count events
+            var warrantyEl = document.getElementById('warrantyTerms');
+            if (warrantyEl) {
+                warrantyEl.addEventListener('input', function() {
+                    updateCharCount('warrantyTerms', 'warrantyTermsCount', 300);
+                });
+            }
+            
+            var additionalEl = document.getElementById('additionalTerms');
+            if (additionalEl) {
+                additionalEl.addEventListener('input', function() {
+                    updateCharCount('additionalTerms', 'additionalTermsCount', 500);
+                });
+            }
+            
+            // Limit product notes length
+            document.querySelectorAll('input[name*="[notes]"]').forEach(function(input) {
+                input.addEventListener('input', function() {
+                    if (this.value.length > 100) {
+                        this.value = this.value.substring(0, 100);
+                    }
+                });
+            });
         });
+        
+        // Character count helper
+        function updateCharCount(inputId, countId, maxLen) {
+            var input = document.getElementById(inputId);
+            var count = document.getElementById(countId);
+            if (input && count) {
+                count.textContent = input.value.length;
+            }
+        }
 
         // Sanitize profit input - chỉ cho phép số và dấu chấm thập phân
         function sanitizeProfitInput(input) {

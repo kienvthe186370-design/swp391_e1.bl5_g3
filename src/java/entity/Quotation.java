@@ -256,10 +256,10 @@ public class Quotation {
             case STATUS_SENT: return "primary";
             case STATUS_CUSTOMER_COUNTERED: return "warning";
             case STATUS_SELLER_COUNTERED: return "warning";
-            case STATUS_ACCEPTED: return "success";
+            case STATUS_ACCEPTED: return "info"; // Xanh dương - chờ thanh toán
             case STATUS_REJECTED: return "danger";
             case STATUS_EXPIRED: return "secondary";
-            case STATUS_PAID: return "success";
+            case STATUS_PAID: return "success"; // Xanh lá - hoàn thành
             default: return "secondary";
         }
     }

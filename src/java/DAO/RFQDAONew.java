@@ -505,6 +505,47 @@ public class RFQDAONew extends DBContext {
         }
     }
 
+    /**
+     * Seller chấp nhận ngày do customer đề xuất (khi status = DateCountered)
+     */
+    public boolean sellerAcceptCustomerDate(int rfqID, int sellerID) {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+            
+            RFQ rfq = getRFQById(rfqID);
+            if (rfq == null || !"DateCountered".equals(rfq.getStatus())) {
+                lastError = "Không thể chấp nhận ngày giao cho RFQ này";
+                return false;
+            }
+            
+            String oldStatus = rfq.getStatus();
+            
+            // Cập nhật ProposedDeliveryDate = CustomerCounterDate và chuyển status sang DateAccepted
+            String sql = "UPDATE RFQs SET ProposedDeliveryDate = CustomerCounterDate, Status = ?, UpdatedDate = GETDATE() WHERE RFQID = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, RFQ.STATUS_DATE_ACCEPTED);
+                ps.setInt(2, rfqID);
+                ps.executeUpdate();
+            }
+            
+            insertHistory(conn, rfqID, oldStatus, RFQ.STATUS_DATE_ACCEPTED, "Seller Accept Customer Date", 
+                         "Seller chấp nhận ngày KH đề xuất: " + rfq.getCustomerCounterDate(), 
+                         sellerID, "employee");
+            
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            lastError = e.getMessage();
+            LOGGER.log(Level.SEVERE, "sellerAcceptCustomerDate failed", e);
+            if (conn != null) try { conn.rollback(); } catch (SQLException ex) {}
+            return false;
+        } finally {
+            closeConnection(conn);
+        }
+    }
+
     // ==================== CANCEL RFQ ====================
     
     /**
@@ -772,7 +813,61 @@ public class RFQDAONew extends DBContext {
      */
     public List<RFQ> getCustomerRFQs(int customerID, String keyword, String status, 
                                       int page, int pageSize) {
-        return searchRFQs(keyword, status, null, customerID, page, pageSize);
+        return getCustomerRFQsWithSort(customerID, keyword, status, null, page, pageSize);
+    }
+
+    /**
+     * Lấy danh sách RFQ của customer với sort
+     */
+    public List<RFQ> getCustomerRFQsWithSort(int customerID, String keyword, String status, 
+                                              String sortBy, int page, int pageSize) {
+        List<RFQ> rfqs = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT r.*, e.FullName as AssignedName, c.FullName as CustomerName ");
+        sql.append("FROM RFQs r ");
+        sql.append("LEFT JOIN Employees e ON r.AssignedTo = e.EmployeeID ");
+        sql.append("LEFT JOIN Customers c ON r.CustomerID = c.CustomerID ");
+        sql.append("WHERE r.CustomerID = ? ");
+        
+        List<Object> params = new ArrayList<>();
+        params.add(customerID);
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("AND (r.RFQCode LIKE ? OR r.CompanyName LIKE ? OR r.ContactPerson LIKE ?) ");
+            String kw = "%" + keyword.trim() + "%";
+            params.add(kw); params.add(kw); params.add(kw);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append("AND r.Status = ? ");
+            params.add(status);
+        }
+        
+        // Sort
+        if ("oldest".equals(sortBy)) {
+            sql.append("ORDER BY r.CreatedDate ASC ");
+        } else {
+            sql.append("ORDER BY r.CreatedDate DESC ");
+        }
+        
+        sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add((page - 1) * pageSize);
+        params.add(pageSize);
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                RFQ rfq = mapResultSetToRFQ(rs);
+                rfq.setItems(getRFQItems(rfq.getRfqID()));
+                rfqs.add(rfq);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "getCustomerRFQsWithSort failed", e);
+        }
+        return rfqs;
     }
 
     /**
@@ -785,18 +880,133 @@ public class RFQDAONew extends DBContext {
     // ==================== SELLER METHODS ====================
     
     /**
-     * Lấy danh sách RFQ được assign cho seller
+     * Lấy danh sách RFQ được assign cho seller (với filter negotiationCount)
      */
     public List<RFQ> getSellerRFQs(int sellerID, String keyword, String status, 
-                                    int page, int pageSize) {
-        return searchRFQs(keyword, status, sellerID, null, page, pageSize);
+                                    Integer negotiationCount, int page, int pageSize) {
+        return searchRFQsWithNegotiation(keyword, status, sellerID, null, negotiationCount, page, pageSize);
     }
 
     /**
-     * Đếm số RFQ được assign cho seller
+     * Đếm số RFQ được assign cho seller (với filter negotiationCount)
      */
-    public int countSellerRFQs(int sellerID, String keyword, String status) {
-        return countRFQs(keyword, status, sellerID, null);
+    public int countSellerRFQs(int sellerID, String keyword, String status, Integer negotiationCount) {
+        return countRFQsWithNegotiation(keyword, status, sellerID, null, negotiationCount);
+    }
+
+    /**
+     * Tìm kiếm RFQ với filter negotiationCount
+     */
+    public List<RFQ> searchRFQsWithNegotiation(String keyword, String status, Integer assignedTo, 
+                                               Integer customerID, Integer negotiationCount, 
+                                               int page, int pageSize) {
+        List<RFQ> rfqs = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT r.*, c.FullName as CustomerName, e.FullName as AssignedName ");
+        sql.append("FROM RFQs r ");
+        sql.append("LEFT JOIN Customers c ON r.CustomerID = c.CustomerID ");
+        sql.append("LEFT JOIN Employees e ON r.AssignedTo = e.EmployeeID ");
+        sql.append("WHERE 1=1 ");
+        
+        List<Object> params = new ArrayList<>();
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("AND (r.RFQCode LIKE ? OR r.CompanyName LIKE ? OR c.FullName LIKE ?) ");
+            String kw = "%" + keyword.trim() + "%";
+            params.add(kw); params.add(kw); params.add(kw);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append("AND r.Status = ? ");
+            params.add(status);
+        }
+        if (assignedTo != null) {
+            if (assignedTo == 0) {
+                sql.append("AND r.AssignedTo IS NULL ");
+            } else {
+                sql.append("AND r.AssignedTo = ? ");
+                params.add(assignedTo);
+            }
+        }
+        if (customerID != null) {
+            sql.append("AND r.CustomerID = ? ");
+            params.add(customerID);
+        }
+        if (negotiationCount != null) {
+            sql.append("AND r.DateNegotiationCount = ? ");
+            params.add(negotiationCount);
+        }
+        
+        sql.append("ORDER BY r.CreatedDate DESC ");
+        sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add((page - 1) * pageSize);
+        params.add(pageSize);
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                rfqs.add(mapResultSetToRFQ(rs));
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "searchRFQsWithNegotiation failed", e);
+        }
+        return rfqs;
+    }
+
+    /**
+     * Đếm tổng số RFQ với filter negotiationCount
+     */
+    public int countRFQsWithNegotiation(String keyword, String status, Integer assignedTo, 
+                                        Integer customerID, Integer negotiationCount) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM RFQs r ");
+        sql.append("LEFT JOIN Customers c ON r.CustomerID = c.CustomerID ");
+        sql.append("WHERE 1=1 ");
+        
+        List<Object> params = new ArrayList<>();
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("AND (r.RFQCode LIKE ? OR r.CompanyName LIKE ? OR c.FullName LIKE ?) ");
+            String kw = "%" + keyword.trim() + "%";
+            params.add(kw); params.add(kw); params.add(kw);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append("AND r.Status = ? ");
+            params.add(status);
+        }
+        if (assignedTo != null) {
+            if (assignedTo == 0) {
+                sql.append("AND r.AssignedTo IS NULL ");
+            } else {
+                sql.append("AND r.AssignedTo = ? ");
+                params.add(assignedTo);
+            }
+        }
+        if (customerID != null) {
+            sql.append("AND r.CustomerID = ? ");
+            params.add(customerID);
+        }
+        if (negotiationCount != null) {
+            sql.append("AND r.DateNegotiationCount = ? ");
+            params.add(negotiationCount);
+        }
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "countRFQsWithNegotiation failed", e);
+        }
+        return 0;
     }
 
     /**

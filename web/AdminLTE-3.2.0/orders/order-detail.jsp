@@ -268,7 +268,13 @@
                                     </c:choose>
                                 </h3>
                                 <hr>
-                                <p><strong>Thanh toán:</strong> ${order.paymentMethod}</p>
+                                <p><strong>Thanh toán:</strong> 
+                                    <c:choose>
+                                        <c:when test="${order.paymentMethod == 'BankTransfer'}">VNPay</c:when>
+                                        <c:when test="${order.paymentMethod == 'COD'}">Thanh toán khi nhận hàng</c:when>
+                                        <c:otherwise>${order.paymentMethod}</c:otherwise>
+                                    </c:choose>
+                                </p>
                                 <p>
                                     <span class="badge badge-${order.paymentStatus == 'Paid' ? 'success' : 'warning'}">
                                         ${order.paymentStatus == 'Paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}

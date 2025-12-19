@@ -236,9 +236,13 @@ public class QuotationDAO extends DBContext {
                 ps.executeUpdate();
             }
             
+            String formattedPrice = String.format("%,d", counterPrice.longValue());
+            String historyNote = "KH đề xuất giá: " + formattedPrice + " VND";
+            if (note != null && !note.trim().isEmpty()) {
+                historyNote += "\nLý do: " + note;
+            }
             insertHistory(conn, quotationID, q.getStatus(), Quotation.STATUS_CUSTOMER_COUNTERED, 
-                         "Customer Counter", "KH đề xuất giá: " + counterPrice + " VND. " + note, 
-                         customerID, "customer");
+                         "Customer Counter", historyNote, customerID, "customer");
             
             conn.commit();
             return true;
@@ -277,14 +281,110 @@ public class QuotationDAO extends DBContext {
                 ps.executeUpdate();
             }
             
+            String formattedPrice = String.format("%,d", counterPrice.longValue());
+            String historyNote = "Seller đề xuất giá: " + formattedPrice + " VND";
+            if (note != null && !note.trim().isEmpty()) {
+                historyNote += "\nLý do: " + note;
+            }
             insertHistory(conn, quotationID, q.getStatus(), Quotation.STATUS_SELLER_COUNTERED, 
-                         "Seller Counter", "Seller đề xuất giá: " + counterPrice + " VND. " + note, 
-                         employeeID, "employee");
+                         "Seller Counter", historyNote, employeeID, "employee");
             
             conn.commit();
             return true;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "sellerCounterPrice failed", e);
+            if (conn != null) try { conn.rollback(); } catch (SQLException ex) {}
+            return false;
+        } finally {
+            closeConnection(conn);
+        }
+    }
+
+    /**
+     * Seller chấp nhận giá khách hàng đề xuất
+     */
+    public boolean sellerAcceptCustomerPrice(int quotationID, int employeeID) {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+            
+            Quotation q = getQuotationById(quotationID);
+            if (q == null || !Quotation.STATUS_CUSTOMER_COUNTERED.equals(q.getStatus())) {
+                return false;
+            }
+            
+            // Lấy giá khách hàng đề xuất
+            BigDecimal customerPrice = q.getCustomerCounterPrice();
+            if (customerPrice == null) {
+                return false;
+            }
+            
+            // Cập nhật status sang Accepted và set totalAmount = customerCounterPrice
+            String sql = "UPDATE Quotations SET TotalAmount = ?, Status = ?, UpdatedDate = GETDATE() " +
+                        "WHERE QuotationID = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setBigDecimal(1, customerPrice);
+                ps.setString(2, Quotation.STATUS_ACCEPTED);
+                ps.setInt(3, quotationID);
+                ps.executeUpdate();
+            }
+            
+            String formattedPrice = String.format("%,d", customerPrice.longValue());
+            insertHistory(conn, quotationID, q.getStatus(), Quotation.STATUS_ACCEPTED, 
+                         "Seller Accept Customer Price", 
+                         "Seller chấp nhận giá KH đề xuất: " + formattedPrice + " VND", 
+                         employeeID, "employee");
+            
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "sellerAcceptCustomerPrice failed", e);
+            if (conn != null) try { conn.rollback(); } catch (SQLException ex) {}
+            return false;
+        } finally {
+            closeConnection(conn);
+        }
+    }
+
+    /**
+     * Seller từ chối báo giá (khi hết lần thương lượng)
+     */
+    public boolean sellerRejectQuotation(int quotationID, String reason, int employeeID) {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+            
+            Quotation q = getQuotationById(quotationID);
+            if (q == null) {
+                return false;
+            }
+            String oldStatus = q.getStatus();
+            
+            String sql = "UPDATE Quotations SET Status = ?, RejectionReason = ?, UpdatedDate = GETDATE() " +
+                        "WHERE QuotationID = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, Quotation.STATUS_REJECTED);
+                ps.setString(2, reason);
+                ps.setInt(3, quotationID);
+                ps.executeUpdate();
+            }
+            
+            String historyNote = "Seller từ chối báo giá";
+            if (reason != null && !reason.trim().isEmpty()) {
+                historyNote += "\nLý do: " + reason;
+            }
+            insertHistory(conn, quotationID, oldStatus, Quotation.STATUS_REJECTED, 
+                         "Seller Reject", historyNote, employeeID, "employee");
+            
+            // Update RFQ status to Cancelled
+            updateRFQStatus(conn, q.getRfqID(), "Cancelled");
+            
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "sellerRejectQuotation failed", e);
             if (conn != null) try { conn.rollback(); } catch (SQLException ex) {}
             return false;
         } finally {
@@ -529,10 +629,120 @@ public class QuotationDAO extends DBContext {
     }
 
     /**
+     * Tìm kiếm Quotations với filter negotiationCount
+     */
+    public List<Quotation> searchQuotationsWithNegotiation(String keyword, String status, Integer createdBy, 
+                                                           Integer negotiationCount, int page, int pageSize) {
+        List<Quotation> quotations = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT q.*, e.FullName as CreatedByName, r.RFQCode, c.FullName as CustomerName ");
+        sql.append("FROM Quotations q ");
+        sql.append("JOIN RFQs r ON q.RFQID = r.RFQID ");
+        sql.append("JOIN Customers c ON r.CustomerID = c.CustomerID ");
+        sql.append("LEFT JOIN Employees e ON q.CreatedBy = e.EmployeeID ");
+        sql.append("WHERE 1=1 ");
+        
+        List<Object> params = new ArrayList<>();
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("AND (q.QuotationCode LIKE ? OR r.RFQCode LIKE ? OR c.FullName LIKE ?) ");
+            String kw = "%" + keyword.trim() + "%";
+            params.add(kw); params.add(kw); params.add(kw);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append("AND q.Status = ? ");
+            params.add(status);
+        }
+        if (createdBy != null) {
+            sql.append("AND q.CreatedBy = ? ");
+            params.add(createdBy);
+        }
+        if (negotiationCount != null) {
+            sql.append("AND q.NegotiationCount = ? ");
+            params.add(negotiationCount);
+        }
+        
+        sql.append("ORDER BY q.CreatedDate DESC ");
+        sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add((page - 1) * pageSize);
+        params.add(pageSize);
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Quotation q = mapResultSetToQuotation(rs);
+                q.setItems(getQuotationItems(q.getQuotationID()));
+                quotations.add(q);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "searchQuotationsWithNegotiation failed", e);
+        }
+        return quotations;
+    }
+
+    /**
+     * Đếm số Quotations với filter negotiationCount
+     */
+    public int countQuotationsWithNegotiation(String keyword, String status, Integer createdBy, 
+                                              Integer negotiationCount) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM Quotations q ");
+        sql.append("JOIN RFQs r ON q.RFQID = r.RFQID ");
+        sql.append("JOIN Customers c ON r.CustomerID = c.CustomerID ");
+        sql.append("WHERE 1=1 ");
+        
+        List<Object> params = new ArrayList<>();
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("AND (q.QuotationCode LIKE ? OR r.RFQCode LIKE ? OR c.FullName LIKE ?) ");
+            String kw = "%" + keyword.trim() + "%";
+            params.add(kw); params.add(kw); params.add(kw);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append("AND q.Status = ? ");
+            params.add(status);
+        }
+        if (createdBy != null) {
+            sql.append("AND q.CreatedBy = ? ");
+            params.add(createdBy);
+        }
+        if (negotiationCount != null) {
+            sql.append("AND q.NegotiationCount = ? ");
+            params.add(negotiationCount);
+        }
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "countQuotationsWithNegotiation failed", e);
+        }
+        return 0;
+    }
+
+    /**
      * Lấy danh sách Quotations cho Customer
      */
     public List<Quotation> getCustomerQuotations(int customerID, String keyword, String status, 
                                                   int page, int pageSize) {
+        return getCustomerQuotationsWithSort(customerID, keyword, status, null, page, pageSize);
+    }
+
+    /**
+     * Lấy danh sách Quotations cho Customer với sort theo giá
+     */
+    public List<Quotation> getCustomerQuotationsWithSort(int customerID, String keyword, String status, 
+                                                          String sortBy, int page, int pageSize) {
         List<Quotation> quotations = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT q.*, e.FullName as CreatedByName, r.RFQCode ");
@@ -554,7 +764,17 @@ public class QuotationDAO extends DBContext {
             params.add(status);
         }
         
-        sql.append("ORDER BY q.CreatedDate DESC ");
+        // Sort
+        if ("price_asc".equals(sortBy)) {
+            sql.append("ORDER BY q.TotalAmount ASC ");
+        } else if ("price_desc".equals(sortBy)) {
+            sql.append("ORDER BY q.TotalAmount DESC ");
+        } else if ("oldest".equals(sortBy)) {
+            sql.append("ORDER BY q.CreatedDate ASC ");
+        } else {
+            sql.append("ORDER BY q.CreatedDate DESC ");
+        }
+        
         sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
         params.add((page - 1) * pageSize);
         params.add(pageSize);
@@ -570,7 +790,7 @@ public class QuotationDAO extends DBContext {
                 quotations.add(q);
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "getCustomerQuotations failed", e);
+            LOGGER.log(Level.SEVERE, "getCustomerQuotationsWithSort failed", e);
         }
         return quotations;
     }

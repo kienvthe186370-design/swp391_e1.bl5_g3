@@ -117,6 +117,31 @@ public class RolePermission {
     public static boolean canAssignShipper(String role) {
         return SELLER_MANAGER.equalsIgnoreCase(role) || ADMIN.equalsIgnoreCase(role);
     }
+    
+    // ==================== STOCK REQUEST PERMISSIONS ====================
+    
+    /**
+     * Quyền quản lý yêu cầu nhập kho
+     * - Seller: Tạo yêu cầu từ RFQ, xem yêu cầu của mình
+     * - Admin: Xem tất cả, approve yêu cầu
+     */
+    public static boolean canManageStockRequests(String role) {
+        return SELLER.equalsIgnoreCase(role) || ADMIN.equalsIgnoreCase(role);
+    }
+    
+    /**
+     * Quyền tạo yêu cầu nhập kho (chỉ Seller)
+     */
+    public static boolean canCreateStockRequest(String role) {
+        return SELLER.equalsIgnoreCase(role);
+    }
+    
+    /**
+     * Quyền approve yêu cầu nhập kho (chỉ Admin)
+     */
+    public static boolean canApproveStockRequest(String role) {
+        return ADMIN.equalsIgnoreCase(role);
+    }
 
     public static boolean canManageProducts(String role) {
         return MARKETER.equalsIgnoreCase(role);
@@ -178,6 +203,11 @@ public class RolePermission {
         // Refund: SellerManager giám sát, Seller xử lý đơn của mình
         if (path.startsWith("/refund")) {
             return canManageRefunds(role);
+        }
+        
+        // Stock Requests: Seller tạo yêu cầu, Admin duyệt
+        if (path.startsWith("/stock-requests")) {
+            return canManageStockRequests(role);
         }
 
         if (path.startsWith("/products")) {

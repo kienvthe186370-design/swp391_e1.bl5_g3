@@ -35,8 +35,6 @@
         .nav-tabs .nav-link.active { color: #ca1515; border-bottom: 2px solid #ca1515; background: transparent; }
         
         /* Style cho đơn hàng Mua Buôn (RFQ) */
-        .order-card.rfq-order { border-left: 4px solid #ca1515; border-color: #ca1515; }
-        .order-card.rfq-order .card-header { background: #fff5f5; }
         .badge-wholesale { background: #ca1515; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; margin-left: 10px; }
     </style>
 </head>
@@ -123,7 +121,7 @@
 
                     <!-- Orders list -->
                     <c:forEach var="order" items="${orders}">
-                        <div class="order-card ${order.rfqID != null ? 'rfq-order' : ''}">
+                        <div class="order-card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <div>
                                     <strong>Đơn hàng: ${order.orderCode}</strong>

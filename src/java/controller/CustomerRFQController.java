@@ -157,21 +157,24 @@ public class CustomerRFQController extends HttpServlet {
         
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
+        String sortBy = request.getParameter("sortBy");
         int page = 1;
         try {
             page = Integer.parseInt(request.getParameter("page"));
         } catch (Exception e) {}
         
-        int pageSize = 10;
-        List<RFQ> rfqs = rfqDAO.getCustomerRFQs(customer.getCustomerID(), keyword, status, page, pageSize);
+        int pageSize = 5;
+        List<RFQ> rfqs = rfqDAO.getCustomerRFQsWithSort(customer.getCustomerID(), keyword, status, sortBy, page, pageSize);
         int totalCount = rfqDAO.countCustomerRFQs(customer.getCustomerID(), keyword, status);
         int totalPages = (int) Math.ceil((double) totalCount / pageSize);
+        if (totalPages < 1) totalPages = 1;
         
         request.setAttribute("rfqs", rfqs);
         request.setAttribute("currentPage", page);
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("keyword", keyword);
         request.setAttribute("status", status);
+        request.setAttribute("sortBy", sortBy);
         
         request.getRequestDispatcher("/customer/rfq-list.jsp").forward(request, response);
     }

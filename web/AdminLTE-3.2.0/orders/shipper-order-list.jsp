@@ -112,7 +112,7 @@
                                     </thead>
                                     <tbody>
                                         <c:forEach var="order" items="${orders}">
-                                            <tr class="${order.rfqID != null ? 'table-warning' : ''}">
+                                            <tr>
                                                 <td>
                                                     <strong>${order.orderCode}</strong>
                                                     <c:if test="${order.rfqID != null}">

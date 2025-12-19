@@ -172,7 +172,7 @@
                             </thead>
                             <tbody>
                                 <c:forEach var="order" items="${orders}">
-                                    <tr class="${order.rfqID != null ? 'table-warning' : ''}">
+                                    <tr>
                                         <td>
                                             <a href="?action=detail&id=${order.orderID}">
                                                 <strong>${order.orderCode}</strong>
@@ -192,7 +192,7 @@
                                             <span class="badge badge-${order.paymentStatus == 'Paid' ? 'success' : 'warning'}">
                                                 ${order.paymentStatus == 'Paid' ? 'Đã TT' : 'Chưa TT'}
                                             </span>
-                                            <br><small>${order.paymentMethod}</small>
+                                            <br><small><c:choose><c:when test="${order.paymentMethod == 'BankTransfer'}">VNPay</c:when><c:when test="${order.paymentMethod == 'COD'}">COD</c:when><c:otherwise>${order.paymentMethod}</c:otherwise></c:choose></small>
                                         </td>
                                         <td>
                                             <c:choose>

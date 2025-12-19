@@ -16,8 +16,8 @@
         .status-sent { background: #007bff; color: #fff; }
         .status-customercountered { background: #ffc107; color: #000; }
         .status-sellercountered { background: #17a2b8; color: #fff; }
-        .status-accepted { background: #28a745; color: #fff; }
-        .status-paid { background: #28a745; color: #fff; }
+        .status-accepted { background: #5dade2; color: #fff; } /* Xanh biển - chờ thanh toán */
+        .status-paid { background: #28a745; color: #fff; } /* Xanh lá - hoàn thành */
         .status-rejected { background: #dc3545; color: #fff; }
         .status-expired { background: #6c757d; color: #fff; }
         .info-label { font-weight: 600; color: #666; }
@@ -117,12 +117,6 @@
                                 </div>
                                 <div class="col-md-6">
                                     <p><span class="info-label">Ngày gửi báo giá:</span> <fmt:formatDate value="${quotation.quotationSentDate}" pattern="dd/MM/yyyy HH:mm"/></p>
-                                    <p><span class="info-label">Hiệu lực đến:</span> 
-                                        <fmt:formatDate value="${quotation.quotationValidUntil}" pattern="dd/MM/yyyy"/>
-                                        <c:if test="${quotation.expired}">
-                                            <span class="badge badge-danger">Hết hạn</span>
-                                        </c:if>
-                                    </p>
                                     <p><span class="info-label">Thanh toán:</span> 
                                         <c:choose>
                                             <c:when test="${quotation.paymentMethod == 'BankTransfer'}">Chuyển khoản (VNPay)</c:when>
@@ -218,7 +212,7 @@
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label>Ghi chú</label>
-                                                    <input type="text" class="form-control" name="note" maxlength="500" placeholder="Lý do đề xuất giá này...">
+                                                    <input type="text" class="form-control" name="note" maxlength="100" placeholder="Lý do đề xuất giá này...">
                                                 </div>
                                             </div>
                                             <button type="submit" class="btn btn-warning">
@@ -298,21 +292,6 @@
                                 <c:if test="${not empty quotation.rejectionReason}">
                                     <p><strong>Lý do:</strong> ${quotation.rejectionReason}</p>
                                 </c:if>
-                                <a href="${pageContext.request.contextPath}/rfq/form" class="btn btn-primary">
-                                    <i class="fa fa-plus"></i> Tạo Yêu Cầu Báo Giá Mới
-                                </a>
-                            </div>
-                        </div>
-                    </c:if>
-
-                    <!-- Expired -->
-                    <c:if test="${quotation.status == 'Expired' || quotation.expired}">
-                        <div class="card mb-4 border-secondary">
-                            <div class="card-header bg-secondary text-white">
-                                <i class="fa fa-clock-o"></i> Báo Giá Đã Hết Hạn
-                            </div>
-                            <div class="card-body">
-                                <p>Báo giá này đã hết hạn vào ngày <fmt:formatDate value="${quotation.quotationValidUntil}" pattern="dd/MM/yyyy"/>.</p>
                                 <a href="${pageContext.request.contextPath}/rfq/form" class="btn btn-primary">
                                     <i class="fa fa-plus"></i> Tạo Yêu Cầu Báo Giá Mới
                                 </a>
@@ -448,29 +427,84 @@
         var rejectReasonEl = document.getElementById('rejectReason');
         if (rejectReasonEl) {
             rejectReasonEl.addEventListener('input', function() {
+                // Limit to 500 characters
+                if (this.value.length > 500) {
+                    this.value = this.value.substring(0, 500);
+                }
+                document.getElementById('rejectReasonCount').textContent = this.value.length;
+            });
+            rejectReasonEl.addEventListener('blur', function() {
+                this.value = this.value.trim();
                 document.getElementById('rejectReasonCount').textContent = this.value.length;
             });
         }
         
         function validateRejectForm() {
-            var reason = document.getElementById('rejectReason').value.trim();
+            var reasonEl = document.getElementById('rejectReason');
+            var reason = reasonEl.value.trim();
             if (!reason) {
                 alert('Vui lòng nhập lý do từ chối');
+                reasonEl.focus();
                 return false;
             }
+            if (reason.length < 5) {
+                alert('Lý do từ chối phải có ít nhất 5 ký tự');
+                reasonEl.focus();
+                return false;
+            }
+            reasonEl.value = reason; // Set trimmed value
             return true;
         }
         
         function validateCounterForm() {
             var priceEl = document.getElementById('counterPrice');
             if (!priceEl) return true;
-            var price = priceEl.value;
-            if (!price || price <= 0) {
-                alert('Vui lòng nhập giá đề xuất hợp lệ');
+            
+            // Sanitize - only numbers
+            var price = priceEl.value.replace(/[^0-9]/g, '');
+            priceEl.value = price;
+            
+            if (!price || parseInt(price) <= 0) {
+                alert('Vui lòng nhập giá đề xuất hợp lệ (số dương)');
+                priceEl.focus();
                 return false;
             }
+            
+            // Check minimum price
+            if (parseInt(price) < 1000) {
+                alert('Giá đề xuất phải lớn hơn 1,000₫');
+                priceEl.focus();
+                return false;
+            }
+            
             return true;
         }
+        
+        // Sanitize counter price input - only allow numbers
+        $(document).ready(function() {
+            var counterPriceInput = document.getElementById('counterPrice');
+            if (counterPriceInput) {
+                counterPriceInput.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                });
+                counterPriceInput.addEventListener('blur', function() {
+                    this.value = this.value.trim();
+                });
+            }
+            
+            // Limit note length for counter form
+            var noteInput = document.querySelector('input[name="note"]');
+            if (noteInput) {
+                noteInput.addEventListener('input', function() {
+                    if (this.value.length > 100) {
+                        this.value = this.value.substring(0, 100);
+                    }
+                });
+                noteInput.addEventListener('blur', function() {
+                    this.value = this.value.trim();
+                });
+            }
+        });
     </script>
 </body>
 </html>

@@ -68,6 +68,30 @@
             <button type="button" class="close" data-dismiss="alert">&times;</button>
           </div>
         </c:if>
+        <c:if test="${param.success == 'accepted_customer_price'}">
+          <div class="alert alert-success alert-dismissible fade show">
+            <i class="fas fa-check-circle"></i> Đã chấp nhận giá khách hàng đề xuất. Chờ khách hàng thanh toán.
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+          </div>
+        </c:if>
+        <c:if test="${param.error == 'accept_price_failed'}">
+          <div class="alert alert-danger alert-dismissible fade show">
+            <i class="fas fa-exclamation-circle"></i> Không thể chấp nhận giá. Vui lòng thử lại.
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+          </div>
+        </c:if>
+        <c:if test="${param.success == 'rejected'}">
+          <div class="alert alert-warning alert-dismissible fade show">
+            <i class="fas fa-times-circle"></i> Đã từ chối báo giá. Đơn báo giá đã kết thúc.
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+          </div>
+        </c:if>
+        <c:if test="${param.error == 'reject_failed'}">
+          <div class="alert alert-danger alert-dismissible fade show">
+            <i class="fas fa-exclamation-circle"></i> Không thể từ chối báo giá. Vui lòng thử lại.
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+          </div>
+        </c:if>
 
         <div class="row">
           <!-- Main Content -->
@@ -94,10 +118,6 @@
                   <div class="col-md-6">
                     <p><span class="info-label">Ngày tạo:</span> <fmt:formatDate value="${quotation.createdDate}" pattern="dd/MM/yyyy HH:mm"/></p>
                     <p><span class="info-label">Ngày gửi:</span> <fmt:formatDate value="${quotation.quotationSentDate}" pattern="dd/MM/yyyy HH:mm"/></p>
-                    <p><span class="info-label">Hiệu lực đến:</span> 
-                      <fmt:formatDate value="${quotation.quotationValidUntil}" pattern="dd/MM/yyyy"/>
-                      <c:if test="${quotation.expired}"><span class="badge badge-danger ml-2">Hết hạn</span></c:if>
-                    </p>
                     <p><span class="info-label">Thanh toán:</span> 
                       <c:choose>
                         <c:when test="${quotation.paymentMethod == 'BankTransfer'}">Chuyển khoản (VNPay)</c:when>
@@ -137,8 +157,19 @@
 
                   <c:if test="${quotation.canSellerCounter()}">
                     <hr>
+                    <!-- Nút chấp nhận giá KH đề xuất -->
+                    <div class="mb-3">
+                      <form action="<%= request.getContextPath() %>/admin/quotations/accept-customer-price" method="POST" 
+                            style="display: inline-block;" onsubmit="return confirm('Bạn có chắc muốn chấp nhận giá khách hàng đề xuất?');">
+                        <input type="hidden" name="quotationId" value="${quotation.quotationID}">
+                        <button type="submit" class="btn btn-success btn-lg">
+                          <i class="fas fa-check"></i> Chấp Nhận Giá KH Đề Xuất
+                        </button>
+                      </form>
+                    </div>
+                    
                     <div class="negotiation-box">
-                      <h6><i class="fas fa-reply"></i> Phản Hồi Đề Xuất (còn ${quotation.remainingNegotiations} lần thương lượng)</h6>
+                      <h6><i class="fas fa-reply"></i> Hoặc Đề Xuất Giá Mới (còn ${quotation.remainingNegotiations} lần thương lượng)</h6>
                       <form action="<%= request.getContextPath() %>/admin/quotations/counter" method="POST" onsubmit="return validateCounterForm()">
                         <input type="hidden" name="quotationId" value="${quotation.quotationID}">
                         <div class="row">
@@ -149,7 +180,7 @@
                           </div>
                           <div class="col-md-5 mb-3">
                             <label>Ghi chú</label>
-                            <input type="text" class="form-control" name="note" maxlength="500" placeholder="Lý do đề xuất giá này...">
+                            <input type="text" class="form-control" name="note" maxlength="100" placeholder="Lý do đề xuất giá này...">
                           </div>
                           <div class="col-md-2 mb-3 d-flex align-items-end">
                             <button type="submit" class="btn btn-warning w-100">
@@ -161,8 +192,27 @@
                     </div>
                   </c:if>
                   <c:if test="${!quotation.canSellerCounter()}">
-                    <div class="alert alert-danger mt-3 mb-0">
-                      <i class="fas fa-exclamation-circle"></i> Đã hết số lần thương lượng. Chờ khách hàng quyết định.
+                    <hr>
+                    <div class="alert alert-info mb-3">
+                      <i class="fas fa-info-circle"></i> Đã hết số lần thương lượng. Vui lòng chọn một trong hai hành động bên dưới:
+                    </div>
+                    <div class="row">
+                      <div class="col-md-6 mb-2">
+                        <form action="<%= request.getContextPath() %>/admin/quotations/accept-customer-price" method="POST" 
+                              onsubmit="return confirm('Bạn có chắc muốn chấp nhận giá khách hàng đề xuất?');">
+                          <input type="hidden" name="quotationId" value="${quotation.quotationID}">
+                          <button type="submit" class="btn btn-success btn-lg btn-block">
+                            <i class="fas fa-check"></i> Chấp Nhận Giá KH Đề Xuất
+                          </button>
+                          <small class="text-muted">Chấp nhận giá <fmt:formatNumber value="${quotation.customerCounterPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/> và chờ thanh toán</small>
+                        </form>
+                      </div>
+                      <div class="col-md-6 mb-2">
+                        <button type="button" class="btn btn-danger btn-lg btn-block" data-toggle="modal" data-target="#rejectModal">
+                          <i class="fas fa-times"></i> Từ Chối Báo Giá
+                        </button>
+                        <small class="text-muted">Kết thúc đơn báo giá này</small>
+                      </div>
                     </div>
                   </c:if>
                 </div>
@@ -360,7 +410,7 @@
                     <div class="history-item ${h.newStatus == 'CustomerCountered' || h.newStatus == 'SellerCountered' ? 'counter' : ''} ${h.newStatus == 'Accepted' || h.newStatus == 'Paid' ? 'accepted' : ''} ${h.newStatus == 'Rejected' ? 'rejected' : ''}">
                       <strong>${h.action}</strong>
                       <c:if test="${not empty h.notes}">
-                        <p class="mb-1 small">${h.notes}</p>
+                        <p class="mb-1 small" style="white-space: pre-line;">${h.notes}</p>
                       </c:if>
                       <c:if test="${h.priceChange != null}">
                         <p class="mb-1 small text-primary">
@@ -383,18 +433,103 @@
   <jsp:include page="includes/admin-footer.jsp" />
 </div>
 
+<!-- Modal Từ Chối Báo Giá -->
+<div class="modal fade" id="rejectModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form action="<%= request.getContextPath() %>/admin/quotations/reject" method="POST">
+        <input type="hidden" name="quotationId" value="${quotation.quotationID}">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title"><i class="fas fa-times-circle"></i> Từ Chối Báo Giá</h5>
+          <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Bạn có chắc muốn từ chối báo giá này? Đơn báo giá sẽ kết thúc và không thể tiếp tục thương lượng.</p>
+          <div class="form-group">
+            <label>Lý do từ chối <span class="text-danger">*</span></label>
+            <textarea class="form-control" name="reason" rows="3" required placeholder="Nhập lý do từ chối..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-danger"><i class="fas fa-times"></i> Xác Nhận Từ Chối</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>
 <script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="<%= request.getContextPath() %>/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
 <script>
 function validateCounterForm() {
-    var price = document.getElementById('counterPrice').value;
-    if (!price || price <= 0) {
-        alert('Vui lòng nhập giá đề xuất hợp lệ');
+    var priceInput = document.getElementById('counterPrice');
+    var price = priceInput.value.trim();
+    
+    // Remove non-numeric characters except for the value
+    price = price.replace(/[^0-9]/g, '');
+    priceInput.value = price;
+    
+    if (!price || parseInt(price) <= 0) {
+        alert('Vui lòng nhập giá đề xuất hợp lệ (số dương)');
+        priceInput.focus();
         return false;
     }
+    
+    // Check if price is reasonable (not too small)
+    if (parseInt(price) < 1000) {
+        alert('Giá đề xuất phải lớn hơn 1,000₫');
+        priceInput.focus();
+        return false;
+    }
+    
     return true;
 }
+
+// Sanitize price input - only allow numbers
+document.addEventListener('DOMContentLoaded', function() {
+    var counterPriceInput = document.getElementById('counterPrice');
+    if (counterPriceInput) {
+        counterPriceInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+        counterPriceInput.addEventListener('blur', function() {
+            this.value = this.value.trim();
+        });
+    }
+    
+    // Limit note length
+    var noteInputs = document.querySelectorAll('input[name="note"]');
+    noteInputs.forEach(function(input) {
+        input.addEventListener('input', function() {
+            if (this.value.length > 100) {
+                this.value = this.value.substring(0, 100);
+            }
+        });
+        input.addEventListener('blur', function() {
+            this.value = this.value.trim();
+        });
+    });
+    
+    // Reject modal - validate reason
+    var rejectForm = document.querySelector('#rejectModal form');
+    if (rejectForm) {
+        rejectForm.addEventListener('submit', function(e) {
+            var reasonInput = this.querySelector('textarea[name="reason"]');
+            if (reasonInput) {
+                var reason = reasonInput.value.trim();
+                if (!reason || reason.length < 5) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập lý do từ chối (ít nhất 5 ký tự)');
+                    reasonInput.focus();
+                    return false;
+                }
+                reasonInput.value = reason; // Set trimmed value
+            }
+        });
+    }
+});
 </script>
 </body>
 </html>

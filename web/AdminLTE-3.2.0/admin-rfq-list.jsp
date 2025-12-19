@@ -116,10 +116,10 @@
           <!-- Filter -->
           <div class="card-body border-bottom">
             <form class="row g-3 align-items-end" method="GET">
-              <div class="col-md-5">
+              <div class="col-md-4">
                 <input type="text" class="form-control" name="keyword" placeholder="Tìm theo mã RFQ, công ty, khách hàng..." value="${keyword}">
               </div>
-              <div class="col-md-5">
+              <div class="col-md-3">
                 <select class="form-control" name="status">
                   <option value="">Tất cả trạng thái</option>
                   <option value="Pending" ${status == 'Pending' ? 'selected' : ''}>Chờ xử lý</option>
@@ -130,6 +130,15 @@
                   <option value="QuotationCreated" ${status == 'QuotationCreated' ? 'selected' : ''}>Đã tạo báo giá</option>
                   <option value="Completed" ${status == 'Completed' ? 'selected' : ''}>Hoàn thành</option>
                   <option value="Cancelled" ${status == 'Cancelled' ? 'selected' : ''}>Đã hủy</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select class="form-control" name="negotiationCount">
+                  <option value="">Tất cả số lần TL</option>
+                  <option value="0" ${negotiationCount == '0' ? 'selected' : ''}>Chưa thương lượng (0)</option>
+                  <option value="1" ${negotiationCount == '1' ? 'selected' : ''}>1 lần</option>
+                  <option value="2" ${negotiationCount == '2' ? 'selected' : ''}>2 lần</option>
+                  <option value="3" ${negotiationCount == '3' ? 'selected' : ''}>3 lần (tối đa)</option>
                 </select>
               </div>
               <div class="col-md-2">

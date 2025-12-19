@@ -17,6 +17,8 @@
         .required-field::after { content: " *"; color: red; }
         .product-row { border: 1px solid #dee2e6; padding: 15px; margin-bottom: 10px; border-radius: 5px; background: #f8f9fa; }
         .product-row:hover { background: #e9ecef; }
+        .is-invalid { border-color: #dc3545 !important; }
+        .form-control:focus.is-invalid { box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); }
     </style>
 </head>
 <body>
@@ -69,11 +71,11 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                     <label>Tên Công Ty</label>
-                                    <input type="text" class="form-control" name="companyName" value="${draftRfq.companyName}" maxlength="100">
+                                    <input type="text" class="form-control" name="companyName" id="companyName" value="${draftRfq.companyName}" maxlength="100" placeholder="Nhập tên công ty">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Mã Số Thuế</label>
-                                <input type="text" class="form-control" name="taxID" value="${draftRfq.taxID}" maxlength="20">
+                                <input type="text" class="form-control" name="taxID" id="taxID" value="${draftRfq.taxID}" maxlength="14" placeholder="Nhập mã số thuế">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Loại Hình Kinh Doanh</label>
@@ -111,7 +113,7 @@
                             </div>
                             <div class="col-12 mb-3">
                                 <label>Liên Hệ Dự Phòng</label>
-                                <input type="text" class="form-control" name="alternativeContact" value="${draftRfq.alternativeContact}" maxlength="100">
+                                <input type="text" class="form-control" name="alternativeContact" id="alternativeContact" value="${draftRfq.alternativeContact}" maxlength="100" placeholder="Số điện thoại hoặc email dự phòng">
                             </div>
                         </div>
                     </div>
@@ -151,7 +153,6 @@
                             <div class="col-md-4 mb-3">
                                 <label class="required-field">Ngày Mong Muốn Nhận Hàng</label>
                                 <input type="text" class="form-control" name="requestedDeliveryDate" id="deliveryDate" placeholder="dd/mm/yyyy" required autocomplete="off">
-                                <small class="text-muted">Chọn ngày bạn muốn nhận hàng</small>
                             </div>
                         </div>
                     </div>
@@ -802,6 +803,77 @@
                 btn.innerHTML = '<i class="fa fa-plus"></i> Thêm thông tin công ty';
             }
         }
+        
+        // ===== Character count and input sanitization =====
+        function updateCharCount(inputId, countId, maxLen) {
+            var input = document.getElementById(inputId);
+            var count = document.getElementById(countId);
+            if (input && count) {
+                var len = input.value.length;
+                count.textContent = len;
+                var parent = count.parentElement;
+                parent.classList.remove('warning', 'danger');
+                if (len >= maxLen) {
+                    parent.classList.add('danger');
+                } else if (len >= maxLen * 0.8) {
+                    parent.classList.add('warning');
+                }
+            }
+        }
+        
+        // Trim whitespace on blur
+        function trimOnBlur(inputId) {
+            var input = document.getElementById(inputId);
+            if (input) {
+                input.value = input.value.trim().replace(/\s+/g, ' ');
+            }
+        }
+        
+        // Tax ID: only numbers
+        $('#taxID').on('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+        
+        // Company name char count
+        $('#companyName').on('input', function() {
+            updateCharCount('companyName', 'companyNameCount', 100);
+        }).on('blur', function() {
+            trimOnBlur('companyName');
+            updateCharCount('companyName', 'companyNameCount', 100);
+        });
+        
+        // Alternative contact char count
+        $('#alternativeContact').on('input', function() {
+            updateCharCount('alternativeContact', 'alternativeContactCount', 100);
+        }).on('blur', function() {
+            trimOnBlur('alternativeContact');
+            updateCharCount('alternativeContact', 'alternativeContactCount', 100);
+        });
+        
+        // Delivery street char count
+        $('#deliveryStreet').on('input', function() {
+            updateCharCount('deliveryStreet', 'deliveryStreetCount', 200);
+        }).on('blur', function() {
+            trimOnBlur('deliveryStreet');
+            updateCharCount('deliveryStreet', 'deliveryStreetCount', 200);
+        });
+        
+        // Contact person: trim and sanitize
+        $('#contactPerson').on('blur', function() {
+            this.value = this.value.trim().replace(/\s+/g, ' ');
+        });
+        
+        // Phone: only numbers
+        $('#contactPhone').on('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+        
+        // Initialize char counts on page load
+        $(document).ready(function() {
+            updateCharCount('companyName', 'companyNameCount', 100);
+            updateCharCount('alternativeContact', 'alternativeContactCount', 100);
+            updateCharCount('deliveryStreet', 'deliveryStreetCount', 200);
+        });
         
         // ===== Delivery Date Functions =====
         // Draft delivery date from server

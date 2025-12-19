@@ -118,7 +118,7 @@
                                             </div>
                                         </div>
                                         <div class="col-12 mt-2">
-                                            <input type="text" class="form-control" name="items[${loop.index}][notes]" placeholder="Ghi chú cho sản phẩm này..." maxlength="200">
+                                            <input type="text" class="form-control" name="items[${loop.index}][notes]" placeholder="Ghi chú cho sản phẩm này..." maxlength="100">
                                         </div>
                                     </div>
                                 </div>

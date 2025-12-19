@@ -97,6 +97,12 @@ public class SellerQuotationController extends HttpServlet {
             case "/counter":
                 counterPrice(request, response, employee);
                 break;
+            case "/accept-customer-price":
+                acceptCustomerPrice(request, response, employee);
+                break;
+            case "/reject":
+                rejectQuotation(request, response, employee);
+                break;
             default:
                 response.sendRedirect(request.getContextPath() + "/admin/quotations");
         }
@@ -113,11 +119,18 @@ public class SellerQuotationController extends HttpServlet {
 
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
+        String negotiationCountStr = request.getParameter("negotiationCount");
+        Integer negotiationCount = null;
+        if (negotiationCountStr != null && !negotiationCountStr.isEmpty()) {
+            try {
+                negotiationCount = Integer.parseInt(negotiationCountStr);
+            } catch (NumberFormatException e) {}
+        }
 
         // Seller chỉ xem Quotation do mình tạo
-        List<Quotation> quotations = quotationDAO.searchQuotations(keyword, status, 
-                                                                    employee.getEmployeeID(), page, pageSize);
-        int totalCount = quotationDAO.countQuotations(keyword, status, employee.getEmployeeID());
+        List<Quotation> quotations = quotationDAO.searchQuotationsWithNegotiation(keyword, status, 
+                                                                    employee.getEmployeeID(), negotiationCount, page, pageSize);
+        int totalCount = quotationDAO.countQuotationsWithNegotiation(keyword, status, employee.getEmployeeID(), negotiationCount);
         int totalPages = (int) Math.ceil((double) totalCount / pageSize);
         if (totalPages < 1) totalPages = 1; // Luôn có ít nhất 1 trang
 
@@ -141,6 +154,7 @@ public class SellerQuotationController extends HttpServlet {
         request.setAttribute("pageSize", pageSize);
         request.setAttribute("keyword", keyword);
         request.setAttribute("status", status);
+        request.setAttribute("negotiationCount", negotiationCountStr);
         request.setAttribute("sentCount", sentCount);
         request.setAttribute("negotiatingCount", negotiatingCount);
         request.setAttribute("paidCount", paidCount);
@@ -376,6 +390,47 @@ public class SellerQuotationController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             response.sendRedirect(request.getContextPath() + "/admin/quotations?error=counter_failed");
+        }
+    }
+
+    private void acceptCustomerPrice(HttpServletRequest request, HttpServletResponse response, Employee employee)
+            throws ServletException, IOException {
+
+        try {
+            int quotationID = Integer.parseInt(request.getParameter("quotationId"));
+
+            boolean success = quotationDAO.sellerAcceptCustomerPrice(quotationID, employee.getEmployeeID());
+
+            if (success) {
+                response.sendRedirect(request.getContextPath() + "/admin/quotations/detail?id=" + quotationID + "&success=accepted_customer_price");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/admin/quotations/detail?id=" + quotationID + "&error=accept_price_failed");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/admin/quotations?error=accept_price_failed");
+        }
+    }
+
+    private void rejectQuotation(HttpServletRequest request, HttpServletResponse response, Employee employee)
+            throws ServletException, IOException {
+
+        try {
+            int quotationID = Integer.parseInt(request.getParameter("quotationId"));
+            String reason = request.getParameter("reason");
+
+            boolean success = quotationDAO.sellerRejectQuotation(quotationID, reason, employee.getEmployeeID());
+
+            if (success) {
+                response.sendRedirect(request.getContextPath() + "/admin/quotations/detail?id=" + quotationID + "&success=rejected");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/admin/quotations/detail?id=" + quotationID + "&error=reject_failed");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/admin/quotations?error=reject_failed");
         }
     }
 }

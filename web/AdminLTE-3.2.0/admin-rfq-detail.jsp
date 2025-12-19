@@ -71,6 +71,12 @@
             <button type="button" class="close" data-dismiss="alert">&times;</button>
           </div>
         </c:if>
+        <c:if test="${param.success == 'date_accepted'}">
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check"></i> Đã chấp nhận ngày giao do khách hàng đề xuất! Bạn có thể tạo báo giá ngay.
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+          </div>
+        </c:if>
         <c:if test="${param.success == 'notes_updated'}">
           <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check"></i> Đã cập nhật ghi chú!
@@ -101,10 +107,14 @@
                   </div>
                   <div class="col-md-6">
                     <p><span class="info-label">Ngày tạo:</span> <fmt:formatDate value="${rfq.createdDate}" pattern="dd/MM/yyyy HH:mm"/></p>
-                    <p><span class="info-label">Địa chỉ giao:</span> ${rfq.deliveryAddress}</p>
-                    <c:if test="${not empty rfq.deliveryInstructions}">
-                      <p><span class="info-label">Yêu cầu đặc biệt:</span> ${rfq.deliveryInstructions}</p>
+                    <p><span class="info-label">Ngày yêu cầu giao:</span> <fmt:formatDate value="${rfq.requestedDeliveryDate}" pattern="dd/MM/yyyy"/></p>
+                    <c:if test="${rfq.status == 'DateAccepted' || rfq.status == 'QuotationCreated' || rfq.status == 'Completed'}">
+                      <p>
+                        <span class="info-label text-success"><i class="fas fa-check-circle"></i> Ngày giao (đã thống nhất):</span> 
+                        <strong class="text-success"><fmt:formatDate value="${rfq.finalDeliveryDate}" pattern="dd/MM/yyyy"/></strong>
+                      </p>
                     </c:if>
+                    <p><span class="info-label">Địa chỉ giao:</span> ${rfq.deliveryAddress}</p>
                   </div>
                 </div>
               </div>
@@ -195,13 +205,17 @@
                   <thead class="table-light">
                     <tr>
                       <th>Sản phẩm</th>
+                      <th class="text-center">Tồn kho</th>
                       <th class="text-center">Số lượng</th>
-                      <th>Yêu cầu đặc biệt</th>
+                      <th class="text-center">Trạng thái</th>
                     </tr>
                   </thead>
                   <tbody>
                     <c:forEach var="item" items="${rfq.items}">
-                      <tr>
+                      <c:set var="stock" value="${itemStocks[item.rfqItemID]}"/>
+                      <c:if test="${stock == null}"><c:set var="stock" value="0"/></c:if>
+                      <c:set var="isShortage" value="${item.quantity > stock}"/>
+                      <tr class="${isShortage ? 'table-warning' : ''}">
                         <td>
                           <div class="d-flex align-items-center">
                             <c:if test="${not empty item.productImage}">
@@ -214,8 +228,20 @@
                             </div>
                           </div>
                         </td>
+                        <td class="text-center">
+                          <span class="badge ${stock > 0 ? 'badge-secondary' : 'badge-danger'}">${stock}</span>
+                        </td>
                         <td class="text-center">${item.quantity}</td>
-                        <td><small class="text-muted">${item.specialRequirements}</small></td>
+                        <td class="text-center">
+                          <c:choose>
+                            <c:when test="${isShortage}">
+                              <span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Thiếu ${item.quantity - stock}</span>
+                            </c:when>
+                            <c:otherwise>
+                              <span class="badge badge-success"><i class="fas fa-check"></i> Đủ hàng</span>
+                            </c:otherwise>
+                          </c:choose>
+                        </td>
                       </tr>
                     </c:forEach>
                   </tbody>
@@ -227,6 +253,14 @@
             <div class="card mb-4">
               <div class="card-header"><h5 class="mb-0"><i class="fas fa-cogs"></i> Hành Động</h5></div>
               <div class="card-body">
+                <c:if test="${rfq.status == 'DateCountered'}">
+                  <form action="<%= request.getContextPath() %>/admin/rfq/accept-customer-date" method="POST" style="display: inline;">
+                    <input type="hidden" name="rfqId" value="${rfq.rfqID}">
+                    <button type="submit" class="btn btn-success mr-2" onclick="return confirm('Chấp nhận ngày do khách hàng đề xuất?')">
+                      <i class="fas fa-check"></i> Chấp Nhận Ngày KH Đề Xuất
+                    </button>
+                  </form>
+                </c:if>
                 <c:if test="${rfq.canSellerProposeDate()}">
                   <button type="button" class="btn btn-warning mr-2" data-toggle="modal" data-target="#proposeDateModal">
                     <i class="fas fa-calendar-alt"></i> Đề Xuất Ngày Mới
@@ -235,6 +269,17 @@
                 <c:if test="${rfq.canCreateQuotation()}">
                   <a href="<%= request.getContextPath() %>/admin/quotations/form?rfqId=${rfq.rfqID}" class="btn btn-success mr-2">
                     <i class="fas fa-file-invoice-dollar"></i> Tạo Báo Giá
+                  </a>
+                </c:if>
+                <!-- Nút yêu cầu nhập hàng - hiển thị khi có sản phẩm thiếu hàng và chưa có yêu cầu -->
+                <c:if test="${hasShortage && !hasStockRequest && (rfq.status == 'Reviewing' || rfq.status == 'DateAccepted')}">
+                  <a href="<%= request.getContextPath() %>/admin/stock-requests?action=create&rfqId=${rfq.rfqID}" class="btn btn-warning mr-2">
+                    <i class="fas fa-boxes"></i> Yêu cầu nhập hàng
+                  </a>
+                </c:if>
+                <c:if test="${hasStockRequest}">
+                  <a href="<%= request.getContextPath() %>/admin/stock-requests?action=detail&id=${stockRequestId}" class="btn btn-info mr-2">
+                    <i class="fas fa-boxes"></i> Xem yêu cầu nhập hàng
                   </a>
                 </c:if>
                 <c:if test="${rfq.status == 'QuotationCreated' && not empty rfq.quotation}">

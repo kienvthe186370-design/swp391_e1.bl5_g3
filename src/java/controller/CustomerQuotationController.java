@@ -96,16 +96,18 @@ public class CustomerQuotationController extends HttpServlet {
         try {
             page = Integer.parseInt(request.getParameter("page"));
         } catch (Exception ignored) {}
-        int pageSize = 10;
+        int pageSize = 5;
 
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
+        String sortBy = request.getParameter("sortBy"); // price_asc, price_desc
 
         // Lấy danh sách Quotation
-        List<Quotation> quotations = quotationDAO.getCustomerQuotations(customer.getCustomerID(), 
-                                                                         keyword, status, page, pageSize);
+        List<Quotation> quotations = quotationDAO.getCustomerQuotationsWithSort(customer.getCustomerID(), 
+                                                                         keyword, status, sortBy, page, pageSize);
         int totalCount = quotationDAO.countCustomerQuotations(customer.getCustomerID(), keyword, status);
         int totalPages = (int) Math.ceil((double) totalCount / pageSize);
+        if (totalPages < 1) totalPages = 1;
 
         // Load RFQ info for each quotation
         for (Quotation q : quotations) {
@@ -126,6 +128,7 @@ public class CustomerQuotationController extends HttpServlet {
         request.setAttribute("totalCount", totalCount);
         request.setAttribute("keyword", keyword);
         request.setAttribute("status", status);
+        request.setAttribute("sortBy", sortBy);
         request.setAttribute("sentCount", sentCount);
         request.setAttribute("negotiatingCount", negotiatingCount);
         request.setAttribute("acceptedCount", acceptedCount);

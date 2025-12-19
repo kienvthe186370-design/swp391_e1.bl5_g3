@@ -47,7 +47,7 @@
                             <div class="card-body text-center py-5">
                                 <i class="fa fa-check-circle result-icon success"></i>
                                 <h2 class="text-success mb-3">Thanh Toán Thành Công!</h2>
-                                <p class="lead">${message}</p>
+                                <p class="lead">Cảm ơn bạn đã mua hàng! Đơn hàng đã được tạo.</p>
                                 
                                 <div class="bg-light p-4 rounded my-4">
                                     <c:if test="${quotation != null}">
