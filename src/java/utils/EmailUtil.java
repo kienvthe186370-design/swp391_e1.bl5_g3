@@ -107,7 +107,7 @@ public class EmailUtil {
     }
 
     /**
-     * Gửi mail chào mừng khách hàng (kèm tài khoản, mật khẩu tạm và link xác thực)
+     * Gửi mail chào mừng khách hàng (kèm tài khoản, mật khẩu tạm)
      */
     public static boolean sendCustomerWelcome(String toEmail, String fullName, String rawPassword, String verifyUrl) {
         String subject = "Chào mừng đến với Pickleball Shop";
@@ -118,10 +118,7 @@ public class EmailUtil {
                 + "  <li>Email: <b>" + safe(toEmail) + "</b></li>"
                 + "  <li>Mật khẩu: <b>" + safe(rawPassword) + "</b></li>"
                 + "</ul>"
-                + "<p>Vui lòng đăng nhập bằng liên kết sau: "
-                + "<a href='" + safe(verifyUrl) + "'>" + safe(verifyUrl) + "</a>. "
-                + "Nếu tài khoản chưa xác thực, hệ thống sẽ gửi OTP để hoàn tất xác thực.</p>"
-                + "<p>Sau khi xác thực, hãy đổi mật khẩu ngay.</p>"
+                + "<p>Vui lòng đăng nhập và đổi mật khẩu.</p>"
                 + "<p>Trân trọng!</p>";
         return sendEmail(toEmail, subject, body, true);
     }

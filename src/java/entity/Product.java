@@ -19,6 +19,9 @@ public class Product {
     private Integer createdBy;
     private Timestamp createdDate;
     private Timestamp updatedDate;
+    
+    // Transient field for stock calculation
+    private int totalStock;
 
     public Product() {
     }
@@ -117,6 +120,14 @@ public class Product {
 
     public void setUpdatedDate(Timestamp updatedDate) {
         this.updatedDate = updatedDate;
+    }
+
+    public int getTotalStock() {
+        return totalStock;
+    }
+
+    public void setTotalStock(int totalStock) {
+        this.totalStock = totalStock;
     }
 
     @Override

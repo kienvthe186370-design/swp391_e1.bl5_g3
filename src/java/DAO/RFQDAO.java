@@ -499,9 +499,56 @@ public class RFQDAO extends DBContext {
     }
 
     /**
-     * Gửi báo giá
+     * Gửi báo giá (overload với thông tin shipping)
      */
     public boolean sendQuotation(int rfqID, List<RFQItem> items, BigDecimal shippingFee, 
+                                  BigDecimal taxAmount, Timestamp validUntil, 
+                                  String paymentMethod, String quotationTerms, 
+                                  String warrantyTerms, int employeeID,
+                                  String shippingCarrierId, String shippingCarrierName,
+                                  String shippingServiceName, int estimatedDeliveryDays) {
+        // First update shipping info
+        updateShippingInfo(rfqID, shippingCarrierId, shippingCarrierName, shippingServiceName, estimatedDeliveryDays);
+        // Then call original method
+        return sendQuotationInternal(rfqID, items, shippingFee, taxAmount, validUntil, 
+                                     paymentMethod, quotationTerms, warrantyTerms, employeeID);
+    }
+    
+    /**
+     * Update shipping info for RFQ
+     */
+    private void updateShippingInfo(int rfqID, String carrierId, String carrierName, 
+                                    String serviceName, int estimatedDays) {
+        String sql = "UPDATE RFQs SET ShippingCarrierID = ?, ShippingCarrierName = ?, " +
+                     "ShippingServiceName = ?, EstimatedDeliveryDays = ? WHERE RFQID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, carrierId);
+            ps.setString(2, carrierName);
+            ps.setString(3, serviceName);
+            ps.setInt(4, estimatedDays);
+            ps.setInt(5, rfqID);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            Logger.getLogger(RFQDAO.class.getName()).log(Level.WARNING, "Could not update shipping info", e);
+        }
+    }
+    
+    /**
+     * Gửi báo giá (original method for backward compatibility)
+     */
+    public boolean sendQuotation(int rfqID, List<RFQItem> items, BigDecimal shippingFee, 
+                                  BigDecimal taxAmount, Timestamp validUntil, 
+                                  String paymentMethod, String quotationTerms, 
+                                  String warrantyTerms, int employeeID) {
+        return sendQuotationInternal(rfqID, items, shippingFee, taxAmount, validUntil, 
+                                     paymentMethod, quotationTerms, warrantyTerms, employeeID);
+    }
+    
+    /**
+     * Internal method for sending quotation
+     */
+    private boolean sendQuotationInternal(int rfqID, List<RFQItem> items, BigDecimal shippingFee, 
                                   BigDecimal taxAmount, Timestamp validUntil, 
                                   String paymentMethod, String quotationTerms, 
                                   String warrantyTerms, int employeeID) {
@@ -529,12 +576,12 @@ public class RFQDAO extends DBContext {
             String sql;
             if (hasPaymentMethod) {
                 sql = "UPDATE RFQs SET SubtotalAmount = ?, ShippingFee = ?, TaxAmount = ?, " +
-                      "TotalAmount = ?, QuotationSentDate = GETDATE(), QuotationValidUntil = ?, " +
+                      "TotalAmount = ?, QuotationSentDate = GETDATE(), " +
                       "PaymentMethod = ?, QuotationTerms = ?, WarrantyTerms = ?, " +
                       "Status = ?, UpdatedDate = GETDATE() WHERE RFQID = ?";
             } else {
                 sql = "UPDATE RFQs SET SubtotalAmount = ?, ShippingFee = ?, TaxAmount = ?, " +
-                      "TotalAmount = ?, QuotationSentDate = GETDATE(), QuotationValidUntil = ?, " +
+                      "TotalAmount = ?, QuotationSentDate = GETDATE(), " +
                       "QuotationTerms = ?, WarrantyTerms = ?, " +
                       "Status = ?, UpdatedDate = GETDATE() WHERE RFQID = ?";
             }
@@ -544,18 +591,17 @@ public class RFQDAO extends DBContext {
                 ps.setBigDecimal(2, shippingFee);
                 ps.setBigDecimal(3, taxAmount);
                 ps.setBigDecimal(4, total);
-                ps.setTimestamp(5, validUntil);
                 if (hasPaymentMethod) {
-                    ps.setString(6, paymentMethod);
-                    ps.setString(7, quotationTerms);
-                    ps.setString(8, warrantyTerms);
-                    ps.setString(9, RFQ.STATUS_QUOTED);
-                    ps.setInt(10, rfqID);
-                } else {
+                    ps.setString(5, paymentMethod);
                     ps.setString(6, quotationTerms);
                     ps.setString(7, warrantyTerms);
                     ps.setString(8, RFQ.STATUS_QUOTED);
                     ps.setInt(9, rfqID);
+                } else {
+                    ps.setString(5, quotationTerms);
+                    ps.setString(6, warrantyTerms);
+                    ps.setString(7, RFQ.STATUS_QUOTED);
+                    ps.setInt(8, rfqID);
                 }
                 ps.executeUpdate();
             }

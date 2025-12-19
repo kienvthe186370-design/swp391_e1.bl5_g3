@@ -36,8 +36,9 @@ public class Order {
     private String notes;
     private String cancelReason;
     
-    // RFQ Reference
+    // RFQ/Quotation Reference
     private Integer rfqID;
+    private Integer quotationID;
     
     // Timestamps
     private Timestamp orderDate;
@@ -239,6 +240,14 @@ public class Order {
 
     public void setRfqID(Integer rfqID) {
         this.rfqID = rfqID;
+    }
+
+    public Integer getQuotationID() {
+        return quotationID;
+    }
+
+    public void setQuotationID(Integer quotationID) {
+        this.quotationID = quotationID;
     }
 
     public Timestamp getOrderDate() {

@@ -14,6 +14,7 @@ public class Employee {
     private boolean isActive;
     private Timestamp createdDate;
     private Timestamp lastLogin;
+    private boolean mustChangePassword; // Bắt buộc đổi mật khẩu lần đầu
 
     public Employee() {
     }
@@ -108,5 +109,13 @@ public class Employee {
 
     public void setLastLogin(Timestamp lastLogin) {
         this.lastLogin = lastLogin;
+    }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
     }
 }

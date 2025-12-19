@@ -114,61 +114,7 @@
                     </div>
                 </div>
 
-                <!-- Stock History Card -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-history mr-2"></i>Lịch sử nhập kho</h3>
-                    </div>
-                    <div class="card-body table-responsive p-0">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Ngày nhập</th>
-                                    <th class="text-center">Số lượng</th>
-                                    <th class="text-right">Giá nhập/đơn vị</th>
-                                    <th class="text-right">Thành tiền</th>
-                                    <th>Người nhập</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <c:choose>
-                                    <c:when test="${not empty receiptHistory}">
-                                        <c:forEach var="receipt" items="${receiptHistory}">
-                                            <tr>
-                                                <td><span class="badge badge-secondary">#${receipt.receiptId}</span></td>
-                                                <td><fmt:formatDate value="${receipt.receiptDate}" pattern="dd/MM/yyyy HH:mm"/></td>
-                                                <td class="text-center"><strong>${receipt.quantity}</strong></td>
-                                                <td class="text-right"><fmt:formatNumber value="${receipt.unitCost}" type="number" maxFractionDigits="0"/>đ</td>
-                                                <td class="text-right"><strong><fmt:formatNumber value="${receipt.totalCost}" type="number" maxFractionDigits="0"/>đ</strong></td>
-                                                <td><i class="fas fa-user-circle mr-1"></i>${not empty receipt.createdByName ? receipt.createdByName : 'N/A'}</td>
-                                            </tr>
-                                        </c:forEach>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <tr>
-                                            <td colspan="6" class="text-center py-4 text-muted">
-                                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                                                Chưa có lịch sử nhập kho
-                                            </td>
-                                        </tr>
-                                    </c:otherwise>
-                                </c:choose>
-                            </tbody>
-                            <c:if test="${not empty receiptHistory}">
-                                <tfoot class="bg-light">
-                                    <tr>
-                                        <td colspan="2"><strong>Tổng cộng</strong></td>
-                                        <td class="text-center"><strong class="text-primary">${receiptSummary.totalQuantity}</strong></td>
-                                        <td class="text-right">-</td>
-                                        <td class="text-right"><strong class="text-primary"><fmt:formatNumber value="${receiptSummary.totalAmount}" type="number" maxFractionDigits="0"/>đ</strong></td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </c:if>
-                        </table>
-                    </div>
-                </div>
+
             </div>
 
             <!-- Right Column - Import Form -->

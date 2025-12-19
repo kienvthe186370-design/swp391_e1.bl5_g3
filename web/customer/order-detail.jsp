@@ -37,7 +37,6 @@
         
         /* Style cho đơn hàng Mua Buôn (RFQ) */
         .badge-wholesale { background: #ca1515; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
-        .rfq-header { background: #fff5f5 !important; border-left: 4px solid #ca1515; }
     </style>
 </head>
 <body>
@@ -78,7 +77,7 @@
             </c:if>
             
             <!-- Order Header -->
-            <div class="info-card ${order.rfqID != null ? 'rfq-header' : ''}">
+            <div class="info-card">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h4 class="mb-1">
@@ -312,7 +311,12 @@
                     <div class="info-card">
                         <h5><i class="fa fa-credit-card"></i> Thanh toán</h5>
                         <p class="mb-1">
-                            <strong>Phương thức:</strong> ${order.paymentMethod}
+                            <strong>Phương thức:</strong> 
+                            <c:choose>
+                                <c:when test="${order.paymentMethod == 'BankTransfer'}">VNPay</c:when>
+                                <c:when test="${order.paymentMethod == 'COD'}">Thanh toán khi nhận hàng</c:when>
+                                <c:otherwise>${order.paymentMethod}</c:otherwise>
+                            </c:choose>
                         </p>
                         <p class="mb-0">
                             <strong>Trạng thái:</strong>

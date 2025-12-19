@@ -55,8 +55,15 @@ public class CustomerDAO extends DBContext {
      * Tạo khách hàng mới (cho admin) - có thể set IsEmailVerified
      */
     public boolean createCustomer(String fullName, String email, String password, String phone, boolean isEmailVerified) {
-        String sql = "INSERT INTO Customers (FullName, Email, PasswordHash, Phone, IsEmailVerified, IsActive, CreatedDate) "
-                   + "VALUES (?, ?, ?, ?, ?, 1, GETDATE())";
+        return createCustomer(fullName, email, password, phone, isEmailVerified, false);
+    }
+
+    /**
+     * Tạo khách hàng mới (cho admin) - có thể set IsEmailVerified và MustChangePassword
+     */
+    public boolean createCustomer(String fullName, String email, String password, String phone, boolean isEmailVerified, boolean mustChangePassword) {
+        String sql = "INSERT INTO Customers (FullName, Email, PasswordHash, Phone, IsEmailVerified, IsActive, MustChangePassword, CreatedDate) "
+                   + "VALUES (?, ?, ?, ?, ?, 1, ?, GETDATE())";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
@@ -65,6 +72,7 @@ public class CustomerDAO extends DBContext {
             ps.setString(3, PasswordUtil.hashPassword(password));
             ps.setString(4, phone);
             ps.setBoolean(5, isEmailVerified);
+            ps.setBoolean(6, mustChangePassword);
             
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -207,6 +215,11 @@ public class CustomerDAO extends DBContext {
         try {
             customer.setLoginProvider(rs.getString("LoginProvider"));
         } catch (SQLException e) { /* Column may not exist */ }
+        try {
+            customer.setMustChangePassword(rs.getBoolean("MustChangePassword"));
+        } catch (SQLException e) { 
+            customer.setMustChangePassword(false);
+        }
         
         return customer;
     }
@@ -601,6 +614,42 @@ public class CustomerDAO extends DBContext {
             ps.executeUpdate();
         } catch (SQLException e) {
             Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+    }
+
+    /**
+     * Cập nhật trạng thái bắt buộc đổi mật khẩu
+     */
+    public boolean setMustChangePassword(int customerID, boolean mustChangePassword) {
+        String sql = "UPDATE Customers SET MustChangePassword = ? WHERE CustomerID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setBoolean(1, mustChangePassword);
+            ps.setInt(2, customerID);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
+            return false;
+        }
+    }
+
+    /**
+     * Cập nhật mật khẩu và tắt cờ bắt buộc đổi mật khẩu
+     */
+    public boolean updatePasswordAndClearMustChange(int customerID, String newPassword) {
+        String sql = "UPDATE Customers SET PasswordHash = ?, MustChangePassword = 0 WHERE CustomerID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, PasswordUtil.hashPassword(newPassword));
+            ps.setInt(2, customerID);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
+            return false;
         }
     }
 }

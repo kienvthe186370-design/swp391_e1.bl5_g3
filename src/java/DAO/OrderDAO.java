@@ -605,6 +605,12 @@ public class OrderDAO extends DBContext {
             order.setRfqID(rs.wasNull() ? null : rfqId);
         } catch (SQLException e) { /* Column không tồn tại */ }
         
+        // QuotationID - cho đơn hàng từ Quotation
+        try {
+            int quotationId = rs.getInt("QuotationID");
+            order.setQuotationID(rs.wasNull() ? null : quotationId);
+        } catch (SQLException e) { /* Column không tồn tại */ }
+        
         order.setNotes(rs.getString("Notes"));
         order.setCancelReason(rs.getString("CancelReason"));
         order.setOrderDate(rs.getTimestamp("OrderDate"));
@@ -1660,6 +1666,208 @@ public class OrderDAO extends DBContext {
             
         } catch (SQLException | RuntimeException e) {
             System.err.println("[OrderDAO] createOrderFromRFQ failed: " + e.getMessage());
+            e.printStackTrace();
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { /* ignore */ }
+            }
+            return -1;
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { /* ignore */ }
+            }
+        }
+    }
+    
+    /**
+     * Tạo đơn hàng từ Quotation sau khi thanh toán thành công
+     */
+    public int createOrderFromQuotation(entity.Quotation quotation, entity.RFQ rfq, Integer addressID, String transactionNo) {
+        Connection conn = null;
+        try {
+            System.out.println("[OrderDAO] createOrderFromQuotation started");
+            System.out.println("[OrderDAO] Quotation ID: " + quotation.getQuotationID() + ", Code: " + quotation.getQuotationCode());
+            System.out.println("[OrderDAO] RFQ ID: " + rfq.getRfqID() + ", Code: " + rfq.getRfqCode());
+            System.out.println("[OrderDAO] RFQ AssignedTo (Seller): " + rfq.getAssignedTo());
+            System.out.println("[OrderDAO] RFQ CustomerID: " + rfq.getCustomerID());
+            
+            conn = getConnection();
+            conn.setAutoCommit(false);
+            
+            String orderCode = generateOrderCode();
+            String paymentMethod = quotation.getPaymentMethod() != null ? quotation.getPaymentMethod() : "BankTransfer";
+            String paymentStatus = "Paid";
+            
+            // Get quotation items
+            java.util.List<entity.QuotationItem> items = quotation.getItems();
+            if (items == null || items.isEmpty()) {
+                // Load items if not loaded
+                DAO.QuotationDAO quotationDAO = new DAO.QuotationDAO();
+                items = quotationDAO.getQuotationItems(quotation.getQuotationID());
+            }
+            
+            // Calculate total cost
+            BigDecimal totalCost = BigDecimal.ZERO;
+            if (items != null) {
+                for (entity.QuotationItem item : items) {
+                    if (item.getCostPrice() != null) {
+                        totalCost = totalCost.add(item.getCostPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+                    }
+                }
+            }
+            
+            BigDecimal subtotal = quotation.getSubtotalAmount() != null ? quotation.getSubtotalAmount() : BigDecimal.ZERO;
+            BigDecimal shippingFee = quotation.getShippingFee() != null ? quotation.getShippingFee() : BigDecimal.ZERO;
+            BigDecimal totalAmount = quotation.getTotalAmount() != null ? quotation.getTotalAmount() : subtotal.add(shippingFee);
+            BigDecimal totalProfit = subtotal.subtract(totalCost);
+            
+            // Insert Order with RFQID and QuotationID
+            // Note: Bảng Orders dùng cột AssignedTo (không phải AssignedSellerID)
+            String orderSql = "INSERT INTO Orders (OrderCode, CustomerID, AddressID, SubtotalAmount, DiscountAmount, " +
+                             "VoucherDiscount, ShippingFee, TotalAmount, TotalCost, TotalProfit, VoucherID, " +
+                             "PaymentMethod, PaymentStatus, PaymentToken, OrderStatus, Notes, RFQID, QuotationID, AssignedTo, OrderDate, UpdatedDate) " +
+                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())";
+            
+            int orderID = -1;
+            try (PreparedStatement ps = conn.prepareStatement(orderSql, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, orderCode);
+                ps.setInt(2, rfq.getCustomerID());
+                if (addressID != null) {
+                    ps.setInt(3, addressID);
+                } else {
+                    ps.setNull(3, Types.INTEGER);
+                }
+                ps.setBigDecimal(4, subtotal);
+                ps.setBigDecimal(5, BigDecimal.ZERO);
+                ps.setBigDecimal(6, BigDecimal.ZERO);
+                ps.setBigDecimal(7, shippingFee);
+                ps.setBigDecimal(8, totalAmount);
+                ps.setBigDecimal(9, totalCost);
+                ps.setBigDecimal(10, totalProfit);
+                ps.setNull(11, Types.INTEGER);
+                ps.setString(12, paymentMethod);
+                ps.setString(13, paymentStatus);
+                ps.setString(14, transactionNo);
+                ps.setString(15, "Confirmed");
+                ps.setString(16, "Đơn hàng từ Quotation: " + quotation.getQuotationCode() + " (RFQ: " + rfq.getRfqCode() + ")");
+                ps.setInt(17, rfq.getRfqID());
+                ps.setInt(18, quotation.getQuotationID());
+                // Assign to same seller who processed RFQ
+                if (rfq.getAssignedSellerID() != null) {
+                    ps.setInt(19, rfq.getAssignedSellerID());
+                } else {
+                    ps.setNull(19, Types.INTEGER);
+                }
+                
+                if (ps.executeUpdate() > 0) {
+                    ResultSet rs = ps.getGeneratedKeys();
+                    if (rs.next()) {
+                        orderID = rs.getInt(1);
+                    }
+                }
+            }
+            
+            System.out.println("[OrderDAO] Order ID after insert: " + orderID);
+            
+            if (orderID <= 0 || items == null || items.isEmpty()) {
+                conn.rollback();
+                return -1;
+            }
+            
+            // Insert OrderDetails from Quotation Items
+            String detailSql = "INSERT INTO OrderDetails (OrderID, VariantID, ProductName, SKU, Quantity, " +
+                              "CostPrice, UnitPrice, DiscountAmount, FinalPrice, IsReviewed) " +
+                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)";
+            
+            int itemsInserted = 0;
+            try (PreparedStatement ps = conn.prepareStatement(detailSql)) {
+                for (entity.QuotationItem item : items) {
+                    // Get variant info from RFQItem
+                    Integer variantID = null;
+                    String sku = item.getSku();
+                    String productName = item.getProductName();
+                    int quantity = item.getQuantity();
+                    
+                    // Get VariantID from RFQItem
+                    String rfqItemSql = "SELECT VariantID, ProductID, SKU, ProductName, Quantity FROM RFQItems WHERE RFQItemID = ?";
+                    try (PreparedStatement riPs = conn.prepareStatement(rfqItemSql)) {
+                        riPs.setInt(1, item.getRfqItemID());
+                        ResultSet riRs = riPs.executeQuery();
+                        if (riRs.next()) {
+                            variantID = riRs.getObject("VariantID") != null ? riRs.getInt("VariantID") : null;
+                            if (sku == null) sku = riRs.getString("SKU");
+                            if (productName == null) productName = riRs.getString("ProductName");
+                            if (quantity == 0) quantity = riRs.getInt("Quantity");
+                            
+                            // If no VariantID, get default variant from ProductID
+                            if (variantID == null) {
+                                int productID = riRs.getInt("ProductID");
+                                if (productID > 0) {
+                                    String getVariantSql = "SELECT TOP 1 VariantID, SKU FROM ProductVariants WHERE ProductID = ? AND IsActive = 1 ORDER BY VariantID";
+                                    try (PreparedStatement pvPs = conn.prepareStatement(getVariantSql)) {
+                                        pvPs.setInt(1, productID);
+                                        ResultSet pvRs = pvPs.executeQuery();
+                                        if (pvRs.next()) {
+                                            variantID = pvRs.getInt("VariantID");
+                                            sku = pvRs.getString("SKU");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (variantID == null) continue;
+                    
+                    BigDecimal costPrice = item.getCostPrice() != null ? item.getCostPrice() : BigDecimal.ZERO;
+                    BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO;
+                    BigDecimal subtotalItem = item.getSubtotal() != null ? item.getSubtotal() : 
+                                              unitPrice.multiply(BigDecimal.valueOf(quantity));
+                    
+                    ps.setInt(1, orderID);
+                    ps.setInt(2, variantID);
+                    ps.setString(3, productName);
+                    ps.setString(4, sku != null ? sku : "");
+                    ps.setInt(5, quantity);
+                    ps.setBigDecimal(6, costPrice);
+                    ps.setBigDecimal(7, unitPrice);
+                    ps.setBigDecimal(8, BigDecimal.ZERO);
+                    ps.setBigDecimal(9, subtotalItem);
+                    ps.addBatch();
+                    itemsInserted++;
+                }
+                
+                if (itemsInserted > 0) {
+                    ps.executeBatch();
+                } else {
+                    conn.rollback();
+                    return -1;
+                }
+            }
+            
+            // Insert status history
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO OrderStatusHistory (OrderID, OldStatus, NewStatus, Notes, ChangedDate) " +
+                    "VALUES (?, NULL, 'Confirmed', N'Đơn hàng từ Quotation đã thanh toán', GETDATE())")) {
+                ps.setInt(1, orderID);
+                ps.executeUpdate();
+            } catch (SQLException e) { /* ignore */ }
+            
+            // Trừ Stock và đặt Reserved
+            String stockSql = "UPDATE pv SET pv.Stock = pv.Stock - od.Quantity, " +
+                             "pv.ReservedStock = pv.ReservedStock + od.Quantity " +
+                             "FROM ProductVariants pv INNER JOIN OrderDetails od ON pv.VariantID = od.VariantID " +
+                             "WHERE od.OrderID = ?";
+            try (PreparedStatement ps = conn.prepareStatement(stockSql)) {
+                ps.setInt(1, orderID);
+                ps.executeUpdate();
+            }
+            
+            conn.commit();
+            System.out.println("[OrderDAO] Order created successfully from Quotation! OrderID: " + orderID);
+            return orderID;
+            
+        } catch (SQLException | RuntimeException e) {
+            System.err.println("[OrderDAO] createOrderFromQuotation failed: " + e.getMessage());
             e.printStackTrace();
             if (conn != null) {
                 try { conn.rollback(); } catch (SQLException ex) { /* ignore */ }

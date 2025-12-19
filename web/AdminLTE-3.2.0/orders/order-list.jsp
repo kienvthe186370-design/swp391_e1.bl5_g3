@@ -46,7 +46,6 @@
         <section class="content">
             <div class="container-fluid">
                 
-                <!-- Thông báo -->
                 <c:if test="${not empty sessionScope.success}">
                     <div class="alert alert-success alert-dismissible">
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -62,7 +61,6 @@
                     <c:remove var="error" scope="session"/>
                 </c:if>
 
-                <!-- Tabs cho SellerManager - đầy đủ trạng thái -->
                 <c:if test="${userRole == 'SellerManager'}">
                     <ul class="nav nav-tabs mb-3">
                         <li class="nav-item">
@@ -78,45 +76,38 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link ${param.tab == 'Pending' ? 'active' : ''}" 
-                               href="?tab=Pending">
+                            <a class="nav-link ${param.tab == 'Pending' ? 'active' : ''}" href="?tab=Pending">
                                 Chờ xử lý <span class="badge badge-secondary">${pendingCount}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link ${param.tab == 'Confirmed' ? 'active' : ''}" 
-                               href="?tab=Confirmed">
+                            <a class="nav-link ${param.tab == 'Confirmed' ? 'active' : ''}" href="?tab=Confirmed">
                                 Đã xác nhận <span class="badge badge-info">${confirmedCount}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link ${param.tab == 'Processing' ? 'active' : ''}" 
-                               href="?tab=Processing">
+                            <a class="nav-link ${param.tab == 'Processing' ? 'active' : ''}" href="?tab=Processing">
                                 Đang xử lý <span class="badge badge-primary">${processingCount}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link ${param.tab == 'Shipping' ? 'active' : ''}" 
-                               href="?tab=Shipping">
+                            <a class="nav-link ${param.tab == 'Shipping' ? 'active' : ''}" href="?tab=Shipping">
                                 Đang giao <span class="badge badge-warning">${shippingCount}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link ${param.tab == 'Delivered' ? 'active' : ''}" 
-                               href="?tab=Delivered">
+                            <a class="nav-link ${param.tab == 'Delivered' ? 'active' : ''}" href="?tab=Delivered">
                                 Đã giao <span class="badge badge-success">${deliveredCount}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link ${param.tab == 'Cancelled' ? 'active' : ''}" 
-                               href="?tab=Cancelled">
+                            <a class="nav-link ${param.tab == 'Cancelled' ? 'active' : ''}" href="?tab=Cancelled">
                                 Đã hủy <span class="badge badge-danger">${cancelledCount}</span>
                             </a>
                         </li>
                     </ul>
                 </c:if>
                 
-                <!-- Tabs cho Admin - giữ đơn giản -->
                 <c:if test="${userRole == 'Admin'}">
                     <ul class="nav nav-tabs mb-3">
                         <li class="nav-item">
@@ -128,7 +119,6 @@
                     </ul>
                 </c:if>
                 
-                <!-- Tabs cho Seller - đầy đủ trạng thái -->
                 <c:if test="${userRole == 'Seller'}">
                     <ul class="nav nav-tabs mb-3">
                         <li class="nav-item">
@@ -138,45 +128,38 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link ${param.tab == 'Pending' ? 'active' : ''}" 
-                               href="?tab=Pending">
+                            <a class="nav-link ${param.tab == 'Pending' ? 'active' : ''}" href="?tab=Pending">
                                 Chờ xử lý <span class="badge badge-secondary">${pendingCount}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link ${param.tab == 'Confirmed' ? 'active' : ''}" 
-                               href="?tab=Confirmed">
+                            <a class="nav-link ${param.tab == 'Confirmed' ? 'active' : ''}" href="?tab=Confirmed">
                                 Đã xác nhận <span class="badge badge-info">${confirmedCount}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link ${param.tab == 'Processing' ? 'active' : ''}" 
-                               href="?tab=Processing">
+                            <a class="nav-link ${param.tab == 'Processing' ? 'active' : ''}" href="?tab=Processing">
                                 Đang xử lý <span class="badge badge-primary">${processingCount}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link ${param.tab == 'Shipping' ? 'active' : ''}" 
-                               href="?tab=Shipping">
+                            <a class="nav-link ${param.tab == 'Shipping' ? 'active' : ''}" href="?tab=Shipping">
                                 Đang giao <span class="badge badge-warning">${shippingCount}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link ${param.tab == 'Delivered' ? 'active' : ''}" 
-                               href="?tab=Delivered">
+                            <a class="nav-link ${param.tab == 'Delivered' ? 'active' : ''}" href="?tab=Delivered">
                                 Đã giao <span class="badge badge-success">${deliveredCount}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link ${param.tab == 'Cancelled' ? 'active' : ''}" 
-                               href="?tab=Cancelled">
+                            <a class="nav-link ${param.tab == 'Cancelled' ? 'active' : ''}" href="?tab=Cancelled">
                                 Đã hủy <span class="badge badge-danger">${cancelledCount}</span>
                             </a>
                         </li>
                     </ul>
                 </c:if>
                 
-                <!-- Filter Card -->
                 <div class="card card-outline card-primary collapsed-card">
                     <div class="card-header">
                         <h3 class="card-title">
@@ -246,7 +229,6 @@
                     </div>
                 </div>
 
-                <!-- Orders Table -->
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Danh sách đơn hàng</h3>
@@ -272,6 +254,9 @@
                                             <a href="?action=detail&id=${order.orderID}">
                                                 <strong>${order.orderCode}</strong>
                                             </a>
+                                            <c:if test="${order.rfqID != null}">
+                                                <br><span class="badge badge-danger"><i class="fas fa-building"></i> Mua Buôn</span>
+                                            </c:if>
                                         </td>
                                         <td>
                                             ${order.customer.fullName}
@@ -284,7 +269,7 @@
                                             <span class="badge badge-${order.paymentStatus == 'Paid' ? 'success' : 'warning'}">
                                                 ${order.paymentStatus == 'Paid' ? 'Đã TT' : 'Chưa TT'}
                                             </span>
-                                            <br><small>${order.paymentMethod}</small>
+                                            <br><small><c:choose><c:when test="${order.paymentMethod == 'BankTransfer'}">VNPay</c:when><c:when test="${order.paymentMethod == 'COD'}">COD</c:when><c:otherwise>${order.paymentMethod}</c:otherwise></c:choose></small>
                                         </td>
                                         <td>
                                             <c:choose>
@@ -352,7 +337,6 @@
                         </table>
                     </div>
 
-                    <!-- Pagination -->
                     <div class="card-footer clearfix">
                         <div class="float-left">
                             <c:choose>
@@ -407,7 +391,6 @@
         </section>
     </div>
 
-    <!-- Modal Phân công -->
     <div class="modal fade" id="assignModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
