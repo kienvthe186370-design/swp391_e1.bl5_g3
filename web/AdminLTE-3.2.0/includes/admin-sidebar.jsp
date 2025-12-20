@@ -170,20 +170,6 @@
           </a>
         </li>
         
-<%
-    // Stock Request detection and count
-    boolean isStockRequestPage = currentURI.contains("/admin/stock-requests");
-    boolean canAccessStockRequests = RolePermission.canManageStockRequests(userRole);
-    int pendingStockRequestCount = 0;
-    if (canAccessStockRequests && isAdmin) {
-        try {
-            DAO.StockRequestDAO stockRequestDAO = new DAO.StockRequestDAO();
-            pendingStockRequestCount = stockRequestDAO.countPendingRequests();
-        } catch (Exception e) {
-            // Ignore
-        }
-    }
-%>
 <% if (isAdmin) { %>
         <!-- ==================== ADMIN - CHỈ QUẢN LÝ USER VÀ SẢN PHẨM ==================== -->
         
