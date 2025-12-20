@@ -42,25 +42,19 @@
       <div class="container-fluid">
         <!-- Stats -->
         <div class="row mb-3">
-          <div class="col-lg-3 col-6">
+          <div class="col-lg-4 col-6">
             <div class="small-box bg-primary">
               <div class="inner"><h3>${sentCount}</h3><p>Đã gửi</p></div>
               <div class="icon"><i class="fas fa-paper-plane"></i></div>
             </div>
           </div>
-          <div class="col-lg-3 col-6">
-            <div class="small-box bg-warning">
-              <div class="inner"><h3>${acceptedCount}</h3><p>Đã chấp nhận</p></div>
-              <div class="icon"><i class="fas fa-handshake"></i></div>
-            </div>
-          </div>
-          <div class="col-lg-3 col-6">
+          <div class="col-lg-4 col-6">
             <div class="small-box bg-success">
               <div class="inner"><h3>${paidCount}</h3><p>Đã thanh toán</p></div>
               <div class="icon"><i class="fas fa-check-circle"></i></div>
             </div>
           </div>
-          <div class="col-lg-3 col-6">
+          <div class="col-lg-4 col-6">
             <div class="small-box bg-danger">
               <div class="inner"><h3>${rejectedCount}</h3><p>Từ chối</p></div>
               <div class="icon"><i class="fas fa-times-circle"></i></div>
@@ -82,7 +76,6 @@
                 <select class="form-control" name="status">
                   <option value="">Tất cả trạng thái</option>
                   <option value="Sent" ${status == 'Sent' ? 'selected' : ''}>Đã gửi</option>
-                  <option value="Accepted" ${status == 'Accepted' ? 'selected' : ''}>Đã chấp nhận</option>
                   <option value="Paid" ${status == 'Paid' ? 'selected' : ''}>Đã thanh toán</option>
                   <option value="Rejected" ${status == 'Rejected' ? 'selected' : ''}>Từ chối</option>
                 </select>

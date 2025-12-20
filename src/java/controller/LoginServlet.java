@@ -52,6 +52,15 @@ public class LoginServlet extends HttpServlet {
         HttpSession session = request.getSession();
         if (userType == null || userType.equals("customer")) {
             CustomerDAO customerDAO = new CustomerDAO();
+            
+            // Kiểm tra tài khoản khách hàng bị khóa trước
+            if (customerDAO.isAccountLocked(email)) {
+                request.setAttribute("error", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
+                request.setAttribute("email", email);
+                request.getRequestDispatcher("login.jsp").forward(request, response);
+                return;
+            }
+            
             Customer customer = customerDAO.login(email, password);
 
             if (customer != null) {
@@ -105,6 +114,15 @@ public class LoginServlet extends HttpServlet {
         }
 
         EmployeeDAO employeeDAO = new EmployeeDAO();
+        
+        // Kiểm tra tài khoản bị khóa trước
+        if (employeeDAO.isAccountLocked(email)) {
+            request.setAttribute("error", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
+            request.setAttribute("email", email);
+            request.getRequestDispatcher("login.jsp").forward(request, response);
+            return;
+        }
+        
         Employee employee = employeeDAO.login(email, password);
 
         if (employee != null) {

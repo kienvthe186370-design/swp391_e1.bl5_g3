@@ -33,6 +33,27 @@ public class CustomerDAO extends DBContext {
         return null;
     }
     
+    /**
+     * Kiểm tra tài khoản khách hàng có bị khóa không (IsActive = 0)
+     * @return true nếu tài khoản tồn tại và bị khóa
+     */
+    public boolean isAccountLocked(String email) {
+        String sql = "SELECT IsActive FROM Customers WHERE Email = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return !rs.getBoolean("IsActive"); // true nếu IsActive = 0 (bị khóa)
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(CustomerDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return false; // Không tìm thấy email
+    }
+    
     public boolean register(String fullName, String email, String password, String phone) {
         String sql = "INSERT INTO Customers (FullName, Email, PasswordHash, Phone, IsEmailVerified, IsActive, CreatedDate) "
                    + "VALUES (?, ?, ?, ?, 0, 1, GETDATE())";
@@ -53,9 +74,10 @@ public class CustomerDAO extends DBContext {
     
     /**
      * Tạo khách hàng mới (cho admin) - có thể set IsEmailVerified
+     * Mặc định yêu cầu đổi mật khẩu khi đăng nhập lần đầu
      */
     public boolean createCustomer(String fullName, String email, String password, String phone, boolean isEmailVerified) {
-        return createCustomer(fullName, email, password, phone, isEmailVerified, false);
+        return createCustomer(fullName, email, password, phone, isEmailVerified, true); // mustChangePassword = true
     }
 
     /**
