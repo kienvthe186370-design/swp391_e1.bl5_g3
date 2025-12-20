@@ -96,6 +96,10 @@ public class VNPayCallbackServlet extends HttpServlet {
             orderDAO.updateOrderStatus(order.getOrderID(), "Confirmed");
             System.out.println("[CALLBACK] Updated Order ID " + order.getOrderID() + " to Paid/Confirmed");
             
+            // Trừ stock và đặt reserved SAU KHI thanh toán thành công
+            boolean stockReserved = orderDAO.reserveStockOnOrder(order.getOrderID());
+            System.out.println("[CALLBACK] Stock reserved: " + stockReserved);
+            
             // Update Shipping status (optional - can trigger shipment creation here)
             Shipping shipping = shippingDAO.getShippingByOrderId(order.getOrderID());
             if (shipping != null) {
@@ -116,10 +120,10 @@ public class VNPayCallbackServlet extends HttpServlet {
                 System.out.println("[CALLBACK] Updated Payment ID " + payment.getPaymentID() + " to Failed");
             }
             
-            // Update Order status
+            // Update Order status - KHÔNG cần restore stock vì chưa trừ
             orderDAO.updatePaymentStatus(order.getOrderID(), "Unpaid", transactionNo);
             orderDAO.updateOrderStatus(order.getOrderID(), "Cancelled");
-            System.out.println("[CALLBACK] Updated Order ID " + order.getOrderID() + " to Unpaid/Cancelled");
+            System.out.println("[CALLBACK] Updated Order ID " + order.getOrderID() + " to Unpaid/Cancelled (no stock to restore)");
             
             System.out.println("[CALLBACK] Redirecting to failed page");
             response.sendRedirect("checkout-result.jsp?orderCode=" + orderCode + 

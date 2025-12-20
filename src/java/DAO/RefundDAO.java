@@ -315,21 +315,59 @@ public class RefundDAO extends DBContext {
     /**
      * Cập nhật trạng thái hoàn tiền đã hoàn thành
      * Chỉ có thể complete khi trạng thái hiện tại là Approved
+     * Khi hoàn tiền thành công: tăng Stock và giảm ReservedStock
      */
     public boolean completeRefund(int refundRequestId) {
-        String sql = "UPDATE RefundRequests SET RefundStatus = 'Completed', " +
-                     "ProcessedDate = GETDATE() WHERE RefundRequestID = ? AND RefundStatus = 'Approved'";
-        
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
             
-            ps.setInt(1, refundRequestId);
-            int updated = ps.executeUpdate();
-            System.out.println("[RefundDAO] completeRefund - RefundID: " + refundRequestId + ", Updated rows: " + updated);
-            return updated > 0;
+            // 1. Update RefundRequest status
+            String updateStatusSql = "UPDATE RefundRequests SET RefundStatus = 'Completed', " +
+                         "ProcessedDate = GETDATE() WHERE RefundRequestID = ? AND RefundStatus = 'Approved'";
+            
+            try (PreparedStatement ps = conn.prepareStatement(updateStatusSql)) {
+                ps.setInt(1, refundRequestId);
+                int updated = ps.executeUpdate();
+                if (updated == 0) {
+                    conn.rollback();
+                    System.out.println("[RefundDAO] completeRefund - RefundID: " + refundRequestId + " - Status not Approved or not found");
+                    return false;
+                }
+            }
+            
+            // 2. Hoàn lại Stock và giảm ReservedStock cho các sản phẩm trong RefundItems
+            // Join RefundItems -> OrderDetails để lấy VariantID
+            String restoreStockSql = "UPDATE pv SET " +
+                         "pv.Stock = pv.Stock + ri.Quantity, " +
+                         "pv.ReservedStock = CASE WHEN pv.ReservedStock >= ri.Quantity THEN pv.ReservedStock - ri.Quantity ELSE 0 END " +
+                         "FROM ProductVariants pv " +
+                         "INNER JOIN OrderDetails od ON pv.VariantID = od.VariantID " +
+                         "INNER JOIN RefundItems ri ON od.OrderDetailID = ri.OrderDetailID " +
+                         "WHERE ri.RefundRequestID = ?";
+            
+            try (PreparedStatement ps = conn.prepareStatement(restoreStockSql)) {
+                ps.setInt(1, refundRequestId);
+                int stockUpdated = ps.executeUpdate();
+                System.out.println("[RefundDAO] completeRefund - RefundID: " + refundRequestId + 
+                                   ", Stock restored for " + stockUpdated + " variants");
+            }
+            
+            conn.commit();
+            System.out.println("[RefundDAO] completeRefund - RefundID: " + refundRequestId + " - SUCCESS");
+            return true;
+            
         } catch (SQLException e) {
             System.out.println("[RefundDAO] completeRefund ERROR: " + e.getMessage());
             e.printStackTrace();
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            }
         }
         return false;
     }
