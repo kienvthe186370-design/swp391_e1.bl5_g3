@@ -500,17 +500,6 @@
         </li>
         <% } %>
         
-        <!-- ===== STOCK REQUEST - Seller (tạo) ===== -->
-        <% if (canAccessStockRequests && !isAdmin) { %>
-        <li class="nav-item">
-          <a href="<%= contextPath %>/admin/stock-requests" 
-             class="nav-link <%= isStockRequestPage ? "active" : "" %>">
-            <i class="nav-icon fas fa-boxes"></i>
-            <p>Yêu cầu nhập hàng</p>
-          </a>
-        </li>
-        <% } %>
-        
 <% } %>
         
       </ul>
