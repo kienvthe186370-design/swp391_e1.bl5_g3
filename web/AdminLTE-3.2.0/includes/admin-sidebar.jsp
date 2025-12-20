@@ -150,6 +150,20 @@
           </a>
         </li>
         
+<%
+    // Stock Request detection and count
+    boolean isStockRequestPage = currentURI.contains("/admin/stock-requests");
+    boolean canAccessStockRequests = RolePermission.canManageStockRequests(userRole);
+    int pendingStockRequestCount = 0;
+    if (canAccessStockRequests && isAdmin) {
+        try {
+            DAO.StockRequestDAO stockRequestDAO = new DAO.StockRequestDAO();
+            pendingStockRequestCount = stockRequestDAO.countPendingRequests();
+        } catch (Exception e) {
+            // Ignore
+        }
+    }
+%>
 <% if (isAdmin) { %>
         <!-- ==================== ADMIN - CHỈ QUẢN LÝ USER VÀ SẢN PHẨM ==================== -->
         
@@ -232,6 +246,19 @@
               </a>
             </li>
           </ul>
+        </li>
+        
+        <!-- Yêu cầu nhập hàng - Admin (duyệt) -->
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/stock-requests" 
+             class="nav-link <%= isStockRequestPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-boxes"></i>
+            <p>Yêu cầu nhập hàng
+              <% if (pendingStockRequestCount > 0) { %>
+                <span class="badge badge-warning right"><%= pendingStockRequestCount %></span>
+              <% } %>
+            </p>
+          </a>
         </li>
         
 <% } else { %>
@@ -448,6 +475,17 @@
              class="nav-link <%= isOrderPage ? "active" : "" %>">
             <i class="nav-icon fas fa-motorcycle"></i>
             <p>Đơn hàng giao</p>
+          </a>
+        </li>
+        <% } %>
+        
+        <!-- ===== STOCK REQUEST - Seller (tạo) ===== -->
+        <% if (canAccessStockRequests && !isAdmin) { %>
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/stock-requests" 
+             class="nav-link <%= isStockRequestPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-boxes"></i>
+            <p>Yêu cầu nhập hàng</p>
           </a>
         </li>
         <% } %>
