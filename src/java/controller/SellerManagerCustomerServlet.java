@@ -169,10 +169,11 @@ public class SellerManagerCustomerServlet extends HttpServlet {
         if ("create".equals(action)) {
             String fullName = request.getParameter("fullName");
             String email = request.getParameter("email");
-            String password = request.getParameter("password");
             String phone = request.getParameter("phone");
-            String emailVerificationStatus = request.getParameter("emailVerificationStatus");
-            boolean isEmailVerified = "true".equals(emailVerificationStatus);
+            
+            // Khi admin tạo tài khoản, email luôn được xác thực
+            boolean isEmailVerified = true;
+            
             Customer tempCustomer = new Customer();
             tempCustomer.setFullName(fullName);
             tempCustomer.setEmail(email);
@@ -231,15 +232,8 @@ public class SellerManagerCustomerServlet extends HttpServlet {
                 return;
             }
             
-            if (password == null || password.trim().isEmpty() || password.length() < 6) {
-                request.setAttribute("message", "Mật khẩu phải có ít nhất 6 ký tự!");
-                request.setAttribute("messageType", "danger");
-                request.setAttribute("customer", tempCustomer);
-                request.setAttribute("formMode", "create");
-                request.setAttribute("pageTitle", "Thêm Khách hàng mới");
-                request.getRequestDispatcher("/AdminLTE-3.2.0/customers/form.jsp").forward(request, response);
-                return;
-            }
+            // Tự động tạo mật khẩu ngẫu nhiên 8 ký tự
+            String password = utils.PasswordUtil.generateRandomPassword(8);
             
             if (phone == null || phone.trim().isEmpty()) {
                 request.setAttribute("message", "Số điện thoại không được để trống!");

@@ -235,6 +235,10 @@ public class SellerQuotationController extends HttpServlet {
             if (item.getVariantID() != null && item.getCostPrice() == null) {
                 item.setCostPrice(quotationDAO.getWeightedAverageCost(item.getVariantID()));
             }
+            // Load minProfitMargin from ProductVariants.ProfitMarginTarget
+            if (item.getVariantID() != null && item.getMinProfitMargin() == null) {
+                item.setMinProfitMargin(quotationDAO.getProfitMarginTarget(item.getVariantID()));
+            }
         }
 
         // Calculate total weight for shipping

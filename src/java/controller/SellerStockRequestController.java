@@ -118,6 +118,7 @@ public class SellerStockRequestController extends HttpServlet {
         request.setAttribute("currentPage", page);
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("totalRequests", totalRequests);
+        request.setAttribute("pageSize", PAGE_SIZE);
         request.setAttribute("keyword", keyword);
         request.setAttribute("status", status);
         request.setAttribute("isAdmin", isAdmin);

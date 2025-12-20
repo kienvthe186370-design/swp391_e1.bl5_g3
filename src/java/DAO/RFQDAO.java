@@ -190,6 +190,7 @@ public class RFQDAO extends DBContext {
     public List<RFQItem> getRFQItems(int rfqID) {
         List<RFQItem> items = new ArrayList<>();
         String sql = "SELECT ri.*, p.ProductName as PName, pv.SKU as VSKU, " +
+                    "pv.ProfitMarginTarget as ProfitMarginTarget, " +
                     "(SELECT TOP 1 pi.ImageURL FROM ProductImages pi WHERE pi.ProductID = ri.ProductID AND pi.ImageType = 'main' ORDER BY pi.SortOrder) as ProductImage " +
                     "FROM RFQItems ri " +
                     "LEFT JOIN Products p ON ri.ProductID = p.ProductID " +
@@ -200,7 +201,15 @@ public class RFQDAO extends DBContext {
             ps.setInt(1, rfqID);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                items.add(mapResultSetToRFQItem(rs));
+                RFQItem item = mapResultSetToRFQItem(rs);
+                // Set minProfitMargin from ProductVariants.ProfitMarginTarget
+                if (hasColumn(rs, "ProfitMarginTarget")) {
+                    BigDecimal profitTarget = rs.getBigDecimal("ProfitMarginTarget");
+                    item.setMinProfitMargin(profitTarget != null ? profitTarget : new BigDecimal("30"));
+                } else {
+                    item.setMinProfitMargin(new BigDecimal("30")); // Default 30%
+                }
+                items.add(item);
             }
         } catch (SQLException e) {
             Logger.getLogger(RFQDAO.class.getName()).log(Level.SEVERE, null, e);
@@ -1664,6 +1673,46 @@ public class RFQDAO extends DBContext {
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(RFQDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return 0;
+    }
+    
+    /**
+     * Đếm số RFQ theo status và seller được assign
+     */
+    public int countRFQsByStatusAndSeller(String status, int sellerID) {
+        String sql = "SELECT COUNT(*) FROM RFQs WHERE Status = ? AND AssignedTo = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, sellerID);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(RFQDAO.class.getName()).log(Level.SEVERE, null, e);
+        }
+        return 0;
+    }
+    
+    /**
+     * Đếm số RFQ cho seller (assign cho seller hoặc chưa assign ai)
+     */
+    public int countRFQsForSeller(String status, int sellerID) {
+        String sql = "SELECT COUNT(*) FROM RFQs WHERE Status = ? AND (AssignedTo = ? OR AssignedTo IS NULL)";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setInt(2, sellerID);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1);
