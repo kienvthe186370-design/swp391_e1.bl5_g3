@@ -451,8 +451,8 @@
                         </button>
                     </c:if>
                     
-                    <!-- Khi đơn hàng Delivered và chưa có refund request: hiện 2 nút -->
-                    <c:if test="${order.orderStatus == 'Delivered' && empty refundRequest}">
+                    <!-- Khi đơn hàng Delivered và chưa có refund request: hiện 2 nút (CHỈ CHO ĐƠN BÁN LẺ) -->
+                    <c:if test="${order.orderStatus == 'Delivered' && empty refundRequest && order.rfqID == null}">
                         <div class="info-card">
                             <h5><i class="fa fa-check-circle"></i> Xác nhận đơn hàng</h5>
                             <p class="text-muted small">Vui lòng xác nhận bạn đã nhận được hàng hoặc yêu cầu trả hàng/hoàn tiền.</p>
@@ -471,21 +471,21 @@
                         </div>
                     </c:if>
                     
-                    <!-- Khi đơn hàng Completed: chỉ hiện nút đánh giá nếu còn sản phẩm chưa đánh giá -->
-                    <c:if test="${order.orderStatus == 'Completed' && order.hasPendingReview()}">
+                    <!-- Khi đơn hàng Completed: chỉ hiện nút đánh giá nếu còn sản phẩm chưa đánh giá (CHỈ CHO ĐƠN BÁN LẺ) -->
+                    <c:if test="${order.orderStatus == 'Completed' && order.hasPendingReview() && order.rfqID == null}">
                         <a href="${pageContext.request.contextPath}/order-review?orderId=${order.orderID}" 
                            class="btn btn-success btn-block">
                             <i class="fa fa-star"></i> Đánh giá sản phẩm
                         </a>
                     </c:if>
-                    <c:if test="${order.orderStatus == 'Completed' && order.allReviewed}">
+                    <c:if test="${order.orderStatus == 'Completed' && order.allReviewed && order.rfqID == null}">
                         <span class="btn btn-outline-success btn-block disabled">
                             <i class="fa fa-check"></i> Đã đánh giá tất cả sản phẩm
                         </span>
                     </c:if>
                     
-                    <!-- Khi đang Shipping và chưa có refund: cho phép yêu cầu hoàn tiền -->
-                    <c:if test="${order.orderStatus == 'Shipping' && empty refundRequest}">
+                    <!-- Khi đang Shipping và chưa có refund: cho phép yêu cầu hoàn tiền (CHỈ CHO ĐƠN BÁN LẺ) -->
+                    <c:if test="${order.orderStatus == 'Shipping' && empty refundRequest && order.rfqID == null}">
                         <a href="${pageContext.request.contextPath}/customer/refund?action=create&orderId=${order.orderID}" 
                            class="btn btn-warning btn-block">
                             <i class="fa fa-undo"></i> Yêu cầu hoàn tiền

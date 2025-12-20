@@ -1875,6 +1875,20 @@ public class OrderDAO extends DBContext {
                 ps.executeUpdate();
             }
             
+            // ===== TẠO RECORD SHIPPING CHO ĐƠN HÀNG TỪ QUOTATION =====
+            // Điều này cần thiết để khi Seller chuyển sang "Shipping", 
+            // hệ thống có thể auto-assign shipper và shipper có thể thấy đơn hàng
+            String shippingSql = "INSERT INTO Shipping (OrderID, ShippingFee, GoshipStatus) VALUES (?, ?, 'pending')";
+            try (PreparedStatement ps = conn.prepareStatement(shippingSql)) {
+                ps.setInt(1, orderID);
+                ps.setBigDecimal(2, shippingFee);
+                ps.executeUpdate();
+                System.out.println("[OrderDAO] Shipping record created for Quotation order: " + orderID);
+            } catch (SQLException e) {
+                System.err.println("[OrderDAO] Warning: Could not create Shipping record: " + e.getMessage());
+                // Không rollback vì đây không phải lỗi critical
+            }
+            
             conn.commit();
             System.out.println("[OrderDAO] Order created successfully from Quotation! OrderID: " + orderID);
             return orderID;
