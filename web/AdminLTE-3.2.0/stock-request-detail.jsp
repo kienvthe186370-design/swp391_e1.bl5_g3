@@ -195,9 +195,11 @@
                                                                        name="approvedQuantity_${item.stockRequestItemID}" 
                                                                        class="form-control form-control-sm text-center approved-quantity"
                                                                        value="${item.requestedQuantity}" 
-                                                                       min="1" max="10000" required
+                                                                       min="${item.requestedQuantity}" max="10000" required
+                                                                       data-min-quantity="${item.requestedQuantity}"
                                                                        onchange="validateApprovedQuantity(this)"
                                                                        onkeyup="validateApprovedQuantity(this)">
+                                                                <small class="text-muted">Tối thiểu: ${item.requestedQuantity}</small>
                                                             </td>
                                                         </tr>
                                                     </c:forEach>
@@ -319,59 +321,29 @@
     <jsp:include page="includes/admin-footer.jsp"/>
     
 <script>
-// Chặn nhập ký tự không phải số
-document.querySelectorAll('.approved-quantity').forEach(function(input) {
-    input.addEventListener('keypress', function(e) {
-        // Chỉ cho phép số (0-9)
-        if (!/[0-9]/.test(e.key)) {
-            e.preventDefault();
-            alert('Chỉ được nhập số!');
-        }
-    });
-    
-    input.addEventListener('paste', function(e) {
-        var pasteData = (e.clipboardData || window.clipboardData).getData('text');
-        if (!/^\d+$/.test(pasteData)) {
-            e.preventDefault();
-            alert('Chỉ được nhập số!');
-        }
-    });
-});
+// Không chặn nhập - cho phép người dùng tự do nhập và xóa
+// Chỉ validate khi submit form
 
 function validateApprovedQuantity(input) {
+    // Không làm gì khi đang nhập - chỉ validate khi submit
+    // Chỉ hiển thị trạng thái visual
     var rawValue = input.value.toString().trim();
+    var minQuantity = parseInt(input.getAttribute('data-min-quantity')) || 1;
     
-    // Nếu rỗng, không làm gì (sẽ validate khi submit)
-    if (rawValue === '') {
-        input.classList.add('is-invalid');
-        return;
-    }
-    
-    // Kiểm tra chỉ chứa số
-    if (!/^\d+$/.test(rawValue)) {
-        alert('Chỉ được nhập số!');
-        input.value = '';
-        input.classList.add('is-invalid');
+    if (rawValue === '' || !/^\d+$/.test(rawValue)) {
+        input.classList.remove('is-valid');
+        input.classList.remove('is-invalid');
         return;
     }
     
     var value = parseInt(rawValue);
-    
-    // Không cho phép giá trị < 1
-    if (value < 1) {
-        alert('Số lượng phải lớn hơn 0!');
-        input.value = '';
+    if (value < minQuantity || value > 10000) {
         input.classList.add('is-invalid');
-        return;
+        input.classList.remove('is-valid');
+    } else {
+        input.classList.add('is-valid');
+        input.classList.remove('is-invalid');
     }
-    
-    // Giới hạn tối đa 10000
-    if (value > 10000) {
-        alert('Số lượng tối đa là 10,000!');
-        input.value = 10000;
-    }
-    
-    input.classList.remove('is-invalid');
 }
 
 // Validate trước khi submit form approve
@@ -384,6 +356,7 @@ if (approveForm) {
         
         inputs.forEach(function(input) {
             var rawValue = input.value.toString().trim();
+            var minQuantity = parseInt(input.getAttribute('data-min-quantity')) || 1;
             
             // Kiểm tra rỗng
             if (rawValue === '') {
@@ -402,9 +375,9 @@ if (approveForm) {
             }
             
             var value = parseInt(rawValue);
-            if (value < 1) {
+            if (value < minQuantity) {
                 valid = false;
-                errorMsg = 'Số lượng phải lớn hơn 0!';
+                errorMsg = 'Số lượng tối thiểu phải nhập là ' + minQuantity + '!';
                 input.classList.add('is-invalid');
             } else if (value > 10000) {
                 valid = false;

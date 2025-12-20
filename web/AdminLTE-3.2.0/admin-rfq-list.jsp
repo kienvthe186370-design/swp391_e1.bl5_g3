@@ -201,16 +201,9 @@
                         </span>
                       </td>
                       <td>
-                        <div class="btn-group btn-group-sm">
-                          <a href="<%= request.getContextPath() %>/admin/rfq/detail?id=${rfq.rfqID}" class="btn btn-outline-info" title="Xem chi tiết">
-                            <i class="fas fa-eye"></i>
-                          </a>
-                          <c:if test="${rfq.canCreateQuotation()}">
-                            <a href="<%= request.getContextPath() %>/admin/quotations/form?rfqId=${rfq.rfqID}" class="btn btn-outline-success" title="Tạo báo giá">
-                              <i class="fas fa-file-invoice-dollar"></i>
-                            </a>
-                          </c:if>
-                        </div>
+                        <a href="<%= request.getContextPath() %>/admin/rfq/detail?id=${rfq.rfqID}" class="btn btn-sm btn-outline-info" title="Xem chi tiết">
+                          <i class="fas fa-eye"></i>
+                        </a>
                       </td>
                     </tr>
                   </c:forEach>
