@@ -166,6 +166,7 @@ public class RolePermission {
             if (path.startsWith("/brands") || path.startsWith("/brand-")) return true;
             if (path.startsWith("/attributes") || path.startsWith("/attribute-")) return true;
             if (path.startsWith("/settings")) return true;
+            if (path.startsWith("/api/")) return true; // API endpoints cho product management
             // Admin quản lý Stock Requests (đã check ở Global block trên)
             return false;
         }
@@ -206,6 +207,7 @@ public class RolePermission {
             if (path.startsWith("/discount")) return true;
             if (path.startsWith("/voucher")) return true;
             if (path.startsWith("/feedbacks")) return true;
+            if (path.startsWith("/api/")) return true; // API endpoints cho product management
             return false;
         }
 

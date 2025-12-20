@@ -48,6 +48,16 @@
         .order-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 15px; }
         .badge-status { padding: 5px 12px; border-radius: 20px; font-size: 12px; }
         .nav-tabs .nav-link { color: #666; border: none; padding: 10px 20px; }
+        
+        /* Review content - prevent overflow */
+        .review-item { overflow: hidden; word-wrap: break-word; overflow-wrap: break-word; }
+        .review-item div { word-wrap: break-word; overflow-wrap: break-word; }
+        .review-content-text { 
+            word-wrap: break-word; 
+            overflow-wrap: break-word; 
+            white-space: pre-wrap;
+            max-width: 100%;
+        }
         .nav-tabs .nav-link.active { color: #ca1515; border-bottom: 2px solid #ca1515; background: transparent; }
         
         /* Wishlist Styles - from wishlist.jsp */
@@ -355,11 +365,16 @@
                                                             <i class="fa fa-undo"></i> Trả hàng
                                                         </a>
                                                     </c:if>
-                                                    <c:if test="${order.orderStatus == 'Completed'}">
+                                                    <c:if test="${order.orderStatus == 'Completed' && order.hasPendingReview()}">
                                                         <a href="${pageContext.request.contextPath}/order-review?orderId=${order.orderID}" 
                                                            class="btn btn-outline-warning btn-sm">
                                                             <i class="fa fa-star"></i> Đánh giá
                                                         </a>
+                                                    </c:if>
+                                                    <c:if test="${order.orderStatus == 'Completed' && order.allReviewed}">
+                                                        <span class="btn btn-outline-success btn-sm disabled">
+                                                            <i class="fa fa-check"></i> Đã đánh giá
+                                                        </span>
                                                     </c:if>
                                                 </div>
                                             </div>
@@ -511,7 +526,7 @@
                                                 </c:if>
 
                                                 <c:if test="${not empty review.reviewContent}">
-                                                    <div style="color: #555; line-height: 1.6; margin-bottom: 12px;">${review.reviewContent}</div>
+                                                    <div class="review-content-text" style="color: #555; line-height: 1.6; margin-bottom: 12px;">${review.reviewContent}</div>
                                                 </c:if>
 
                                                 <div style="font-size: 13px; color: #999;">
@@ -597,8 +612,10 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label>Ngày sinh</label>
+                                                <jsp:useBean id="now" class="java.util.Date"/>
                                                 <input type="date" name="dateOfBirth" class="form-control" 
-                                                       value="<fmt:formatDate value='${customer.dateOfBirth}' pattern='yyyy-MM-dd'/>">
+                                                       value="<fmt:formatDate value='${customer.dateOfBirth}' pattern='yyyy-MM-dd'/>"
+                                                       max="<fmt:formatDate value='${now}' pattern='yyyy-MM-dd'/>">
                                             </div>
                                         </div>
                                         <div class="col-md-6">

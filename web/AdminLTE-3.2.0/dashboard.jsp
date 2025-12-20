@@ -221,7 +221,7 @@
                                     <thead>
                                         <tr>
                                             <th>Sản phẩm</th>
-                                            <th>Tồn kho</th>
+                                            <th>Số lượng</th>
                                         </tr>
                                     </thead>
                                     <tbody>

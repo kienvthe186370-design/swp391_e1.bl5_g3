@@ -280,8 +280,7 @@ public class AdminProductServlet extends HttpServlet {
                 int existingProductId = (Integer) duplicateProduct.get("productId");
                 String existingProductName = (String) duplicateProduct.get("productName");
                 
-                // Redirect đến trang chỉnh sửa sản phẩm đã tồn tại
-                response.sendRedirect(request.getContextPath() + "/admin/product-edit?id=" + existingProductId + 
+                                response.sendRedirect(request.getContextPath() + "/admin/product-edit?id=" + existingProductId + 
                                     "&duplicate=true&message=" + encodeURL("Sản phẩm \"" + existingProductName + "\" đã tồn tại. Bạn có muốn chỉnh sửa không?"));
                 return;
             }

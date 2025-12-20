@@ -131,7 +131,27 @@ public class BrandController extends HttpServlet {
             String desc = request.getParameter("description");
             boolean isActive = "on".equals(request.getParameter("isActive"));
             
-            entity.Brand brand = new entity.Brand(0, name, logo, desc, isActive);
+            // Validate required fields
+            if (name == null || name.trim().isEmpty()) {
+                request.setAttribute("error", "Vui lòng nhập tên thương hiệu!");
+                forwardToForm(request, response, null, name, logo, desc, isActive);
+                return;
+            }
+            
+            if (name.trim().length() < 2) {
+                request.setAttribute("error", "Tên thương hiệu phải có ít nhất 2 ký tự!");
+                forwardToForm(request, response, null, name, logo, desc, isActive);
+                return;
+            }
+            
+            // Check duplicate name
+            if (brandDAO.isBrandNameExists(name.trim(), null)) {
+                request.setAttribute("error", "Tên thương hiệu đã tồn tại!");
+                forwardToForm(request, response, null, name, logo, desc, isActive);
+                return;
+            }
+            
+            entity.Brand brand = new entity.Brand(0, name.trim(), logo, desc, isActive);
             boolean success = brandDAO.insertBrand(brand);
             
             if (success) {
@@ -154,7 +174,27 @@ public class BrandController extends HttpServlet {
             String desc = request.getParameter("description");
             boolean isActive = "on".equals(request.getParameter("isActive"));
             
-            entity.Brand brand = new entity.Brand(id, name, logo, desc, isActive);
+            // Validate required fields
+            if (name == null || name.trim().isEmpty()) {
+                request.setAttribute("error", "Vui lòng nhập tên thương hiệu!");
+                forwardToForm(request, response, id, name, logo, desc, isActive);
+                return;
+            }
+            
+            if (name.trim().length() < 2) {
+                request.setAttribute("error", "Tên thương hiệu phải có ít nhất 2 ký tự!");
+                forwardToForm(request, response, id, name, logo, desc, isActive);
+                return;
+            }
+            
+            // Check duplicate name (exclude current brand)
+            if (brandDAO.isBrandNameExists(name.trim(), id)) {
+                request.setAttribute("error", "Tên thương hiệu đã tồn tại!");
+                forwardToForm(request, response, id, name, logo, desc, isActive);
+                return;
+            }
+            
+            entity.Brand brand = new entity.Brand(id, name.trim(), logo, desc, isActive);
             boolean success = brandDAO.updateBrand(brand);
             
             if (success) {
@@ -166,6 +206,21 @@ public class BrandController extends HttpServlet {
             e.printStackTrace();
             response.sendRedirect("brands?msg=error");
         }
+    }
+    
+    private void forwardToForm(HttpServletRequest request, HttpServletResponse response, 
+                               Integer id, String name, String logo, String desc, boolean isActive)
+    throws ServletException, IOException {
+        if (id != null) {
+            entity.Brand brand = new entity.Brand(id, name, logo, desc, isActive);
+            request.setAttribute("brand", brand);
+        } else {
+            request.setAttribute("brandName", name);
+            request.setAttribute("logo", logo);
+            request.setAttribute("description", desc);
+            request.setAttribute("isActive", isActive);
+        }
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-brand-detail.jsp").forward(request, response);
     }
     
     private void deleteBrand(HttpServletRequest request, HttpServletResponse response)

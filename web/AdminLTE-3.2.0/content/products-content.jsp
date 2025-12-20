@@ -89,7 +89,7 @@
                                 <option value="date" ${sortBy == 'date' ? 'selected' : ''}>Ngày tạo</option>
                                 <option value="name" ${sortBy == 'name' ? 'selected' : ''}>Tên</option>
                                 <option value="price" ${sortBy == 'price' ? 'selected' : ''}>Giá</option>
-                                <option value="stock" ${sortBy == 'stock' ? 'selected' : ''}>Tồn kho</option>
+                                <option value="stock" ${sortBy == 'stock' ? 'selected' : ''}>Số lượng</option>
                             </select>
                         </div>
                         <div class="col-auto">
@@ -116,9 +116,9 @@
                             <th>Tên sản phẩm</th>
                             <th>Danh mục</th>
                             <th>Thương hiệu</th>
-                            <th class="text-center">Tồn kho</th>
+                            <th class="text-center">Số lượng</th>
                             <th class="text-center">Đã giữ</th>
-                            <th class="text-right">Giá bán</th>
+                            <th class="text-right">Giá nhập TB</th>
                             <th class="text-center">Tình trạng</th>
                             <th class="text-center">Trạng thái</th>
                             <th class="text-center">Thao tác</th>
@@ -184,16 +184,9 @@
                                 </td>
                                 <td class="text-right">
                                     <c:choose>
-                                        <c:when test="${item.minPrice != null && item.maxPrice != null}">
-                                            <span class="text-danger font-weight-bold">
-                                                <c:choose>
-                                                    <c:when test="${item.minPrice == item.maxPrice}">
-                                                        <fmt:formatNumber value="${item.minPrice}" type="number" maxFractionDigits="0"/>₫
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <fmt:formatNumber value="${item.minPrice}" type="number" maxFractionDigits="0"/>₫ - <fmt:formatNumber value="${item.maxPrice}" type="number" maxFractionDigits="0"/>₫
-                                                    </c:otherwise>
-                                                </c:choose>
+                                        <c:when test="${item.avgCostPrice != null}">
+                                            <span class="text-primary font-weight-bold">
+                                                <fmt:formatNumber value="${item.avgCostPrice}" type="number" maxFractionDigits="0"/>₫
                                             </span>
                                         </c:when>
                                         <c:otherwise><span class="text-muted">Chưa có giá</span></c:otherwise>

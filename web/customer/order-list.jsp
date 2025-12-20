@@ -217,11 +217,16 @@
                                                 <i class="fa fa-undo"></i> Trả hàng
                                             </a>
                                         </c:if>
-                                        <c:if test="${order.orderStatus == 'Completed'}">
+                                        <c:if test="${order.orderStatus == 'Completed' && order.hasPendingReview()}">
                                             <a href="${pageContext.request.contextPath}/order-review?orderId=${order.orderID}" 
                                                class="btn btn-outline-warning btn-sm">
                                                 <i class="fa fa-star"></i> Đánh giá
                                             </a>
+                                        </c:if>
+                                        <c:if test="${order.orderStatus == 'Completed' && order.allReviewed}">
+                                            <span class="btn btn-outline-success btn-sm disabled">
+                                                <i class="fa fa-check"></i> Đã đánh giá
+                                            </span>
                                         </c:if>
                                     </div>
                                 </div>

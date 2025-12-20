@@ -147,7 +147,27 @@ public class AttributeController extends HttpServlet {
             String name = request.getParameter("attributeName");
             boolean isActive = "on".equals(request.getParameter("isActive"));
             
-            entity.ProductAttribute attr = new entity.ProductAttribute(0, name, isActive);
+            // Validate required fields
+            if (name == null || name.trim().isEmpty()) {
+                request.setAttribute("error", "Vui lòng nhập tên thuộc tính!");
+                forwardToAttributeForm(request, response, null, name, isActive);
+                return;
+            }
+            
+            if (name.trim().length() < 2) {
+                request.setAttribute("error", "Tên thuộc tính phải có ít nhất 2 ký tự!");
+                forwardToAttributeForm(request, response, null, name, isActive);
+                return;
+            }
+            
+            // Check duplicate name
+            if (attributeDAO.isAttributeNameExists(name.trim(), null)) {
+                request.setAttribute("error", "Tên thuộc tính đã tồn tại!");
+                forwardToAttributeForm(request, response, null, name, isActive);
+                return;
+            }
+            
+            entity.ProductAttribute attr = new entity.ProductAttribute(0, name.trim(), isActive);
             boolean success = attributeDAO.insertAttribute(attr);
             
             if (success) {
@@ -168,7 +188,27 @@ public class AttributeController extends HttpServlet {
             String name = request.getParameter("attributeName");
             boolean isActive = "on".equals(request.getParameter("isActive"));
             
-            entity.ProductAttribute attr = new entity.ProductAttribute(id, name, isActive);
+            // Validate required fields
+            if (name == null || name.trim().isEmpty()) {
+                request.setAttribute("error", "Vui lòng nhập tên thuộc tính!");
+                forwardToAttributeForm(request, response, id, name, isActive);
+                return;
+            }
+            
+            if (name.trim().length() < 2) {
+                request.setAttribute("error", "Tên thuộc tính phải có ít nhất 2 ký tự!");
+                forwardToAttributeForm(request, response, id, name, isActive);
+                return;
+            }
+            
+            // Check duplicate name (exclude current attribute)
+            if (attributeDAO.isAttributeNameExists(name.trim(), id)) {
+                request.setAttribute("error", "Tên thuộc tính đã tồn tại!");
+                forwardToAttributeForm(request, response, id, name, isActive);
+                return;
+            }
+            
+            entity.ProductAttribute attr = new entity.ProductAttribute(id, name.trim(), isActive);
             boolean success = attributeDAO.updateAttribute(attr);
             
             if (success) {
@@ -180,6 +220,19 @@ public class AttributeController extends HttpServlet {
             e.printStackTrace();
             response.sendRedirect("attributes?msg=error");
         }
+    }
+    
+    private void forwardToAttributeForm(HttpServletRequest request, HttpServletResponse response, 
+                                        Integer id, String name, boolean isActive)
+    throws ServletException, IOException {
+        if (id != null) {
+            entity.ProductAttribute attr = new entity.ProductAttribute(id, name, isActive);
+            request.setAttribute("attribute", attr);
+        } else {
+            request.setAttribute("attributeName", name);
+            request.setAttribute("isActive", isActive);
+        }
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-attribute-detail.jsp").forward(request, response);
     }
     
     private void deleteAttribute(HttpServletRequest request, HttpServletResponse response)
@@ -210,7 +263,21 @@ public class AttributeController extends HttpServlet {
             String valueName = request.getParameter("valueName");
             boolean isActive = "on".equals(request.getParameter("isActive"));
             
-            entity.AttributeValue value = new entity.AttributeValue(0, attrId, valueName, isActive);
+            // Validate required fields
+            if (valueName == null || valueName.trim().isEmpty()) {
+                request.setAttribute("error", "Vui lòng nhập tên giá trị!");
+                forwardToValuesPage(request, response, attrId);
+                return;
+            }
+            
+            // Check duplicate value name for this attribute
+            if (attributeDAO.isAttributeValueExists(valueName.trim(), attrId, null)) {
+                request.setAttribute("error", "Giá trị này đã tồn tại cho thuộc tính này!");
+                forwardToValuesPage(request, response, attrId);
+                return;
+            }
+            
+            entity.AttributeValue value = new entity.AttributeValue(0, attrId, valueName.trim(), isActive);
             boolean success = attributeDAO.insertAttributeValue(value);
             
             if (success) {
@@ -222,6 +289,14 @@ public class AttributeController extends HttpServlet {
             e.printStackTrace();
             response.sendRedirect("attributes?msg=error");
         }
+    }
+    
+    private void forwardToValuesPage(HttpServletRequest request, HttpServletResponse response, int attrId)
+    throws ServletException, IOException {
+        entity.ProductAttribute attr = attributeDAO.getAttributeByID(attrId);
+        request.setAttribute("attribute", attr);
+        request.setAttribute("values", attributeDAO.getValuesByAttributeID(attrId));
+        request.getRequestDispatcher("/AdminLTE-3.2.0/admin-attribute-values.jsp").forward(request, response);
     }
     
     private void deleteValue(HttpServletRequest request, HttpServletResponse response)

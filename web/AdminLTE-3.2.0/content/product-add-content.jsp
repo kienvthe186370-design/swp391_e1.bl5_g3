@@ -172,14 +172,9 @@
                     </div>
                     
                     <!-- ========== PHẦN QUẢN LÝ BIẾN THỂ ========== -->
-                    <div class="card card-outline card-info collapsed-card" id="variant-section">
+                    <div class="card card-outline card-info" id="variant-section">
                         <div class="card-header">
                             <h3 class="card-title"><i class="fas fa-th mr-2"></i>Quản lý Biến thể (Variants)</h3>
-                            <div class="card-tools">
-                                <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
                         </div>
                         <div class="card-body">
                             <!-- Hướng dẫn -->
@@ -611,6 +606,109 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 5000);
     
+    // ========== TEXT FIELD VALIDATION ==========
+    var ValidationRules = {
+        productName: { required: true, maxLength: 100, label: 'Tên sản phẩm' },
+        description: { required: false, maxLength: 500, label: 'Mô tả sản phẩm' },
+        specifications: { required: false, maxLength: 500, label: 'Thông số kỹ thuật' }
+    };
+    
+    // Validate single text field
+    function validateTextField(fieldId) {
+        var field = document.getElementById(fieldId);
+        if (!field) return { valid: true };
+        
+        var rules = ValidationRules[fieldId];
+        if (!rules) return { valid: true };
+        
+        var value = field.value.trim();
+        field.value = value; // Auto trim
+        
+        // Clear previous error
+        clearFieldError(field);
+        
+        // Required check
+        if (rules.required && value === '') {
+            showFieldError(field, rules.label + ' không được để trống');
+            return { valid: false, error: rules.label + ' không được để trống' };
+        }
+        
+        // Max length check
+        if (rules.maxLength && value.length > rules.maxLength) {
+            showFieldError(field, rules.label + ' không được vượt quá ' + rules.maxLength + ' ký tự (hiện tại: ' + value.length + ')');
+            return { valid: false, error: rules.label + ' không được vượt quá ' + rules.maxLength + ' ký tự' };
+        }
+        
+        return { valid: true };
+    }
+    
+    // Show error for field
+    function showFieldError(field, message) {
+        field.classList.add('is-invalid');
+        var errorDiv = field.parentElement.querySelector('.field-error');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'form-error field-error';
+            field.parentElement.appendChild(errorDiv);
+        }
+        errorDiv.textContent = message;
+    }
+    
+    // Clear error for field
+    function clearFieldError(field) {
+        field.classList.remove('is-invalid');
+        var errorDiv = field.parentElement.querySelector('.field-error');
+        if (errorDiv) errorDiv.remove();
+    }
+    
+    // Attach real-time validation to text fields
+    ['productName', 'description', 'specifications'].forEach(function(fieldId) {
+        var field = document.getElementById(fieldId);
+        if (field) {
+            // Validate on blur (when leaving field)
+            field.addEventListener('blur', function() {
+                this.value = this.value.trim(); // Trim on blur
+                validateTextField(fieldId);
+            });
+            
+            // Clear error on input
+            field.addEventListener('input', function() {
+                clearFieldError(this);
+                // Show character count for fields with maxLength
+                var rules = ValidationRules[fieldId];
+                if (rules && rules.maxLength) {
+                    updateCharCount(this, rules.maxLength);
+                }
+            });
+            
+            // Add character counter
+            var rules = ValidationRules[fieldId];
+            if (rules && rules.maxLength) {
+                var counter = document.createElement('small');
+                counter.className = 'text-muted char-counter';
+                counter.id = fieldId + '-counter';
+                field.parentElement.appendChild(counter);
+                updateCharCount(field, rules.maxLength);
+            }
+        }
+    });
+    
+    // Update character count display
+    function updateCharCount(field, maxLength) {
+        var counter = document.getElementById(field.id + '-counter');
+        if (counter) {
+            var currentLength = field.value.length;
+            counter.textContent = currentLength + '/' + maxLength + ' ký tự';
+            if (currentLength > maxLength) {
+                counter.classList.remove('text-muted');
+                counter.classList.add('text-danger');
+            } else {
+                counter.classList.remove('text-danger');
+                counter.classList.add('text-muted');
+            }
+        }
+    }
+    
     // Form validation before submit
     var form = document.getElementById('productAddForm');
     if (form) {
@@ -618,12 +716,14 @@ document.addEventListener('DOMContentLoaded', function() {
             var isValid = true;
             var errorMessage = '';
             
-            // Check product name
-            var productName = document.getElementById('productName').value.trim();
-            if (productName === '') {
-                isValid = false;
-                errorMessage += '- Tên sản phẩm không được để trống\n';
-            }
+            // Validate all text fields
+            ['productName', 'description', 'specifications'].forEach(function(fieldId) {
+                var result = validateTextField(fieldId);
+                if (!result.valid) {
+                    isValid = false;
+                    errorMessage += '- ' + result.error + '\n';
+                }
+            });
             
             // Check category
             var categoryId = document.getElementById('categoryId').value;
@@ -663,6 +763,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
+            // Validate all SKU fields
+            var skuInputs = document.querySelectorAll('.variant-sku-input');
+            skuInputs.forEach(function(input, index) {
+                var skuResult = validateSkuField(input);
+                if (!skuResult.valid) {
+                    isValid = false;
+                    errorMessage += '- Biến thể ' + (index + 1) + ': ' + skuResult.error + '\n';
+                }
+            });
+            
             if (!isValid) {
                 e.preventDefault();
                 alert('Vui lòng kiểm tra lại:\n\n' + errorMessage);
@@ -695,6 +805,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             loadCategoryAttributes(categoryId);
         });
+        
+        // Auto load attributes if category is already selected (e.g., after validation error)
+        var initialCategoryId = categorySelect.value;
+        if (initialCategoryId && initialCategoryId !== '0') {
+            loadCategoryAttributes(initialCategoryId);
+        }
     }
     
     // Load thuộc tính của category (AJAX)
@@ -829,7 +945,7 @@ function renderVariantTable(combinations) {
         html += '<input type="hidden" name="variant_values_' + index + '" value="' + valueIds + '">';
         html += '</td>';
         html += '<td><div class="sku-input-wrapper">';
-        html += '<input type="text" class="form-control form-control-sm variant-sku-input" name="variant_sku_' + index + '" placeholder="VD: SKU-' + (index + 1) + '" required data-index="' + index + '">';
+        html += '<input type="text" class="form-control form-control-sm variant-sku-input" name="variant_sku_' + index + '" placeholder="VD: SKU-' + (index + 1) + '" maxlength="30" required data-index="' + index + '">';
         html += '</div></td>';
         html += '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariantRow(this)">';
         html += '<i class="fas fa-trash"></i></button></td>';
@@ -842,26 +958,111 @@ function renderVariantTable(combinations) {
     attachSkuValidationToVariants();
 }
 
+// SKU Validation Rules
+var SKU_MAX_LENGTH = 30;
+
+// Validate SKU field
+function validateSkuField(input) {
+    var value = input.value.trim();
+    input.value = value; // Auto trim
+    
+    // Clear previous error
+    clearSkuError(input);
+    
+    // Required check
+    if (value === '') {
+        showSkuError(input, 'SKU không được để trống');
+        return { valid: false, error: 'SKU không được để trống' };
+    }
+    
+    // Max length check
+    if (value.length > SKU_MAX_LENGTH) {
+        showSkuError(input, 'SKU không được vượt quá ' + SKU_MAX_LENGTH + ' ký tự (hiện tại: ' + value.length + ')');
+        return { valid: false, error: 'SKU không được vượt quá ' + SKU_MAX_LENGTH + ' ký tự' };
+    }
+    
+    return { valid: true };
+}
+
+// Show SKU error
+function showSkuError(input, message) {
+    input.classList.add('is-invalid');
+    var wrapper = input.closest('.sku-input-wrapper') || input.parentElement;
+    var errorDiv = wrapper.querySelector('.sku-error');
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.className = 'form-error sku-error';
+        wrapper.appendChild(errorDiv);
+    }
+    errorDiv.textContent = message;
+}
+
+// Clear SKU error
+function clearSkuError(input) {
+    input.classList.remove('is-invalid');
+    var wrapper = input.closest('.sku-input-wrapper') || input.parentElement;
+    var errorDiv = wrapper.querySelector('.sku-error');
+    if (errorDiv) errorDiv.remove();
+    var warning = wrapper.querySelector('.duplicate-warning');
+    if (warning) warning.remove();
+}
+
 // Attach SKU validation to variant inputs
 function attachSkuValidationToVariants() {
     var skuInputs = document.querySelectorAll('.variant-sku-input');
     skuInputs.forEach(function(input) {
+        // Validate on blur
         input.addEventListener('blur', function() {
-            var sku = this.value.trim();
+            var result = validateSkuField(this);
             var inputEl = this;
-            if (sku) {
-                ProductDuplicateCheck.checkSku(sku, null, function(result) {
-                    ProductDuplicateCheck.showSkuDuplicateWarning(inputEl, result);
+            var sku = this.value.trim();
+            
+            // If valid, also check for duplicates
+            if (result.valid && sku) {
+                ProductDuplicateCheck.checkSku(sku, null, function(dupResult) {
+                    ProductDuplicateCheck.showSkuDuplicateWarning(inputEl, dupResult);
                 });
             }
         });
         
+        // Clear error on input and show character count
         input.addEventListener('input', function() {
-            var warning = this.parentElement.querySelector('.duplicate-warning');
-            if (warning) warning.remove();
-            this.classList.remove('is-invalid');
+            clearSkuError(this);
+            updateSkuCharCount(this);
         });
+        
+        // Add character counter
+        addSkuCharCounter(input);
     });
+}
+
+// Add character counter to SKU input
+function addSkuCharCounter(input) {
+    var wrapper = input.closest('.sku-input-wrapper') || input.parentElement;
+    var counter = wrapper.querySelector('.sku-char-counter');
+    if (!counter) {
+        counter = document.createElement('small');
+        counter.className = 'text-muted sku-char-counter';
+        wrapper.appendChild(counter);
+    }
+    updateSkuCharCount(input);
+}
+
+// Update SKU character count
+function updateSkuCharCount(input) {
+    var wrapper = input.closest('.sku-input-wrapper') || input.parentElement;
+    var counter = wrapper.querySelector('.sku-char-counter');
+    if (counter) {
+        var currentLength = input.value.length;
+        counter.textContent = currentLength + '/' + SKU_MAX_LENGTH;
+        if (currentLength > SKU_MAX_LENGTH) {
+            counter.classList.remove('text-muted');
+            counter.classList.add('text-danger');
+        } else {
+            counter.classList.remove('text-danger');
+            counter.classList.add('text-muted');
+        }
+    }
 }
 
 // Xóa một row variant

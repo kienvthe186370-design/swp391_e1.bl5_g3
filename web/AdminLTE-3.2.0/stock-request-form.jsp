@@ -96,7 +96,7 @@
                                             <tr>
                                                 <th style="width: 60px">Ảnh</th>
                                                 <th>Sản phẩm</th>
-                                                <th class="text-center">Tồn kho<br>hiện tại</th>
+                                                <th class="text-center">Số lượng<br>hiện tại</th>
                                                 <th class="text-center">SL yêu cầu<br>trong RFQ</th>
                                                 <th class="text-center text-danger">Thiếu</th>
                                                 <th class="text-center" style="width: 120px">SL yêu cầu<br>nhập hàng</th>
@@ -163,7 +163,7 @@
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle"></i>
                                 <strong>Lưu ý:</strong> Sau khi gửi yêu cầu, Admin sẽ xem xét và nhập hàng. 
-                                Khi Admin duyệt, tồn kho sẽ được tự động cập nhật.
+                                Khi Admin duyệt, số lượng sẽ được tự động cập nhật.
                             </div>
                         </div>
                     </div>
