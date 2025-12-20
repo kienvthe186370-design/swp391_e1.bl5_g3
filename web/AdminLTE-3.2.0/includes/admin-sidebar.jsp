@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="entity.Employee" %>
 <%@ page import="utils.RolePermission" %>
+<%@ page import="DAO.StockRequestDAO" %>
 <%
     // ===== ROLE DETECTION AND NULL SAFETY =====
     Employee employee = (Employee) session.getAttribute("employee");
@@ -101,20 +102,39 @@
         }
     }
     
-    // RFQ pending count (for SellerManager) - đếm các đơn cần xử lý
+    // RFQ pending count - đếm các đơn cần xử lý (assign cho seller hoặc chưa assign)
     int pendingRFQCount = 0;
     int dateAcceptedRFQCount = 0;
     int totalRFQNeedAction = 0;
-    if (canAccessRFQ) {
+    if (canAccessRFQ && RolePermission.isSeller(userRole)) {
         try {
             DAO.RFQDAO rfqDAO = new DAO.RFQDAO();
-            pendingRFQCount = rfqDAO.countRFQsByStatus("Pending"); // Đơn mới
-            dateAcceptedRFQCount = rfqDAO.countRFQsByStatus("DateAccepted"); // Khách đã chấp nhận ngày mới
+            int sellerID = employee.getEmployeeID();
+            // Đếm RFQ Pending được assign cho seller này hoặc chưa assign
+            pendingRFQCount = rfqDAO.countRFQsForSeller("Pending", sellerID);
+            // Đếm RFQ DateAccepted được assign cho seller này
+            dateAcceptedRFQCount = rfqDAO.countRFQsByStatusAndSeller("DateAccepted", sellerID);
             totalRFQNeedAction = pendingRFQCount + dateAcceptedRFQCount;
+            System.out.println("[Sidebar] SellerID=" + sellerID + ", PendingRFQ=" + pendingRFQCount + ", DateAccepted=" + dateAcceptedRFQCount + ", Total=" + totalRFQNeedAction);
+        } catch (Exception e) {
+            System.err.println("[Sidebar] Error counting RFQ: " + e.getMessage());
+        }
+    }
+    
+    // Stock Request count
+    boolean canAccessStockRequests = RolePermission.canManageStockRequests(userRole);
+    int pendingStockRequestCount = 0;
+    if (canAccessStockRequests) {
+        try {
+            StockRequestDAO stockRequestDAO = new StockRequestDAO();
+            pendingStockRequestCount = stockRequestDAO.countPendingRequests();
         } catch (Exception e) {
             // Ignore
         }
     }
+    
+    // Stock Request page detection
+    boolean isStockRequestPage = currentURI.contains("/admin/stock-requests");
     
     // Check for access denied message
     String accessDeniedMsg = (String) session.getAttribute("accessDeniedMessage");
@@ -248,11 +268,11 @@
           </ul>
         </li>
         
-        <!-- Yêu cầu nhập hàng - Admin (duyệt) -->
+        <!-- Stock Requests - Admin -->
         <li class="nav-item">
           <a href="<%= contextPath %>/admin/stock-requests" 
              class="nav-link <%= isStockRequestPage ? "active" : "" %>">
-            <i class="nav-icon fas fa-boxes"></i>
+            <i class="nav-icon fas fa-dolly"></i>
             <p>Yêu cầu nhập hàng
               <% if (pendingStockRequestCount > 0) { %>
                 <span class="badge badge-warning right"><%= pendingStockRequestCount %></span>
@@ -325,8 +345,8 @@
         </li>
         <% } %>
         
-        <!-- RFQ Management - Chỉ SellerManager -->
-        <% if (canAccessRFQ) { %>
+        <!-- RFQ Management - Chỉ Seller (không phải SellerManager) -->
+        <% if (canAccessRFQ && RolePermission.isSeller(userRole)) { %>
         <li class="nav-item">
           <a href="<%= contextPath %>/admin/rfq" 
              class="nav-link <%= isRFQPage ? "active" : "" %>">
@@ -343,6 +363,21 @@
              class="nav-link <%= currentURI.contains("/admin/quotations") ? "active" : "" %>">
             <i class="nav-icon fas fa-file-invoice-dollar"></i>
             <p>Đơn Báo Giá</p>
+          </a>
+        </li>
+        <% } %>
+        
+        <!-- Stock Requests - Seller -->
+        <% if (canAccessStockRequests && !isAdmin) { %>
+        <li class="nav-item">
+          <a href="<%= contextPath %>/admin/stock-requests" 
+             class="nav-link <%= isStockRequestPage ? "active" : "" %>">
+            <i class="nav-icon fas fa-dolly"></i>
+            <p>Yêu cầu nhập hàng
+              <% if (pendingStockRequestCount > 0) { %>
+                <span class="badge badge-info right"><%= pendingStockRequestCount %></span>
+              <% } %>
+            </p>
           </a>
         </li>
         <% } %>

@@ -36,8 +36,8 @@
         <label for="email">Email <span class="text-danger">*</span></label>
         <input type="email" class="form-control" id="email" name="email" 
                value="<%= employee != null ? employee.getEmail() : "" %>" required 
-               placeholder="Nhập email">
-        <small class="form-text text-muted">Email phải bắt đầu bằng chữ cái (Ví dụ: example@gmail.com)</small>
+               placeholder="Nhập email" <%= isEditMode ? "readonly" : "" %>>
+        <small class="form-text text-muted"><%= isEditMode ? "Email không thể thay đổi" : "Email phải bắt đầu bằng chữ cái (Ví dụ: example@gmail.com)" %></small>
       </div>
       
       <div class="form-group">

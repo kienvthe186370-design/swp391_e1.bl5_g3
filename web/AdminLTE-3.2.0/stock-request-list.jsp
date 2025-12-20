@@ -205,31 +205,33 @@
                     </div>
                     
                     <!-- Pagination -->
-                    <c:if test="${totalPages > 1}">
-                        <div class="card-footer clearfix">
-                            <ul class="pagination pagination-sm m-0 float-right">
-                                <c:if test="${currentPage > 1}">
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page=${currentPage - 1}&keyword=${keyword}&status=${status}">
-                                            <i class="fas fa-chevron-left"></i>
-                                        </a>
-                                    </li>
-                                </c:if>
-                                <c:forEach begin="1" end="${totalPages}" var="i">
-                                    <li class="page-item ${i == currentPage ? 'active' : ''}">
-                                        <a class="page-link" href="?page=${i}&keyword=${keyword}&status=${status}">${i}</a>
-                                    </li>
-                                </c:forEach>
-                                <c:if test="${currentPage < totalPages}">
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page=${currentPage + 1}&keyword=${keyword}&status=${status}">
-                                            <i class="fas fa-chevron-right"></i>
-                                        </a>
-                                    </li>
-                                </c:if>
-                            </ul>
+                    <div class="card-footer clearfix">
+                        <div class="float-left">
+                            <c:choose>
+                                <c:when test="${totalRequests > 0}">
+                                    <c:set var="startRecord" value="${(currentPage - 1) * pageSize + 1}" />
+                                    <c:set var="endRecord" value="${currentPage * pageSize > totalRequests ? totalRequests : currentPage * pageSize}" />
+                                    Hiển thị <strong>${startRecord}</strong> đến <strong>${endRecord}</strong> của <strong>${totalRequests}</strong> bản ghi
+                                </c:when>
+                                <c:otherwise>
+                                    Hiển thị <strong>0</strong> bản ghi
+                                </c:otherwise>
+                            </c:choose>
                         </div>
-                    </c:if>
+                        <ul class="pagination pagination-sm m-0 float-right">
+                            <li class="page-item ${currentPage <= 1 ? 'disabled' : ''}">
+                                <a class="page-link" href="?page=${currentPage - 1}&keyword=${keyword}&status=${status}">Trước</a>
+                            </li>
+                            <c:forEach begin="1" end="${totalPages > 0 ? totalPages : 1}" var="i">
+                                <li class="page-item ${i == currentPage ? 'active' : ''}">
+                                    <a class="page-link" href="?page=${i}&keyword=${keyword}&status=${status}">${i}</a>
+                                </li>
+                            </c:forEach>
+                            <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
+                                <a class="page-link" href="?page=${currentPage + 1}&keyword=${keyword}&status=${status}">Sau</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </section>

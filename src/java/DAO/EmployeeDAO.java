@@ -35,6 +35,27 @@ public class EmployeeDAO extends DBContext {
         return null;
     }
     
+    /**
+     * Kiểm tra tài khoản có bị khóa không (IsActive = 0)
+     * @return true nếu tài khoản tồn tại và bị khóa
+     */
+    public boolean isAccountLocked(String email) {
+        String sql = "SELECT IsActive FROM Employees WHERE Email = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return !rs.getBoolean("IsActive"); // true nếu IsActive = 0 (bị khóa)
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, null, e);
+        }
+        return false; // Không tìm thấy email
+    }
+    
     public Employee getEmployeeById(int employeeID) {
         String sql = "SELECT * FROM Employees WHERE EmployeeID = ?";
         try (Connection conn = getConnection();
