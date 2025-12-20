@@ -97,18 +97,6 @@
                     <small class="form-text text-muted">Mô tả ngắn gọn về danh mục sản phẩm</small>
                   </div>
 
-                  <!-- Icon -->
-                  <div class="form-group">
-                    <label for="icon">Icon CSS Class</label>
-                    <input type="text" class="form-control" id="icon" name="icon" 
-                           value="${category != null ? category.icon : ''}" 
-                           placeholder="fas fa-list, icon-paddle...">
-                    <small class="form-text text-muted">Class CSS của icon (Font Awesome hoặc custom)</small>
-                    <div class="mt-2">
-                      <span id="iconPreview" class="${category != null ? category.icon : ''}" style="font-size: 24px;"></span>
-                    </div>
-                  </div>
-
                   <!-- Display Order -->
                   <div class="form-group">
                     <label for="displayOrder">Thứ tự hiển thị</label>
@@ -153,16 +141,7 @@
                 <ul class="pl-3">
                   <li>Tên danh mục phải <strong>duy nhất</strong></li>
                   <li>Mô tả giúp SEO tốt hơn</li>
-                  <li>Icon hiển thị trên menu</li>
                   <li>Thứ tự nhỏ hơn hiển thị trước</li>
-                </ul>
-
-                <h6 class="mt-3"><i class="fas fa-icons"></i> Icon phổ biến:</h6>
-                <ul class="pl-3">
-                  <li><i class="fas fa-table-tennis"></i> fas fa-table-tennis</li>
-                  <li><i class="fas fa-baseball-ball"></i> fas fa-baseball-ball</li>
-                  <li><i class="fas fa-tshirt"></i> fas fa-tshirt</li>
-                  <li><i class="fas fa-shopping-bag"></i> fas fa-shopping-bag</li>
                 </ul>
               </div>
             </div>
@@ -193,12 +172,6 @@
   <jsp:include page="includes/admin-footer.jsp" />
 
 <script>
-// Preview icon when class is entered
-$('#icon').on('input', function() {
-    const iconClass = $(this).val();
-    $('#iconPreview').attr('class', iconClass).css('font-size', '24px');
-});
-
 // Form validation
 $('#categoryForm').on('submit', function(e) {
     const categoryName = $('#categoryName').val().trim();

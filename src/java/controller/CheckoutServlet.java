@@ -278,7 +278,10 @@ public class CheckoutServlet extends HttpServlet {
             order.setOrderStatus("Pending");
 
             // Create order in database
-            int orderID = orderDAO.createOrder(order, orderDetails);
+            // VNPay: không trừ stock ngay, chờ thanh toán thành công
+            // COD: trừ stock ngay
+            boolean reserveStock = !"VNPay".equals(paymentMethod);
+            int orderID = orderDAO.createOrder(order, orderDetails, reserveStock);
             
             if (orderID <= 0) {
                 request.setAttribute("error", "Không thể tạo đơn hàng. Vui lòng thử lại.");

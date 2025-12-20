@@ -910,8 +910,9 @@ public class OrderDAO extends DBContext {
     
     /**
      * Tạo đơn hàng mới với chi tiết
+     * @param reserveStock - true nếu muốn trừ stock ngay (COD), false nếu chờ thanh toán (VNPay)
      */
-    public int createOrder(Order order, List<OrderDetail> orderDetails) {
+    public int createOrder(Order order, List<OrderDetail> orderDetails, boolean reserveStock) {
         Connection conn = null;
         try {
             conn = getConnection();
@@ -994,17 +995,22 @@ public class OrderDAO extends DBContext {
                 System.out.println("OrderStatusHistory insert skipped: " + e.getMessage());
             }
             
-            // Trừ Stock và đặt Reserved
-            String stockSql = "UPDATE pv SET " +
-                             "pv.Stock = pv.Stock - od.Quantity, " +
-                             "pv.ReservedStock = pv.ReservedStock + od.Quantity " +
-                             "FROM ProductVariants pv " +
-                             "INNER JOIN OrderDetails od ON pv.VariantID = od.VariantID " +
-                             "WHERE od.OrderID = ?";
-            try (PreparedStatement ps = conn.prepareStatement(stockSql)) {
-                ps.setInt(1, orderID);
-                int updated = ps.executeUpdate();
-                System.out.println("[OrderDAO] Reserved stock for new order " + orderID + ", updated " + updated + " variants");
+            // Chỉ trừ Stock và đặt Reserved khi reserveStock = true (COD)
+            // VNPay sẽ trừ stock sau khi thanh toán thành công
+            if (reserveStock) {
+                String stockSql = "UPDATE pv SET " +
+                                 "pv.Stock = pv.Stock - od.Quantity, " +
+                                 "pv.ReservedStock = pv.ReservedStock + od.Quantity " +
+                                 "FROM ProductVariants pv " +
+                                 "INNER JOIN OrderDetails od ON pv.VariantID = od.VariantID " +
+                                 "WHERE od.OrderID = ?";
+                try (PreparedStatement ps = conn.prepareStatement(stockSql)) {
+                    ps.setInt(1, orderID);
+                    int updated = ps.executeUpdate();
+                    System.out.println("[OrderDAO] Reserved stock for new order " + orderID + ", updated " + updated + " variants");
+                }
+            } else {
+                System.out.println("[OrderDAO] Stock NOT reserved for order " + orderID + " (waiting for payment)");
             }
             
             conn.commit();
@@ -1021,6 +1027,13 @@ public class OrderDAO extends DBContext {
                 try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
             }
         }
+    }
+    
+    /**
+     * Tạo đơn hàng mới với chi tiết (backward compatible - mặc định trừ stock ngay)
+     */
+    public int createOrder(Order order, List<OrderDetail> orderDetails) {
+        return createOrder(order, orderDetails, true);
     }
     
     /**
