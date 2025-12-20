@@ -1,3 +1,16 @@
+/**
+ * FILE NÀY ĐÃ ĐƯỢC TẮT - KHÔNG SỬ DỤNG
+ * 
+ * Lý do: Chuyển sang sử dụng Backend Validation thay vì Frontend AJAX Validation
+ * để dễ dàng maintain và debug hơn.
+ * 
+ * Validation được xử lý tại: src/java/controller/RegisterServlet.java
+ * Sử dụng utility: src/java/utils/ValidationUtil.java
+ * 
+ * Ngày tắt: 19/12/2024
+ */
+
+/*
 $(document).ready(function() {
     let isEmailValid = false;
     let isEmailChecking = false;
@@ -152,3 +165,4 @@ $(document).ready(function() {
         return true;
     });
 });
+*/
