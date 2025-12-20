@@ -44,7 +44,7 @@ public class RolePermission {
     }
 
     public static boolean canProcessRFQ(String role) {
-        return SELLER.equalsIgnoreCase(role);
+        return SELLER.equalsIgnoreCase(role) || SELLER_MANAGER.equalsIgnoreCase(role);
     }
 
     public static boolean isSeller(String role) {
@@ -160,11 +160,11 @@ public class RolePermission {
         // 1. ADMIN - Đã loại bỏ Orders, Marketing, Voucher, Reports
         if (ADMIN.equalsIgnoreCase(role)) {
             if (path.startsWith("/employees")) return true;
-            if (path.startsWith("/products")) return true;
+            if (path.startsWith("/products") || path.startsWith("/product-")) return true;
             if (path.startsWith("/stock")) return true;
-            if (path.startsWith("/categories")) return true;
-            if (path.startsWith("/brands")) return true;
-            if (path.startsWith("/attributes")) return true;
+            if (path.startsWith("/categories") || path.startsWith("/category-")) return true;
+            if (path.startsWith("/brands") || path.startsWith("/brand-")) return true;
+            if (path.startsWith("/attributes") || path.startsWith("/attribute-")) return true;
             if (path.startsWith("/settings")) return true;
             // Admin quản lý Stock Requests (đã check ở Global block trên)
             return false;
@@ -175,6 +175,8 @@ public class RolePermission {
             if (path.startsWith("/customers")) return true;
             if (path.startsWith("/orders")) return true;
             if (path.startsWith("/reports")) return true;
+            if (path.startsWith("/rfq")) return true;
+            if (path.startsWith("/quotations")) return true;
             return false;
         }
 
@@ -195,10 +197,10 @@ public class RolePermission {
 
         // 4. MARKETER
         if (MARKETER.equalsIgnoreCase(role)) {
-            if (path.startsWith("/products")) return true;
-            if (path.startsWith("/categories")) return true;
-            if (path.startsWith("/brands")) return true;
-            if (path.startsWith("/attributes")) return true;
+            if (path.startsWith("/products") || path.startsWith("/product-")) return true;
+            if (path.startsWith("/categories") || path.startsWith("/category-")) return true;
+            if (path.startsWith("/brands") || path.startsWith("/brand-")) return true;
+            if (path.startsWith("/attributes") || path.startsWith("/attribute-")) return true;
             if (path.startsWith("/slider")) return true;
             if (path.startsWith("/blog")) return true;
             if (path.startsWith("/discount")) return true;

@@ -232,6 +232,7 @@
     <script src="js/main.js"></script>
     
     <!-- Register Validation Script -->
-    <script src="js/register-validation.js"></script>
+    <!-- Đã tắt frontend validation, sử dụng backend validation thay thế -->
+    <!-- <script src="js/register-validation.js"></script> -->
 </body>
 </html>
