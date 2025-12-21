@@ -212,18 +212,22 @@
                                                     <i class="fa fa-check"></i> Đã nhận hàng
                                                 </button>
                                             </form>
-                                            <a href="${pageContext.request.contextPath}/customer/refund?action=create&orderId=${order.orderID}" 
-                                               class="btn btn-outline-warning btn-sm">
-                                                <i class="fa fa-undo"></i> Trả hàng
-                                            </a>
+                                            <%-- Nút Trả hàng chỉ hiện cho đơn bán lẻ (không phải RFQ) --%>
+                                            <c:if test="${order.rfqID == null}">
+                                                <a href="${pageContext.request.contextPath}/customer/refund?action=create&orderId=${order.orderID}" 
+                                                   class="btn btn-outline-warning btn-sm">
+                                                    <i class="fa fa-undo"></i> Trả hàng
+                                                </a>
+                                            </c:if>
                                         </c:if>
-                                        <c:if test="${order.orderStatus == 'Completed' && order.hasPendingReview()}">
+                                        <%-- Nút Đánh giá chỉ hiện cho đơn bán lẻ (không phải RFQ) --%>
+                                        <c:if test="${order.orderStatus == 'Completed' && order.hasPendingReview() && order.rfqID == null}">
                                             <a href="${pageContext.request.contextPath}/order-review?orderId=${order.orderID}" 
                                                class="btn btn-outline-warning btn-sm">
                                                 <i class="fa fa-star"></i> Đánh giá
                                             </a>
                                         </c:if>
-                                        <c:if test="${order.orderStatus == 'Completed' && order.allReviewed}">
+                                        <c:if test="${order.orderStatus == 'Completed' && order.allReviewed && order.rfqID == null}">
                                             <span class="btn btn-outline-success btn-sm disabled">
                                                 <i class="fa fa-check"></i> Đã đánh giá
                                             </span>
